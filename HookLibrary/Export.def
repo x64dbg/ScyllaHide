@@ -1,0 +1,4 @@
+LIBRARY
+EXPORTS
+InitDll @1
+DllExchange @2
