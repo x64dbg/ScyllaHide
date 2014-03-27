@@ -11,6 +11,7 @@ bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module);
 extern t_NtSetInformationThread dNtSetInformationThread;
 extern t_NtQuerySystemInformation dNtQuerySystemInformation;
 extern t_NtQueryInformationProcess dNtQueryInformationProcess;
+extern t_NtQueryObject dNtQueryObject;
 extern t_GetTickCount dGetTickCount;
 extern t_BlockInput dBlockInput;
 
@@ -60,7 +61,7 @@ void StartHooking()
 	t_NtSetInformationThread _NtSetInformationThread = (t_NtSetInformationThread)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtSetInformationThread");
 	t_NtQuerySystemInformation _NtQuerySystemInformation = (t_NtQuerySystemInformation)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQuerySystemInformation");
 	t_NtQueryInformationProcess _NtQueryInformationProcess = (t_NtQueryInformationProcess)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQueryInformationProcess");
-
+	t_NtQueryObject _NtQueryObject = (t_NtQueryObject)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQueryObject");
 	
 
 	t_GetTickCount _GetTickCount;
@@ -82,6 +83,7 @@ void StartHooking()
 	HOOK(NtSetInformationThread);
 	HOOK(NtQuerySystemInformation);
 	HOOK(NtQueryInformationProcess);
+	HOOK(NtQueryObject);
 	HOOK(GetTickCount);
 }
 

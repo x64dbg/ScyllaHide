@@ -28,22 +28,22 @@ const WCHAR * BadWindowList[] = {
 };
 
 extern t_NtQueryInformationProcess dNtQueryInformationProcess;
+extern t_NtQueryObject dNtQueryObject;
 
 bool IsProcessBad(const WCHAR * name, int nameSizeInBytes)
 {
-	//WCHAR nameCopy[300] = { 0 };
+	WCHAR nameCopy[400] = { 0 };
 
-	if (!name)
+	if (!name || !nameSizeInBytes)
 	{
 		return false;
 	}
 
-	//memcpy(nameCopy, name, nameSizeInBytes);
-
+	memcpy(nameCopy, name, nameSizeInBytes);
 
 	for (int i = 0; i < _countof(BadProcessnameList); i++)
 	{
-		if (!lstrcmpiW(name, BadProcessnameList[i]))
+		if (!lstrcmpiW(nameCopy, BadProcessnameList[i]))
 		{
 			return true;
 		}
@@ -116,6 +116,11 @@ DWORD GetExplorerProcessId()
 		dwExplorerPid = GetProcessIdByName(L"explorer.exe");
 	}
 	return dwExplorerPid;
+}
+
+DWORD GetCsrssProcessId()
+{
+	return GetProcessIdByName(L"csrss.exe");
 }
 
 DWORD GetProcessIdByName(const WCHAR * processName)
