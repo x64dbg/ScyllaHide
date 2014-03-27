@@ -39,7 +39,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -162,7 +162,8 @@
     <ClCompile Include="Hook.cpp" />
     <ClCompile Include="HookedFunctions.cpp" />
     <ClCompile Include="HookHelper.cpp" />
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="PebHider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Export.def" />
@@ -173,6 +174,7 @@
     <ClInclude Include="HookHelper.h" />
     <ClInclude Include="HookMain.h" />
     <ClInclude Include="ntdll.h" />
+    <ClInclude Include="PebHider.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

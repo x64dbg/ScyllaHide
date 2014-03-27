@@ -5,22 +5,45 @@
 const WCHAR * BadProcessnameList[] = {
 	L"ollydbg.exe",
 	L"idag.exe",
+	L"idag64.exe",
 	L"idaw.exe",
+	L"idaw64.exe",
 	L"scylla.exe",
 	L"scylla_x64.exe",
 	L"scylla_x86.exe",
+	L"protection_id.exe",
+	L"x64_dbg.exe",
+	L"windbg.exe",
+	L"reshacker.exe",
 	L"ImportREC.exe"
 };
 
+const WCHAR * BadWindowList[] = {
+	L"OLLYDBG",
+	L"Zeta Debugger",
+	L"Rock Debugger",
+	L"ObsidianGUI",
+	L"ID", //Immunity Debugger
+	L"WinDbgFrameClass" //WinDBG
+};
+
+extern t_NtQueryInformationProcess dNtQueryInformationProcess;
+
 bool IsProcessBad(const WCHAR * name, int nameSizeInBytes)
 {
-	WCHAR nameCopy[300] = { 0 };
-	memcpy(nameCopy, name, nameSizeInBytes);
+	//WCHAR nameCopy[300] = { 0 };
+
+	if (!name)
+	{
+		return false;
+	}
+
+	//memcpy(nameCopy, name, nameSizeInBytes);
 
 
 	for (int i = 0; i < _countof(BadProcessnameList); i++)
 	{
-		if (!lstrcmpiW(nameCopy, BadProcessnameList[i]))
+		if (!lstrcmpiW(name, BadProcessnameList[i]))
 		{
 			return true;
 		}
@@ -76,7 +99,7 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 {
 	PROCESS_BASIC_INFORMATION pbi;
 
-	if (NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
+	if (dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
 	{
 		return (DWORD)pbi.UniqueProcessId;
 	}
@@ -84,9 +107,15 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 	return 0;
 }
 
+static DWORD dwExplorerPid = 0;
+
 DWORD GetExplorerProcessId()
 {
-	return GetProcessIdByName(L"explorer.exe");
+	if (!dwExplorerPid)
+	{
+		dwExplorerPid = GetProcessIdByName(L"explorer.exe");
+	}
+	return dwExplorerPid;
 }
 
 DWORD GetProcessIdByName(const WCHAR * processName)

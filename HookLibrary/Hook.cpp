@@ -4,7 +4,7 @@
 
 void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo)
 {
-#ifdef WIN64
+#ifdef _WIN64
 	lpbFrom[0] = 0xFF;
 	lpbFrom[1] = 0x25;
 	*(DWORD*)&lpbFrom[2] = 0;
@@ -16,15 +16,34 @@ void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo)
 
 }
 
+void * FixWindowsRedirects(void * address)
+{
+	BYTE * pb = (BYTE *)address;
+	int len = (int)LDE((void *)address, 0);
+
+	if (len == 2 && pb[0] == 0xEB) //JMP SHORT
+	{
+		return (pb + 2 + pb[1]);
+	}
+	else if (len == 6 && pb[0] == 0xFF && pb[1] == 0x25) //JMP DWORD PTR
+	{
+		return (pb + 2 + pb[1]);
+	}
+
+	return address;
+}
+
 void * DetourCreate(void * lpFuncOrig, void * lpFuncDetour)
 {
 	DWORD protect;
-#ifdef WIN64
+#ifdef _WIN64
 	const int minDetourLen = 2 + sizeof(DWORD) + sizeof(DWORD_PTR);
 #else
 	const int minDetourLen = sizeof(DWORD)+1;
 #endif
 	bool success = false;
+
+	//lpFuncOrig = FixWindowsRedirects(lpFuncOrig);
 
 	int detourLen = GetDetourLen(lpFuncOrig, minDetourLen);
 

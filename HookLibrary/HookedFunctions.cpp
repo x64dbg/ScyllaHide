@@ -7,6 +7,10 @@ t_NtSetInformationThread dNtSetInformationThread = 0;
 t_NtQuerySystemInformation dNtQuerySystemInformation = 0;
 t_NtQueryInformationProcess dNtQueryInformationProcess = 0;
 
+t_GetTickCount dGetTickCount = 0;
+t_BlockInput dBlockInput = 0;
+
+void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo);
 
 NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass, PVOID ThreadInformation, ULONG ThreadInformationLength)
 {
@@ -31,45 +35,11 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
 			}
 			else if (SystemInformationClass == SystemProcessInformation)
 			{
-				PSYSTEM_PROCESS_INFORMATION pInfo = (PSYSTEM_PROCESS_INFORMATION)SystemInformation;
-				PSYSTEM_PROCESS_INFORMATION pPrev = pInfo;
-
-				while (TRUE)
-				{
-					if (IsProcessBad(pInfo->ImageName.Buffer, pInfo->ImageName.Length))
-					{
-						ZeroMemory(pInfo->ImageName.Buffer, pInfo->ImageName.Length);
-
-						if (pInfo->NextEntryOffset == 0) //last element
-						{
-							pPrev->NextEntryOffset = 0;
-							break;
-						}
-						else
-						{
-							pPrev->NextEntryOffset += pInfo->NextEntryOffset;
-						}
-					}
-					else
-					{
-						pPrev = pInfo;
-					}
-
-					if (pInfo->NextEntryOffset == 0)
-					{
-						break;
-					}
-					else
-					{
-						pInfo = (PSYSTEM_PROCESS_INFORMATION)((DWORD_PTR)pInfo + pInfo->NextEntryOffset);
-					}
-				}
+				FilterProcess((PSYSTEM_PROCESS_INFORMATION)SystemInformation);
 			}
 		}
-		else
-		{
-			return ntStat;
-		}
+
+		return ntStat;
 	}
 	return dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
 }
@@ -85,28 +55,91 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
 			if (ProcessInformationClass == ProcessDebugFlags)
 			{
 				*((ULONG *)ProcessInformation) = 1;
-				return ntStat;
 			}
 			else if (ProcessInformationClass == ProcessDebugObjectHandle)
 			{
 				*((HANDLE *)ProcessInformation) = 0;
-				return ntStat;
 			}
 			else if (ProcessInformationClass == ProcessDebugPort)
 			{
 				*((HANDLE *)ProcessInformation) = 0;
-				return ntStat;
 			}
 			else if (ProcessInformationClass == ProcessBasicInformation) //Fake parent
 			{
 				((PPROCESS_BASIC_INFORMATION)ProcessInformation)->InheritedFromUniqueProcessId = (HANDLE)GetExplorerProcessId();
-				return ntStat;
+			}
+		}
+
+		return ntStat;
+	}
+	return dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
+}
+
+static DWORD OneTickCount = 0;
+
+DWORD WINAPI HookedGetTickCount(void)
+{
+	if (!OneTickCount)
+	{
+		OneTickCount = dGetTickCount();
+	}
+	else
+	{
+		OneTickCount++;
+	}
+	return OneTickCount;
+}
+
+static BOOL isBlocked = FALSE;
+
+BOOL WINAPI HookedBlockInput(BOOL fBlockIt)
+{
+	if (isBlocked == FALSE && fBlockIt != FALSE)
+	{
+		isBlocked = TRUE;
+		return TRUE;
+	}
+	else if (isBlocked != FALSE && fBlockIt == FALSE)
+	{
+		isBlocked = FALSE;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+
+void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo)
+{
+	PSYSTEM_PROCESS_INFORMATION pPrev = pInfo;
+
+	while (TRUE)
+	{
+		if (IsProcessBad(pInfo->ImageName.Buffer, pInfo->ImageName.Length))
+		{
+			ZeroMemory(pInfo->ImageName.Buffer, pInfo->ImageName.Length);
+
+			if (pInfo->NextEntryOffset == 0) //last element
+			{
+				pPrev->NextEntryOffset = 0;
+			}
+			else
+			{
+				pPrev->NextEntryOffset += pInfo->NextEntryOffset;
 			}
 		}
 		else
 		{
-			return ntStat;
+			pPrev = pInfo;
+		}
+
+		if (pInfo->NextEntryOffset == 0)
+		{
+			break;
+		}
+		else
+		{
+			pInfo = (PSYSTEM_PROCESS_INFORMATION)((DWORD_PTR)pInfo + pInfo->NextEntryOffset);
 		}
 	}
-	return dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
 }

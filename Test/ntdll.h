@@ -8,6 +8,7 @@
 #pragma comment(lib, "ntdll_x64.lib")
 #endif
 
+#define NT_SUCCESS(Status)			((NTSTATUS)(Status) >= 0)
 #define STATUS_SUCCESS              ((NTSTATUS)0x00000000L)
 #define STATUS_INVALID_INFO_CLASS   ((NTSTATUS)0xC0000003L)
 #define STATUS_INFO_LENGTH_MISMATCH ((NTSTATUS)0xC0000004L)
@@ -104,6 +105,19 @@ typedef struct _SYSTEM_SESSION_PROCESS_INFORMATION
     ULONG SizeOfBuf;
     PVOID Buffer;
 } SYSTEM_SESSION_PROCESS_INFORMATION, *PSYSTEM_SESSION_PROCESS_INFORMATION;
+
+typedef struct _SYSTEM_KERNEL_DEBUGGER_INFORMATION
+{
+	BOOLEAN KernelDebuggerEnabled;
+	BOOLEAN KernelDebuggerNotPresent;
+} SYSTEM_KERNEL_DEBUGGER_INFORMATION, *PSYSTEM_KERNEL_DEBUGGER_INFORMATION;
+
+typedef struct _LDT_INFORMATION
+{
+	ULONG Start;
+	ULONG Length;
+	LDT_ENTRY LdtEntries[1];
+} PROCESS_LDT_INFORMATION, *PPROCESS_LDT_INFORMATION;
 
 typedef struct _SYSTEM_THREAD_INFORMATION
 {
@@ -360,6 +374,35 @@ typedef struct _OBJECT_TYPES_INFORMATION
     OBJECT_TYPE_INFORMATION TypeInformation[1];
 } OBJECT_TYPES_INFORMATION, *POBJECT_TYPES_INFORMATION;
 
+typedef struct _OBJECT_HANDLE_FLAG_INFORMATION
+{
+	BOOLEAN Inherit;
+	BOOLEAN ProtectFromClose;
+} OBJECT_HANDLE_FLAG_INFORMATION, *POBJECT_HANDLE_FLAG_INFORMATION;
+
+typedef struct _RTL_DEBUG_INFORMATION
+{
+	HANDLE SectionHandleClient;
+	PVOID ViewBaseClient;
+	PVOID ViewBaseTarget;
+	ULONG_PTR ViewBaseDelta;
+	HANDLE EventPairClient;
+	HANDLE EventPairTarget;
+	HANDLE TargetProcessId;
+	HANDLE TargetThreadHandle;
+	ULONG Flags;
+	SIZE_T OffsetFree;
+	SIZE_T CommitSize;
+	SIZE_T ViewSize;
+	PVOID Modules; //PRTL_PROCESS_MODULES
+	PVOID BackTraces; //PRTL_PROCESS_BACKTRACES
+	PVOID Heaps; //PRTL_PROCESS_HEAPS
+	PVOID Locks; //PRTL_PROCESS_LOCKS
+	PVOID SpecificHeap;
+	HANDLE TargetProcessHandle;
+	PVOID Reserved[ 6 ];
+} RTL_DEBUG_INFORMATION, *PRTL_DEBUG_INFORMATION;
+
 typedef
 VOID
 (*PPS_APC_ROUTINE) (
@@ -367,6 +410,24 @@ VOID
     __in_opt PVOID ApcArgument2,
     __in_opt PVOID ApcArgument3
 );
+
+
+//0x22C FlsHighIndex, x64 0x0350
+typedef struct _RTL_UNKNOWN_FLS_DATA {
+	PVOID unk2;
+	PVOID address;
+	PVOID unk3;
+	PVOID unk4;
+} RTL_UNKNOWN_FLS_DATA,*PRTL_UNKNOWN_FLS_DATA;
+
+typedef struct _FLS_CALLBACK_INFO //0x20C PEB FlsCallback, x64 0x320
+{
+	PVOID unk1;
+	PVOID unk2;
+	PVOID address;
+	PVOID unk3;
+	PVOID unk4;
+} FLS_CALLBACK_INFO, *PFLS_CALLBACK_INFO;
 
 typedef struct _IO_STATUS_BLOCK {
     union {
@@ -640,7 +701,7 @@ typedef enum _OBJECT_INFORMATION_CLASS
     ObjectNameInformation,
     ObjectTypeInformation,
     ObjectTypesInformation,
-    ObjectHandleFlagInformation,
+    ObjectHandleFlagInformation, //OBJECT_HANDLE_FLAG_INFORMATION
     ObjectSessionInformation,
     MaxObjectInfoClass  // MaxObjectInfoClass should always be the last enum
 } OBJECT_INFORMATION_CLASS;
@@ -1640,6 +1701,49 @@ NtSetDebugFilterState (
 	__in ULONG ComponentId,
 	__in ULONG Level,
 	__in BOOLEAN State
+);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+	RtlQueryProcessHeapInformation (
+	IN OUT PRTL_DEBUG_INFORMATION Buffer
+);
+
+NTSYSAPI
+PRTL_DEBUG_INFORMATION
+NTAPI
+RtlCreateQueryDebugBuffer (
+	IN ULONG MaximumCommit OPTIONAL,
+	IN BOOLEAN UseEventPair
+);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlQueryProcessDebugInformation (
+	IN HANDLE UniqueProcessId,
+	IN ULONG Flags,
+	IN OUT PRTL_DEBUG_INFORMATION Buffer
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtSetLdtEntries (
+	__in ULONG Selector0,
+	__in ULONG Entry0Low,
+	__in ULONG Entry0Hi,
+	__in ULONG Selector1,
+	__in ULONG Entry1Low,
+	__in ULONG Entry1Hi
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+RtlProcessFlsData (
+	PRTL_UNKNOWN_FLS_DATA Buffer
 );
 
 #ifdef __cplusplus

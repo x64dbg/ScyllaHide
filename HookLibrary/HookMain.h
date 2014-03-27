@@ -10,6 +10,8 @@ typedef HMODULE(WINAPI * t_LoadLibraryA)(LPCSTR lpFileName);
 typedef struct _HOOK_DLL_EXCHANGE {
 	HMODULE hNtdll;
 	HMODULE hkernel32;
+	HMODULE hkernelBase;
+	HMODULE hUser32;
 	t_GetProcAddress fGetProcAddress;
 	t_GetModuleHandleA fGetModuleHandleA;
 	t_LoadLibraryA fLoadLibraryA;

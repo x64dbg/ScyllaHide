@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
+    <ClCompile Include="DynamicMapping.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DynamicMapping.cpp">
+    <ClCompile Include="CliMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

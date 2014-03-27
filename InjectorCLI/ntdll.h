@@ -8,6 +8,8 @@
 #pragma comment(lib, "ntdll_x64.lib")
 #endif
 
+#define NT_SUCCESS(Status)			((NTSTATUS)(Status) >= 0)
+#define STATUS_SUCCESS              ((NTSTATUS)0x00000000L)
 #define STATUS_INVALID_INFO_CLASS   ((NTSTATUS)0xC0000003L)
 #define STATUS_INFO_LENGTH_MISMATCH ((NTSTATUS)0xC0000004L)
 #define STATUS_ACCESS_DENIED        ((NTSTATUS)0xC0000022L)
@@ -103,6 +105,19 @@ typedef struct _SYSTEM_SESSION_PROCESS_INFORMATION
     ULONG SizeOfBuf;
     PVOID Buffer;
 } SYSTEM_SESSION_PROCESS_INFORMATION, *PSYSTEM_SESSION_PROCESS_INFORMATION;
+
+typedef struct _SYSTEM_KERNEL_DEBUGGER_INFORMATION
+{
+	BOOLEAN KernelDebuggerEnabled;
+	BOOLEAN KernelDebuggerNotPresent;
+} SYSTEM_KERNEL_DEBUGGER_INFORMATION, *PSYSTEM_KERNEL_DEBUGGER_INFORMATION;
+
+typedef struct _LDT_INFORMATION
+{
+	ULONG Start;
+	ULONG Length;
+	LDT_ENTRY LdtEntries[1];
+} PROCESS_LDT_INFORMATION, *PPROCESS_LDT_INFORMATION;
 
 typedef struct _SYSTEM_THREAD_INFORMATION
 {
@@ -359,6 +374,35 @@ typedef struct _OBJECT_TYPES_INFORMATION
     OBJECT_TYPE_INFORMATION TypeInformation[1];
 } OBJECT_TYPES_INFORMATION, *POBJECT_TYPES_INFORMATION;
 
+typedef struct _OBJECT_HANDLE_FLAG_INFORMATION
+{
+	BOOLEAN Inherit;
+	BOOLEAN ProtectFromClose;
+} OBJECT_HANDLE_FLAG_INFORMATION, *POBJECT_HANDLE_FLAG_INFORMATION;
+
+typedef struct _RTL_DEBUG_INFORMATION
+{
+	HANDLE SectionHandleClient;
+	PVOID ViewBaseClient;
+	PVOID ViewBaseTarget;
+	ULONG_PTR ViewBaseDelta;
+	HANDLE EventPairClient;
+	HANDLE EventPairTarget;
+	HANDLE TargetProcessId;
+	HANDLE TargetThreadHandle;
+	ULONG Flags;
+	SIZE_T OffsetFree;
+	SIZE_T CommitSize;
+	SIZE_T ViewSize;
+	PVOID Modules; //PRTL_PROCESS_MODULES
+	PVOID BackTraces; //PRTL_PROCESS_BACKTRACES
+	PVOID Heaps; //PRTL_PROCESS_HEAPS
+	PVOID Locks; //PRTL_PROCESS_LOCKS
+	PVOID SpecificHeap;
+	HANDLE TargetProcessHandle;
+	PVOID Reserved[ 6 ];
+} RTL_DEBUG_INFORMATION, *PRTL_DEBUG_INFORMATION;
+
 typedef
 VOID
 (*PPS_APC_ROUTINE) (
@@ -366,6 +410,24 @@ VOID
     __in_opt PVOID ApcArgument2,
     __in_opt PVOID ApcArgument3
 );
+
+
+//0x22C FlsHighIndex, x64 0x0350
+typedef struct _RTL_UNKNOWN_FLS_DATA {
+	PVOID unk2;
+	PVOID address;
+	PVOID unk3;
+	PVOID unk4;
+} RTL_UNKNOWN_FLS_DATA,*PRTL_UNKNOWN_FLS_DATA;
+
+typedef struct _FLS_CALLBACK_INFO //0x20C PEB FlsCallback, x64 0x320
+{
+	PVOID unk1;
+	PVOID unk2;
+	PVOID address;
+	PVOID unk3;
+	PVOID unk4;
+} FLS_CALLBACK_INFO, *PFLS_CALLBACK_INFO;
 
 typedef struct _IO_STATUS_BLOCK {
     union {
@@ -639,7 +701,7 @@ typedef enum _OBJECT_INFORMATION_CLASS
     ObjectNameInformation,
     ObjectTypeInformation,
     ObjectTypesInformation,
-    ObjectHandleFlagInformation,
+    ObjectHandleFlagInformation, //OBJECT_HANDLE_FLAG_INFORMATION
     ObjectSessionInformation,
     MaxObjectInfoClass  // MaxObjectInfoClass should always be the last enum
 } OBJECT_INFORMATION_CLASS;
@@ -877,7 +939,31 @@ typedef enum _FILE_INFORMATION_CLASS
 #define NtCurrentProcess ((HANDLE)(LONG_PTR)-1)
 #define NtCurrentThread ((HANDLE)(LONG_PTR)-2)
 
+typedef NTSTATUS (NTAPI * t_NtClose)(HANDLE Handle);
+typedef NTSTATUS (NTAPI * t_NtContinue)(PCONTEXT ContextRecord,BOOLEAN TestAlert);
 typedef NTSTATUS (NTAPI * t_NtCreateThreadEx)(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PVOID StartRoutine,PVOID Argument,ULONG CreateFlags,ULONG_PTR ZeroBits,SIZE_T StackSize,SIZE_T MaximumStackSize,PPS_ATTRIBUTE_LIST AttributeList);
+typedef NTSTATUS (NTAPI * t_NtGetContextThread)(HANDLE ThreadHandle,PCONTEXT ThreadContext);
+typedef NTSTATUS (NTAPI * t_NtOpenProcess)(PHANDLE ProcessHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,PCLIENT_ID ClientId);
+typedef NTSTATUS (NTAPI * t_NtProtectVirtualMemory)(HANDLE ProcessHandle,PVOID *BaseAddress,PSIZE_T RegionSize,ULONG NewProtect,PULONG OldProtect);
+typedef NTSTATUS (NTAPI * t_NtQueryDebugFilterState)(ULONG ComponentId,ULONG Level);
+typedef NTSTATUS (NTAPI * t_NtQueryInformationProcess)(HANDLE ProcessHandle,PROCESSINFOCLASS ProcessInformationClass,PVOID ProcessInformation,ULONG ProcessInformationLength,PULONG ReturnLength);
+typedef NTSTATUS (NTAPI * t_NtQueryInformationThread)(HANDLE ThreadHandle,THREADINFOCLASS ThreadInformationClass,PVOID ThreadInformation,ULONG ThreadInformationLength,PULONG ReturnLength);
+typedef NTSTATUS (NTAPI * t_NtQueryObject)(HANDLE Handle,OBJECT_INFORMATION_CLASS ObjectInformationClass,PVOID ObjectInformation,ULONG ObjectInformationLength,PULONG ReturnLength);
+typedef NTSTATUS (NTAPI * t_NtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS SystemInformationClass,PVOID SystemInformation,ULONG SystemInformationLength,PULONG ReturnLength);
+typedef NTSTATUS (NTAPI * t_NtQueryVirtualMemory)(HANDLE ProcessHandle,PVOID BaseAddress,MEMORY_INFORMATION_CLASS MemoryInformationClass,PVOID MemoryInformation,SIZE_T MemoryInformationLength,PSIZE_T ReturnLength);
+typedef NTSTATUS (NTAPI * t_NtResumeProcess)(HANDLE ProcessHandle);
+typedef NTSTATUS (NTAPI * t_NtResumeThread)(HANDLE ThreadHandle,PULONG PreviousSuspendCount);
+typedef NTSTATUS (NTAPI * t_NtSetContextThread)(HANDLE ThreadHandle,PCONTEXT ThreadContext);
+typedef NTSTATUS (NTAPI * t_NtSetDebugFilterState)(ULONG ComponentId,ULONG Level,BOOLEAN State);
+typedef NTSTATUS (NTAPI * t_NtSetInformationProcess)(HANDLE ProcessHandle,PROCESSINFOCLASS ProcessInformationClass,PVOID ProcessInformation,ULONG ProcessInformationLength);
+typedef NTSTATUS (NTAPI * t_NtSetInformationThread)(HANDLE ThreadHandle,THREADINFOCLASS ThreadInformationClass,PVOID ThreadInformation,ULONG ThreadInformationLength);
+typedef NTSTATUS (NTAPI * t_NtSetSystemInformation)(SYSTEM_INFORMATION_CLASS SystemInformationClass,PVOID SystemInformation,ULONG SystemInformationLength);
+typedef NTSTATUS (NTAPI * t_NtSuspendProcess)(HANDLE ProcessHandle);
+typedef NTSTATUS (NTAPI * t_NtSuspendThread)(HANDLE ThreadHandle,PULONG PreviousSuspendCount);
+typedef NTSTATUS (NTAPI * t_NtSystemDebugControl)(SYSDBG_COMMAND Command,PVOID InputBuffer,ULONG InputBufferLength,PVOID OutputBuffer,ULONG OutputBufferLength,PULONG ReturnLength);
+typedef NTSTATUS (NTAPI * t_NtTerminateProcess)(HANDLE ProcessHandle,NTSTATUS ExitStatus);
+typedef NTSTATUS (NTAPI * t_NtYieldExecution)(VOID);
+typedef VOID     (NTAPI * t_KiUserExceptionDispatcher)(PEXCEPTION_RECORD ExceptionRecord,PCONTEXT ContextFrame);
 
 
 #ifdef __cplusplus
@@ -1598,6 +1684,66 @@ NTAPI
 NtDelayExecution (
     __in BOOLEAN Alertable,
     __in PLARGE_INTEGER DelayInterval
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtQueryDebugFilterState (
+	__in ULONG ComponentId,
+	__in ULONG Level
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtSetDebugFilterState (
+	__in ULONG ComponentId,
+	__in ULONG Level,
+	__in BOOLEAN State
+);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+	RtlQueryProcessHeapInformation (
+	IN OUT PRTL_DEBUG_INFORMATION Buffer
+);
+
+NTSYSAPI
+PRTL_DEBUG_INFORMATION
+NTAPI
+RtlCreateQueryDebugBuffer (
+	IN ULONG MaximumCommit OPTIONAL,
+	IN BOOLEAN UseEventPair
+);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlQueryProcessDebugInformation (
+	IN HANDLE UniqueProcessId,
+	IN ULONG Flags,
+	IN OUT PRTL_DEBUG_INFORMATION Buffer
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtSetLdtEntries (
+	__in ULONG Selector0,
+	__in ULONG Entry0Low,
+	__in ULONG Entry0Hi,
+	__in ULONG Selector1,
+	__in ULONG Entry1Low,
+	__in ULONG Entry1Hi
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+RtlProcessFlsData (
+	PRTL_UNKNOWN_FLS_DATA Buffer
 );
 
 #ifdef __cplusplus

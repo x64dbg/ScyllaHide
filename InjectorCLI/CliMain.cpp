@@ -13,6 +13,7 @@ DWORD GetProcessIdByName(const WCHAR * processName);
 void startInjection(DWORD targetPid, const WCHAR * dllPath);
 DWORD SetDebugPrivileges();
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
+void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
 
 void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data);
 
@@ -32,11 +33,13 @@ int wmain(int argc, wchar_t* argv[])
 	}
 	else
 	{
-		targetPid = GetProcessIdByName(L"test.exe");
+		
 #ifdef _WIN64
-		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHook\\x64\\Release\\HookLibrary.dll";
+		targetPid = GetProcessIdByName(L"scylla_x64.exe");//scylla_x64
+		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\x64\\Release\\HookLibrary.dll";
 #else
-		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHook\\Release\\HookLibrary.dll";
+		targetPid = GetProcessIdByName(L"scylla_x86.exe");
+		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\Release\\HookLibrary.dll";
 #endif
 	}
 
@@ -54,6 +57,34 @@ int wmain(int argc, wchar_t* argv[])
 	return 0;
 }
 
+void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
+{
+	LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
+	if (remoteImageBase)
+	{
+		FillExchangeStruct(hProcess, &DllExchangeLoader);
+		DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
+		DWORD exchangeDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "DllExchange");
+
+		if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
+		{
+			DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
+
+			if (exitCode == HOOK_ERROR_SUCCESS)
+			{
+				wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
+			}
+			else
+			{
+				wprintf(L"Injection failed, exit code %d Imagebase %p\n", exitCode, remoteImageBase);
+			}
+		}
+		else
+		{
+			wprintf(L"Failed to write exchange struct\n");
+		}
+	}
+}
 
 void startInjection(DWORD targetPid, const WCHAR * dllPath)
 {
@@ -63,32 +94,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath)
 		BYTE * dllMemory = ReadFileToMemory(dllPath);
 		if (dllMemory)
 		{
-			LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
-			if (remoteImageBase)
-			{
-				FillExchangeStruct(hProcess, &DllExchangeLoader);
-				DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
-				DWORD exchangeDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "DllExchange");
-
-				if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
-				{
-					DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
-
-					if (exitCode == HOOK_ERROR_SUCCESS)
-					{
-						wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
-					}
-					else
-					{
-						wprintf(L"Injection failed, exit code %d Imagebase %p\n", exitCode, remoteImageBase);
-					}
-				}
-				else
-				{
-					wprintf(L"Failed to write exchange struct\n");
-				}
-			}
-
+			startInjectionProcess(hProcess, dllMemory);
 			free(dllMemory);
 		}
 		else
@@ -110,6 +116,8 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
 
 	data->hNtdll = GetModuleBaseRemote(hProcess, L"ntdll.dll");
 	data->hkernel32 = GetModuleBaseRemote(hProcess, L"kernel32.dll");
+	data->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
+	data->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
 
 	data->fLoadLibraryA = (t_LoadLibraryA)((DWORD_PTR)GetProcAddress(localKernel, "LoadLibraryA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
 	data->fGetModuleHandleA = (t_GetModuleHandleA)((DWORD_PTR)GetProcAddress(localKernel, "GetModuleHandleA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);

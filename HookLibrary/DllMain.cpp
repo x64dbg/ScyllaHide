@@ -11,6 +11,8 @@ bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module);
 extern t_NtSetInformationThread dNtSetInformationThread;
 extern t_NtQuerySystemInformation dNtQuerySystemInformation;
 extern t_NtQueryInformationProcess dNtQueryInformationProcess;
+extern t_GetTickCount dGetTickCount;
+extern t_BlockInput dBlockInput;
 
 #define HOOK(name) d##name = (t_##name)DetourCreate(_##name, Hooked##name)
 
@@ -31,6 +33,7 @@ DWORD WINAPI InitDll(LPVOID imageBase)
 		{
 			if (_DLLMain((HINSTANCE)imageBase, DLL_PROCESS_ATTACH, 0))
 			{
+				ZeroMemory(imageBase, pNtHeader->OptionalHeader.SizeOfHeaders);
 				StartHooking();
 				return HOOK_ERROR_SUCCESS;
 			}
@@ -58,9 +61,28 @@ void StartHooking()
 	t_NtQuerySystemInformation _NtQuerySystemInformation = (t_NtQuerySystemInformation)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQuerySystemInformation");
 	t_NtQueryInformationProcess _NtQueryInformationProcess = (t_NtQueryInformationProcess)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQueryInformationProcess");
 
+	
+
+	t_GetTickCount _GetTickCount;
+	if (DllExchange.hkernelBase)
+	{
+		_GetTickCount = (t_GetTickCount)DllExchange.fGetProcAddress(DllExchange.hkernelBase, "GetTickCount");
+	}
+	else
+	{
+		_GetTickCount = (t_GetTickCount)DllExchange.fGetProcAddress(DllExchange.hkernel32, "GetTickCount");
+	}
+
+	if (DllExchange.hUser32)
+	{
+		t_BlockInput _BlockInput = (t_BlockInput)DllExchange.fGetProcAddress(DllExchange.hUser32, "BlockInput");
+		HOOK(BlockInput);
+	}
+
 	HOOK(NtSetInformationThread);
 	HOOK(NtQuerySystemInformation);
 	HOOK(NtQueryInformationProcess);
+	HOOK(GetTickCount);
 }
 
 bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module)
