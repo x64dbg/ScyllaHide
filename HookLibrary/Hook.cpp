@@ -33,11 +33,12 @@ void * FixWindowsRedirects(void * address)
 	return address;
 }
 
-void * DetourCreate(void * lpFuncOrig, void * lpFuncDetour)
+void * DetourCreate(void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
 {
+	PBYTE trampoline = 0;
 	DWORD protect;
 #ifdef _WIN64
-	const int minDetourLen = 2 + sizeof(DWORD) + sizeof(DWORD_PTR);
+	const int minDetourLen = 2 + sizeof(DWORD) + sizeof(DWORD_PTR); //8+4+2=14
 #else
 	const int minDetourLen = sizeof(DWORD)+1;
 #endif
@@ -46,13 +47,18 @@ void * DetourCreate(void * lpFuncOrig, void * lpFuncDetour)
 	//lpFuncOrig = FixWindowsRedirects(lpFuncOrig);
 
 	int detourLen = GetDetourLen(lpFuncOrig, minDetourLen);
+	
 
-	PBYTE trampoline = (PBYTE)VirtualAlloc(0, detourLen + minDetourLen, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-	if (!trampoline)
-		return 0;
+	if (createTramp)
+	{
+		trampoline = (PBYTE)VirtualAlloc(0, detourLen + minDetourLen, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		if (!trampoline)
+			return 0;
 
-	memcpy(trampoline, lpFuncOrig, detourLen);
-	WriteJumper(trampoline + detourLen, (PBYTE)lpFuncOrig + detourLen);
+		memcpy(trampoline, lpFuncOrig, detourLen);
+		WriteJumper(trampoline + detourLen, (PBYTE)lpFuncOrig + detourLen);
+	}
+
 
 	if (VirtualProtect(lpFuncOrig, detourLen, PAGE_EXECUTE_READWRITE, &protect))
 	{
@@ -63,12 +69,19 @@ void * DetourCreate(void * lpFuncOrig, void * lpFuncDetour)
 		success = true;
 	}
 
-	if (!success)
+	if (createTramp)
 	{
-		VirtualFree(trampoline, 0, MEM_RELEASE);
-		trampoline = 0;
+		if (!success)
+		{
+			VirtualFree(trampoline, 0, MEM_RELEASE);
+			trampoline = 0;
+		}
+		return trampoline;
 	}
-	return trampoline;
+	else
+	{
+		return 0;
+	}
 }
 
 int GetDetourLen(const void * lpStart, const int minSize)

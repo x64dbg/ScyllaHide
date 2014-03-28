@@ -7,9 +7,15 @@ t_NtSetInformationThread dNtSetInformationThread = 0;
 t_NtQuerySystemInformation dNtQuerySystemInformation = 0;
 t_NtQueryInformationProcess dNtQueryInformationProcess = 0;
 t_NtQueryObject dNtQueryObject = 0;
+t_NtYieldExecution dNtYieldExecution = 0;
+t_NtGetContextThread dNtGetContextThread = 0;
+t_NtSetContextThread dNtSetContextThread = 0;
 
 t_GetTickCount dGetTickCount = 0;
 t_BlockInput dBlockInput = 0;
+
+
+//t_OutputDebugStringA dOutputDebugStringA = 0;
 
 void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes);
@@ -17,9 +23,12 @@ void FilterObject(POBJECT_TYPE_INFORMATION pObject);
 
 NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass, PVOID ThreadInformation, ULONG ThreadInformationLength)
 {
-	if (ThreadInformationClass == ThreadHideFromDebugger && ThreadInformation == 0 && ThreadInformationLength == 0 && IsValidThreadHandle(ThreadHandle))
+	if (ThreadInformationClass == ThreadHideFromDebugger && ThreadInformation == 0 && ThreadInformationLength == 0)
 	{
-		return STATUS_SUCCESS;
+		if (ThreadHandle == NtCurrentThread || GetCurrentProcessId() == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
+		{
+			return STATUS_SUCCESS;
+		}
 	}
 	return dNtSetInformationThread(ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
 }
@@ -97,6 +106,55 @@ NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS Objec
 	return ntStat;
 }
 
+NTSTATUS NTAPI HookedNtYieldExecution()
+{
+	dNtYieldExecution();
+	return STATUS_SUCCESS;
+}
+
+
+NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadContext)
+{
+	DWORD ContextBackup = 0;
+	if (ThreadHandle == NtCurrentThread || GetCurrentProcessId() == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
+	{
+		if (ThreadContext)
+		{
+			ContextBackup = ThreadContext->ContextFlags;
+			ThreadContext->ContextFlags &= ~CONTEXT_DEBUG_REGISTERS;
+		}
+	}
+
+	NTSTATUS ntStat = dNtGetContextThread(ThreadHandle, ThreadContext);
+
+	if (ContextBackup)
+	{
+		ThreadContext->ContextFlags = ContextBackup;
+	}
+	return ntStat;
+}
+NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadContext)
+{
+	DWORD ContextBackup = 0;
+	if (ThreadHandle == NtCurrentThread || GetCurrentProcessId() == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
+	{
+		if (ThreadContext)
+		{
+			ContextBackup = ThreadContext->ContextFlags;
+			ThreadContext->ContextFlags &= ~CONTEXT_DEBUG_REGISTERS;
+		}
+	}
+
+	NTSTATUS ntStat = dNtSetContextThread(ThreadHandle, ThreadContext);
+
+	if (ContextBackup)
+	{
+		ThreadContext->ContextFlags = ContextBackup;
+	}
+
+	return ntStat;
+}
+
 static DWORD OneTickCount = 0;
 
 DWORD WINAPI HookedGetTickCount(void)
@@ -131,20 +189,28 @@ BOOL WINAPI HookedBlockInput(BOOL fBlockIt)
 }
 
 
+//GetLastError() function might not change if a  debugger is present (it has never been the case that it is always set to zero).
+DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString) //Worst anti-debug ever
+{
+	if (IsAtleastVista())
+	{
+		return 0;
+	}
+	else
+	{
+		SetLastError(GetLastError() + 1); //change last error
+		return 1; //WinXP EAX -> 1
+	}
+}
+
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes)
 {
 	POBJECT_TYPE_INFORMATION pObject = pObjectTypes->TypeInformation;
-	BYTE * pObjInfoLocation;
 	for (ULONG i = 0; i < pObjectTypes->NumberOfTypes; i++)
 	{
 		FilterObject(pObject);
-		
-		pObjInfoLocation = (unsigned char*)pObject->TypeName.Buffer;
-		pObjInfoLocation += pObject->TypeName.MaximumLength;
-		ULONG_PTR tmp = ((ULONG_PTR)pObjInfoLocation)&-sizeof(void*);
-		if ((ULONG_PTR)tmp != (ULONG_PTR)pObjInfoLocation)
-			tmp += sizeof(void*);
-		pObject = (POBJECT_TYPE_INFORMATION)tmp;
+	
+		pObject = (POBJECT_TYPE_INFORMATION)(((PCHAR)(pObject + 1) + ALIGN_UP(pObject->TypeName.MaximumLength, ULONG_PTR)));
 	}
 }
 

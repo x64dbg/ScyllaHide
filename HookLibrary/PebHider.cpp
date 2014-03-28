@@ -1,5 +1,5 @@
 #include "PebHider.h"
-
+#include "HookHelper.h"
 
 #ifndef _WIN64
 bool IsThisProcessWow64()
@@ -43,25 +43,13 @@ PEB64 * GetPEB64()
 	return pPeb;
 }
 
-static bool isAtleastVista()
-{
-	static bool isAtleastVista = false;
-	static bool isSet = false;
-	if (isSet)
-		return isAtleastVista;
-	OSVERSIONINFO versionInfo = { 0 };
-	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&versionInfo);
-	isAtleastVista = versionInfo.dwMajorVersion >= 6;
-	isSet = true;
-	return isAtleastVista;
-}
+
 
 static int getHeapFlagsOffset(bool x64)
 {
 	if (x64) //x64 offsets
 	{
-		if (isAtleastVista())
+		if (IsAtleastVista())
 		{
 			return 0x70;
 		}
@@ -72,7 +60,7 @@ static int getHeapFlagsOffset(bool x64)
 	}
 	else //x86 offsets
 	{
-		if (isAtleastVista())
+		if (IsAtleastVista())
 		{
 			return 0x40;
 		}
@@ -87,7 +75,7 @@ static int getHeapForceFlagsOffset(bool x64)
 {
 	if (x64) //x64 offsets
 	{
-		if (isAtleastVista())
+		if (IsAtleastVista())
 		{
 			return 0x74;
 		}
@@ -98,7 +86,7 @@ static int getHeapForceFlagsOffset(bool x64)
 	}
 	else //x86 offsets
 	{
-		if (isAtleastVista())
+		if (IsAtleastVista())
 		{
 			return 0x44;
 		}

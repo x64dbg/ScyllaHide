@@ -15,7 +15,8 @@ const WCHAR * BadProcessnameList[] = {
 	L"x64_dbg.exe",
 	L"windbg.exe",
 	L"reshacker.exe",
-	L"ImportREC.exe"
+	L"ImportREC.exe",
+	L"IMMUNITYDEBUGGER.EXE"
 };
 
 const WCHAR * BadWindowList[] = {
@@ -84,6 +85,20 @@ bool IsValidThreadHandle(HANDLE hThread)
 	}
 }
 
+bool IsAtleastVista()
+{
+	static bool isAtleastVista = false;
+	static bool isSet = false;
+	if (isSet)
+		return isAtleastVista;
+	OSVERSIONINFO versionInfo = { 0 };
+	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionEx(&versionInfo);
+	isAtleastVista = versionInfo.dwMajorVersion >= 6;
+	isSet = true;
+	return isAtleastVista;
+}
+
 bool IsValidHandle(HANDLE hHandle)
 {
 	//return !!GetHandleInformation(hThread, &flags); //calls NtQueryObject ObjectHandleFlagInformation
@@ -104,6 +119,30 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 		return (DWORD)pbi.UniqueProcessId;
 	}
 	
+	return 0;
+}
+
+DWORD GetThreadIdByThreadHandle(HANDLE hThread)
+{
+	THREAD_BASIC_INFORMATION tbi;
+
+	if (NT_SUCCESS(NtQueryInformationThread(hThread, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0)))
+	{
+		return (DWORD)tbi.ClientId.UniqueThread;
+	}
+
+	return 0;
+}
+
+DWORD GetProcessIdByThreadHandle(HANDLE hThread)
+{
+	THREAD_BASIC_INFORMATION tbi;
+
+	if (NT_SUCCESS(NtQueryInformationThread(hThread, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0)))
+	{
+		return (DWORD)tbi.ClientId.UniqueProcess;
+	}
+
 	return 0;
 }
 

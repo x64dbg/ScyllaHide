@@ -2,6 +2,7 @@
 #include "Hook.h"
 #include "ntdll.h"
 #include "HookedFunctions.h"
+#include "PebHider.h"
 
 HOOK_DLL_EXCHANGE DllExchange = { 0 };
 
@@ -12,10 +13,16 @@ extern t_NtSetInformationThread dNtSetInformationThread;
 extern t_NtQuerySystemInformation dNtQuerySystemInformation;
 extern t_NtQueryInformationProcess dNtQueryInformationProcess;
 extern t_NtQueryObject dNtQueryObject;
+extern t_NtYieldExecution dNtYieldExecution;
+extern t_NtGetContextThread dNtGetContextThread;
+extern t_NtSetContextThread dNtSetContextThread;
+
 extern t_GetTickCount dGetTickCount;
 extern t_BlockInput dBlockInput;
+//extern t_OutputDebugStringA dOutputDebugStringA;
 
-#define HOOK(name) d##name = (t_##name)DetourCreate(_##name, Hooked##name)
+#define HOOK(name) d##name = (t_##name)DetourCreate(_##name, Hooked##name, true)
+#define HOOK_NOTRAMP(name) DetourCreate(_##name, Hooked##name, false)
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 {
@@ -35,6 +42,7 @@ DWORD WINAPI InitDll(LPVOID imageBase)
 			if (_DLLMain((HINSTANCE)imageBase, DLL_PROCESS_ATTACH, 0))
 			{
 				ZeroMemory(imageBase, pNtHeader->OptionalHeader.SizeOfHeaders);
+				FixPebAntidebug();
 				StartHooking();
 				return HOOK_ERROR_SUCCESS;
 			}
@@ -62,16 +70,21 @@ void StartHooking()
 	t_NtQuerySystemInformation _NtQuerySystemInformation = (t_NtQuerySystemInformation)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQuerySystemInformation");
 	t_NtQueryInformationProcess _NtQueryInformationProcess = (t_NtQueryInformationProcess)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQueryInformationProcess");
 	t_NtQueryObject _NtQueryObject = (t_NtQueryObject)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQueryObject");
-	
+	t_NtYieldExecution _NtYieldExecution = (t_NtYieldExecution)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtYieldExecution");
+	t_NtGetContextThread _NtGetContextThread = (t_NtGetContextThread)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtGetContextThread");
+	t_NtSetContextThread _NtSetContextThread = (t_NtSetContextThread)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtSetContextThread");
 
+	t_OutputDebugStringA _OutputDebugStringA;
 	t_GetTickCount _GetTickCount;
 	if (DllExchange.hkernelBase)
 	{
 		_GetTickCount = (t_GetTickCount)DllExchange.fGetProcAddress(DllExchange.hkernelBase, "GetTickCount");
+		_OutputDebugStringA = (t_OutputDebugStringA)DllExchange.fGetProcAddress(DllExchange.hkernelBase, "OutputDebugStringA");
 	}
 	else
 	{
 		_GetTickCount = (t_GetTickCount)DllExchange.fGetProcAddress(DllExchange.hkernel32, "GetTickCount");
+		_OutputDebugStringA = (t_OutputDebugStringA)DllExchange.fGetProcAddress(DllExchange.hkernel32, "OutputDebugStringA");
 	}
 
 	if (DllExchange.hUser32)
@@ -84,7 +97,13 @@ void StartHooking()
 	HOOK(NtQuerySystemInformation);
 	HOOK(NtQueryInformationProcess);
 	HOOK(NtQueryObject);
+	HOOK(NtYieldExecution);
+	HOOK(NtGetContextThread);
+	HOOK(NtSetContextThread);
+
 	HOOK(GetTickCount);
+
+	HOOK_NOTRAMP(OutputDebugStringA);
 }
 
 bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module)

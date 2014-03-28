@@ -8,13 +8,19 @@
 #pragma comment(lib, "ntdll_x64.lib")
 #endif
 
-#define NT_SUCCESS(Status)			((NTSTATUS)(Status) >= 0)
+#define NT_SUCCESS(Status)          ((NTSTATUS)(Status) >= 0)
 #define STATUS_SUCCESS              ((NTSTATUS)0x00000000L)
 #define STATUS_INVALID_INFO_CLASS   ((NTSTATUS)0xC0000003L)
 #define STATUS_INFO_LENGTH_MISMATCH ((NTSTATUS)0xC0000004L)
 #define STATUS_ACCESS_DENIED        ((NTSTATUS)0xC0000022L)
 #define STATUS_DEBUGGER_INACTIVE    ((NTSTATUS)0xC0000354L)
 #define STATUS_NO_YIELD_PERFORMED   ((NTSTATUS)0x40000024L)
+
+#define ALIGN_DOWN(length, type) \
+	((ULONG)(length) & ~(sizeof(type) - 1))
+
+#define ALIGN_UP(length, type) \
+	(ALIGN_DOWN(((ULONG)(length) + sizeof(type) - 1), type))
 
 typedef LONG NTSTATUS;
 typedef LONG KPRIORITY;
@@ -700,7 +706,7 @@ typedef enum _OBJECT_INFORMATION_CLASS
     ObjectBasicInformation,
     ObjectNameInformation,
     ObjectTypeInformation,
-    ObjectTypesInformation,
+    ObjectTypesInformation, //OBJECT_TYPES_INFORMATION
     ObjectHandleFlagInformation, //OBJECT_HANDLE_FLAG_INFORMATION
     ObjectSessionInformation,
     MaxObjectInfoClass  // MaxObjectInfoClass should always be the last enum
@@ -963,8 +969,8 @@ typedef NTSTATUS (NTAPI * t_NtSuspendThread)(HANDLE ThreadHandle,PULONG Previous
 typedef NTSTATUS (NTAPI * t_NtSystemDebugControl)(SYSDBG_COMMAND Command,PVOID InputBuffer,ULONG InputBufferLength,PVOID OutputBuffer,ULONG OutputBufferLength,PULONG ReturnLength);
 typedef NTSTATUS (NTAPI * t_NtTerminateProcess)(HANDLE ProcessHandle,NTSTATUS ExitStatus);
 typedef NTSTATUS (NTAPI * t_NtYieldExecution)(VOID);
-typedef VOID     (NTAPI * t_KiUserExceptionDispatcher)(PEXCEPTION_RECORD ExceptionRecord,PCONTEXT ContextFrame);
-
+typedef VOID     (NTAPI * t_KiUserExceptionDispatcher)(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT ContextFrame);
+typedef VOID     (NTAPI * t_RtlRestoreContext)(PCONTEXT ContextRecord, PEXCEPTION_RECORD ExceptionRecord);
 
 #ifdef __cplusplus
 extern "C" {
@@ -1745,6 +1751,15 @@ NTAPI
 RtlProcessFlsData (
 	PRTL_UNKNOWN_FLS_DATA Buffer
 );
+
+NTSYSCALLAPI
+VOID
+WINAPI
+RtlRestoreContext (
+	_In_  PCONTEXT ContextRecord,
+	_In_  PEXCEPTION_RECORD ExceptionRecord
+);
+
 
 #ifdef __cplusplus
 };
