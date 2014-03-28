@@ -40,7 +40,7 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
         {
             hProcess=debugEvent->u.CreateProcessInfo.hProcess;
             ProcessId=debugEvent->dwProcessId;
-            ScyllaHide(ProcessId);
+            
         }
         break;
 
@@ -50,7 +50,7 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
             {
             case STATUS_BREAKPOINT:
             {
-
+				ScyllaHide(ProcessId);
             }
             break;
             }
