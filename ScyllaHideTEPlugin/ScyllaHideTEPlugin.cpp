@@ -2,6 +2,8 @@
 #include "TitanEngine.h"
 #include "Injector.h"
 
+static bool bootstrapped = false;
+
 BOOL APIENTRY DllMain(HINSTANCE hi, DWORD reason, LPVOID)
 {
     switch(reason)
@@ -40,7 +42,7 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
         {
             hProcess=debugEvent->u.CreateProcessInfo.hProcess;
             ProcessId=debugEvent->dwProcessId;
-            
+
         }
         break;
 
@@ -50,7 +52,10 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
             {
             case STATUS_BREAKPOINT:
             {
-				ScyllaHide(ProcessId);
+                if(!bootstrapped) {
+                    ScyllaHide(ProcessId);
+                    bootstrapped = true;
+                }
             }
             break;
             }
