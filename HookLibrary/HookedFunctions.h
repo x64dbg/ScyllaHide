@@ -25,3 +25,4 @@ NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
 BOOL WINAPI HookedBlockInput(BOOL fBlockIt);
 DWORD WINAPI HookedGetTickCount(void);
 DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString);
+VOID NTAPI HookedKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame);
