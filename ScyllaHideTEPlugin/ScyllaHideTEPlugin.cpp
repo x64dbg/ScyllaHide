@@ -2,6 +2,8 @@
 #include "TitanEngine.h"
 #include "Injector.h"
 
+static DWORD ProcessId;
+static ULONG_PTR startAddress;
 static bool bootstrapped = false;
 
 BOOL APIENTRY DllMain(HINSTANCE hi, DWORD reason, LPVOID)
@@ -19,19 +21,25 @@ static void ScyllaHide(DWORD ProcessId) {
     WCHAR * dllPath = 0;
 
 #ifdef _WIN64
-    dllPath = L"Z:\\__dev\\scyllahide\\Debug\\HookLibrary.dll";
+    dllPath = L".\\plugins\\x64\\HookLibrary.dll";
 #else
-    dllPath = L"Z:\\__dev\\scyllahide\\Debug\\HookLibrary.dll";
+    dllPath = L".\\plugins\\x86\\HookLibrary.dll";
 #endif
 
     SetDebugPrivileges();
     startInjection(ProcessId, dllPath);
 }
 
+static void cbEntryPoint() {
+    DeleteBPX(startAddress);
+
+    ScyllaHide(ProcessId);
+}
+
 extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debugEvent, int CallReason)
 {
-    static DWORD ProcessId;
     static HANDLE hProcess;
+
     switch(CallReason)
     {
     case UE_PLUGIN_CALL_REASON_EXCEPTION:
@@ -42,7 +50,9 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
         {
             hProcess=debugEvent->u.CreateProcessInfo.hProcess;
             ProcessId=debugEvent->dwProcessId;
+            startAddress = (ULONG_PTR)debugEvent->u.CreateProcessInfo.lpStartAddress;
 
+            SetBPX(startAddress, UE_BREAKPOINT, &cbEntryPoint);
         }
         break;
 
@@ -52,22 +62,13 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
             {
             case STATUS_BREAKPOINT:
             {
-                if(!bootstrapped) {
-                    ScyllaHide(ProcessId);
-                    bootstrapped = true;
-                }
+
             }
             break;
             }
         }
         break;
         }
-    }
-    break;
-
-    case UE_PLUGIN_CALL_REASON_POSTDEBUG:
-    {
-        //TitanHideCall(ProcessId, UnhidePid);
     }
     break;
     }
