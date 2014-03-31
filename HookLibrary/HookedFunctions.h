@@ -21,6 +21,7 @@ NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS Objec
 NTSTATUS NTAPI HookedNtYieldExecution();
 NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadContext);
 NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadContext);
+NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert);
 
 BOOL WINAPI HookedBlockInput(BOOL fBlockIt);
 DWORD WINAPI HookedGetTickCount(void);

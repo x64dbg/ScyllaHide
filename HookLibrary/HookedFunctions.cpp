@@ -11,6 +11,7 @@ t_NtYieldExecution dNtYieldExecution = 0;
 t_NtGetContextThread dNtGetContextThread = 0;
 t_NtSetContextThread dNtSetContextThread = 0;
 t_KiUserExceptionDispatcher dKiUserExceptionDispatcher = 0;
+t_NtContinue dNtContinue = 0;
 
 t_GetTickCount dGetTickCount = 0;
 t_BlockInput dBlockInput = 0;
@@ -158,11 +159,16 @@ NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
 
 VOID NTAPI HookedKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame)
 {
-    if(ContextFrame) {
-        ContextFrame->ContextFlags &= ~CONTEXT_DEBUG_REGISTERS;
+    return dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
+}
+
+NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert)
+{
+    if(ThreadContext) {
+        ThreadContext->ContextFlags &= ~CONTEXT_DEBUG_REGISTERS;
     }
 
-    return dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
+    return dNtContinue(ThreadContext, RaiseAlert);
 }
 
 static DWORD OneTickCount = 0;

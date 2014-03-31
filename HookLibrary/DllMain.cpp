@@ -17,6 +17,7 @@ extern t_NtYieldExecution dNtYieldExecution;
 extern t_NtGetContextThread dNtGetContextThread;
 extern t_NtSetContextThread dNtSetContextThread;
 extern t_KiUserExceptionDispatcher dKiUserExceptionDispatcher;
+extern t_NtContinue dNtContinue;
 
 extern t_GetTickCount dGetTickCount;
 extern t_BlockInput dBlockInput;
@@ -75,6 +76,7 @@ void StartHooking()
     t_NtGetContextThread _NtGetContextThread = (t_NtGetContextThread)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtGetContextThread");
     t_NtSetContextThread _NtSetContextThread = (t_NtSetContextThread)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtSetContextThread");
     t_KiUserExceptionDispatcher _KiUserExceptionDispatcher = (t_KiUserExceptionDispatcher)DllExchange.fGetProcAddress(DllExchange.hNtdll, "KiUserExceptionDispatcher");
+    t_NtContinue _NtContinue = (t_NtContinue)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtContinue");
 
     t_OutputDebugStringA _OutputDebugStringA;
     t_GetTickCount _GetTickCount;
@@ -102,7 +104,8 @@ void StartHooking()
     HOOK(NtYieldExecution);
     HOOK(NtGetContextThread);
     HOOK(NtSetContextThread);
-    HOOK(KiUserExceptionDispatcher);
+    // HOOK(KiUserExceptionDispatcher);
+    HOOK(NtContinue);
 
     HOOK(GetTickCount);
 
