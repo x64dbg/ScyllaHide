@@ -1,0 +1,23 @@
+ScyllaHide is a Anti-Anti-Debug library that hooks various
+functions in usermode to hide debugging.
+
+Debugger Hiding:
+- NtSetInformationThread
+- NtQuerySystemInformation
+- NtQueryInformationProcess
+- NtQueryObject
+- NtYieldExecution
+- GetTickCount
+- OutputDebugStringA
+Protecting and Stealthing DRx:
+- NtGetContextThread
+- NtSetContextThread
+- KiUserExceptionDispatcher
+- NtContinue
+
+Usage standalone:
+InjectorCLI.exe <process name> <HookLibrary.dll path>
+
+Plugins:
+- for TitanEngine: Copy HookLibrary.dll and ScyllaHide.dll to plugins\x86\  
+  (can be combined with TitanHide which does kernelmode hiding)
