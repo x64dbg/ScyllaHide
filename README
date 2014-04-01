@@ -3,14 +3,14 @@ functions in usermode to hide debugging.
 
 Debugger Hiding:
 - PEB - BeingDebugged, NtGlobalFlag, Heap Flags
-- NtSetInformationThread
-- NtQuerySystemInformation
-- NtQueryInformationProcess
-- NtQueryObject
+- NtSetInformationThread - ThreadHideFromDebugger
+- NtQuerySystemInformation - SystemKernelDebuggerInformation, SystemProcessInformation
+- NtQueryInformationProcess - ProcessDebugFlags, ProcessDebugObjectHandle, ProcessDebugPort, ProcessBasicInformation
+- NtQueryObject - ObjectTypesInformation, ObjectTypeInformation
 - NtYieldExecution
 - GetTickCount
 - OutputDebugStringA
-Protecting and Stealthing DRx:
+Protecting and Stealthing DRx (CONTEXT_DEBUG_REGISTERS):
 - NtGetContextThread
 - NtSetContextThread
 - KiUserExceptionDispatcher
