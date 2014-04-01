@@ -15,6 +15,25 @@ typedef struct _HOOK_DLL_EXCHANGE {
 	t_GetProcAddress fGetProcAddress;
 	t_GetModuleHandleA fGetModuleHandleA;
 	t_LoadLibraryA fLoadLibraryA;
+
+	BOOLEAN EnablePebHiding;
+
+	BOOLEAN EnableBlockInputHook;
+	BOOLEAN EnableGetTickCountHook;
+	BOOLEAN EnableOutputDebugStringHook;
+
+	BOOLEAN EnableNtSetInformationThreadHook;
+	BOOLEAN EnableNtQuerySystemInformationHook;
+	BOOLEAN EnableNtQueryInformationProcessHook;
+	BOOLEAN EnableNtQueryObjectHook;
+	BOOLEAN EnableNtYieldExecutionHook;
+
+	//Protect and Hide Hardware Breakpoints
+	BOOLEAN EnableNtGetContextThreadHook;
+	BOOLEAN EnableNtSetContextThreadHook;
+	BOOLEAN EnableNtContinueHook;
+	BOOLEAN EnableKiUserExceptionDispatcherHook;
+
 } HOOK_DLL_EXCHANGE;
 
 

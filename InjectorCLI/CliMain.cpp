@@ -6,9 +6,12 @@
 
 #include "..\HookLibrary\HookMain.h"
 
-
-
-
+#define INI_APPNAME L"SCYLLA_HIDE"
+void ReadSettings();
+void ReadSettingsFromIni(const WCHAR * iniFile);
+void CreateDummyUnicodeFile(const WCHAR * file);
+bool WriteIniSettings(const WCHAR * settingName, const WCHAR * settingValue, const WCHAR* inifile);
+void CreateDefaultSettings();
 DWORD GetProcessIdByName(const WCHAR * processName);
 void startInjection(DWORD targetPid, const WCHAR * dllPath);
 DWORD SetDebugPrivileges();
@@ -25,6 +28,9 @@ int wmain(int argc, wchar_t* argv[])
 	WCHAR * dllPath = 0;
 
 	SetDebugPrivileges();
+
+	//CreateDefaultSettings();
+	ReadSettings();
 
 	if (argc >= 3)
 	{
@@ -111,6 +117,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath)
 
 void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
 {
+	ZeroMemory(data, sizeof(HOOK_DLL_EXCHANGE));
 	HMODULE localKernel = GetModuleHandleW(L"kernel32.dll");
 	HMODULE localNtdll = GetModuleHandleW(L"ntdll.dll");
 
@@ -122,6 +129,24 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
 	data->fLoadLibraryA = (t_LoadLibraryA)((DWORD_PTR)GetProcAddress(localKernel, "LoadLibraryA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
 	data->fGetModuleHandleA = (t_GetModuleHandleA)((DWORD_PTR)GetProcAddress(localKernel, "GetModuleHandleA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
 	data->fGetProcAddress = (t_GetProcAddress)((DWORD_PTR)GetProcAddress(localKernel, "GetProcAddress") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
+
+
+	data->EnablePebHiding = TRUE;
+
+	data->EnableBlockInputHook = TRUE;
+	data->EnableGetTickCountHook = TRUE;
+	data->EnableOutputDebugStringHook = TRUE;
+
+	data->EnableNtSetInformationThreadHook = TRUE;
+	data->EnableNtQueryInformationProcessHook = TRUE;
+	data->EnableNtQuerySystemInformationHook = TRUE;
+	data->EnableNtQueryObjectHook = TRUE;
+	data->EnableNtYieldExecutionHook = TRUE;
+
+	data->EnableNtGetContextThreadHook = TRUE;
+	data->EnableNtSetContextThreadHook = TRUE;
+	data->EnableNtContinueHook = TRUE;
+	data->EnableKiUserExceptionDispatcherHook = TRUE;
 }
 
 
@@ -214,4 +239,115 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 
 	CloseHandle(hProcessSnap);
 	return pid;
+}
+
+BOOL FileExists(LPCWSTR szPath)
+{
+	DWORD dwAttrib = GetFileAttributesW(szPath);
+
+	return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+void CreateDummyUnicodeFile(const WCHAR * file)
+{
+	//http://www.codeproject.com/Articles/9071/Using-Unicode-in-INI-files
+
+	if (!FileExists(file))
+	{
+		const WCHAR section[] = L"[" INI_APPNAME L"]\r\n";
+		// UTF16-LE BOM(FFFE)
+		WORD wBOM = 0xFEFF;
+		DWORD NumberOfBytesWritten;
+
+		HANDLE hFile = CreateFile(file, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+		WriteFile(hFile, &wBOM, sizeof(WORD), &NumberOfBytesWritten, NULL);
+		WriteFile(hFile, section, (wcslen(section) + 1)*(sizeof(WCHAR)), &NumberOfBytesWritten, NULL);
+		CloseHandle(hFile);
+	}
+}
+
+bool WriteIniSettings(const WCHAR * settingName, const WCHAR * settingValue, const WCHAR* inifile)
+{
+	CreateDummyUnicodeFile(inifile);
+
+	if (!WritePrivateProfileStringW(INI_APPNAME, settingName, settingValue, inifile))
+	{
+		printf("WritePrivateProfileStringW error %d\n", GetLastError());
+		return false;
+	}
+
+	return true;
+}
+
+int ReadIniSettingsInt(const WCHAR * settingName, const WCHAR* inifile)
+{
+	return GetPrivateProfileIntW(INI_APPNAME, settingName, 0, inifile);
+}
+
+const WCHAR iniName[] = L"scylla_hide.ini";
+
+void CreateDefaultSettings()
+{
+	WCHAR path[MAX_PATH] = { 0 };
+
+	GetModuleFileNameW(0, path, _countof(path));
+
+	WCHAR *temp = wcsrchr(path, L'\\');
+	temp++;
+	*temp = 0;
+
+	wcscat_s(path, iniName);
+
+	WriteIniSettings(L"PebHiding", L"1", path);
+
+	WriteIniSettings(L"BlockInputHook", L"1", path);
+	WriteIniSettings(L"GetTickCountHook", L"1", path);
+	WriteIniSettings(L"OutputDebugStringHook", L"1", path);
+
+	WriteIniSettings(L"NtSetInformationThreadHook", L"1", path);
+	WriteIniSettings(L"NtQueryInformationProcessHook", L"1", path);
+	WriteIniSettings(L"NtQuerySystemInformationHook", L"1", path);
+	WriteIniSettings(L"NtQueryObjectHook", L"1", path);
+	WriteIniSettings(L"NtYieldExecutionHook", L"1", path);
+
+	WriteIniSettings(L"NtGetContextThreadHook", L"1", path);
+	WriteIniSettings(L"NtSetContextThreadHook", L"1", path);
+	WriteIniSettings(L"NtContinueHook", L"1", path);
+	WriteIniSettings(L"KiUserExceptionDispatcherHook", L"1", path);
+}
+
+void ReadSettings()
+{
+	WCHAR path[MAX_PATH] = { 0 };
+
+	GetModuleFileNameW(0, path, _countof(path));
+
+	WCHAR *temp = wcsrchr(path, L'\\');
+	temp++;
+	*temp = 0;
+
+	wcscat_s(path, iniName);
+	
+	ReadSettingsFromIni(path);
+}
+
+void ReadSettingsFromIni(const WCHAR * iniFile)
+{
+
+	DllExchangeLoader.EnablePebHiding = ReadIniSettingsInt(L"PebHiding", iniFile);
+
+	DllExchangeLoader.EnableBlockInputHook = ReadIniSettingsInt(L"BlockInputHook", iniFile);
+	DllExchangeLoader.EnableGetTickCountHook = ReadIniSettingsInt(L"GetTickCountHook", iniFile);
+	DllExchangeLoader.EnableOutputDebugStringHook = ReadIniSettingsInt(L"OutputDebugStringHook", iniFile);
+
+	DllExchangeLoader.EnableNtSetInformationThreadHook = ReadIniSettingsInt(L"NtSetInformationThreadHook", iniFile);
+	DllExchangeLoader.EnableNtQueryInformationProcessHook = ReadIniSettingsInt(L"NtQueryInformationProcessHook", iniFile);
+	DllExchangeLoader.EnableNtQuerySystemInformationHook = ReadIniSettingsInt(L"NtQuerySystemInformationHook", iniFile);
+	DllExchangeLoader.EnableNtQueryObjectHook = ReadIniSettingsInt(L"NtQueryObjectHook", iniFile);
+	DllExchangeLoader.EnableNtYieldExecutionHook = ReadIniSettingsInt(L"NtYieldExecutionHook", iniFile);
+
+	DllExchangeLoader.EnableNtGetContextThreadHook = ReadIniSettingsInt(L"NtGetContextThreadHook", iniFile);
+	DllExchangeLoader.EnableNtSetContextThreadHook = ReadIniSettingsInt(L"NtSetContextThreadHook", iniFile);
+	DllExchangeLoader.EnableNtContinueHook = ReadIniSettingsInt(L"NtContinueHook", iniFile);
+	DllExchangeLoader.EnableKiUserExceptionDispatcherHook = ReadIniSettingsInt(L"KiUserExceptionDispatcherHook", iniFile);
 }

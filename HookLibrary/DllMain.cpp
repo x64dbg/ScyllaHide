@@ -6,7 +6,7 @@
 
 HOOK_DLL_EXCHANGE DllExchange = { 0 };
 
-void StartHooking();
+void StartHiding();
 bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module);
 
 extern t_NtSetInformationThread dNtSetInformationThread;
@@ -44,8 +44,7 @@ DWORD WINAPI InitDll(LPVOID imageBase)
             if (_DLLMain((HINSTANCE)imageBase, DLL_PROCESS_ATTACH, 0))
             {
                 ZeroMemory(imageBase, pNtHeader->OptionalHeader.SizeOfHeaders);
-                FixPebAntidebug();
-                StartHooking();
+                StartHiding();
                 return HOOK_ERROR_SUCCESS;
             }
             else
@@ -64,52 +63,55 @@ DWORD WINAPI InitDll(LPVOID imageBase)
     }
 }
 
-void StartHooking()
+void StartHiding()
 {
-    MessageBoxA(0, "StartHooking", "StartHooking", 0);
+    MessageBoxA(0, "StartHiding", "StartHiding", 0);
 
-    t_NtSetInformationThread _NtSetInformationThread = (t_NtSetInformationThread)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtSetInformationThread");
-    t_NtQuerySystemInformation _NtQuerySystemInformation = (t_NtQuerySystemInformation)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQuerySystemInformation");
-    t_NtQueryInformationProcess _NtQueryInformationProcess = (t_NtQueryInformationProcess)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQueryInformationProcess");
-    t_NtQueryObject _NtQueryObject = (t_NtQueryObject)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQueryObject");
-    t_NtYieldExecution _NtYieldExecution = (t_NtYieldExecution)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtYieldExecution");
-    t_NtGetContextThread _NtGetContextThread = (t_NtGetContextThread)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtGetContextThread");
-    t_NtSetContextThread _NtSetContextThread = (t_NtSetContextThread)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtSetContextThread");
-    t_KiUserExceptionDispatcher _KiUserExceptionDispatcher = (t_KiUserExceptionDispatcher)DllExchange.fGetProcAddress(DllExchange.hNtdll, "KiUserExceptionDispatcher");
-    t_NtContinue _NtContinue = (t_NtContinue)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtContinue");
+	t_NtSetInformationThread _NtSetInformationThread = (t_NtSetInformationThread)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtSetInformationThread");
+	t_NtQuerySystemInformation _NtQuerySystemInformation = (t_NtQuerySystemInformation)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQuerySystemInformation");
+	t_NtQueryInformationProcess _NtQueryInformationProcess = (t_NtQueryInformationProcess)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQueryInformationProcess");
+	t_NtQueryObject _NtQueryObject = (t_NtQueryObject)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtQueryObject");
+	t_NtYieldExecution _NtYieldExecution = (t_NtYieldExecution)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtYieldExecution");
+	t_NtGetContextThread _NtGetContextThread = (t_NtGetContextThread)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtGetContextThread");
+	t_NtSetContextThread _NtSetContextThread = (t_NtSetContextThread)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtSetContextThread");
+	t_KiUserExceptionDispatcher _KiUserExceptionDispatcher = (t_KiUserExceptionDispatcher)DllExchange.fGetProcAddress(DllExchange.hNtdll, "KiUserExceptionDispatcher");
+	t_NtContinue _NtContinue = (t_NtContinue)DllExchange.fGetProcAddress(DllExchange.hNtdll, "NtContinue");
 
-    t_OutputDebugStringA _OutputDebugStringA;
-    t_GetTickCount _GetTickCount;
-    if (DllExchange.hkernelBase)
-    {
-        _GetTickCount = (t_GetTickCount)DllExchange.fGetProcAddress(DllExchange.hkernelBase, "GetTickCount");
-        _OutputDebugStringA = (t_OutputDebugStringA)DllExchange.fGetProcAddress(DllExchange.hkernelBase, "OutputDebugStringA");
-    }
-    else
-    {
-        _GetTickCount = (t_GetTickCount)DllExchange.fGetProcAddress(DllExchange.hkernel32, "GetTickCount");
-        _OutputDebugStringA = (t_OutputDebugStringA)DllExchange.fGetProcAddress(DllExchange.hkernel32, "OutputDebugStringA");
-    }
+	t_OutputDebugStringA _OutputDebugStringA;
+	t_GetTickCount _GetTickCount;
+	if (DllExchange.hkernelBase)
+	{
+		_GetTickCount = (t_GetTickCount)DllExchange.fGetProcAddress(DllExchange.hkernelBase, "GetTickCount");
+		_OutputDebugStringA = (t_OutputDebugStringA)DllExchange.fGetProcAddress(DllExchange.hkernelBase, "OutputDebugStringA");
+	}
+	else
+	{
+		_GetTickCount = (t_GetTickCount)DllExchange.fGetProcAddress(DllExchange.hkernel32, "GetTickCount");
+		_OutputDebugStringA = (t_OutputDebugStringA)DllExchange.fGetProcAddress(DllExchange.hkernel32, "OutputDebugStringA");
+	}
 
-    if (DllExchange.hUser32)
-    {
-        t_BlockInput _BlockInput = (t_BlockInput)DllExchange.fGetProcAddress(DllExchange.hUser32, "BlockInput");
-        HOOK(BlockInput);
-    }
+	if (DllExchange.hUser32)
+	{
+		t_BlockInput _BlockInput = (t_BlockInput)DllExchange.fGetProcAddress(DllExchange.hUser32, "BlockInput");
+		if (DllExchange.EnableBlockInputHook == TRUE) HOOK(BlockInput);
+	}
 
-    HOOK(NtSetInformationThread);
-    HOOK(NtQuerySystemInformation);
-    HOOK(NtQueryInformationProcess);
-    HOOK(NtQueryObject);
-    HOOK(NtYieldExecution);
-    HOOK(NtGetContextThread);
-    HOOK(NtSetContextThread);
-    // HOOK(KiUserExceptionDispatcher);
-    HOOK(NtContinue);
 
-    HOOK(GetTickCount);
+	if (DllExchange.EnablePebHiding == TRUE) FixPebAntidebug();
 
-    HOOK_NOTRAMP(OutputDebugStringA);
+	if (DllExchange.EnableNtSetInformationThreadHook == TRUE) HOOK(NtSetInformationThread);
+	if (DllExchange.EnableNtQuerySystemInformationHook == TRUE) HOOK(NtQuerySystemInformation);
+	if (DllExchange.EnableNtQueryInformationProcessHook == TRUE) HOOK(NtQueryInformationProcess);
+	if (DllExchange.EnableNtQueryObjectHook == TRUE) HOOK(NtQueryObject);
+	if (DllExchange.EnableNtYieldExecutionHook == TRUE) HOOK(NtYieldExecution);
+	if (DllExchange.EnableNtGetContextThreadHook == TRUE) HOOK(NtGetContextThread);
+	if (DllExchange.EnableNtSetContextThreadHook == TRUE) HOOK(NtSetContextThread);
+    //if (DllExchange.EnableKiUserExceptionDispatcherHook == TRUE) HOOK(KiUserExceptionDispatcher);
+	if (DllExchange.EnableNtContinueHook == TRUE) HOOK(NtContinue);
+
+	if (DllExchange.EnableGetTickCountHook == TRUE) HOOK(GetTickCount);
+
+	if (DllExchange.EnableOutputDebugStringHook == TRUE) HOOK_NOTRAMP(OutputDebugStringA);
 }
 
 bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module)
