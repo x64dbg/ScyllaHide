@@ -6,12 +6,16 @@
 
 #include "..\HookLibrary\HookMain.h"
 
+const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 #define INI_APPNAME L"SCYLLA_HIDE"
+
+
+void CreateSettings();
 void ReadSettings();
 void ReadSettingsFromIni(const WCHAR * iniFile);
 void CreateDummyUnicodeFile(const WCHAR * file);
 bool WriteIniSettings(const WCHAR * settingName, const WCHAR * settingValue, const WCHAR* inifile);
-void CreateDefaultSettings();
+void CreateDefaultSettings(const WCHAR * iniFile);
 DWORD GetProcessIdByName(const WCHAR * processName);
 void startInjection(DWORD targetPid, const WCHAR * dllPath);
 DWORD SetDebugPrivileges();
@@ -29,7 +33,7 @@ int wmain(int argc, wchar_t* argv[])
 
 	SetDebugPrivileges();
 
-	//CreateDefaultSettings();
+	CreateSettings();
 	ReadSettings();
 
 	if (argc >= 3)
@@ -117,7 +121,6 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath)
 
 void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
 {
-	ZeroMemory(data, sizeof(HOOK_DLL_EXCHANGE));
 	HMODULE localKernel = GetModuleHandleW(L"kernel32.dll");
 	HMODULE localNtdll = GetModuleHandleW(L"ntdll.dll");
 
@@ -131,22 +134,22 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
 	data->fGetProcAddress = (t_GetProcAddress)((DWORD_PTR)GetProcAddress(localKernel, "GetProcAddress") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
 
 
-	data->EnablePebHiding = TRUE;
+	//data->EnablePebHiding = TRUE;
 
-	data->EnableBlockInputHook = TRUE;
-	data->EnableGetTickCountHook = TRUE;
-	data->EnableOutputDebugStringHook = TRUE;
+	//data->EnableBlockInputHook = TRUE;
+	//data->EnableGetTickCountHook = TRUE;
+	//data->EnableOutputDebugStringHook = TRUE;
 
-	data->EnableNtSetInformationThreadHook = TRUE;
-	data->EnableNtQueryInformationProcessHook = TRUE;
-	data->EnableNtQuerySystemInformationHook = TRUE;
-	data->EnableNtQueryObjectHook = TRUE;
-	data->EnableNtYieldExecutionHook = TRUE;
+	//data->EnableNtSetInformationThreadHook = TRUE;
+	//data->EnableNtQueryInformationProcessHook = TRUE;
+	//data->EnableNtQuerySystemInformationHook = TRUE;
+	//data->EnableNtQueryObjectHook = TRUE;
+	//data->EnableNtYieldExecutionHook = TRUE;
 
-	data->EnableNtGetContextThreadHook = TRUE;
-	data->EnableNtSetContextThreadHook = TRUE;
-	data->EnableNtContinueHook = TRUE;
-	data->EnableKiUserExceptionDispatcherHook = TRUE;
+	//data->EnableNtGetContextThreadHook = TRUE;
+	//data->EnableNtSetContextThreadHook = TRUE;
+	//data->EnableNtContinueHook = TRUE;
+	//data->EnableKiUserExceptionDispatcherHook = TRUE;
 }
 
 
@@ -284,9 +287,7 @@ int ReadIniSettingsInt(const WCHAR * settingName, const WCHAR* inifile)
 	return GetPrivateProfileIntW(INI_APPNAME, settingName, 0, inifile);
 }
 
-const WCHAR iniName[] = L"scylla_hide.ini";
-
-void CreateDefaultSettings()
+void CreateSettings()
 {
 	WCHAR path[MAX_PATH] = { 0 };
 
@@ -296,24 +297,31 @@ void CreateDefaultSettings()
 	temp++;
 	*temp = 0;
 
-	wcscat_s(path, iniName);
+	wcscat_s(path, ScyllaHideIniFilename);
+	if (!FileExists(path))
+	{
+		CreateDefaultSettings(path);
+	}
+}
 
-	WriteIniSettings(L"PebHiding", L"1", path);
+void CreateDefaultSettings(const WCHAR * iniFile)
+{
+	WriteIniSettings(L"PebHiding", L"1", iniFile);
 
-	WriteIniSettings(L"BlockInputHook", L"1", path);
-	WriteIniSettings(L"GetTickCountHook", L"1", path);
-	WriteIniSettings(L"OutputDebugStringHook", L"1", path);
+	WriteIniSettings(L"BlockInputHook", L"1", iniFile);
+	WriteIniSettings(L"GetTickCountHook", L"1", iniFile);
+	WriteIniSettings(L"OutputDebugStringHook", L"1", iniFile);
 
-	WriteIniSettings(L"NtSetInformationThreadHook", L"1", path);
-	WriteIniSettings(L"NtQueryInformationProcessHook", L"1", path);
-	WriteIniSettings(L"NtQuerySystemInformationHook", L"1", path);
-	WriteIniSettings(L"NtQueryObjectHook", L"1", path);
-	WriteIniSettings(L"NtYieldExecutionHook", L"1", path);
+	WriteIniSettings(L"NtSetInformationThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtQueryInformationProcessHook", L"1", iniFile);
+	WriteIniSettings(L"NtQuerySystemInformationHook", L"1", iniFile);
+	WriteIniSettings(L"NtQueryObjectHook", L"1", iniFile);
+	WriteIniSettings(L"NtYieldExecutionHook", L"1", iniFile);
 
-	WriteIniSettings(L"NtGetContextThreadHook", L"1", path);
-	WriteIniSettings(L"NtSetContextThreadHook", L"1", path);
-	WriteIniSettings(L"NtContinueHook", L"1", path);
-	WriteIniSettings(L"KiUserExceptionDispatcherHook", L"1", path);
+	WriteIniSettings(L"NtGetContextThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtSetContextThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtContinueHook", L"1", iniFile);
+	WriteIniSettings(L"KiUserExceptionDispatcherHook", L"1", iniFile);
 }
 
 void ReadSettings()
@@ -326,7 +334,7 @@ void ReadSettings()
 	temp++;
 	*temp = 0;
 
-	wcscat_s(path, iniName);
+	wcscat_s(path, ScyllaHideIniFilename);
 	
 	ReadSettingsFromIni(path);
 }
