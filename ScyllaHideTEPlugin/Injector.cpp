@@ -97,6 +97,24 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->fLoadLibraryA = (t_LoadLibraryA)((DWORD_PTR)GetProcAddress(localKernel, "LoadLibraryA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
     data->fGetModuleHandleA = (t_GetModuleHandleA)((DWORD_PTR)GetProcAddress(localKernel, "GetModuleHandleA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
     data->fGetProcAddress = (t_GetProcAddress)((DWORD_PTR)GetProcAddress(localKernel, "GetProcAddress") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
+
+    //for use with TE we simply enable all options
+    data->EnablePebHiding = TRUE;
+
+    data->EnableBlockInputHook = TRUE;
+    data->EnableGetTickCountHook = TRUE;
+    data->EnableOutputDebugStringHook = TRUE;
+
+    data->EnableNtSetInformationThreadHook = TRUE;
+    data->EnableNtQueryInformationProcessHook = TRUE;
+    data->EnableNtQuerySystemInformationHook = TRUE;
+    data->EnableNtQueryObjectHook = TRUE;
+    data->EnableNtYieldExecutionHook = TRUE;
+
+    data->EnableNtGetContextThreadHook = TRUE;
+    data->EnableNtSetContextThreadHook = TRUE;
+    data->EnableNtContinueHook = TRUE;
+    data->EnableKiUserExceptionDispatcherHook = TRUE;
 }
 
 DWORD SetDebugPrivileges()
