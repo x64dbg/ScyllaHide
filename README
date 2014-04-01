@@ -22,3 +22,4 @@ InjectorCLI.exe <process name> <HookLibrary.dll path>
 Plugins:
 - for TitanEngine: Copy HookLibrary.dll and ScyllaHide.dll to plugins\x86\  
   (can be combined with TitanHide which does kernelmode hiding)
+- for OllyDbg1.10: Copy HookLibrary.dll and ScyllaHide.dll to your plugins directoy
