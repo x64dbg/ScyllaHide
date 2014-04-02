@@ -92,6 +92,10 @@
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
     <ClInclude Include="Injector.h" />
     <ClInclude Include="Plugin.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ScyllaHideOlly1Plugin.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

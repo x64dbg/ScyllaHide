@@ -1,5 +1,7 @@
 #include "Injector.h"
 
+extern struct HideOptions pHideOptions;
+
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
@@ -98,25 +100,20 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->fGetModuleHandleA = (t_GetModuleHandleA)((DWORD_PTR)GetProcAddress(localKernel, "GetModuleHandleA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
     data->fGetProcAddress = (t_GetProcAddress)((DWORD_PTR)GetProcAddress(localKernel, "GetProcAddress") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
 
-    //TODO replace this with proper settings from ollydbg.ini via olly PDK
-    //as soon as we have a menu
-    //for now we simply enable all
-    data->EnablePebHiding = TRUE;
+    data->EnablePebHiding = (BOOLEAN)pHideOptions.PEB;
+    data->EnableBlockInputHook = pHideOptions.BlockInput;
+    data->EnableGetTickCountHook = pHideOptions.GetTickCount;
+    data->EnableOutputDebugStringHook = pHideOptions.OutputDebugStringA;
 
-    data->EnableBlockInputHook = TRUE;
-    data->EnableGetTickCountHook = TRUE;
-    data->EnableOutputDebugStringHook = TRUE;
+    data->EnableNtSetInformationThreadHook = pHideOptions.NtSetInformationThread;
+    data->EnableNtQueryInformationProcessHook = pHideOptions.NtQueryInformationProcess;
+    data->EnableNtQuerySystemInformationHook = pHideOptions.NtQuerySystemInformation;
+    data->EnableNtQueryObjectHook = pHideOptions.NtQueryObject;
+    data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
 
-    data->EnableNtSetInformationThreadHook = TRUE;
-    data->EnableNtQueryInformationProcessHook = TRUE;
-    data->EnableNtQuerySystemInformationHook = TRUE;
-    data->EnableNtQueryObjectHook = TRUE;
-    data->EnableNtYieldExecutionHook = TRUE;
-
-    data->EnableNtGetContextThreadHook = TRUE;
-    data->EnableNtSetContextThreadHook = TRUE;
-    data->EnableNtContinueHook = TRUE;
-    data->EnableKiUserExceptionDispatcherHook = TRUE;
+    data->EnableNtGetContextThreadHook = pHideOptions.ProtectDrx;
+    data->EnableNtSetContextThreadHook = pHideOptions.ProtectDrx;
+    data->EnableNtContinueHook = pHideOptions.ProtectDrx;
 }
 
 DWORD SetDebugPrivileges()
