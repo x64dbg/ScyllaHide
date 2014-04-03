@@ -224,3 +224,20 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 	CloseHandle(hProcessSnap);
 	return pid;
 }
+
+bool wcsistr(const wchar_t *s, const wchar_t *t)
+{
+	const size_t l1 = wcslen(s);
+	const size_t l2 = wcslen(t);
+
+	if (l1 < l2)
+		return false;
+
+	for (int off = 0; off < (int)(l1 - l2); ++off)
+	{
+		if (!_wcsnicmp(s + off, t, l2))
+			return true;
+	}
+
+	return false;
+}

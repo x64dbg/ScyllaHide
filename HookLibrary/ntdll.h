@@ -221,6 +221,36 @@ typedef struct _PROCESS_EXTENDED_BASIC_INFORMATION
 	};
 } PROCESS_EXTENDED_BASIC_INFORMATION, *PPROCESS_EXTENDED_BASIC_INFORMATION;
 
+typedef enum _DBG_STATE
+{
+	DbgIdle,
+	DbgReplyPending,
+	DbgCreateThreadStateChange,
+	DbgCreateProcessStateChange,
+	DbgExitThreadStateChange,
+	DbgExitProcessStateChange,
+	DbgExceptionStateChange,
+	DbgBreakpointStateChange,
+	DbgSingleStepStateChange,
+	DbgLoadDllStateChange,
+	DbgUnloadDllStateChange
+} DBG_STATE, *PDBG_STATE;
+
+typedef struct _DBGUI_WAIT_STATE_CHANGE
+{
+	DBG_STATE NewState;
+	CLIENT_ID AppClientId;
+	//union {
+	//	DBGKM_EXCEPTION Exception;
+	//	DBGUI_CREATE_THREAD CreateThread;
+	//	DBGUI_CREATE_PROCESS CreateProcessInfo;
+	//	DBGKM_EXIT_THREAD ExitThread;
+	//	DBGKM_EXIT_PROCESS ExitProcess;
+	//	DBGKM_LOAD_DLL LoadDll;
+	//	DBGKM_UNLOAD_DLL UnloadDll;
+	//} StateInfo;
+} DBGUI_WAIT_STATE_CHANGE, *PDBGUI_WAIT_STATE_CHANGE;
+
 typedef struct _THREAD_BASIC_INFORMATION
 {
     NTSTATUS ExitStatus;
@@ -845,6 +875,12 @@ typedef enum _SYSDBG_COMMAND
     SysDbgSetKdBlockEnable,
 } SYSDBG_COMMAND, *PSYSDBG_COMMAND;
 
+typedef enum _DEBUGOBJECTINFOCLASS
+{
+	DebugObjectFlags = 1,
+	MaxDebugObjectInfoClass
+} DEBUGOBJECTINFOCLASS, *PDEBUGOBJECTINFOCLASS;
+
 //Source: http://processhacker.sourceforge.net
 typedef enum _FILE_INFORMATION_CLASS
 {
@@ -942,6 +978,16 @@ typedef enum _FILE_INFORMATION_CLASS
 #define THREAD_CREATE_FLAGS_INITIAL_THREAD 0x00000080
 
 
+#define DEBUG_READ_EVENT        (0x0001)
+#define DEBUG_PROCESS_ASSIGN    (0x0002)
+#define DEBUG_SET_INFORMATION   (0x0004)
+#define DEBUG_QUERY_INFORMATION (0x0008)
+#define DEBUG_ALL_ACCESS     (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|DEBUG_READ_EVENT|DEBUG_PROCESS_ASSIGN|\
+	DEBUG_SET_INFORMATION|DEBUG_QUERY_INFORMATION)
+
+#define DEBUG_KILL_ON_CLOSE  (0x1) // Kill all debuggees on last handle close
+
+
 #define NtCurrentProcess ((HANDLE)(LONG_PTR)-1)
 #define NtCurrentThread ((HANDLE)(LONG_PTR)-2)
 
@@ -971,6 +1017,24 @@ typedef NTSTATUS (NTAPI * t_NtTerminateProcess)(HANDLE ProcessHandle,NTSTATUS Ex
 typedef NTSTATUS (NTAPI * t_NtYieldExecution)(VOID);
 typedef VOID     (NTAPI * t_KiUserExceptionDispatcher)(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT ContextFrame);
 typedef VOID     (NTAPI * t_RtlRestoreContext)(PCONTEXT ContextRecord, PEXCEPTION_RECORD ExceptionRecord);
+
+
+//user32.dll native calls
+//FindWindow
+typedef HWND (NTAPI * t_NtUserFindWindowEx)(HWND hWndParent,HWND hWndChildAfter,PUNICODE_STRING lpszClass,PUNICODE_STRING lpszWindow,DWORD dwType);
+//EnumWindows
+typedef NTSTATUS (NTAPI * t_NtUserBuildHwndList)(HDESK hdesk,HWND hwndNext, BOOL fEnumChildren, DWORD idThread, UINT cHwndMax, HWND *phwndFirst, PUINT pcHwndNeeded);
+
+typedef enum _WINDOWINFOCLASS
+{
+	WindowUniqueProcessId = 0, //HANDLE
+	WindowRealWindowOwner = 1, //ULONG
+	WindowUniqueThreadId = 2, //HANDLE
+	WindowIsHungApp = 5 //BOOL
+} WINDOWINFOCLASS;
+//GetWindowThreadProcessId
+typedef HANDLE (NTAPI * t_NtUserQueryWindow)(HWND hwnd, WINDOWINFOCLASS WindowInfo);
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -1760,6 +1824,50 @@ RtlRestoreContext (
 	_In_  PEXCEPTION_RECORD ExceptionRecord
 );
 
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtRemoveProcessDebug (
+	IN HANDLE ProcessHandle,
+	IN HANDLE DebugObjectHandle
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtWaitForDebugEvent (
+	IN HANDLE DebugObjectHandle,
+	IN BOOLEAN Alertable,
+	IN PLARGE_INTEGER Timeout OPTIONAL,
+	OUT PDBGUI_WAIT_STATE_CHANGE WaitStateChange
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtDebugContinue (
+	IN HANDLE DebugObjectHandle,
+	IN PCLIENT_ID ClientId,
+	IN NTSTATUS ContinueStatus
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtSetInformationDebugObject (
+	IN HANDLE DebugObjectHandle,
+	IN DEBUGOBJECTINFOCLASS DebugObjectInformationClass,
+	IN PVOID DebugInformation,
+	IN ULONG DebugInformationLength,
+	OUT PULONG ReturnLength OPTIONAL
+);
+
+NTSYSCALLAPI
+HANDLE
+NTAPI
+CsrGetProcessId (
+	VOID
+);
 
 #ifdef __cplusplus
 };

@@ -18,6 +18,8 @@ t_NtClose dNtClose = 0;
 t_GetTickCount dGetTickCount = 0;
 t_BlockInput dBlockInput = 0;
 
+t_NtUserFindWindowEx dNtUserFindWindowEx = 0;
+
 
 //t_OutputDebugStringA dOutputDebugStringA = 0;
 
@@ -260,6 +262,11 @@ DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString) //Worst anti-debug 
         SetLastError(GetLastError() + 1); //change last error
         return 1; //WinXP EAX -> 1
     }
+}
+
+HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICODE_STRING lpszClass, PUNICODE_STRING lpszWindow, DWORD dwType)
+{
+	return dNtUserFindWindowEx(hWndParent, hWndChildAfter, lpszClass, lpszWindow, dwType);
 }
 
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes)

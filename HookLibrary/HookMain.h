@@ -35,6 +35,15 @@ typedef struct _HOOK_DLL_EXCHANGE {
 	BOOLEAN EnableNtContinueHook;
 	BOOLEAN EnableKiUserExceptionDispatcherHook;
 
+	//Native User32.dll functions, not exported
+	DWORD NtUserQueryWindowRVA;
+	DWORD NtUserBuildHwndListRVA;
+	DWORD NtUserFindWindowExRVA;
+
+	BOOLEAN EnableNtUserQueryWindowHook;
+	BOOLEAN EnableNtUserBuildHwndListHook;
+	BOOLEAN EnableNtUserFindWindowExHook;
+
 } HOOK_DLL_EXCHANGE;
 
 #define HOOK_ERROR_SUCCESS 0

@@ -25,6 +25,8 @@ extern t_GetTickCount dGetTickCount;
 extern t_BlockInput dBlockInput;
 //extern t_OutputDebugStringA dOutputDebugStringA;
 
+extern t_NtUserFindWindowEx dNtUserFindWindowEx;
+
 #define HOOK(name) d##name = (t_##name)DetourCreate(_##name, Hooked##name, true)
 #define HOOK_NOTRAMP(name) DetourCreate(_##name, Hooked##name, false)
 
@@ -96,8 +98,15 @@ void StartHiding()
 
 	if (DllExchange.hUser32)
 	{
+		t_NtUserFindWindowEx _NtUserFindWindowEx = 0;
+		if (DllExchange.NtUserFindWindowExRVA)
+		{
+			_NtUserFindWindowEx = (t_NtUserFindWindowEx)((DWORD_PTR)DllExchange.hUser32 + DllExchange.NtUserFindWindowExRVA);
+		}
 		t_BlockInput _BlockInput = (t_BlockInput)DllExchange.fGetProcAddress(DllExchange.hUser32, "BlockInput");
+
 		if (DllExchange.EnableBlockInputHook == TRUE) HOOK(BlockInput);
+		if (DllExchange.EnableNtUserFindWindowExHook == TRUE && _NtUserFindWindowEx != 0) HOOK(NtUserFindWindowEx);
 	}
 
 

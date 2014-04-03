@@ -15,4 +15,5 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess);
 DWORD GetThreadIdByThreadHandle(HANDLE hThread);
 DWORD GetProcessIdByThreadHandle(HANDLE hThread);
 
+bool wcsistr(const wchar_t *s, const wchar_t *t);
 
