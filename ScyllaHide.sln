@@ -9,6 +9,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideTEPlugin", "ScyllaHideTEPlugin\ScyllaHideTEPlugin.vcxproj", "{0520906F-4296-4BEC-BD5F-B370E1F7800A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideOlly1Plugin", "ScyllaHideOlly1Plugin\ScyllaHideOlly1Plugin.vcxproj", "{79774D44-ED2A-4FD2-9224-40AF0A590410}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideOlly2Plugin", "ScyllaHideOlly2Plugin\ScyllaHideOlly2Plugin.vcxproj", "{9EEA6D78-4E74-47B9-8746-B8754B15525D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -47,6 +51,18 @@ Global
 		{0520906F-4296-4BEC-BD5F-B370E1F7800A}.Release|Win32.ActiveCfg = Release|Win32
 		{0520906F-4296-4BEC-BD5F-B370E1F7800A}.Release|Win32.Build.0 = Release|Win32
 		{0520906F-4296-4BEC-BD5F-B370E1F7800A}.Release|x64.ActiveCfg = Release|Win32
+		{79774D44-ED2A-4FD2-9224-40AF0A590410}.Debug|Win32.ActiveCfg = Debug|Win32
+		{79774D44-ED2A-4FD2-9224-40AF0A590410}.Debug|Win32.Build.0 = Debug|Win32
+		{79774D44-ED2A-4FD2-9224-40AF0A590410}.Debug|x64.ActiveCfg = Debug|Win32
+		{79774D44-ED2A-4FD2-9224-40AF0A590410}.Release|Win32.ActiveCfg = Release|Win32
+		{79774D44-ED2A-4FD2-9224-40AF0A590410}.Release|Win32.Build.0 = Release|Win32
+		{79774D44-ED2A-4FD2-9224-40AF0A590410}.Release|x64.ActiveCfg = Release|Win32
+		{9EEA6D78-4E74-47B9-8746-B8754B15525D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9EEA6D78-4E74-47B9-8746-B8754B15525D}.Debug|Win32.Build.0 = Debug|Win32
+		{9EEA6D78-4E74-47B9-8746-B8754B15525D}.Debug|x64.ActiveCfg = Debug|Win32
+		{9EEA6D78-4E74-47B9-8746-B8754B15525D}.Release|Win32.ActiveCfg = Release|Win32
+		{9EEA6D78-4E74-47B9-8746-B8754B15525D}.Release|Win32.Build.0 = Release|Win32
+		{9EEA6D78-4E74-47B9-8746-B8754B15525D}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

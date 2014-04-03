@@ -1,5 +1,7 @@
 #include "Injector.h"
 
+extern struct HideOptions pHideOptions;
+
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
@@ -17,16 +19,16 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 
             if (exitCode == HOOK_ERROR_SUCCESS)
             {
-                //  wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
+                _Message(0, "[ScyllaHide] Injection successful, Imagebase %p\n", remoteImageBase);
             }
             else
             {
-                // wprintf(L"Injection failed, exit code %d Imagebase %p\n", exitCode, remoteImageBase);
+                _Message(0, "[ScyllaHide] Injection failed, exit code %d Imagebase %p\n", exitCode, remoteImageBase);
             }
         }
         else
         {
-            // wprintf(L"Failed to write exchange struct\n");
+            _Message(0, "[ScyllaHide] Failed to write exchange struct\n");
         }
     }
 }
@@ -44,13 +46,13 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath)
         }
         else
         {
-            //wprintf(L"Cannot read file to memory %s\n", dllPath);
+            _Error("[ScyllaHide] Cannot find HookLibrary.dll");
         }
         CloseHandle(hProcess);
     }
     else
     {
-        //wprintf(L"Cannot open process handle %d\n", targetPid);
+        _Error("[ScyllaHide] Cannot open process handle %d\n", targetPid);
     }
 }
 
@@ -98,23 +100,20 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->fGetModuleHandleA = (t_GetModuleHandleA)((DWORD_PTR)GetProcAddress(localKernel, "GetModuleHandleA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
     data->fGetProcAddress = (t_GetProcAddress)((DWORD_PTR)GetProcAddress(localKernel, "GetProcAddress") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
 
-    //for use with TE we simply enable all options
-    data->EnablePebHiding = TRUE;
+    data->EnablePebHiding = (BOOLEAN)pHideOptions.PEB;
+    data->EnableBlockInputHook = pHideOptions.BlockInput;
+    data->EnableGetTickCountHook = pHideOptions.GetTickCount;
+    data->EnableOutputDebugStringHook = pHideOptions.OutputDebugStringA;
 
-    data->EnableBlockInputHook = TRUE;
-    data->EnableGetTickCountHook = TRUE;
-    data->EnableOutputDebugStringHook = TRUE;
+    data->EnableNtSetInformationThreadHook = pHideOptions.NtSetInformationThread;
+    data->EnableNtQueryInformationProcessHook = pHideOptions.NtQueryInformationProcess;
+    data->EnableNtQuerySystemInformationHook = pHideOptions.NtQuerySystemInformation;
+    data->EnableNtQueryObjectHook = pHideOptions.NtQueryObject;
+    data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
 
-    data->EnableNtSetInformationThreadHook = TRUE;
-    data->EnableNtQueryInformationProcessHook = TRUE;
-    data->EnableNtQuerySystemInformationHook = TRUE;
-    data->EnableNtQueryObjectHook = TRUE;
-    data->EnableNtYieldExecutionHook = TRUE;
-
-    data->EnableNtGetContextThreadHook = TRUE;
-    data->EnableNtSetContextThreadHook = TRUE;
-    data->EnableNtContinueHook = TRUE;
-    data->EnableKiUserExceptionDispatcherHook = TRUE;
+    data->EnableNtGetContextThreadHook = pHideOptions.ProtectDrx;
+    data->EnableNtSetContextThreadHook = pHideOptions.ProtectDrx;
+    data->EnableNtContinueHook = pHideOptions.ProtectDrx;
 }
 
 DWORD SetDebugPrivileges()
