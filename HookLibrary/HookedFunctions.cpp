@@ -5,6 +5,7 @@
 
 t_NtSetInformationThread dNtSetInformationThread = 0;
 t_NtQuerySystemInformation dNtQuerySystemInformation = 0;
+t_NtSetInformationProcess dNtSetInformationProcess = 0;
 t_NtQueryInformationProcess dNtQueryInformationProcess = 0;
 t_NtQueryObject dNtQueryObject = 0;
 t_NtYieldExecution dNtYieldExecution = 0;
@@ -12,6 +13,7 @@ t_NtGetContextThread dNtGetContextThread = 0;
 t_NtSetContextThread dNtSetContextThread = 0;
 t_KiUserExceptionDispatcher dKiUserExceptionDispatcher = 0;
 t_NtContinue dNtContinue = 0;
+t_NtClose dNtClose = 0;
 
 t_GetTickCount dGetTickCount = 0;
 t_BlockInput dBlockInput = 0;
@@ -58,6 +60,8 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
     return dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
 }
 
+static ULONG ValueProcessBreakOnTermination = FALSE;
+
 NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength)
 {
     if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
@@ -82,11 +86,28 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
             {
                 ((PPROCESS_BASIC_INFORMATION)ProcessInformation)->InheritedFromUniqueProcessId = (HANDLE)GetExplorerProcessId();
             }
+			else if (ProcessInformationClass == ProcessBreakOnTermination)
+			{
+				*((ULONG *)ProcessInformation) = ValueProcessBreakOnTermination;
+			}
         }
 
         return ntStat;
     }
     return dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
+}
+
+NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength)
+{
+	if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
+	{
+		if (ProcessInformationClass == ProcessBreakOnTermination && ProcessInformation != 0 && sizeof(ULONG) == ProcessInformationLength)
+		{
+			ValueProcessBreakOnTermination = *((ULONG *)ProcessInformation);
+			return STATUS_SUCCESS;
+		}
+	}
+	return dNtSetInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength);
 }
 
 NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS ObjectInformationClass, PVOID ObjectInformation, ULONG ObjectInformationLength, PULONG ReturnLength)
@@ -169,6 +190,28 @@ NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert)
     }
 
     return dNtContinue(ThreadContext, RaiseAlert);
+}
+
+NTSTATUS NTAPI HookedNtClose(HANDLE Handle)
+{
+#define STATUS_HANDLE_NOT_CLOSABLE       ((NTSTATUS)0xC0000235L)
+
+	OBJECT_HANDLE_FLAG_INFORMATION flags;
+	flags.ProtectFromClose = 0;
+	flags.Inherit = 0;
+	if (NtQueryObject(Handle, ObjectHandleFlagInformation, &flags, sizeof(OBJECT_HANDLE_FLAG_INFORMATION), 0) >= 0)
+	{
+		if (flags.ProtectFromClose)
+		{
+			return STATUS_HANDLE_NOT_CLOSABLE;
+		}
+
+		return dNtClose(Handle);
+	}
+	else
+	{
+		return STATUS_INVALID_HANDLE;
+	}
 }
 
 static DWORD OneTickCount = 0;

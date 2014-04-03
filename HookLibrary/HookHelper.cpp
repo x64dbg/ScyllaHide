@@ -19,13 +19,32 @@ const WCHAR * BadProcessnameList[] = {
 	L"IMMUNITYDEBUGGER.EXE"
 };
 
-const WCHAR * BadWindowList[] = {
+const WCHAR * BadWindowTextList[] = {
+	L"OLLYDBG",
+	L"ida",
+	L"disassembly",
+	L"scylla",
+	L"Debug",
+	L"[CPU",
+	L"Immunity",
+	L"Windbg",
+	L"x32_dbg",
+	L"x64_dbg",
+	L"Windbg",
+	L"Import reconstructor"
+};
+
+const WCHAR * BadWindowClassList[] = {
 	L"OLLYDBG",
 	L"Zeta Debugger",
 	L"Rock Debugger",
 	L"ObsidianGUI",
 	L"ID", //Immunity Debugger
-	L"WinDbgFrameClass" //WinDBG
+	L"WinDbgFrameClass", //WinDBG
+	L"idawindow",
+	L"tnavbox",
+	L"idaview",
+	L"tgrzoom"
 };
 
 extern t_NtQueryInformationProcess dNtQueryInformationProcess;
@@ -114,10 +133,21 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 {
 	PROCESS_BASIC_INFORMATION pbi;
 
-	if (dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
+	if (dNtQueryInformationProcess)
 	{
-		return (DWORD)pbi.UniqueProcessId;
+		if (dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
+		{
+			return (DWORD)pbi.UniqueProcessId;
+		}
 	}
+	else
+	{ //maybe not hooked
+		if (NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
+		{
+			return (DWORD)pbi.UniqueProcessId;
+		}
+	}
+
 	
 	return 0;
 }

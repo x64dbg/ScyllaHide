@@ -27,6 +27,7 @@ typedef struct _HOOK_DLL_EXCHANGE {
 	BOOLEAN EnableNtQueryInformationProcessHook;
 	BOOLEAN EnableNtQueryObjectHook;
 	BOOLEAN EnableNtYieldExecutionHook;
+	BOOLEAN EnableNtCloseHook;
 
 	//Protect and Hide Hardware Breakpoints
 	BOOLEAN EnableNtGetContextThreadHook;
@@ -35,7 +36,6 @@ typedef struct _HOOK_DLL_EXCHANGE {
 	BOOLEAN EnableKiUserExceptionDispatcherHook;
 
 } HOOK_DLL_EXCHANGE;
-
 
 #define HOOK_ERROR_SUCCESS 0
 #define HOOK_ERROR_RESOLVE_IMPORT 1
