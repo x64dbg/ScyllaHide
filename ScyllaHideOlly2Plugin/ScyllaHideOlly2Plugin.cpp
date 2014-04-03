@@ -235,7 +235,8 @@ extc void ODBG2_Pluginnotify(int code,void *data,ulong parm1,ulong parm2) {
             CONTEXT ctx;
             ctx.ContextFlags = CONTEXT_CONTROL;
             GetThreadContext(hThread, &ctx);
-            if(ctx.Eip == startAddress) {
+            DWORD eip2 = ctx.Eip - 1; //if we land here by BP, the eip is real eip+1 ?!
+            if(ctx.Eip == startAddress || eip2 == startAddress) {
                 ScyllaHide(ProcessId);
             }
             break;
@@ -260,6 +261,9 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent) {
         hThread = debugevent->u.CreateProcessInfo.hThread;
         ProcessId = debugevent->dwProcessId;
         startAddress = (ULONG_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
+
+        //we need this to break on EP if Olly is set to break on systembp first
+        Setint3breakpoint(startAddress, BP_ONESHOT, -1, -1, -1, -1, NULL, NULL, NULL);
     }
     break;
 
