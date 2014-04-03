@@ -19,9 +19,9 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
 
 //globals
 HINSTANCE hinst;
+static HANDLE hThread;
 static DWORD ProcessId;
 static ULONG_PTR startAddress;
-static BOOL bootstrapped = FALSE;
 //menus
 static t_menu mainmenu[] = {
     {   L"Options",
@@ -232,8 +232,10 @@ extc void ODBG2_Pluginnotify(int code,void *data,ulong parm1,ulong parm2) {
     case PN_STATUS: {
         switch(parm1) {
         case STAT_PAUSED: {
-            if(!bootstrapped) {
-                bootstrapped = TRUE;
+            CONTEXT ctx;
+            ctx.ContextFlags = CONTEXT_CONTROL;
+            GetThreadContext(hThread, &ctx);
+            if(ctx.Eip == startAddress) {
                 ScyllaHide(ProcessId);
             }
             break;
@@ -254,10 +256,10 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent) {
     {
     case CREATE_PROCESS_DEBUG_EVENT:
     {
-        hProcess=debugevent->u.CreateProcessInfo.hProcess;
-        ProcessId=debugevent->dwProcessId;
+        hProcess = debugevent->u.CreateProcessInfo.hProcess;
+        hThread = debugevent->u.CreateProcessInfo.hThread;
+        ProcessId = debugevent->dwProcessId;
         startAddress = (ULONG_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
-        bootstrapped = FALSE;
     }
     break;
 
