@@ -20,7 +20,8 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
 //globals
 HINSTANCE hinst;
 static DWORD ProcessId;
-
+static ULONG_PTR startAddress;
+static BOOL bootstrapped = FALSE;
 //menus
 static t_menu mainmenu[] = {
     {   L"Options",
@@ -172,11 +173,27 @@ extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginnam
 
 //initialization happens in here
 extc int __cdecl ODBG2_Plugininit(void) {
-    HideOptions pHideOptions = {};
-
+    //we cant read them directly to pHideOptions
+    //because control vars need to be static and pHideOptions to be extern
     Getfromini(NULL,PLUGINNAME,L"PEB",L"%i",&opt_peb);
+    Getfromini(NULL,PLUGINNAME,L"NtSetInformationThread",L"%i",&opt_NtSetInformationThread);
+    Getfromini(NULL,PLUGINNAME,L"NtQuerySystemInformation",L"%i",&opt_NtQuerySystemInformation);
+    Getfromini(NULL,PLUGINNAME,L"NtQueryInformationProcess",L"%i",&opt_NtQueryInformationProcess);
+    Getfromini(NULL,PLUGINNAME,L"NtQueryObject",L"%i",&opt_NtQueryObject);
+    Getfromini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",&opt_NtYieldExecution);
+    Getfromini(NULL,PLUGINNAME,L"GetTickCount",L"%i",&opt_GetTickCount);
+    Getfromini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",&opt_OutputDebugStringA);
+    Getfromini(NULL,PLUGINNAME,L"ProtectDRx",L"%i",&opt_ProtectDRx);
 
     pHideOptions.PEB = opt_peb;
+    pHideOptions.NtSetInformationThread = opt_NtSetInformationThread;
+    pHideOptions.NtQueryInformationProcess = opt_NtQueryInformationProcess;
+    pHideOptions.NtQuerySystemInformation = opt_NtQuerySystemInformation;
+    pHideOptions.NtQueryObject = opt_NtQueryObject;
+    pHideOptions.NtYieldExecution = opt_NtYieldExecution;
+    pHideOptions.GetTickCount = opt_GetTickCount;
+    pHideOptions.OutputDebugStringA = opt_OutputDebugStringA;
+    pHideOptions.ProtectDrx = opt_ProtectDRx;
 
     return 0;
 }
@@ -192,9 +209,16 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type) {
 //options dialogproc
 extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp) {
     if (msg==WM_CLOSE && wp!=0) {
-        // User pressed OK in the Plugin options dialog. Options are updated, save
-        // them to the .ini file.
+        // User pressed OK in the Plugin options dialog. Options are updated, save them to the .ini file.
         Writetoini(NULL,PLUGINNAME,L"PEB",L"%i",opt_peb);
+        Writetoini(NULL,PLUGINNAME,L"NtSetInformationThread",L"%i",opt_NtSetInformationThread);
+        Writetoini(NULL,PLUGINNAME,L"NtQuerySystemInformation",L"%i",opt_NtQuerySystemInformation);
+        Writetoini(NULL,PLUGINNAME,L"NtQueryInformationProcess",L"%i",opt_NtQueryInformationProcess);
+        Writetoini(NULL,PLUGINNAME,L"NtQueryObject",L"%i",opt_NtQueryObject);
+        Writetoini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",opt_NtYieldExecution);
+        Writetoini(NULL,PLUGINNAME,L"GetTickCount",L"%i",opt_GetTickCount);
+        Writetoini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",opt_OutputDebugStringA);
+        Writetoini(NULL,PLUGINNAME,L"ProtectDRx",L"%i",opt_ProtectDRx);
 
         MessageBoxW(hwollymain, L"Please restart Olly to apply changes !", L"[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
     };
@@ -202,10 +226,27 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp) {
     return scyllahideoptions;
 };
 
+//first time this gets called we are at EP
+extc void ODBG2_Pluginnotify(int code,void *data,ulong parm1,ulong parm2) {
+    switch(code) {
+    case PN_STATUS: {
+        switch(parm1) {
+        case STAT_PAUSED: {
+            if(!bootstrapped) {
+                bootstrapped = TRUE;
+                ScyllaHide(ProcessId);
+            }
+            break;
+        }
+        }
+    }
+    break;
+    }
+}
+
 //called for every debugloop pass
 extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent) {
     static HANDLE hProcess;
-    static ULONG_PTR startAddress;
 
     if(!debugevent)
         return;
@@ -216,22 +257,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent) {
         hProcess=debugevent->u.CreateProcessInfo.hProcess;
         ProcessId=debugevent->dwProcessId;
         startAddress = (ULONG_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
-    }
-    break;
-
-    case EXCEPTION_DEBUG_EVENT:
-    {
-        switch(debugevent->u.Exception.ExceptionRecord.ExceptionCode)
-        {
-        case STATUS_BREAKPOINT:
-        {
-            //are we at EP ?
-            if(debugevent->u.Exception.ExceptionRecord.ExceptionAddress == (PVOID)startAddress) {
-                ScyllaHide(ProcessId);
-            }
-        }
-        break;
-        }
+        bootstrapped = FALSE;
     }
     break;
 
