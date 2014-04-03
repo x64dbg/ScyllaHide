@@ -175,11 +175,29 @@ HMODULE GetModuleBaseRemote(HANDLE hProcess, const wchar_t* szDLLName)
 
 DWORD StartDllInitFunction(HANDLE hProcess, DWORD_PTR functionAddress, LPVOID imageBase)
 {
+	NTSTATUS ntStat = 0;
 	DWORD dwExit = 0;
-	HANDLE hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)functionAddress, imageBase, CREATE_SUSPENDED, 0);
+	HANDLE hThread = 0;
+	t_NtCreateThreadEx _NtCreateThreadEx = (t_NtCreateThreadEx)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtCreateThreadEx");
+
+
+//	if (_NtCreateThreadEx)
+//	{
+//#define THREAD_ALL_ACCESS_VISTA         (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | \
+//	0xFFFF)
+//		ntStat = _NtCreateThreadEx(&hThread, THREAD_ALL_ACCESS_VISTA, 0, hProcess, (LPTHREAD_START_ROUTINE)functionAddress, imageBase, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, 0, 0, 0, 0);
+//	}
+//	else
+	{
+		hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)functionAddress, imageBase, CREATE_SUSPENDED, 0);
+	}
+
 	if (hThread)
 	{
-		NTSTATUS ntStat = NtSetInformationThread(hThread, ThreadHideFromDebugger, 0, 0);
+		ntStat = NtSetInformationThread(hThread, ThreadHideFromDebugger, 0, 0);
+
+		//SkipThreadAttach(hProcess, hThread);
+
 		ResumeThread(hThread);
 
 		WaitForSingleObject(hThread, INFINITE);
@@ -190,4 +208,25 @@ DWORD StartDllInitFunction(HANDLE hProcess, DWORD_PTR functionAddress, LPVOID im
 	}
 
 	return -1;
+}
+
+bool SkipThreadAttach(HANDLE hProcess, HANDLE hThread)
+{
+	USHORT tebFlags = 0;
+	THREAD_BASIC_INFORMATION tbi = { 0 };
+	if (NtQueryInformationThread(hThread, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0) >= 0)
+	{
+		DWORD_PTR tebAddress = (DWORD_PTR)tbi.TebBaseAddress;
+
+		DWORD_PTR tebFlagAddress = tebAddress + TEB_OFFSET_SAME_TEB_FLAGS;
+
+		if (ReadProcessMemory(hProcess, (void*)tebFlagAddress, &tebFlags, sizeof(USHORT), 0))
+		{
+			SameTebFlags * structFlags = (SameTebFlags *)&tebFlags;
+			structFlags->DbgSkipThreadAttach = TRUE;
+			return !!WriteProcessMemory(hProcess, (void*)tebFlagAddress, &tebFlags, sizeof(USHORT), 0);
+		}
+	}
+
+	return false;
 }
