@@ -230,3 +230,66 @@ bool SkipThreadAttach(HANDLE hProcess, HANDLE hThread)
 
 	return false;
 }
+
+
+
+#ifndef _WIN64
+//32bit
+BYTE pushDword[] = { 0x68, 0x00, 0x00, 0x00, 0x00 };
+BYTE callDword[] = { 0xE8, 0x00, 0x00, 0x00, 0x00 };
+BYTE jmpDword[] = { 0xE9, 0x00, 0x00, 0x00, 0x00 };
+
+int GetInjectStubSize()
+{
+	return sizeof(pushDword)+sizeof(callDword)+sizeof(jmpDword);
+}
+
+void PrepareInjectStub(DWORD memoryAddress, DWORD dllImageBase, DWORD systemBreakpointContinue, DWORD dllInitAddress, BYTE * result)
+{
+	DWORD * temp = (DWORD *)&pushDword[1];
+	*temp = dllImageBase;
+
+	temp = (DWORD *)&callDword[1];
+	*temp = (DWORD)(dllInitAddress - memoryAddress + sizeof(pushDword) - 5);
+
+	temp = (DWORD *)&jmpDword[1];
+	*temp = (DWORD)(systemBreakpointContinue - memoryAddress + sizeof(pushDword)+sizeof(callDword)-5);
+
+	memcpy(result, pushDword, sizeof(pushDword));
+	memcpy(result + sizeof(pushDword), callDword, sizeof(callDword));
+	memcpy(result + sizeof(pushDword)+sizeof(callDword), jmpDword, sizeof(jmpDword));
+}
+#else
+//64bit
+BYTE movRcx[] = { 0x48, 0xB9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+BYTE callQword[] = { 0xFF, 0x15, 0x00, 0x00, 0x00, 0x00 }; //dll init
+BYTE jmpQword[] = { 0xFF, 0x25, 0x00, 0x00, 0x00, 0x00 };
+BYTE addressTable[8 * 2] = { 0 };
+
+int GetInjectStubSize()
+{
+	return sizeof(movRcx)+sizeof(callQword)+sizeof(jmpQword)+sizeof(addressTable);
+}
+
+void PrepareInjectStub(DWORD_PTR memoryAddress, DWORD_PTR dllImageBase, DWORD_PTR systemBreakpointContinue, DWORD_PTR dllInitAddress, BYTE * result)
+{
+	DWORD_PTR * temp = (DWORD_PTR *)&movRcx[2];
+	*temp = dllImageBase;
+
+	temp = (DWORD_PTR *)addressTable;
+	*temp = dllInitAddress;
+	temp++;
+	*temp = systemBreakpointContinue;
+
+	DWORD * tempDw = (DWORD*)&callQword[2];
+	*tempDw = sizeof(jmpQword);
+
+	tempDw = (DWORD*)&jmpQword[2];
+	*tempDw = sizeof(DWORD_PTR);
+
+	memcpy(result, movRcx, sizeof(movRcx));
+	memcpy(result + sizeof(movRcx), callQword, sizeof(callQword));
+	memcpy(result + sizeof(movRcx)+sizeof(callQword), jmpQword, sizeof(jmpQword));
+	memcpy(result + sizeof(movRcx)+sizeof(callQword)+sizeof(jmpQword), addressTable, sizeof(addressTable));
+}
+#endif

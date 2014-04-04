@@ -33,3 +33,11 @@ DWORD RVAToOffset(PIMAGE_NT_HEADERS pNtHdr, DWORD dwRVA);
 HMODULE GetModuleBaseRemote(HANDLE hProcess, const wchar_t* szDLLName);
 DWORD StartDllInitFunction(HANDLE hProcess, DWORD_PTR functionAddress, LPVOID imageBase);
 bool SkipThreadAttach(HANDLE hProcess, HANDLE hThread);
+
+#ifndef _WIN64
+int GetInjectStubSize();
+void PrepareInjectStub(DWORD memoryAddress, DWORD dllImageBase, DWORD systemBreakpointContinue, DWORD dllInitAddress, BYTE * result);
+#else
+int GetInjectStubSize();
+void PrepareInjectStub(DWORD_PTR memoryAddress, DWORD_PTR dllImageBase, DWORD_PTR systemBreakpointContinue, DWORD_PTR dllInitAddress, BYTE * result);
+#endif
