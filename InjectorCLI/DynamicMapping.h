@@ -33,6 +33,7 @@ DWORD RVAToOffset(PIMAGE_NT_HEADERS pNtHdr, DWORD dwRVA);
 HMODULE GetModuleBaseRemote(HANDLE hProcess, const wchar_t* szDLLName);
 DWORD StartDllInitFunction(HANDLE hProcess, DWORD_PTR functionAddress, LPVOID imageBase);
 bool SkipThreadAttach(HANDLE hProcess, HANDLE hThread);
+bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module);
 
 bool StartSystemBreakpointInjection(DWORD threadi, HANDLE hProcess, DWORD_PTR functionAddress, LPVOID imageBase);
 #ifndef _WIN64

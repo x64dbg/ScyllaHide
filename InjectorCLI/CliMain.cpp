@@ -5,6 +5,8 @@
 #include "DynamicMapping.h"
 #include <Shlwapi.h>
 #include "..\HookLibrary\HookMain.h"
+#include "RemoteHook.h"
+#include "RemotePebHider.h"
 
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
@@ -23,7 +25,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath);
 DWORD SetDebugPrivileges();
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
-
+void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase);
 void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data);
 
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
@@ -58,7 +60,7 @@ int wmain(int argc, wchar_t* argv[])
 	}
 	else
 	{
-		
+
 #ifdef _WIN64
 		targetPid = GetProcessIdByName(L"scylla_x64.exe");//scylla_x64
 		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\x64\\Release\\HookLibrary.dll";
@@ -82,6 +84,97 @@ int wmain(int argc, wchar_t* argv[])
 	return 0;
 }
 
+#define HOOK(name) DllExchangeLoader.d##name = (t_##name)DetourCreateRemote(hProcess,_##name, Hooked##name, true)
+#define HOOK_NOTRAMP(name) DetourCreateRemote(hProcess,_##name, Hooked##name, false)
+
+void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+{
+	HMODULE hNtdll = GetModuleHandleW(L"ntdll.dll");
+	HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
+	HMODULE hUser = GetModuleHandleW(L"kernel32.dll");
+	HMODULE hKernelbase = GetModuleHandleW(L"kernelbase.dll");
+
+	void * HookedNtSetInformationThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetInformationThread") + imageBase);
+	void * HookedNtQuerySystemInformation = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQuerySystemInformation") + imageBase);
+	void * HookedNtQueryInformationProcess = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQueryInformationProcess") + imageBase);
+	void * HookedNtSetInformationProcess = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetInformationProcess") + imageBase);
+	void * HookedNtQueryObject = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQueryObject") + imageBase);
+	void * HookedNtYieldExecution = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtYieldExecution") + imageBase);
+	void * HookedNtGetContextThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtGetContextThread") + imageBase);
+	void * HookedNtSetContextThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetContextThread") + imageBase);
+	void * HookedKiUserExceptionDispatcher = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedKiUserExceptionDispatcher") + imageBase);
+	void * HookedNtContinue = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtContinue") + imageBase);
+	void * HookedNtClose = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtClose") + imageBase);
+
+	void * HookedOutputDebugStringA = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedOutputDebugStringA") + imageBase);
+	void * HookedGetTickCount = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetTickCount") + imageBase);
+	void * HookedBlockInput = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedBlockInput") + imageBase);
+	void * HookedNtUserFindWindowEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserFindWindowEx") + imageBase);
+
+
+	t_NtSetInformationThread _NtSetInformationThread = (t_NtSetInformationThread)GetProcAddress(hNtdll, "NtSetInformationThread");
+	t_NtQuerySystemInformation _NtQuerySystemInformation = (t_NtQuerySystemInformation)GetProcAddress(hNtdll, "NtQuerySystemInformation");
+	t_NtQueryInformationProcess _NtQueryInformationProcess = (t_NtQueryInformationProcess)GetProcAddress(hNtdll, "NtQueryInformationProcess");
+	t_NtSetInformationProcess _NtSetInformationProcess = (t_NtSetInformationProcess)GetProcAddress(hNtdll, "NtSetInformationProcess");
+	t_NtQueryObject _NtQueryObject = (t_NtQueryObject)GetProcAddress(hNtdll, "NtQueryObject");
+	t_NtYieldExecution _NtYieldExecution = (t_NtYieldExecution)GetProcAddress(hNtdll, "NtYieldExecution");
+	t_NtGetContextThread _NtGetContextThread = (t_NtGetContextThread)GetProcAddress(hNtdll, "NtGetContextThread");
+	t_NtSetContextThread _NtSetContextThread = (t_NtSetContextThread)GetProcAddress(hNtdll, "NtSetContextThread");
+	t_KiUserExceptionDispatcher _KiUserExceptionDispatcher = (t_KiUserExceptionDispatcher)GetProcAddress(hNtdll, "KiUserExceptionDispatcher");
+	t_NtContinue _NtContinue = (t_NtContinue)GetProcAddress(hNtdll, "NtContinue");
+	t_NtClose _NtClose = (t_NtClose)GetProcAddress(hNtdll, "NtClose");
+
+	t_OutputDebugStringA _OutputDebugStringA;
+	t_GetTickCount _GetTickCount;
+	if (hKernelbase)
+	{
+		_GetTickCount = (t_GetTickCount)GetProcAddress(hKernelbase, "GetTickCount");
+		_OutputDebugStringA = (t_OutputDebugStringA)GetProcAddress(hKernelbase, "OutputDebugStringA");
+	}
+	else
+	{
+		_GetTickCount = (t_GetTickCount)GetProcAddress(hKernel, "GetTickCount");
+		_OutputDebugStringA = (t_OutputDebugStringA)GetProcAddress(hKernel, "OutputDebugStringA");
+	}
+
+	if (hUser)
+	{
+		t_NtUserFindWindowEx _NtUserFindWindowEx = 0;
+		if (DllExchangeLoader.NtUserFindWindowExRVA)
+		{
+			_NtUserFindWindowEx = (t_NtUserFindWindowEx)((DWORD_PTR)hUser + DllExchangeLoader.NtUserFindWindowExRVA);
+		}
+		t_BlockInput _BlockInput = (t_BlockInput)GetProcAddress(hUser, "BlockInput");
+
+		if (DllExchangeLoader.EnableBlockInputHook == TRUE) HOOK(BlockInput);
+		if (DllExchangeLoader.EnableNtUserFindWindowExHook == TRUE && _NtUserFindWindowEx != 0) HOOK(NtUserFindWindowEx);
+	}
+
+	DllExchangeLoader.dNtSetInformationThread = (t_NtSetInformationThread)DetourCreateRemote(hProcess, _NtSetInformationThread, (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetInformationThread") + imageBase), true);
+
+
+	if (DllExchangeLoader.EnablePebHiding == TRUE) FixPebInProcess(hProcess);
+
+	if (DllExchangeLoader.EnableNtSetInformationThreadHook == TRUE) HOOK(NtSetInformationThread);
+	if (DllExchangeLoader.EnableNtQuerySystemInformationHook == TRUE) HOOK(NtQuerySystemInformation);
+	if (DllExchangeLoader.EnableNtQueryInformationProcessHook == TRUE)
+	{
+		HOOK(NtQueryInformationProcess);
+		HOOK(NtSetInformationProcess);
+	}
+	if (DllExchangeLoader.EnableNtQueryObjectHook == TRUE) HOOK(NtQueryObject);
+	if (DllExchangeLoader.EnableNtYieldExecutionHook == TRUE) HOOK(NtYieldExecution);
+	if (DllExchangeLoader.EnableNtGetContextThreadHook == TRUE) HOOK(NtGetContextThread);
+	if (DllExchangeLoader.EnableNtSetContextThreadHook == TRUE) HOOK(NtSetContextThread);
+	//if (DllExchangeLoader.EnableKiUserExceptionDispatcherHook == TRUE) HOOK(KiUserExceptionDispatcher);
+	if (DllExchangeLoader.EnableNtContinueHook == TRUE) HOOK(NtContinue);
+	if (DllExchangeLoader.EnableNtCloseHook == TRUE) HOOK(NtClose);
+
+	if (DllExchangeLoader.EnableGetTickCountHook == TRUE) HOOK(GetTickCount);
+
+	if (DllExchangeLoader.EnableOutputDebugStringHook == TRUE) HOOK_NOTRAMP(OutputDebugStringA);
+}
+
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 {
 	LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
@@ -91,18 +184,22 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 		DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
 		DWORD exchangeDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "DllExchange");
 
+		StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
+
 		if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
 		{
-			DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
+			//DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
 
-			if (exitCode == HOOK_ERROR_SUCCESS)
-			{
-				wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
-			}
-			else
-			{
-				wprintf(L"Injection failed, exit code %d 0x%X Imagebase %p\n", exitCode, exitCode, remoteImageBase);
-			}
+
+			//if (exitCode == HOOK_ERROR_SUCCESS)
+
+			//{
+			wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
+			//}
+			//else
+			//{
+			//	wprintf(L"Injection failed, exit code %d 0x%X Imagebase %p\n", exitCode, exitCode, remoteImageBase);
+			//}
 		}
 		else
 		{
@@ -144,10 +241,10 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
 	data->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
 	data->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
 
-	data->fLoadLibraryA = (t_LoadLibraryA)((DWORD_PTR)GetProcAddress(localKernel, "LoadLibraryA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-	data->fGetModuleHandleA = (t_GetModuleHandleA)((DWORD_PTR)GetProcAddress(localKernel, "GetModuleHandleA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-	data->fGetProcAddress = (t_GetProcAddress)((DWORD_PTR)GetProcAddress(localKernel, "GetProcAddress") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-
+	//data->fLoadLibraryA = (t_LoadLibraryA)((DWORD_PTR)GetProcAddress(localKernel, "LoadLibraryA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
+	//data->fGetModuleHandleA = (t_GetModuleHandleA)((DWORD_PTR)GetProcAddress(localKernel, "GetModuleHandleA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
+	//data->fGetProcAddress = (t_GetProcAddress)((DWORD_PTR)GetProcAddress(localKernel, "GetProcAddress") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
+	//data->fLdrGetProcedureAddress = (t_LdrGetProcedureAddress)((DWORD_PTR)GetProcAddress(localNtdll, "LdrGetProcedureAddress") - (DWORD_PTR)localNtdll + (DWORD_PTR)data->hNtdll);
 
 	//data->EnablePebHiding = TRUE;
 
@@ -332,7 +429,7 @@ void CreateDefaultSettings(const WCHAR * iniFile)
 
 void ReadSettings()
 {
-	
+
 	ReadSettingsFromIni(ScyllaHideIniPath);
 }
 

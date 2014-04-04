@@ -119,6 +119,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -141,10 +142,14 @@
   <ItemGroup>
     <ClCompile Include="DynamicMapping.cpp" />
     <ClCompile Include="CliMain.cpp" />
+    <ClCompile Include="RemoteHook.cpp" />
+    <ClCompile Include="RemotePebHider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DynamicMapping.h" />
     <ClInclude Include="ntdll.h" />
+    <ClInclude Include="RemoteHook.h" />
+    <ClInclude Include="RemotePebHider.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

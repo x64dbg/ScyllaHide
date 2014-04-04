@@ -44,6 +44,8 @@ LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory)
 		(DWORD_PTR)imageLocal,
 		dwDelta);
 
+	ResolveImports((PIMAGE_IMPORT_DESCRIPTOR)((DWORD_PTR)imageLocal + pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress), (DWORD_PTR)imageLocal);
+
 	if (WriteProcessMemory(hProcess, imageRemote, imageLocal, pNtHeader->OptionalHeader.SizeOfImage, 0))
 	{
 		VirtualFree(imageLocal, 0, MEM_RELEASE);
@@ -55,6 +57,63 @@ LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory)
 		VirtualFreeEx(hProcess, imageRemote, 0, MEM_RELEASE);
 		return 0;
 	}
+}
+
+bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module)
+{
+	PIMAGE_THUNK_DATA thunkRef;
+	PIMAGE_THUNK_DATA funcRef;
+
+	while (pImport->FirstThunk)
+	{
+		char * moduleName = (char *)(module + pImport->Name);
+
+		HMODULE hModule = GetModuleHandleA(moduleName);
+
+		if (!hModule)
+		{
+			hModule = LoadLibraryA(moduleName);
+			if (!hModule)
+			{
+				return false;
+			}
+		}
+
+		funcRef = (PIMAGE_THUNK_DATA)(module + pImport->FirstThunk);
+		if (pImport->OriginalFirstThunk)
+		{
+			thunkRef = (PIMAGE_THUNK_DATA)(module + pImport->OriginalFirstThunk);
+		}
+		else
+		{
+			thunkRef = (PIMAGE_THUNK_DATA)(module + pImport->FirstThunk);
+		}
+
+		while (thunkRef->u1.Function)
+		{
+			if (IMAGE_SNAP_BY_ORDINAL(thunkRef->u1.Function))
+			{
+				funcRef->u1.Function = (DWORD_PTR)GetProcAddress(hModule, (LPCSTR)IMAGE_ORDINAL(thunkRef->u1.Ordinal));
+			}
+			else
+			{
+				PIMAGE_IMPORT_BY_NAME thunkData = (PIMAGE_IMPORT_BY_NAME)(module + thunkRef->u1.AddressOfData);
+				funcRef->u1.Function = (DWORD_PTR)GetProcAddress(hModule, (LPCSTR)thunkData->Name);
+			}
+
+			if (!funcRef->u1.Function)
+			{
+				return false;
+			}
+
+			thunkRef++;
+			funcRef++;
+		}
+
+		pImport++;
+	}
+
+	return true;
 }
 
 void DoBaseRelocation(PIMAGE_BASE_RELOCATION relocation, DWORD_PTR memory, DWORD_PTR dwDelta)
@@ -173,40 +232,6 @@ HMODULE GetModuleBaseRemote(HANDLE hProcess, const wchar_t* szDLLName)
 	return 0;
 }
 
-//char text[1000] = {0};
-
-bool StartSystemBreakpointInjection(DWORD threadi, HANDLE hProcess, DWORD_PTR functionAddress, LPVOID imageBase)
-{
-	CONTEXT ctx = {0};
-	BYTE stub[1000];
-	ctx.ContextFlags = CONTEXT_CONTROL;
-	HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, 0, threadi);
-	//wsprintfA(text, "%X %X", hThread, threadi);
-	//MessageBoxA(0,text,"StartSystemBreakpointInjection",0);
-
-	if (NtGetContextThread(hThread, &ctx) >= 0)
-	{
-		//wsprintfA(text, "%X", ctx.Eip);
-		//MessageBoxA(0,text,"NtGetContextThread",0);
-
-		LPVOID memory = VirtualAllocEx(hProcess, 0, GetInjectStubSize(), MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-		if (memory)
-		{
-			//wsprintfA(text, "%X", memory);
-			//MessageBoxA(0,text,text,0);
-			PrepareInjectStub((DWORD)memory, (DWORD)imageBase, ctx.Eip, functionAddress, stub);
-			if (WriteProcessMemory(hProcess, memory, stub, GetInjectStubSize(), 0))
-			{
-				ctx.Eip = (DWORD)memory;
-				return (NtSetContextThread(hThread, &ctx) >= 0);
-			}
-
-		}
-	}
-	CloseHandle(hThread);
-	return false;
-}
-
 DWORD StartDllInitFunction(HANDLE hProcess, DWORD_PTR functionAddress, LPVOID imageBase)
 {
 	NTSTATUS ntStat = 0;
@@ -265,7 +290,38 @@ bool SkipThreadAttach(HANDLE hProcess, HANDLE hThread)
 	return false;
 }
 
+bool StartSystemBreakpointInjection(DWORD threadid, HANDLE hProcess, DWORD_PTR functionAddress, LPVOID imageBase)
+{
+	CONTEXT ctx = { 0 };
+	BYTE injectStub[500] = { 0 };
+	ctx.ContextFlags = CONTEXT_CONTROL;
 
+	HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, 0, threadid);
+	//wsprintfA(text, "%X %X", hThread, threadi);
+	//MessageBoxA(0,text,"StartSystemBreakpointInjection",0);
+
+	if (hThread && (NtGetContextThread(hThread, &ctx) >= 0))
+	{
+		//wsprintfA(text, "%X", ctx.Eip);
+		//MessageBoxA(0,text,"NtGetContextThread",0);
+
+		LPVOID memory = VirtualAllocEx(hProcess, 0, GetInjectStubSize(), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		if (memory)
+		{
+			//wsprintfA(text, "%X", memory);
+			//MessageBoxA(0, text, text, 0);
+			PrepareInjectStub((DWORD)memory, (DWORD)imageBase, ctx.Eip, functionAddress, injectStub);
+			if (WriteProcessMemory(hProcess, memory, injectStub, GetInjectStubSize(), 0))
+			{
+				ctx.Eip = (DWORD)memory;
+				return (NtSetContextThread(hThread, &ctx) >= 0);
+			}
+
+		}
+	}
+	CloseHandle(hThread);
+	return false;
+}
 
 #ifndef _WIN64
 //32bit
@@ -277,7 +333,7 @@ BYTE jmpDword[] = { 0xE9, 0x00, 0x00, 0x00, 0x00 };
 
 int GetInjectStubSize()
 {
-	return sizeof(pushDword)+sizeof(callDword)+sizeof(jmpDword) + 2;
+	return sizeof(pushDword)+sizeof(callDword)+sizeof(jmpDword)+2;
 }
 
 void PrepareInjectStub(DWORD memoryAddress, DWORD dllImageBase, DWORD systemBreakpointContinue, DWORD dllInitAddress, BYTE * result)
@@ -286,17 +342,17 @@ void PrepareInjectStub(DWORD memoryAddress, DWORD dllImageBase, DWORD systemBrea
 	*temp = dllImageBase;
 
 	temp = (DWORD *)&callDword[1];
-	*temp = (DWORD)(dllInitAddress - (memoryAddress + sizeof(pushDword) + 1) - 5);
+	*temp = (DWORD)(dllInitAddress - (memoryAddress + sizeof(pushDword)+1) - 5);
 
 	temp = (DWORD *)&jmpDword[1];
-	*temp = (DWORD)(systemBreakpointContinue - (memoryAddress + sizeof(pushDword)+sizeof(callDword) + 2) -5);
+	*temp = (DWORD)(systemBreakpointContinue - (memoryAddress + sizeof(pushDword)+sizeof(callDword)+2) - 5);
 
 	result[0] = pushad;
 	memcpy(result + 1, pushDword, sizeof(pushDword));
 	memcpy(result + 1 + sizeof(pushDword), callDword, sizeof(callDword));
 	memcpy(result + 1 + sizeof(pushDword)+sizeof(callDword), &popad, 1);
 	memcpy(result + 1 + sizeof(pushDword)+sizeof(callDword)+1, jmpDword, sizeof(jmpDword));
-	
+
 }
 #else
 //64bit
