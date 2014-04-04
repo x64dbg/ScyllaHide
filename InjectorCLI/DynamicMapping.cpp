@@ -173,6 +173,40 @@ HMODULE GetModuleBaseRemote(HANDLE hProcess, const wchar_t* szDLLName)
 	return 0;
 }
 
+//char text[1000] = {0};
+
+bool StartSystemBreakpointInjection(DWORD threadi, HANDLE hProcess, DWORD_PTR functionAddress, LPVOID imageBase)
+{
+	CONTEXT ctx = {0};
+	BYTE stub[1000];
+	ctx.ContextFlags = CONTEXT_CONTROL;
+	HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, 0, threadi);
+	//wsprintfA(text, "%X %X", hThread, threadi);
+	//MessageBoxA(0,text,"StartSystemBreakpointInjection",0);
+
+	if (NtGetContextThread(hThread, &ctx) >= 0)
+	{
+		//wsprintfA(text, "%X", ctx.Eip);
+		//MessageBoxA(0,text,"NtGetContextThread",0);
+
+		LPVOID memory = VirtualAllocEx(hProcess, 0, GetInjectStubSize(), MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		if (memory)
+		{
+			//wsprintfA(text, "%X", memory);
+			//MessageBoxA(0,text,text,0);
+			PrepareInjectStub((DWORD)memory, (DWORD)imageBase, ctx.Eip, functionAddress, stub);
+			if (WriteProcessMemory(hProcess, memory, stub, GetInjectStubSize(), 0))
+			{
+				ctx.Eip = (DWORD)memory;
+				return (NtSetContextThread(hThread, &ctx) >= 0);
+			}
+
+		}
+	}
+	CloseHandle(hThread);
+	return false;
+}
+
 DWORD StartDllInitFunction(HANDLE hProcess, DWORD_PTR functionAddress, LPVOID imageBase)
 {
 	NTSTATUS ntStat = 0;
@@ -235,13 +269,15 @@ bool SkipThreadAttach(HANDLE hProcess, HANDLE hThread)
 
 #ifndef _WIN64
 //32bit
+BYTE pushad = 0x60;//PUSHAD
+BYTE popad = 0x61;//POPAD
 BYTE pushDword[] = { 0x68, 0x00, 0x00, 0x00, 0x00 };
 BYTE callDword[] = { 0xE8, 0x00, 0x00, 0x00, 0x00 };
 BYTE jmpDword[] = { 0xE9, 0x00, 0x00, 0x00, 0x00 };
 
 int GetInjectStubSize()
 {
-	return sizeof(pushDword)+sizeof(callDword)+sizeof(jmpDword);
+	return sizeof(pushDword)+sizeof(callDword)+sizeof(jmpDword) + 2;
 }
 
 void PrepareInjectStub(DWORD memoryAddress, DWORD dllImageBase, DWORD systemBreakpointContinue, DWORD dllInitAddress, BYTE * result)
@@ -250,14 +286,17 @@ void PrepareInjectStub(DWORD memoryAddress, DWORD dllImageBase, DWORD systemBrea
 	*temp = dllImageBase;
 
 	temp = (DWORD *)&callDword[1];
-	*temp = (DWORD)(dllInitAddress - memoryAddress + sizeof(pushDword) - 5);
+	*temp = (DWORD)(dllInitAddress - (memoryAddress + sizeof(pushDword) + 1) - 5);
 
 	temp = (DWORD *)&jmpDword[1];
-	*temp = (DWORD)(systemBreakpointContinue - memoryAddress + sizeof(pushDword)+sizeof(callDword)-5);
+	*temp = (DWORD)(systemBreakpointContinue - (memoryAddress + sizeof(pushDword)+sizeof(callDword) + 2) -5);
 
-	memcpy(result, pushDword, sizeof(pushDword));
-	memcpy(result + sizeof(pushDword), callDword, sizeof(callDword));
-	memcpy(result + sizeof(pushDword)+sizeof(callDword), jmpDword, sizeof(jmpDword));
+	result[0] = pushad;
+	memcpy(result + 1, pushDword, sizeof(pushDword));
+	memcpy(result + 1 + sizeof(pushDword), callDword, sizeof(callDword));
+	memcpy(result + 1 + sizeof(pushDword)+sizeof(callDword), &popad, 1);
+	memcpy(result + 1 + sizeof(pushDword)+sizeof(callDword)+1, jmpDword, sizeof(jmpDword));
+	
 }
 #else
 //64bit

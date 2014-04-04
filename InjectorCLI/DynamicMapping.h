@@ -34,6 +34,7 @@ HMODULE GetModuleBaseRemote(HANDLE hProcess, const wchar_t* szDLLName);
 DWORD StartDllInitFunction(HANDLE hProcess, DWORD_PTR functionAddress, LPVOID imageBase);
 bool SkipThreadAttach(HANDLE hProcess, HANDLE hThread);
 
+bool StartSystemBreakpointInjection(DWORD threadi, HANDLE hProcess, DWORD_PTR functionAddress, LPVOID imageBase);
 #ifndef _WIN64
 int GetInjectStubSize();
 void PrepareInjectStub(DWORD memoryAddress, DWORD dllImageBase, DWORD systemBreakpointContinue, DWORD dllInitAddress, BYTE * result);
