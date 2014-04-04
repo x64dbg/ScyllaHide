@@ -16,6 +16,9 @@ static HINSTANCE hinst;
 static DWORD ProcessId;
 HWND hwmain; // Handle of main OllyDbg window
 
+extern HANDLE hThread;
+extern DWORD dwThreadid;
+
 static void ScyllaHide(DWORD ProcessId) {
     WCHAR * dllPath = 0;
 
@@ -222,8 +225,9 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 
 //called for every debugloop pass
 extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent) {
-    static HANDLE hProcess;
-    static ULONG_PTR startAddress;
+	static HANDLE hProcess;
+	static bool once = false;
+    //static ULONG_PTR startAddress;
 
     if(!debugevent)
         return;
@@ -232,8 +236,10 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
     case CREATE_PROCESS_DEBUG_EVENT:
     {
         hProcess=debugevent->u.CreateProcessInfo.hProcess;
+		hThread = debugevent->u.CreateProcessInfo.hThread;
         ProcessId=debugevent->dwProcessId;
-        startAddress = (ULONG_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
+		dwThreadid=debugevent->dwThreadId;
+        //startAddress = (ULONG_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
     }
     break;
 
@@ -244,9 +250,14 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         case STATUS_BREAKPOINT:
         {
             //are we at EP ?
-            if(debugevent->u.Exception.ExceptionRecord.ExceptionAddress == (PVOID)startAddress) {
-                ScyllaHide(ProcessId);
-            }
+            //if(debugevent->u.Exception.ExceptionRecord.ExceptionAddress == (PVOID)startAddress) {
+            //    ScyllaHide(ProcessId);
+            //}
+			if (!once)
+			{
+				once = true;
+				ScyllaHide(ProcessId);
+			}
         }
         break;
         }
