@@ -3,15 +3,17 @@
 #include <string.h>
 #include <tlhelp32.h>
 #include "DynamicMapping.h"
-
+#include <Shlwapi.h>
 #include "..\HookLibrary\HookMain.h"
 
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
+const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 #define INI_APPNAME L"SCYLLA_HIDE"
 
-
+void ChangeBadWindowText();
 void CreateSettings();
 void ReadSettings();
+void ReadNtApiInformation();
 void ReadSettingsFromIni(const WCHAR * iniFile);
 void CreateDummyUnicodeFile(const WCHAR * file);
 bool WriteIniSettings(const WCHAR * settingName, const WCHAR * settingValue, const WCHAR* inifile);
@@ -26,13 +28,26 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data);
 
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
+WCHAR NtApiIniPath[MAX_PATH] = { 0 };
+WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
+
 int wmain(int argc, wchar_t* argv[])
 {
 	DWORD targetPid = 0;
 	WCHAR * dllPath = 0;
 
-	SetDebugPrivileges();
+	GetModuleFileNameW(0, NtApiIniPath, _countof(NtApiIniPath));
 
+	WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
+	temp++;
+	*temp = 0;
+	wcscpy(ScyllaHideIniPath, NtApiIniPath);
+	wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
+	wcscat(NtApiIniPath, NtApiIniFilename);
+
+	ReadNtApiInformation();
+	SetDebugPrivileges();
+	//ChangeBadWindowText();
 	CreateSettings();
 	ReadSettings();
 
@@ -48,7 +63,7 @@ int wmain(int argc, wchar_t* argv[])
 		targetPid = GetProcessIdByName(L"scylla_x64.exe");//scylla_x64
 		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\x64\\Release\\HookLibrary.dll";
 #else
-		targetPid = GetProcessIdByName(L"scylla_x86.exe");
+		targetPid = GetProcessIdByName(L"ThemidaTest.exe");//GetProcessIdByName(L"scylla_x86.exe");
 		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\Release\\HookLibrary.dll";
 #endif
 	}
@@ -86,7 +101,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 			}
 			else
 			{
-				wprintf(L"Injection failed, exit code %d Imagebase %p\n", exitCode, remoteImageBase);
+				wprintf(L"Injection failed, exit code %d 0x%X Imagebase %p\n", exitCode, exitCode, remoteImageBase);
 			}
 		}
 		else
@@ -289,18 +304,9 @@ int ReadIniSettingsInt(const WCHAR * settingName, const WCHAR* inifile)
 
 void CreateSettings()
 {
-	WCHAR path[MAX_PATH] = { 0 };
-
-	GetModuleFileNameW(0, path, _countof(path));
-
-	WCHAR *temp = wcsrchr(path, L'\\');
-	temp++;
-	*temp = 0;
-
-	wcscat_s(path, ScyllaHideIniFilename);
-	if (!FileExists(path))
+	if (!FileExists(ScyllaHideIniPath))
 	{
-		CreateDefaultSettings(path);
+		CreateDefaultSettings(ScyllaHideIniPath);
 	}
 }
 
@@ -326,17 +332,8 @@ void CreateDefaultSettings(const WCHAR * iniFile)
 
 void ReadSettings()
 {
-	WCHAR path[MAX_PATH] = { 0 };
-
-	GetModuleFileNameW(0, path, _countof(path));
-
-	WCHAR *temp = wcsrchr(path, L'\\');
-	temp++;
-	*temp = 0;
-
-	wcscat_s(path, ScyllaHideIniFilename);
 	
-	ReadSettingsFromIni(path);
+	ReadSettingsFromIni(ScyllaHideIniPath);
 }
 
 void ReadSettingsFromIni(const WCHAR * iniFile)
@@ -359,3 +356,125 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
 	DllExchangeLoader.EnableNtContinueHook = ReadIniSettingsInt(L"NtContinueHook", iniFile);
 	DllExchangeLoader.EnableKiUserExceptionDispatcherHook = ReadIniSettingsInt(L"KiUserExceptionDispatcherHook", iniFile);
 }
+
+OSVERSIONINFOEXW osver = { 0 };
+SYSTEM_INFO si = { 0 };
+
+void QueryOsInfo()
+{
+	typedef void (WINAPI *t_GetNativeSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
+	t_GetNativeSystemInfo _GetNativeSystemInfo = (t_GetNativeSystemInfo)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetNativeSystemInfo");
+	if (_GetNativeSystemInfo)
+	{
+		_GetNativeSystemInfo(&si);
+	}
+	else
+	{
+		GetSystemInfo(&si);
+	}
+
+	osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+	GetVersionEx((LPOSVERSIONINFO)&osver);
+}
+
+DWORD ReadApiFromIni(const WCHAR * name, const WCHAR * section) //rva
+{
+	WCHAR buf[100] = { 0 };
+	if (GetPrivateProfileStringW(section, name, L"0", buf, _countof(buf), NtApiIniPath) > 0)
+	{
+		return wcstoul(buf, 0, 16);
+	}
+
+	return 0;
+}
+
+
+void ReadNtApiInformation()
+{
+	WCHAR OsId[300] = { 0 };
+	WCHAR temp[50] = { 0 };
+	QueryOsInfo();
+#ifdef _WIN64
+	wsprintfW(OsId, L"%02X%02X%02X%02X%02X%02X_x64", (DWORD)osver.dwMajorVersion, (DWORD)osver.dwMinorVersion, (DWORD)osver.wServicePackMajor, (DWORD)osver.wServicePackMinor, (DWORD)osver.wProductType, (DWORD)si.wProcessorArchitecture);
+#else
+	wsprintfW(OsId, L"%02X%02X%02X%02X%02X%02X_x86", (DWORD)osver.dwMajorVersion, (DWORD)osver.dwMinorVersion, (DWORD)osver.wServicePackMajor, (DWORD)osver.wServicePackMinor, (DWORD)osver.wProductType, (DWORD)si.wProcessorArchitecture);
+#endif
+	HMODULE hUser = GetModuleHandleW(L"user32.dll");
+	PIMAGE_DOS_HEADER pDosUser = (PIMAGE_DOS_HEADER)hUser;
+	PIMAGE_NT_HEADERS pNtUser = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosUser + pDosUser->e_lfanew);
+
+	if (pNtUser->Signature != IMAGE_NT_SIGNATURE)
+	{
+		printf("Wrong User NT Header\n");
+		return;
+	}
+	wsprintfW(temp, L"%08X", pNtUser->OptionalHeader.AddressOfEntryPoint);
+	wcscat(OsId, L"_");
+	wcscat(OsId, temp);
+
+	DllExchangeLoader.NtUserBuildHwndListRVA = ReadApiFromIni(L"NtUserBuildHwndList", OsId);
+	DllExchangeLoader.NtUserFindWindowExRVA = ReadApiFromIni(L"NtUserFindWindowEx", OsId);
+	DllExchangeLoader.NtUserQueryWindowRVA = ReadApiFromIni(L"NtUserQueryWindow", OsId);
+
+	if (!DllExchangeLoader.NtUserBuildHwndListRVA || !DllExchangeLoader.NtUserFindWindowExRVA || !DllExchangeLoader.NtUserQueryWindowRVA)
+	{
+		printf("NT APIs missing %S %S\n", OsId, NtApiIniPath);
+	}
+}
+
+
+
+//BOOL CALLBACK MyEnumChildProc(
+//	_In_  HWND hwnd,
+//	_In_  LPARAM lParam
+//	)
+//{
+//	WCHAR windowText[1000] = { 0 };
+//	WCHAR classText[1000] = { 0 };
+//	if (GetWindowTextW(hwnd, windowText, _countof(windowText)) > 1)
+//	{
+//		GetClassName(hwnd, classText, _countof(classText));
+//
+//		wprintf(L"\t%s\n\t%s\n", windowText, classText);
+//	}
+//
+//	return TRUE;
+//}
+//
+//BOOL CALLBACK MyEnumWindowsProc(HWND hwnd,LPARAM lParam)
+//{
+//	WCHAR windowText[1000] = { 0 };
+//	WCHAR classText[1000] = { 0 };
+//	if (GetWindowTextW(hwnd, windowText, _countof(windowText)) > 1)
+//	{
+//		GetClassName(hwnd, classText, _countof(classText));
+//
+//		wprintf(L"------------------\n%s\n%s\n", windowText, classText);
+//
+//		if (wcsistr(windowText, L"x32_dbg"))
+//		{
+//
+//			EnumChildWindows(hwnd, MyEnumChildProc, 0);
+//
+//			DWORD_PTR result;
+//			SendMessageTimeoutW(hwnd, WM_SETTEXT, 0, (LPARAM)title, SMTO_ABORTIFHUNG, 1000, &result);
+//
+//			//LPVOID stringW = WriteStringInProcessW(hwnd, L"ficken");
+//			//LPVOID stringA = WriteStringInProcessA(hwnd, "ficken");
+//			//if (!SetClassLongPtrW(hwnd, (int)&((WNDCLASSEXW*)0)->lpszClassName, (LONG_PTR)stringW))
+//			//{
+//			//	printf("%d %d\n", (int)&((WNDCLASSEXW*)0)->lpszClassName,  GetLastError());
+//			//}
+//			//if (!SetClassLongPtrA(hwnd, (int)&((WNDCLASSEXA*)0)->lpszClassName, (LONG_PTR)stringA))
+//			//{
+//			//	printf("%d %d\n", (int)&((WNDCLASSEXA*)0)->lpszClassName, GetLastError());
+//			//}
+//		}
+//	}
+//
+//	return TRUE;
+//}
+//void ChangeBadWindowText()
+//{
+//	EnumWindows(MyEnumWindowsProc, 0);
+//}
