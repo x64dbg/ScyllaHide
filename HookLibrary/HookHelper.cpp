@@ -1,5 +1,5 @@
 #include "HookHelper.h"
-#include "ntdll.h"
+#include "HookMain.h"
 #include <tlhelp32.h>
 
 const WCHAR * BadProcessnameList[] = {
@@ -47,8 +47,7 @@ const WCHAR * BadWindowClassList[] = {
 	L"tgrzoom"
 };
 
-extern t_NtQueryInformationProcess dNtQueryInformationProcess;
-extern t_NtQueryObject dNtQueryObject;
+extern HOOK_DLL_EXCHANGE DllExchange;
 
 bool IsProcessBad(const WCHAR * name, int nameSizeInBytes)
 {
@@ -133,9 +132,9 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 {
 	PROCESS_BASIC_INFORMATION pbi;
 
-	if (dNtQueryInformationProcess)
+	if (DllExchange.dNtQueryInformationProcess)
 	{
-		if (dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
+		if (DllExchange.dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
 		{
 			return (DWORD)pbi.UniqueProcessId;
 		}

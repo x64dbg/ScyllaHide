@@ -1,20 +1,25 @@
 #pragma once
 
 #include <windows.h>
+#include "ntdll.h"
 
 typedef BOOL(WINAPI * t_DllMain)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
-typedef FARPROC(WINAPI * t_GetProcAddress)(HMODULE hModule, LPCSTR lpProcName);
-typedef HMODULE(WINAPI * t_GetModuleHandleA)(LPCSTR lpModuleName);
-typedef HMODULE(WINAPI * t_LoadLibraryA)(LPCSTR lpFileName);
+typedef void  (WINAPI * t_GetSystemTime)(LPSYSTEMTIME lpSystemTime); //Kernel32.dll
+typedef void  (WINAPI * t_GetLocalTime)(LPSYSTEMTIME lpSystemTime); //Kernel32.dll
+typedef DWORD(WINAPI * t_timeGetTime)(void); //Winmm.dll
+typedef DWORD(WINAPI * t_GetTickCount)(void); //Kernel32.dll
+typedef BOOL(WINAPI * t_QueryPerformanceCounter)(LARGE_INTEGER *lpPerformanceCount); //Kernel32.dll
+typedef BOOL(WINAPI * t_BlockInput)(BOOL fBlockIt); //user32.dll
+typedef DWORD(WINAPI * t_OutputDebugStringA)(LPCSTR lpOutputString); //Kernel32.dll
+typedef DWORD(WINAPI * t_OutputDebugStringW)(LPCWSTR lpOutputString); //Kernel32.dll
+//WIN 7 X64: OutputDebugStringW -> OutputDebugStringA
 
 typedef struct _HOOK_DLL_EXCHANGE {
+	HMODULE hDllImage;
 	HMODULE hNtdll;
 	HMODULE hkernel32;
 	HMODULE hkernelBase;
 	HMODULE hUser32;
-	t_GetProcAddress fGetProcAddress;
-	t_GetModuleHandleA fGetModuleHandleA;
-	t_LoadLibraryA fLoadLibraryA;
 
 	BOOLEAN EnablePebHiding;
 
@@ -44,6 +49,24 @@ typedef struct _HOOK_DLL_EXCHANGE {
 	BOOLEAN EnableNtUserBuildHwndListHook;
 	BOOLEAN EnableNtUserFindWindowExHook;
 
+
+
+	t_NtSetInformationThread dNtSetInformationThread;
+	t_NtQuerySystemInformation dNtQuerySystemInformation;
+	t_NtSetInformationProcess dNtSetInformationProcess;
+	t_NtQueryInformationProcess dNtQueryInformationProcess;
+	t_NtQueryObject dNtQueryObject;
+	t_NtYieldExecution dNtYieldExecution;
+	t_NtGetContextThread dNtGetContextThread;
+	t_NtSetContextThread dNtSetContextThread;
+	t_KiUserExceptionDispatcher dKiUserExceptionDispatcher;
+	t_NtContinue dNtContinue;
+	t_NtClose dNtClose;
+
+	t_GetTickCount dGetTickCount;
+	t_BlockInput dBlockInput;
+
+	t_NtUserFindWindowEx dNtUserFindWindowEx;
 } HOOK_DLL_EXCHANGE;
 
 #define HOOK_ERROR_SUCCESS 0

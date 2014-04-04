@@ -1,4 +1,19 @@
 LIBRARY
 EXPORTS
-InitDll @1
-DllExchange @2
+InitDll
+DllExchange
+HookedNtSetInformationThread
+HookedNtQuerySystemInformation
+HookedNtQueryInformationProcess
+HookedNtSetInformationProcess
+HookedNtQueryObject
+HookedNtYieldExecution
+HookedNtGetContextThread
+HookedNtSetContextThread
+HookedKiUserExceptionDispatcher
+HookedNtContinue
+HookedNtClose
+HookedGetTickCount
+HookedBlockInput
+HookedOutputDebugStringA
+HookedNtUserFindWindowEx
