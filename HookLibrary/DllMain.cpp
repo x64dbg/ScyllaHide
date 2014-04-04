@@ -12,41 +12,53 @@ void StartHiding();
 #define HOOK(name) d##name = (t_##name)DetourCreate(_##name, Hooked##name, true)
 #define HOOK_NOTRAMP(name) DetourCreate(_##name, Hooked##name, false)
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
+bool once = false;
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    return TRUE;
+	return TRUE;
 }
 
-DWORD WINAPI InitDll(LPVOID notUsed)
+//DWORD WINAPI InitDll(LPVOID notUsed)
+DWORD InitDll()
 {
+	if (once == false)
+	{
+		once = true;
+	}
+	else
+	{
+		return 0;
+	}
+
 	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)DllExchange.hDllImage;
-    PIMAGE_NT_HEADERS pNtHeader = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosHeader + pDosHeader->e_lfanew);
+	PIMAGE_NT_HEADERS pNtHeader = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosHeader + pDosHeader->e_lfanew);
 	t_DllMain _DLLMain = (t_DllMain)((DWORD_PTR)DllExchange.hDllImage + pNtHeader->OptionalHeader.AddressOfEntryPoint);
 
-    if (pDosHeader && pDosHeader->e_magic == IMAGE_DOS_SIGNATURE && pNtHeader->Signature == IMAGE_NT_SIGNATURE)
-    {
-        //if (ResolveImports((PIMAGE_IMPORT_DESCRIPTOR)((DWORD_PTR)imageBase + pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress), (DWORD_PTR)imageBase))
-        //{
+	if (pDosHeader && pDosHeader->e_magic == IMAGE_DOS_SIGNATURE && pNtHeader->Signature == IMAGE_NT_SIGNATURE)
+	{
+		//if (ResolveImports((PIMAGE_IMPORT_DESCRIPTOR)((DWORD_PTR)imageBase + pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress), (DWORD_PTR)imageBase))
+		//{
 		if (_DLLMain((HINSTANCE)DllExchange.hDllImage, DLL_PROCESS_ATTACH, 0))
-            {
+		{
 			ZeroMemory(DllExchange.hDllImage, pNtHeader->OptionalHeader.SizeOfHeaders);
-                //StartHiding();
-                return HOOK_ERROR_SUCCESS;
-            }
-            else
-            {
-                return HOOK_ERROR_DLLMAIN;
-            }
-        //}
-        //else
-        //{
-        //    return HOOK_ERROR_RESOLVE_IMPORT;
-        //}
-    }
-    else
-    {
-        return HOOK_ERROR_PEHEADER;
-    }
+			//StartHiding();
+			return HOOK_ERROR_SUCCESS;
+		}
+		else
+		{
+			return HOOK_ERROR_DLLMAIN;
+		}
+		//}
+		//else
+		//{
+		//    return HOOK_ERROR_RESOLVE_IMPORT;
+		//}
+	}
+	else
+	{
+		return HOOK_ERROR_PEHEADER;
+	}
 }
 
 //void StartHiding()
