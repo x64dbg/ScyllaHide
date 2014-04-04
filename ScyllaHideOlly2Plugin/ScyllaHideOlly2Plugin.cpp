@@ -47,6 +47,10 @@ static int opt_NtYieldExecution;
 static int opt_GetTickCount;
 static int opt_OutputDebugStringA;
 static int opt_ProtectDRx;
+static int opt_NtUserFindWindowEx;
+static int opt_NtUserBuildHwndList;
+static int opt_NtUserQueryWindow;
+static int opt_NtSetDebugFilterState;
 
 static t_control scyllahideoptions[] = {
     {   CA_COMMENT, -1, 0, 0, 0, 0, NULL,
@@ -89,15 +93,31 @@ static t_control scyllahideoptions[] = {
         L"OutputDebugStringA",
         L"OutputDebugStringA"
     },
-    {   CA_GROUP, -1, 85, 20, 120, 105, NULL,
+    {   CA_CHECK, OPT_9, 90, 126, 120, 10, &opt_NtUserFindWindowEx,
+        L"NtUserFindWindowEx",
+        L"NtUserFindWindowEx"
+    },
+    {   CA_CHECK, OPT_10, 90, 138, 120, 10, &opt_NtUserBuildHwndList,
+        L"NtUserBuildHwndList",
+        L"NtUserBuildHwndList"
+    },
+    {   CA_CHECK, OPT_11, 90, 150, 120, 10, &opt_NtUserQueryWindow,
+        L"NtUserQueryWindow",
+        L"NtUserQueryWindow"
+    },
+    {   CA_CHECK, OPT_12, 90, 162, 120, 10, &opt_NtSetDebugFilterState,
+        L"NtSetDebugFilterState",
+        L"NtSetDebugFilterState"
+    },
+    {   CA_GROUP, -1, 85, 20, 120, 155, NULL,
         L"Debugger Hiding",
         NULL
     },
-    {   CA_CHECK, OPT_9, 90, 140, 120, 10, &opt_ProtectDRx,
+    {   CA_CHECK, OPT_13, 90, 190, 120, 10, &opt_ProtectDRx,
         L"Protect DRx",
         L"NtGetContextThread, NtSetContextThread, NtContinue"
     },
-    {   CA_GROUP, -1, 85, 130, 120, 25, NULL,
+    {   CA_GROUP, -1, 85, 180, 120, 25, NULL,
         L"DRx Protection",
         NULL
     },
@@ -184,6 +204,10 @@ extc int __cdecl ODBG2_Plugininit(void) {
     Getfromini(NULL,PLUGINNAME,L"GetTickCount",L"%i",&opt_GetTickCount);
     Getfromini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",&opt_OutputDebugStringA);
     Getfromini(NULL,PLUGINNAME,L"ProtectDRx",L"%i",&opt_ProtectDRx);
+    Getfromini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",&opt_NtUserFindWindowEx);
+    Getfromini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",&opt_NtUserBuildHwndList);
+    Getfromini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",&opt_NtUserQueryWindow);
+    Getfromini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",&opt_NtSetDebugFilterState);
 
     pHideOptions.PEB = opt_peb;
     pHideOptions.NtSetInformationThread = opt_NtSetInformationThread;
@@ -194,6 +218,10 @@ extc int __cdecl ODBG2_Plugininit(void) {
     pHideOptions.GetTickCount = opt_GetTickCount;
     pHideOptions.OutputDebugStringA = opt_OutputDebugStringA;
     pHideOptions.ProtectDrx = opt_ProtectDRx;
+    pHideOptions.NtUserFindWindowEx = opt_NtUserFindWindowEx;
+    pHideOptions.NtUserBuildHwndList = opt_NtUserBuildHwndList;
+    pHideOptions.NtUserQueryWindow = opt_NtUserQueryWindow;
+    pHideOptions.NtSetDebugFilterState = opt_NtSetDebugFilterState;
 
     return 0;
 }
@@ -219,6 +247,10 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp) {
         Writetoini(NULL,PLUGINNAME,L"GetTickCount",L"%i",opt_GetTickCount);
         Writetoini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",opt_OutputDebugStringA);
         Writetoini(NULL,PLUGINNAME,L"ProtectDRx",L"%i",opt_ProtectDRx);
+        Writetoini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",opt_NtUserFindWindowEx);
+        Writetoini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",opt_NtUserBuildHwndList);
+        Writetoini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",opt_NtUserQueryWindow);
+        Writetoini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",opt_NtSetDebugFilterState);
 
         MessageBoxW(hwollymain, L"Please restart Olly to apply changes !", L"[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
     };
