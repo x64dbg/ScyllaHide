@@ -1,6 +1,7 @@
 #include "HookHelper.h"
 #include "HookMain.h"
 #include <tlhelp32.h>
+#include "ntdllext.h"
 
 const WCHAR * BadProcessnameList[] = {
 	L"ollydbg.exe",
@@ -51,7 +52,9 @@ extern HOOK_DLL_EXCHANGE DllExchange;
 
 bool IsProcessBad(const WCHAR * name, int nameSizeInBytes)
 {
-	WCHAR nameCopy[400] = { 0 };
+	WCHAR nameCopy[400];
+
+	memset(nameCopy, 0, sizeof(nameCopy));
 
 	if (!name || !nameSizeInBytes)
 	{
@@ -103,15 +106,16 @@ bool IsValidThreadHandle(HANDLE hThread)
 	}
 }
 
+OSVERSIONINFO versionInfo = { 0 };
+
 bool IsAtleastVista()
 {
 	static bool isAtleastVista = false;
 	static bool isSet = false;
 	if (isSet)
 		return isAtleastVista;
-	OSVERSIONINFO versionInfo = { 0 };
-	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&versionInfo);
+	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
+	GetVersionExW(&versionInfo);
 	isAtleastVista = versionInfo.dwMajorVersion >= 6;
 	isSet = true;
 	return isAtleastVista;
@@ -226,8 +230,8 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 
 bool wcsistr(const wchar_t *s, const wchar_t *t)
 {
-	const size_t l1 = wcslen(s);
-	const size_t l2 = wcslen(t);
+	size_t l1 = wcslen(s);
+	size_t l2 = wcslen(t);
 
 	if (l1 < l2)
 		return false;

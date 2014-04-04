@@ -8,14 +8,10 @@ void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes);
 void FilterObject(POBJECT_TYPE_INFORMATION pObject);
 
-DWORD InitDll();
-
 NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass, PVOID ThreadInformation, ULONG ThreadInformationLength)
 {
     if (ThreadInformationClass == ThreadHideFromDebugger && ThreadInformation == 0 && ThreadInformationLength == 0)
     {
-		InitDll();
-
         if (ThreadHandle == NtCurrentThread || GetCurrentProcessId() == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
         {
             return STATUS_SUCCESS;
@@ -28,8 +24,6 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
 {
     if (SystemInformationClass == SystemKernelDebuggerInformation || SystemInformationClass == SystemProcessInformation)
     {
-		InitDll();
-
 		NTSTATUS ntStat = DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
         if (NT_SUCCESS(ntStat))
         {
@@ -53,8 +47,6 @@ static ULONG ValueProcessBreakOnTermination = FALSE;
 
 NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength)
 {
-	InitDll();
-
     if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
     {
 		NTSTATUS ntStat = DllExchange.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
@@ -90,8 +82,6 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
 
 NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength)
 {
-	InitDll();
-
 	if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
 	{
 		if (ProcessInformationClass == ProcessBreakOnTermination && ProcessInformation != 0 && sizeof(ULONG) == ProcessInformationLength)
@@ -109,8 +99,6 @@ NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS Objec
 
     if (NT_SUCCESS(ntStat) && ObjectInformation)
     {
-		InitDll();
-
         if (ObjectInformationClass == ObjectTypesInformation)
         {
             FilterObjects((POBJECT_TYPES_INFORMATION)ObjectInformation);
@@ -132,8 +120,6 @@ NTSTATUS NTAPI HookedNtYieldExecution()
 
 NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadContext)
 {
-	InitDll();
-
     DWORD ContextBackup = 0;
     if (ThreadHandle == NtCurrentThread || GetCurrentProcessId() == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
     {
@@ -155,8 +141,6 @@ NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
 
 NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadContext)
 {
-	InitDll();
-
     DWORD ContextBackup = 0;
     if (ThreadHandle == NtCurrentThread || GetCurrentProcessId() == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
     {
@@ -184,8 +168,6 @@ VOID NTAPI HookedKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT
 
 NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert)
 {
-	InitDll();
-
     if(ThreadContext) {
         ThreadContext->ContextFlags &= ~CONTEXT_DEBUG_REGISTERS;
     }
@@ -195,7 +177,7 @@ NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert)
 
 NTSTATUS NTAPI HookedNtClose(HANDLE Handle)
 {
-#define STATUS_HANDLE_NOT_CLOSABLE       ((NTSTATUS)0xC0000235L)
+#define STATUS_HANDLE_NOT_CLOSABLE ((NTSTATUS)0xC0000235L)
 
 	OBJECT_HANDLE_FLAG_INFORMATION flags;
 	flags.ProtectFromClose = 0;
@@ -221,8 +203,6 @@ DWORD WINAPI HookedGetTickCount(void)
 {
     if (!OneTickCount)
     {
-		InitDll();
-
 		OneTickCount = DllExchange.dGetTickCount();
     }
     else
@@ -254,8 +234,6 @@ BOOL WINAPI HookedBlockInput(BOOL fBlockIt)
 //GetLastError() function might not change if a  debugger is present (it has never been the case that it is always set to zero).
 DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString) //Worst anti-debug ever
 {
-	InitDll();
-
     if (IsAtleastVista())
     {
         return 0;
@@ -269,8 +247,6 @@ DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString) //Worst anti-debug 
 
 HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICODE_STRING lpszClass, PUNICODE_STRING lpszWindow, DWORD dwType)
 {
-	InitDll();
-
 	return DllExchange.dNtUserFindWindowEx(hWndParent, hWndChildAfter, lpszClass, lpszWindow, dwType);
 }
 

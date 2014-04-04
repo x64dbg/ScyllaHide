@@ -8,6 +8,8 @@ HOOK_DLL_EXCHANGE DllExchange = { 0 };
 
 void StartHiding();
 
+#pragma comment(linker, "/ENTRY:DllMain")
+
 
 #define HOOK(name) d##name = (t_##name)DetourCreate(_##name, Hooked##name, true)
 #define HOOK_NOTRAMP(name) DetourCreate(_##name, Hooked##name, false)
@@ -39,16 +41,16 @@ DWORD InitDll()
 	{
 		//if (ResolveImports((PIMAGE_IMPORT_DESCRIPTOR)((DWORD_PTR)imageBase + pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress), (DWORD_PTR)imageBase))
 		//{
-		if (_DLLMain((HINSTANCE)DllExchange.hDllImage, DLL_PROCESS_ATTACH, 0))
-		{
+		//if (_DLLMain((HINSTANCE)DllExchange.hDllImage, DLL_PROCESS_ATTACH, 0))
+		//{
 			ZeroMemory(DllExchange.hDllImage, pNtHeader->OptionalHeader.SizeOfHeaders);
 			//StartHiding();
 			return HOOK_ERROR_SUCCESS;
-		}
-		else
-		{
-			return HOOK_ERROR_DLLMAIN;
-		}
+		//}
+		//else
+		//{
+		//	return HOOK_ERROR_DLLMAIN;
+		//}
 		//}
 		//else
 		//{
