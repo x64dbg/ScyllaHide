@@ -103,6 +103,7 @@ bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module)
 
 			if (!funcRef->u1.Function)
 			{
+				MessageBoxA(0,"Function not resolved", moduleName, 0);
 				return false;
 			}
 

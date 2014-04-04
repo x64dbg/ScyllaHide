@@ -65,7 +65,7 @@ int wmain(int argc, wchar_t* argv[])
 		targetPid = GetProcessIdByName(L"scylla_x64.exe");//scylla_x64
 		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\x64\\Release\\HookLibrary.dll";
 #else
-		targetPid = GetProcessIdByName(L"ThemidaTest.exe");//GetProcessIdByName(L"scylla_x86.exe");
+		targetPid = GetProcessIdByName(L"VMProtect.vmp.exe");//GetProcessIdByName(L"scylla_x86.exe");
 		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\Release\\HookLibrary.dll";
 #endif
 	}
@@ -149,9 +149,6 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 		if (DllExchangeLoader.EnableBlockInputHook == TRUE) HOOK(BlockInput);
 		if (DllExchangeLoader.EnableNtUserFindWindowExHook == TRUE && _NtUserFindWindowEx != 0) HOOK(NtUserFindWindowEx);
 	}
-
-	DllExchangeLoader.dNtSetInformationThread = (t_NtSetInformationThread)DetourCreateRemote(hProcess, _NtSetInformationThread, (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetInformationThread") + imageBase), true);
-
 
 	if (DllExchangeLoader.EnablePebHiding == TRUE) FixPebInProcess(hProcess);
 
