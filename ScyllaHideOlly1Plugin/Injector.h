@@ -13,6 +13,10 @@ struct HideOptions {
     int OutputDebugStringA;
     int BlockInput;
     int ProtectDrx;
+    int NtUserFindWindowEx;
+    int NtUserBuildHwndList;
+    int NtUserQueryWindow;
+    int NtSetDebugFilterState;
 };
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);

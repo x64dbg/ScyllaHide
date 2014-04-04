@@ -35,34 +35,46 @@ void SaveOptions(HWND hWnd) {
     //read all checkboxes
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_GETCHECK, 0, 0)) {
         pHideOptions.PEB = 1;
-    }
+    } else pHideOptions.PEB = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_GETCHECK, 0, 0)) {
         pHideOptions.NtSetInformationThread = 1;
-    }
+    } else pHideOptions.NtSetInformationThread = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_GETCHECK, 0, 0)) {
         pHideOptions.NtQuerySystemInformation = 1;
-    }
+    } else pHideOptions.NtQuerySystemInformation = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_GETCHECK, 0, 0)) {
         pHideOptions.NtQueryInformationProcess = 1;
-    }
+    } else pHideOptions.NtQueryInformationProcess = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_GETCHECK, 0, 0)) {
         pHideOptions.NtQueryObject = 1;
-    }
+    } else pHideOptions.NtQueryObject = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_GETCHECK, 0, 0)) {
         pHideOptions.NtYieldExecution = 1;
-    }
+    } else pHideOptions.NtYieldExecution = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_GETCHECK, 0, 0)) {
         pHideOptions.GetTickCount = 1;
-    }
+    } else pHideOptions.GetTickCount = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_GETCHECK, 0, 0)) {
         pHideOptions.OutputDebugStringA = 1;
-    }
+    } else pHideOptions.OutputDebugStringA = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_GETCHECK, 0, 0)) {
         pHideOptions.BlockInput = 1;
-    }
+    } else pHideOptions.BlockInput = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_GETCHECK, 0, 0)) {
         pHideOptions.ProtectDrx = 1;
-    }
+    } else pHideOptions.ProtectDrx = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_GETCHECK, 0, 0)) {
+        pHideOptions.NtUserFindWindowEx = 1;
+    } else pHideOptions.NtUserFindWindowEx = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_GETCHECK, 0, 0)) {
+        pHideOptions.NtUserBuildHwndList = 1;
+    } else pHideOptions.NtUserBuildHwndList = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_GETCHECK, 0, 0)) {
+        pHideOptions.NtUserQueryWindow = 1;
+    } else pHideOptions.NtUserQueryWindow = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_GETCHECK, 0, 0)) {
+        pHideOptions.NtSetDebugFilterState = 1;
+    } else pHideOptions.NtSetDebugFilterState = 0;
 
     //save all options
     _Pluginwriteinttoini(hinst, "PEB", pHideOptions.PEB);
@@ -75,6 +87,10 @@ void SaveOptions(HWND hWnd) {
     _Pluginwriteinttoini(hinst, "OutputDebugStringA", pHideOptions.OutputDebugStringA);
     _Pluginwriteinttoini(hinst, "BlockInput", pHideOptions.BlockInput);
     _Pluginwriteinttoini(hinst, "ProtectDrx", pHideOptions.ProtectDrx);
+    _Pluginwriteinttoini(hinst, "NtUserFindWindowEx", pHideOptions.NtUserFindWindowEx);
+    _Pluginwriteinttoini(hinst, "NtUserBuildHwndList", pHideOptions.NtUserBuildHwndList);
+    _Pluginwriteinttoini(hinst, "NtUserQueryWindow", pHideOptions.NtUserQueryWindow);
+    _Pluginwriteinttoini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
 }
 
 void LoadOptions(HWND hWnd) {
@@ -89,6 +105,10 @@ void LoadOptions(HWND hWnd) {
     pHideOptions.OutputDebugStringA = _Pluginreadintfromini(hinst, "OutputDebugStringA", pHideOptions.OutputDebugStringA);
     pHideOptions.BlockInput = _Pluginreadintfromini(hinst, "BlockInput", pHideOptions.BlockInput);
     pHideOptions.ProtectDrx = _Pluginreadintfromini(hinst, "ProtectDrx", pHideOptions.ProtectDrx);
+    pHideOptions.NtUserFindWindowEx = _Pluginreadintfromini(hinst, "NtUserFindWindowEx", pHideOptions.NtUserFindWindowEx);
+    pHideOptions.NtUserBuildHwndList = _Pluginreadintfromini(hinst, "NtUserBuildHwndList", pHideOptions.NtUserBuildHwndList);
+    pHideOptions.NtUserQueryWindow = _Pluginreadintfromini(hinst, "NtUserQueryWindow", pHideOptions.NtUserQueryWindow);
+    pHideOptions.NtSetDebugFilterState = _Pluginreadintfromini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
 
     //set all options in GUI
     SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, pHideOptions.PEB, 0);
@@ -101,6 +121,10 @@ void LoadOptions(HWND hWnd) {
     SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_SETCHECK, pHideOptions.OutputDebugStringA, 0);
     SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_SETCHECK, pHideOptions.BlockInput, 0);
     SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, pHideOptions.ProtectDrx, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_SETCHECK, pHideOptions.NtUserFindWindowEx, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_SETCHECK, pHideOptions.NtUserBuildHwndList, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_SETCHECK, pHideOptions.NtUserQueryWindow, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, pHideOptions.NtSetDebugFilterState, 0);
 }
 
 //options dialog proc
