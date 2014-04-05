@@ -18,11 +18,11 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 
         if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
         {
-			//DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
+            //DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
 
-			bool suc = StartSystemBreakpointInjection(dwThreadid, hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
-			if (suc)
-			{
+            bool suc = StartSystemBreakpointInjection(dwThreadid, hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
+            if (suc)
+            {
                 _Message(0, "[ScyllaHide] Injection successful, Imagebase %p\n", remoteImageBase);
             }
             else
@@ -93,7 +93,7 @@ BYTE * ReadFileToMemory(const WCHAR * targetFilePath)
 void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
 {
     HMODULE localKernel = GetModuleHandleW(L"kernel32.dll");
-	HMODULE localKernelbase = GetModuleHandleW(L"kernelbase.dll");
+    HMODULE localKernelbase = GetModuleHandleW(L"kernelbase.dll");
     HMODULE localNtdll = GetModuleHandleW(L"ntdll.dll");
 
     data->hNtdll = GetModuleBaseRemote(hProcess, L"ntdll.dll");
@@ -101,33 +101,22 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
     data->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
 
-    data->fLoadLibraryA = (t_LoadLibraryA)((DWORD_PTR)GetProcAddress(localKernel, "LoadLibraryA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-    data->fGetModuleHandleA = (t_GetModuleHandleA)((DWORD_PTR)GetProcAddress(localKernel, "GetModuleHandleA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-    
-	if (localKernelbase)
-	{
-		data->fGetProcAddress = (t_GetProcAddress)((DWORD_PTR)GetProcAddress(localKernelbase, "GetProcAddress") - (DWORD_PTR)localKernelbase + (DWORD_PTR)data->hkernelBase);
-	}
-	else
-	{
-		data->fGetProcAddress = (t_GetProcAddress)((DWORD_PTR)GetProcAddress(localKernel, "GetProcAddress") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-	}
-	
-
-    data->EnablePebHiding = (BOOLEAN)pHideOptions.PEB;
+    data->EnablePebHiding = pHideOptions.PEB;
     data->EnableBlockInputHook = pHideOptions.BlockInput;
     data->EnableGetTickCountHook = pHideOptions.GetTickCount;
     data->EnableOutputDebugStringHook = pHideOptions.OutputDebugStringA;
-
     data->EnableNtSetInformationThreadHook = pHideOptions.NtSetInformationThread;
     data->EnableNtQueryInformationProcessHook = pHideOptions.NtQueryInformationProcess;
     data->EnableNtQuerySystemInformationHook = pHideOptions.NtQuerySystemInformation;
     data->EnableNtQueryObjectHook = pHideOptions.NtQueryObject;
     data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
-
     data->EnableNtGetContextThreadHook = pHideOptions.ProtectDrx;
     data->EnableNtSetContextThreadHook = pHideOptions.ProtectDrx;
     data->EnableNtContinueHook = pHideOptions.ProtectDrx;
+    data->EnableNtUserFindWindowExHook = pHideOptions.NtUserFindWindowEx;
+    data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
+    data->EnableNtUserQueryWindowHook = pHideOptions.NtUserQueryWindow;
+    data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
 }
 
 DWORD SetDebugPrivileges()

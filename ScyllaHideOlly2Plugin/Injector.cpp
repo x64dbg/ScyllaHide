@@ -97,24 +97,22 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
     data->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
 
-    data->fLoadLibraryA = (t_LoadLibraryA)((DWORD_PTR)GetProcAddress(localKernel, "LoadLibraryA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-    data->fGetModuleHandleA = (t_GetModuleHandleA)((DWORD_PTR)GetProcAddress(localKernel, "GetModuleHandleA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-    data->fGetProcAddress = (t_GetProcAddress)((DWORD_PTR)GetProcAddress(localKernel, "GetProcAddress") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-
-    data->EnablePebHiding = (BOOLEAN)pHideOptions.PEB;
+    data->EnablePebHiding = pHideOptions.PEB;
     data->EnableBlockInputHook = pHideOptions.BlockInput;
     data->EnableGetTickCountHook = pHideOptions.GetTickCount;
     data->EnableOutputDebugStringHook = pHideOptions.OutputDebugStringA;
-
     data->EnableNtSetInformationThreadHook = pHideOptions.NtSetInformationThread;
     data->EnableNtQueryInformationProcessHook = pHideOptions.NtQueryInformationProcess;
     data->EnableNtQuerySystemInformationHook = pHideOptions.NtQuerySystemInformation;
     data->EnableNtQueryObjectHook = pHideOptions.NtQueryObject;
     data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
-
     data->EnableNtGetContextThreadHook = pHideOptions.ProtectDrx;
     data->EnableNtSetContextThreadHook = pHideOptions.ProtectDrx;
     data->EnableNtContinueHook = pHideOptions.ProtectDrx;
+    data->EnableNtUserFindWindowExHook = pHideOptions.NtUserFindWindowEx;
+    data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
+    data->EnableNtUserQueryWindowHook = pHideOptions.NtUserQueryWindow;
+    data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
 }
 
 DWORD SetDebugPrivileges()
