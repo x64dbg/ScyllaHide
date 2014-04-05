@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
@@ -65,7 +66,7 @@ int wmain(int argc, wchar_t* argv[])
 		targetPid = GetProcessIdByName(L"scylla_x64.exe");//scylla_x64
 		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\x64\\Release\\HookLibrary.dll";
 #else
-		targetPid = GetProcessIdByName(L"ThemidaTest.exe");//GetProcessIdByName(L"VMProtect.vmp.exe");//GetProcessIdByName(L"scylla_x86.exe");
+		targetPid = GetProcessIdByName(L"VMProtect.vmp.exe");//GetProcessIdByName(L"ThemidaTest.exe");//GetProcessIdByName(L"VMProtect.vmp.exe");//GetProcessIdByName(L"scylla_x86.exe");
 		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\Release\\HookLibrary.dll";
 #endif
 	}
@@ -112,7 +113,8 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 	void * HookedGetTickCount = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetTickCount") + imageBase);
 	void * HookedBlockInput = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedBlockInput") + imageBase);
 	void * HookedNtUserFindWindowEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserFindWindowEx") + imageBase);
-
+	void * HookedNtUserBuildHwndList = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBuildHwndList") + imageBase);
+	void * HookedNtSetDebugFilterState = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetDebugFilterState") + imageBase);
 
 	t_NtSetInformationThread _NtSetInformationThread = (t_NtSetInformationThread)GetProcAddress(hNtdll, "NtSetInformationThread");
 	t_NtQuerySystemInformation _NtQuerySystemInformation = (t_NtQuerySystemInformation)GetProcAddress(hNtdll, "NtQuerySystemInformation");
@@ -125,6 +127,7 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 	t_KiUserExceptionDispatcher _KiUserExceptionDispatcher = (t_KiUserExceptionDispatcher)GetProcAddress(hNtdll, "KiUserExceptionDispatcher");
 	t_NtContinue _NtContinue = (t_NtContinue)GetProcAddress(hNtdll, "NtContinue");
 	t_NtClose _NtClose = (t_NtClose)GetProcAddress(hNtdll, "NtClose");
+	t_NtSetDebugFilterState _NtSetDebugFilterState = (t_NtSetDebugFilterState)GetProcAddress(hNtdll, "NtSetDebugFilterState");
 
 	t_OutputDebugStringA _OutputDebugStringA;
 	t_GetTickCount _GetTickCount;
@@ -141,7 +144,18 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 
 	if (hUser && hUserRemote)
 	{
+		t_NtUserBuildHwndList _NtUserBuildHwndList = 0;
 		t_NtUserFindWindowEx _NtUserFindWindowEx = 0;
+		t_NtUserQueryWindow _NtUserQueryWindow = 0;
+
+		if (DllExchangeLoader.NtUserQueryWindowRVA)
+		{
+			_NtUserQueryWindow = (t_NtUserQueryWindow)((DWORD_PTR)hUserRemote + DllExchangeLoader.NtUserQueryWindowRVA);
+		}
+		if (DllExchangeLoader.NtUserBuildHwndListRVA)
+		{
+			_NtUserBuildHwndList = (t_NtUserBuildHwndList)((DWORD_PTR)hUserRemote + DllExchangeLoader.NtUserBuildHwndListRVA);
+		}
 		if (DllExchangeLoader.NtUserFindWindowExRVA)
 		{
 			_NtUserFindWindowEx = (t_NtUserFindWindowEx)((DWORD_PTR)hUserRemote + DllExchangeLoader.NtUserFindWindowExRVA);
@@ -150,28 +164,28 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 
 		if (DllExchangeLoader.EnableBlockInputHook == TRUE) HOOK(BlockInput);
 		if (DllExchangeLoader.EnableNtUserFindWindowExHook == TRUE && _NtUserFindWindowEx != 0) HOOK(NtUserFindWindowEx);
+		if (DllExchangeLoader.EnableNtUserBuildHwndListHook == TRUE && _NtUserBuildHwndList != 0) HOOK(NtUserBuildHwndList);
 	}
 
 	if (DllExchangeLoader.EnablePebHiding == TRUE) FixPebInProcess(hProcess);
 
-	//if (DllExchangeLoader.EnableNtSetInformationThreadHook == TRUE) HOOK(NtSetInformationThread);
-	//if (DllExchangeLoader.EnableNtQuerySystemInformationHook == TRUE) HOOK(NtQuerySystemInformation);
+	if (DllExchangeLoader.EnableNtSetInformationThreadHook == TRUE) HOOK(NtSetInformationThread);
+	if (DllExchangeLoader.EnableNtQuerySystemInformationHook == TRUE) HOOK(NtQuerySystemInformation);
 	if (DllExchangeLoader.EnableNtQueryInformationProcessHook == TRUE)
 	{
 		HOOK(NtQueryInformationProcess);
 		HOOK(NtSetInformationProcess);
 	}
-	//if (DllExchangeLoader.EnableNtQueryObjectHook == TRUE) HOOK(NtQueryObject);
-	//if (DllExchangeLoader.EnableNtYieldExecutionHook == TRUE) HOOK(NtYieldExecution);
-	//if (DllExchangeLoader.EnableNtGetContextThreadHook == TRUE) HOOK(NtGetContextThread);
-	//if (DllExchangeLoader.EnableNtSetContextThreadHook == TRUE) HOOK(NtSetContextThread);
-	////-if (DllExchangeLoader.EnableKiUserExceptionDispatcherHook == TRUE) HOOK(KiUserExceptionDispatcher);
-	//if (DllExchangeLoader.EnableNtContinueHook == TRUE) HOOK(NtContinue);
-	//if (DllExchangeLoader.EnableNtCloseHook == TRUE) HOOK(NtClose);
-
-	//if (DllExchangeLoader.EnableGetTickCountHook == TRUE) HOOK(GetTickCount);
-
-	//if (DllExchangeLoader.EnableOutputDebugStringHook == TRUE) HOOK_NOTRAMP(OutputDebugStringA);
+	if (DllExchangeLoader.EnableNtQueryObjectHook == TRUE) HOOK(NtQueryObject);
+	if (DllExchangeLoader.EnableNtYieldExecutionHook == TRUE) HOOK(NtYieldExecution);
+	if (DllExchangeLoader.EnableNtGetContextThreadHook == TRUE) HOOK(NtGetContextThread);
+	if (DllExchangeLoader.EnableNtSetContextThreadHook == TRUE) HOOK(NtSetContextThread);
+	//if (DllExchangeLoader.EnableKiUserExceptionDispatcherHook == TRUE) HOOK(KiUserExceptionDispatcher);
+	if (DllExchangeLoader.EnableNtContinueHook == TRUE) HOOK(NtContinue);
+	if (DllExchangeLoader.EnableNtCloseHook == TRUE) HOOK(NtClose);
+	if (DllExchangeLoader.EnableGetTickCountHook == TRUE) HOOK(GetTickCount);
+	if (DllExchangeLoader.EnableOutputDebugStringHook == TRUE) HOOK_NOTRAMP(OutputDebugStringA);
+	if (DllExchangeLoader.EnableNtSetDebugFilterStateHook == TRUE) HOOK_NOTRAMP(NtSetDebugFilterState);
 }
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
@@ -408,22 +422,25 @@ void CreateSettings()
 
 void CreateDefaultSettings(const WCHAR * iniFile)
 {
-	WriteIniSettings(L"PebHiding", L"1", iniFile);
-
 	WriteIniSettings(L"BlockInputHook", L"1", iniFile);
 	WriteIniSettings(L"GetTickCountHook", L"1", iniFile);
-	WriteIniSettings(L"OutputDebugStringHook", L"1", iniFile);
-
-	WriteIniSettings(L"NtSetInformationThreadHook", L"1", iniFile);
-	WriteIniSettings(L"NtQueryInformationProcessHook", L"1", iniFile);
-	WriteIniSettings(L"NtQuerySystemInformationHook", L"1", iniFile);
-	WriteIniSettings(L"NtQueryObjectHook", L"1", iniFile);
-	WriteIniSettings(L"NtYieldExecutionHook", L"1", iniFile);
-
-	WriteIniSettings(L"NtGetContextThreadHook", L"1", iniFile);
-	WriteIniSettings(L"NtSetContextThreadHook", L"1", iniFile);
-	WriteIniSettings(L"NtContinueHook", L"1", iniFile);
 	WriteIniSettings(L"KiUserExceptionDispatcherHook", L"1", iniFile);
+	WriteIniSettings(L"NtCloseHook", L"1", iniFile);
+	WriteIniSettings(L"NtContinueHook", L"1", iniFile);
+	WriteIniSettings(L"NtGetContextThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtQueryInformationProcessHook", L"1", iniFile);
+	WriteIniSettings(L"NtQueryObjectHook", L"1", iniFile);
+	WriteIniSettings(L"NtQuerySystemInformationHook", L"1", iniFile);
+	WriteIniSettings(L"NtSetContextThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtSetDebugFilterStateHook", L"1", iniFile);
+	WriteIniSettings(L"NtSetInformationThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtUserBuildHwndListHook", L"1", iniFile);
+	WriteIniSettings(L"NtUserFindWindowExHook", L"1", iniFile);
+	WriteIniSettings(L"NtYieldExecutionHook", L"1", iniFile);
+	WriteIniSettings(L"OutputDebugStringHook", L"1", iniFile);
+	WriteIniSettings(L"PebHiding", L"1", iniFile);
+
+	WriteIniSettings(L"EnableProtectProcessId", L"1", iniFile);
 }
 
 void ReadSettings()
@@ -434,25 +451,25 @@ void ReadSettings()
 
 void ReadSettingsFromIni(const WCHAR * iniFile)
 {
-
-	DllExchangeLoader.EnablePebHiding = ReadIniSettingsInt(L"PebHiding", iniFile);
-
 	DllExchangeLoader.EnableBlockInputHook = ReadIniSettingsInt(L"BlockInputHook", iniFile);
 	DllExchangeLoader.EnableGetTickCountHook = ReadIniSettingsInt(L"GetTickCountHook", iniFile);
-	DllExchangeLoader.EnableOutputDebugStringHook = ReadIniSettingsInt(L"OutputDebugStringHook", iniFile);
-
-	DllExchangeLoader.EnableNtSetInformationThreadHook = ReadIniSettingsInt(L"NtSetInformationThreadHook", iniFile);
-	DllExchangeLoader.EnableNtQueryInformationProcessHook = ReadIniSettingsInt(L"NtQueryInformationProcessHook", iniFile);
-	DllExchangeLoader.EnableNtQuerySystemInformationHook = ReadIniSettingsInt(L"NtQuerySystemInformationHook", iniFile);
-	DllExchangeLoader.EnableNtQueryObjectHook = ReadIniSettingsInt(L"NtQueryObjectHook", iniFile);
-	DllExchangeLoader.EnableNtYieldExecutionHook = ReadIniSettingsInt(L"NtYieldExecutionHook", iniFile);
-
-	DllExchangeLoader.EnableNtGetContextThreadHook = ReadIniSettingsInt(L"NtGetContextThreadHook", iniFile);
-	DllExchangeLoader.EnableNtSetContextThreadHook = ReadIniSettingsInt(L"NtSetContextThreadHook", iniFile);
-	DllExchangeLoader.EnableNtContinueHook = ReadIniSettingsInt(L"NtContinueHook", iniFile);
 	DllExchangeLoader.EnableKiUserExceptionDispatcherHook = ReadIniSettingsInt(L"KiUserExceptionDispatcherHook", iniFile);
-
+	DllExchangeLoader.EnableNtCloseHook = ReadIniSettingsInt(L"NtCloseHook", iniFile);
+	DllExchangeLoader.EnableNtContinueHook = ReadIniSettingsInt(L"NtContinueHook", iniFile);
+	DllExchangeLoader.EnableNtGetContextThreadHook = ReadIniSettingsInt(L"NtGetContextThreadHook", iniFile);
+	DllExchangeLoader.EnableNtQueryInformationProcessHook = ReadIniSettingsInt(L"NtQueryInformationProcessHook", iniFile);
+	DllExchangeLoader.EnableNtQueryObjectHook = ReadIniSettingsInt(L"NtQueryObjectHook", iniFile);
+	DllExchangeLoader.EnableNtQuerySystemInformationHook = ReadIniSettingsInt(L"NtQuerySystemInformationHook", iniFile);
+	DllExchangeLoader.EnableNtSetContextThreadHook = ReadIniSettingsInt(L"NtSetContextThreadHook", iniFile);
+	DllExchangeLoader.EnableNtSetDebugFilterStateHook = ReadIniSettingsInt(L"NtSetDebugFilterStateHook", iniFile);
+	DllExchangeLoader.EnableNtSetInformationThreadHook = ReadIniSettingsInt(L"NtSetInformationThreadHook", iniFile);
+	DllExchangeLoader.EnableNtUserBuildHwndListHook = ReadIniSettingsInt(L"NtUserBuildHwndListHook", iniFile);
 	DllExchangeLoader.EnableNtUserFindWindowExHook = ReadIniSettingsInt(L"NtUserFindWindowExHook", iniFile);
+	DllExchangeLoader.EnableNtYieldExecutionHook = ReadIniSettingsInt(L"NtYieldExecutionHook", iniFile);
+	DllExchangeLoader.EnableOutputDebugStringHook = ReadIniSettingsInt(L"OutputDebugStringHook", iniFile);
+	DllExchangeLoader.EnablePebHiding = ReadIniSettingsInt(L"PebHiding", iniFile);
+
+	DllExchangeLoader.EnableProtectProcessId = ReadIniSettingsInt(L"EnableProtectProcessId", iniFile);
 }
 
 OSVERSIONINFOEXW osver = { 0 };
