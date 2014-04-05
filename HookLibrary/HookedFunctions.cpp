@@ -181,29 +181,41 @@ NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
 
 int slotIndex = 0;
 
-VOID NTAPI HookedKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame) //remove DRx Registers
+void NTAPI HandleKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame)
 {
-	//__asm push 0
-	//if (ContextFrame && (ContextFrame->ContextFlags & CONTEXT_DEBUG_REGISTERS))
-	//{
-	//	ArrayDebugRegister[slotIndex].dwThreadId = GetCurrentThreadId();
-	//	ArrayDebugRegister[slotIndex].Dr0 = ContextFrame->Dr0;
-	//	ArrayDebugRegister[slotIndex].Dr1 = ContextFrame->Dr1;
-	//	ArrayDebugRegister[slotIndex].Dr2 = ContextFrame->Dr2;
-	//	ArrayDebugRegister[slotIndex].Dr3 = ContextFrame->Dr3;
-	//	ArrayDebugRegister[slotIndex].Dr6 = ContextFrame->Dr6;
-	//	ArrayDebugRegister[slotIndex].Dr7 = ContextFrame->Dr7;
+	if (ContextFrame && (ContextFrame->ContextFlags & CONTEXT_DEBUG_REGISTERS))
+	{
+		ArrayDebugRegister[slotIndex].dwThreadId = GetCurrentThreadId();
+		ArrayDebugRegister[slotIndex].Dr0 = ContextFrame->Dr0;
+		ArrayDebugRegister[slotIndex].Dr1 = ContextFrame->Dr1;
+		ArrayDebugRegister[slotIndex].Dr2 = ContextFrame->Dr2;
+		ArrayDebugRegister[slotIndex].Dr3 = ContextFrame->Dr3;
+		ArrayDebugRegister[slotIndex].Dr6 = ContextFrame->Dr6;
+		ArrayDebugRegister[slotIndex].Dr7 = ContextFrame->Dr7;
 
-	//	ContextFrame->Dr0 = 0;
-	//	ContextFrame->Dr1 = 0;
-	//	ContextFrame->Dr2 = 0;
-	//	ContextFrame->Dr3 = 0;
-	//	ContextFrame->Dr6 = 0;
-	//	ContextFrame->Dr7 = 0;
-	//}
-	//_asm add esp, 8
+		ContextFrame->Dr0 = 0;
+		ContextFrame->Dr1 = 0;
+		ContextFrame->Dr2 = 0;
+		ContextFrame->Dr3 = 0;
+		ContextFrame->Dr6 = 0;
+		ContextFrame->Dr7 = 0;
+	}
+}
 
-    return DllExchange.dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
+VOID __declspec(naked) NTAPI HookedKiUserExceptionDispatcher()// (PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame) //remove DRx Registers
+{
+	//MOV ECX,DWORD PTR SS:[ESP+4] <- ContextFrame
+	//MOV EBX,DWORD PTR SS:[ESP] <- pExcptRec
+	__asm {
+			MOV EAX, [ESP + 4]
+			MOV ECX, [ESP]
+			PUSH EAX
+			PUSH ECX
+			CALL HandleKiUserExceptionDispatcher
+			jmp DllExchange.dKiUserExceptionDispatcher
+	}
+
+    //return DllExchange.dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
 }
 
 static DWORD_PTR KiUserExceptionDispatcherAddress = 0;
