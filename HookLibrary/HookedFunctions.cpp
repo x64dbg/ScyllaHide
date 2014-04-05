@@ -1,6 +1,9 @@
 #include "HookMain.h"
 #include "HookedFunctions.h"
 #include "HookHelper.h"
+#include <intrin.h>
+
+#pragma intrinsic(_ReturnAddress)
 
 extern HOOK_DLL_EXCHANGE DllExchange;
 
@@ -8,6 +11,19 @@ void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes);
 void FilterObject(POBJECT_TYPE_INFORMATION pObject);
 void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded);
+
+typedef struct _SAVE_DEBUG_REGISTERS {
+	DWORD dwThreadId;
+	DWORD   Dr0;
+	DWORD   Dr1;
+	DWORD   Dr2;
+	DWORD   Dr3;
+	DWORD   Dr6;
+	DWORD   Dr7;
+} SAVE_DEBUG_REGISTERS;
+
+SAVE_DEBUG_REGISTERS ArrayDebugRegister[100] = { 0 }; //Max 100 threads
+
 
 NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass, PVOID ThreadInformation, ULONG ThreadInformationLength)
 {
@@ -163,15 +179,58 @@ NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
     return ntStat;
 }
 
-VOID NTAPI HookedKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame)
+int slotIndex = 0;
+
+VOID NTAPI HookedKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame) //remove DRx Registers
 {
+	//__asm push 0
+	//if (ContextFrame && (ContextFrame->ContextFlags & CONTEXT_DEBUG_REGISTERS))
+	//{
+	//	ArrayDebugRegister[slotIndex].dwThreadId = GetCurrentThreadId();
+	//	ArrayDebugRegister[slotIndex].Dr0 = ContextFrame->Dr0;
+	//	ArrayDebugRegister[slotIndex].Dr1 = ContextFrame->Dr1;
+	//	ArrayDebugRegister[slotIndex].Dr2 = ContextFrame->Dr2;
+	//	ArrayDebugRegister[slotIndex].Dr3 = ContextFrame->Dr3;
+	//	ArrayDebugRegister[slotIndex].Dr6 = ContextFrame->Dr6;
+	//	ArrayDebugRegister[slotIndex].Dr7 = ContextFrame->Dr7;
+
+	//	ContextFrame->Dr0 = 0;
+	//	ContextFrame->Dr1 = 0;
+	//	ContextFrame->Dr2 = 0;
+	//	ContextFrame->Dr3 = 0;
+	//	ContextFrame->Dr6 = 0;
+	//	ContextFrame->Dr7 = 0;
+	//}
+	//_asm add esp, 8
+
     return DllExchange.dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
 }
 
-NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert)
+static DWORD_PTR KiUserExceptionDispatcherAddress = 0;
+
+NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert) //restore DRx Registers
 {
-    if(ThreadContext) {
-        ThreadContext->ContextFlags &= ~CONTEXT_DEBUG_REGISTERS;
+	DWORD_PTR retAddress = (DWORD_PTR)_ReturnAddress();
+	if (!KiUserExceptionDispatcherAddress)
+	{
+		KiUserExceptionDispatcherAddress = (DWORD_PTR)GetProcAddress(DllExchange.hNtdll, "KiUserExceptionDispatcher");
+	}
+
+	if (ThreadContext)
+	{
+		//char text[100];
+		//wsprintfA(text, "HookedNtContinue return %X", _ReturnAddress());
+		//MessageBoxA(0, text, "debug", 0);
+
+		if (retAddress >= KiUserExceptionDispatcherAddress && retAddress < (KiUserExceptionDispatcherAddress + 0x200))
+		{
+			ThreadContext->Dr0 = ArrayDebugRegister[slotIndex].Dr0;
+			ThreadContext->Dr1 = ArrayDebugRegister[slotIndex].Dr1;
+			ThreadContext->Dr2 = ArrayDebugRegister[slotIndex].Dr2;
+			ThreadContext->Dr3 = ArrayDebugRegister[slotIndex].Dr3;
+			ThreadContext->Dr6 = ArrayDebugRegister[slotIndex].Dr6;
+			ThreadContext->Dr7 = ArrayDebugRegister[slotIndex].Dr7;
+		}
     }
 
     return DllExchange.dNtContinue(ThreadContext, RaiseAlert);
