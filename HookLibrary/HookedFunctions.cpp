@@ -17,14 +17,14 @@ NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS
             return STATUS_SUCCESS;
         }
     }
-	return DllExchange.dNtSetInformationThread(ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
+    return DllExchange.dNtSetInformationThread(ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
 }
 
 NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
 {
     if (SystemInformationClass == SystemKernelDebuggerInformation || SystemInformationClass == SystemProcessInformation)
     {
-		NTSTATUS ntStat = DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
+        NTSTATUS ntStat = DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
         if (NT_SUCCESS(ntStat))
         {
             if (SystemInformationClass == SystemKernelDebuggerInformation)
@@ -40,7 +40,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
 
         return ntStat;
     }
-	return DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
+    return DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
 }
 
 static ULONG ValueProcessBreakOnTermination = FALSE;
@@ -49,7 +49,7 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
 {
     if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
     {
-		NTSTATUS ntStat = DllExchange.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
+        NTSTATUS ntStat = DllExchange.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
 
         if (NT_SUCCESS(ntStat))
         {
@@ -60,7 +60,7 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
             else if (ProcessInformationClass == ProcessDebugObjectHandle)
             {
                 *((HANDLE *)ProcessInformation) = 0;
-				return STATUS_PORT_NOT_SET;
+                return STATUS_PORT_NOT_SET;
             }
             else if (ProcessInformationClass == ProcessDebugPort)
             {
@@ -70,33 +70,33 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
             {
                 ((PPROCESS_BASIC_INFORMATION)ProcessInformation)->InheritedFromUniqueProcessId = (HANDLE)GetExplorerProcessId();
             }
-			else if (ProcessInformationClass == ProcessBreakOnTermination)
-			{
-				*((ULONG *)ProcessInformation) = ValueProcessBreakOnTermination;
-			}
+            else if (ProcessInformationClass == ProcessBreakOnTermination)
+            {
+                *((ULONG *)ProcessInformation) = ValueProcessBreakOnTermination;
+            }
         }
 
         return ntStat;
     }
-	return DllExchange.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
+    return DllExchange.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
 }
 
 NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength)
 {
-	if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
-	{
-		if (ProcessInformationClass == ProcessBreakOnTermination && ProcessInformation != 0 && sizeof(ULONG) == ProcessInformationLength)
-		{
-			ValueProcessBreakOnTermination = *((ULONG *)ProcessInformation);
-			return STATUS_SUCCESS;
-		}
-	}
-	return DllExchange.dNtSetInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength);
+    if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
+    {
+        if (ProcessInformationClass == ProcessBreakOnTermination && ProcessInformation != 0 && sizeof(ULONG) == ProcessInformationLength)
+        {
+            ValueProcessBreakOnTermination = *((ULONG *)ProcessInformation);
+            return STATUS_SUCCESS;
+        }
+    }
+    return DllExchange.dNtSetInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength);
 }
 
 NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS ObjectInformationClass, PVOID ObjectInformation, ULONG ObjectInformationLength, PULONG ReturnLength)
 {
-	NTSTATUS ntStat = DllExchange.dNtQueryObject(Handle, ObjectInformationClass, ObjectInformation, ObjectInformationLength, ReturnLength);
+    NTSTATUS ntStat = DllExchange.dNtQueryObject(Handle, ObjectInformationClass, ObjectInformation, ObjectInformationLength, ReturnLength);
 
     if (NT_SUCCESS(ntStat) && ObjectInformation)
     {
@@ -115,7 +115,7 @@ NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS Objec
 
 NTSTATUS NTAPI HookedNtYieldExecution()
 {
-	DllExchange.dNtYieldExecution();
+    DllExchange.dNtYieldExecution();
     return STATUS_SUCCESS;
 }
 
@@ -131,7 +131,7 @@ NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
         }
     }
 
-	NTSTATUS ntStat = DllExchange.dNtGetContextThread(ThreadHandle, ThreadContext);
+    NTSTATUS ntStat = DllExchange.dNtGetContextThread(ThreadHandle, ThreadContext);
 
     if (ContextBackup)
     {
@@ -152,7 +152,7 @@ NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
         }
     }
 
-	NTSTATUS ntStat = DllExchange.dNtSetContextThread(ThreadHandle, ThreadContext);
+    NTSTATUS ntStat = DllExchange.dNtSetContextThread(ThreadHandle, ThreadContext);
 
     if (ContextBackup)
     {
@@ -164,7 +164,7 @@ NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
 
 VOID NTAPI HookedKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame)
 {
-	return DllExchange.dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
+    return DllExchange.dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
 }
 
 NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert)
@@ -173,27 +173,27 @@ NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert)
         ThreadContext->ContextFlags &= ~CONTEXT_DEBUG_REGISTERS;
     }
 
-	return DllExchange.dNtContinue(ThreadContext, RaiseAlert);
+    return DllExchange.dNtContinue(ThreadContext, RaiseAlert);
 }
 
 NTSTATUS NTAPI HookedNtClose(HANDLE Handle)
 {
-	OBJECT_HANDLE_FLAG_INFORMATION flags;
-	flags.ProtectFromClose = 0;
-	flags.Inherit = 0;
-	if (NtQueryObject(Handle, ObjectHandleFlagInformation, &flags, sizeof(OBJECT_HANDLE_FLAG_INFORMATION), 0) >= 0)
-	{
-		if (flags.ProtectFromClose)
-		{
-			return STATUS_HANDLE_NOT_CLOSABLE;
-		}
+    OBJECT_HANDLE_FLAG_INFORMATION flags;
+    flags.ProtectFromClose = 0;
+    flags.Inherit = 0;
+    if (NtQueryObject(Handle, ObjectHandleFlagInformation, &flags, sizeof(OBJECT_HANDLE_FLAG_INFORMATION), 0) >= 0)
+    {
+        if (flags.ProtectFromClose)
+        {
+            return STATUS_HANDLE_NOT_CLOSABLE;
+        }
 
-		return DllExchange.dNtClose(Handle);
-	}
-	else
-	{
-		return STATUS_INVALID_HANDLE;
-	}
+        return DllExchange.dNtClose(Handle);
+    }
+    else
+    {
+        return STATUS_INVALID_HANDLE;
+    }
 }
 
 static DWORD OneTickCount = 0;
@@ -202,7 +202,7 @@ DWORD WINAPI HookedGetTickCount(void)
 {
     if (!OneTickCount)
     {
-		OneTickCount = DllExchange.dGetTickCount();
+        OneTickCount = DllExchange.dGetTickCount();
     }
     else
     {
@@ -229,7 +229,6 @@ BOOL WINAPI HookedBlockInput(BOOL fBlockIt)
     return FALSE;
 }
 
-
 //GetLastError() function might not change if a  debugger is present (it has never been the case that it is always set to zero).
 DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString) //Worst anti-debug ever
 {
@@ -246,15 +245,20 @@ DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString) //Worst anti-debug 
 
 HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICODE_STRING lpszClass, PUNICODE_STRING lpszWindow, DWORD dwType)
 {
-	HWND resultHwnd = DllExchange.dNtUserFindWindowEx(hWndParent, hWndChildAfter, lpszClass, lpszWindow, dwType);
-	if (resultHwnd)
-	{
-		if (IsWindowClassBad(lpszClass) || IsWindowNameBad(lpszWindow))
-		{
-			return 0;
-		}
-	}
-	return resultHwnd;
+    HWND resultHwnd = DllExchange.dNtUserFindWindowEx(hWndParent, hWndChildAfter, lpszClass, lpszWindow, dwType);
+    if (resultHwnd)
+    {
+        if (IsWindowClassBad(lpszClass) || IsWindowNameBad(lpszWindow))
+        {
+            return 0;
+        }
+    }
+    return resultHwnd;
+}
+
+NTSTATUS NTAPI NtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLEAN State)
+{
+    return STATUS_ACCESS_DENIED;
 }
 
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes)

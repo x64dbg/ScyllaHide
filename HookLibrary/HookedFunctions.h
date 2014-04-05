@@ -18,6 +18,7 @@ NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
 NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert);
 NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength);
 NTSTATUS NTAPI HookedNtClose(HANDLE Handle);
+NTSTATUS NTAPI NtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLEAN State);
 
 BOOL WINAPI HookedBlockInput(BOOL fBlockIt);
 DWORD WINAPI HookedGetTickCount(void);
