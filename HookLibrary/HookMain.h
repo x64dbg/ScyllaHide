@@ -68,6 +68,12 @@ typedef struct _HOOK_DLL_EXCHANGE {
     t_BlockInput dBlockInput;
 
     t_NtUserFindWindowEx dNtUserFindWindowEx;
+	t_NtUserBuildHwndList dNtUserBuildHwndList;
+	t_NtUserQueryWindow dNtUserQueryWindow;
+	//t_NtUserGetClassName dNtUserGetClassName;
+
+	DWORD dwProtectedProcessId;
+	BOOLEAN EnableProtectProcessId;
 } HOOK_DLL_EXCHANGE;
 
 #define HOOK_ERROR_SUCCESS 0

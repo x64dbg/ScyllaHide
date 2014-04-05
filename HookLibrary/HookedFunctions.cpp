@@ -7,6 +7,7 @@ extern HOOK_DLL_EXCHANGE DllExchange;
 void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes);
 void FilterObject(POBJECT_TYPE_INFORMATION pObject);
+void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded);
 
 NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass, PVOID ThreadInformation, ULONG ThreadInformationLength)
 {
@@ -51,7 +52,7 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
     {
         NTSTATUS ntStat = DllExchange.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
 
-        if (NT_SUCCESS(ntStat))
+        if (NT_SUCCESS(ntStat) && ProcessInformation != 0 && ProcessInformationLength != 0)
         {
             if (ProcessInformationClass == ProcessDebugFlags)
             {
@@ -256,9 +257,46 @@ HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICO
     return resultHwnd;
 }
 
-NTSTATUS NTAPI NtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLEAN State)
+NTSTATUS NTAPI HookedNtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLEAN State)
 {
     return STATUS_ACCESS_DENIED;
+}
+
+void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
+{
+	DWORD lpdwProcessId = 0;
+
+	for (UINT i = 0; i < *pcHwndNeeded; i++)
+	{
+		if (DllExchange.EnableProtectProcessId == TRUE)
+		{
+			GetWindowThreadProcessId(phwndFirst[i], &lpdwProcessId);
+			if (lpdwProcessId == DllExchange.dwProtectedProcessId)
+			{
+				if (i > 0)
+				{
+					phwndFirst[i] = phwndFirst[i - 1]; //just override with previous
+				}
+				else
+				{
+					phwndFirst[i] = phwndFirst[i + 1];
+				}
+			}
+		}
+	}
+
+}
+
+NTSTATUS NTAPI HookedNtUserBuildHwndList(HDESK hdesk, HWND hwndNext, BOOL fEnumChildren, DWORD idThread, UINT cHwndMax, HWND *phwndFirst, PUINT pcHwndNeeded)
+{
+	NTSTATUS ntStat = DllExchange.dNtUserBuildHwndList(hdesk, hwndNext, fEnumChildren, idThread, cHwndMax, phwndFirst, pcHwndNeeded);
+
+	if (NT_SUCCESS(ntStat) && pcHwndNeeded != 0 && phwndFirst != 0)
+	{
+		FilterHwndList(phwndFirst, pcHwndNeeded);
+	}
+
+	return ntStat;
 }
 
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes)
@@ -293,7 +331,7 @@ void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo)
 
     while (TRUE)
     {
-        if (IsProcessBad(&pInfo->ImageName))
+		if (IsProcessBad(&pInfo->ImageName) || ((DllExchange.EnableProtectProcessId == TRUE) && (pInfo->UniqueProcessId == (HANDLE)DllExchange.dwProtectedProcessId)))
         {
             ZeroMemory(pInfo->ImageName.Buffer, pInfo->ImageName.Length);
 
