@@ -56,6 +56,11 @@ bool IsProcessBad(const WCHAR * name, int nameSizeInBytes)
 
 	memset(nameCopy, 0, sizeof(nameCopy));
 
+	if (nameSizeInBytes > (sizeof(nameCopy) - sizeof(WCHAR)))
+	{
+		return false;
+	}
+
 	if (!name || !nameSizeInBytes)
 	{
 		return false;
@@ -230,8 +235,8 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 
 bool wcsistr(const wchar_t *s, const wchar_t *t)
 {
-	size_t l1 = wcslen(s);
-	size_t l2 = wcslen(t);
+	size_t l1 = _wcslen(s);
+	size_t l2 = _wcslen(t);
 
 	if (l1 < l2)
 		return false;
@@ -243,4 +248,20 @@ bool wcsistr(const wchar_t *s, const wchar_t *t)
 	}
 
 	return false;
+}
+
+size_t _strlen(const char* sc)
+{
+	size_t count = 0;
+	while (sc[count] != '\0')
+		count++;
+	return count;
+}
+
+size_t _wcslen(const wchar_t* sc)
+{
+	size_t count = 0;
+	while (sc[count] != L'\0')
+		count++;
+	return count;
 }

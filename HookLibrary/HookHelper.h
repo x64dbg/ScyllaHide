@@ -17,3 +17,5 @@ DWORD GetProcessIdByThreadHandle(HANDLE hThread);
 
 bool wcsistr(const wchar_t *s, const wchar_t *t);
 
+size_t _wcslen(const wchar_t* sc);
+size_t _strlen(const char* sc);

@@ -60,6 +60,7 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
             else if (ProcessInformationClass == ProcessDebugObjectHandle)
             {
                 *((HANDLE *)ProcessInformation) = 0;
+				return STATUS_PORT_NOT_SET;
             }
             else if (ProcessInformationClass == ProcessDebugPort)
             {
@@ -177,8 +178,6 @@ NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert)
 
 NTSTATUS NTAPI HookedNtClose(HANDLE Handle)
 {
-#define STATUS_HANDLE_NOT_CLOSABLE ((NTSTATUS)0xC0000235L)
-
 	OBJECT_HANDLE_FLAG_INFORMATION flags;
 	flags.ProtectFromClose = 0;
 	flags.Inherit = 0;

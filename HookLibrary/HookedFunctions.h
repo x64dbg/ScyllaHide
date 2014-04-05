@@ -3,6 +3,8 @@
 #include <windows.h>
 
 
+#define STATUS_PORT_NOT_SET        ((NTSTATUS)0xC0000353L)
+#define STATUS_HANDLE_NOT_CLOSABLE ((NTSTATUS)0xC0000235L)
 
 //DbgBreakPoint
 
