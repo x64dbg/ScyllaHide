@@ -264,14 +264,15 @@ NTSTATUS NTAPI HookedNtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLE
 
 void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
 {
-	DWORD lpdwProcessId = 0;
+	DWORD dwProcessId = 0;
 
 	for (UINT i = 0; i < *pcHwndNeeded; i++)
 	{
 		if (DllExchange.EnableProtectProcessId == TRUE)
 		{
-			GetWindowThreadProcessId(phwndFirst[i], &lpdwProcessId);
-			if (lpdwProcessId == DllExchange.dwProtectedProcessId)
+			//GetWindowThreadProcessId(phwndFirst[i], &dwProcessId);
+			dwProcessId = (DWORD)DllExchange.NtUserQueryWindow(phwndFirst[i], WindowProcess);
+			if (dwProcessId == DllExchange.dwProtectedProcessId)
 			{
 				if (i > 0)
 				{

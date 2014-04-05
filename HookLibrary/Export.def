@@ -17,3 +17,5 @@ HookedGetTickCount
 HookedBlockInput
 HookedOutputDebugStringA
 HookedNtUserFindWindowEx
+HookedNtUserBuildHwndList
+HookedNtSetDebugFilterState
