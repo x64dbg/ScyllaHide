@@ -50,23 +50,23 @@ const WCHAR * BadWindowClassList[] = {
 
 extern HOOK_DLL_EXCHANGE DllExchange;
 
-bool IsProcessBad(const WCHAR * name, int nameSizeInBytes)
+bool IsProcessBad(PUNICODE_STRING process)
 {
 	WCHAR nameCopy[400];
 
+	if (!process || process->Length == 0)
+	{
+		return false;
+	}
+
 	memset(nameCopy, 0, sizeof(nameCopy));
 
-	if (nameSizeInBytes > (sizeof(nameCopy) - sizeof(WCHAR)))
+	if (process->Length > (sizeof(nameCopy)-sizeof(WCHAR)))
 	{
 		return false;
 	}
 
-	if (!name || !nameSizeInBytes)
-	{
-		return false;
-	}
-
-	memcpy(nameCopy, name, nameSizeInBytes);
+	memcpy(nameCopy, process->Buffer, process->Length);
 
 	for (int i = 0; i < _countof(BadProcessnameList); i++)
 	{
@@ -77,6 +77,64 @@ bool IsProcessBad(const WCHAR * name, int nameSizeInBytes)
 	}
 
 	return false;
+}
+
+bool IsWindowClassBad(PUNICODE_STRING lpszClass)
+{
+	WCHAR nameCopy[400];
+
+	if (!lpszClass || lpszClass->Length == 0)
+	{
+		return false;
+	}
+
+	memset(nameCopy, 0, sizeof(nameCopy));
+
+	if (lpszClass->Length > (sizeof(nameCopy)-sizeof(WCHAR)))
+	{
+		return false;
+	}
+	memcpy(nameCopy, lpszClass->Buffer, lpszClass->Length);
+
+	for (int i = 0; i < _countof(BadWindowClassList); i++)
+	{
+		if (wcsistr(nameCopy, BadWindowClassList[i]))
+		{
+			return true;
+		}
+	}
+
+	return false;
+
+}
+
+bool IsWindowNameBad(PUNICODE_STRING lpszWindow)
+{
+	WCHAR nameCopy[400];
+
+	if (!lpszWindow || lpszWindow->Length == 0)
+	{
+		return false;
+	}
+
+	memset(nameCopy, 0, sizeof(nameCopy));
+
+	if (lpszWindow->Length > (sizeof(nameCopy)-sizeof(WCHAR)))
+	{
+		return false;
+	}
+	memcpy(nameCopy, lpszWindow->Buffer, lpszWindow->Length);
+
+	for (int i = 0; i < _countof(BadWindowTextList); i++)
+	{
+		if (wcsistr(nameCopy, BadWindowTextList[i]))
+		{
+			return true;
+		}
+	}
+
+	return false;
+
 }
 
 bool IsValidProcessHandle(HANDLE hProcess)
@@ -240,6 +298,18 @@ bool wcsistr(const wchar_t *s, const wchar_t *t)
 
 	if (l1 < l2)
 		return false;
+
+	if (l1 == l2)
+	{
+		if (!_wcsicmp(s, t))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 
 	for (int off = 0; off < (int)(l1 - l2); ++off)
 	{

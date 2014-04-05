@@ -246,7 +246,15 @@ DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString) //Worst anti-debug 
 
 HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICODE_STRING lpszClass, PUNICODE_STRING lpszWindow, DWORD dwType)
 {
-	return DllExchange.dNtUserFindWindowEx(hWndParent, hWndChildAfter, lpszClass, lpszWindow, dwType);
+	HWND resultHwnd = DllExchange.dNtUserFindWindowEx(hWndParent, hWndChildAfter, lpszClass, lpszWindow, dwType);
+	if (resultHwnd)
+	{
+		if (IsWindowClassBad(lpszClass) || IsWindowNameBad(lpszWindow))
+		{
+			return 0;
+		}
+	}
+	return resultHwnd;
 }
 
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes)
@@ -281,7 +289,7 @@ void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo)
 
     while (TRUE)
     {
-        if (IsProcessBad(pInfo->ImageName.Buffer, pInfo->ImageName.Length))
+        if (IsProcessBad(&pInfo->ImageName))
         {
             ZeroMemory(pInfo->ImageName.Buffer, pInfo->ImageName.Length);
 
