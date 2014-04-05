@@ -15,58 +15,59 @@ typedef DWORD(WINAPI * t_OutputDebugStringW)(LPCWSTR lpOutputString); //Kernel32
 //WIN 7 X64: OutputDebugStringW -> OutputDebugStringA
 
 typedef struct _HOOK_DLL_EXCHANGE {
-	HMODULE hDllImage;
-	HMODULE hNtdll;
-	HMODULE hkernel32;
-	HMODULE hkernelBase;
-	HMODULE hUser32;
+    HMODULE hDllImage;
+    HMODULE hNtdll;
+    HMODULE hkernel32;
+    HMODULE hkernelBase;
+    HMODULE hUser32;
 
-	BOOLEAN EnablePebHiding;
+    BOOLEAN EnablePebHiding;
 
-	BOOLEAN EnableBlockInputHook;
-	BOOLEAN EnableGetTickCountHook;
-	BOOLEAN EnableOutputDebugStringHook;
+    BOOLEAN EnableBlockInputHook;
+    BOOLEAN EnableGetTickCountHook;
+    BOOLEAN EnableOutputDebugStringHook;
 
-	BOOLEAN EnableNtSetInformationThreadHook;
-	BOOLEAN EnableNtQuerySystemInformationHook;
-	BOOLEAN EnableNtQueryInformationProcessHook;
-	BOOLEAN EnableNtQueryObjectHook;
-	BOOLEAN EnableNtYieldExecutionHook;
-	BOOLEAN EnableNtCloseHook;
+    BOOLEAN EnableNtSetInformationThreadHook;
+    BOOLEAN EnableNtQuerySystemInformationHook;
+    BOOLEAN EnableNtQueryInformationProcessHook;
+    BOOLEAN EnableNtQueryObjectHook;
+    BOOLEAN EnableNtYieldExecutionHook;
+    BOOLEAN EnableNtCloseHook;
 
-	//Protect and Hide Hardware Breakpoints
-	BOOLEAN EnableNtGetContextThreadHook;
-	BOOLEAN EnableNtSetContextThreadHook;
-	BOOLEAN EnableNtContinueHook;
-	BOOLEAN EnableKiUserExceptionDispatcherHook;
+    //Protect and Hide Hardware Breakpoints
+    BOOLEAN EnableNtGetContextThreadHook;
+    BOOLEAN EnableNtSetContextThreadHook;
+    BOOLEAN EnableNtContinueHook;
+    BOOLEAN EnableKiUserExceptionDispatcherHook;
 
-	//Native User32.dll functions, not exported
-	DWORD NtUserQueryWindowRVA;
-	DWORD NtUserBuildHwndListRVA;
-	DWORD NtUserFindWindowExRVA;
+    //Native User32.dll functions, not exported
+    DWORD NtUserQueryWindowRVA;
+    DWORD NtUserBuildHwndListRVA;
+    DWORD NtUserFindWindowExRVA;
 
-	BOOLEAN EnableNtUserQueryWindowHook;
-	BOOLEAN EnableNtUserBuildHwndListHook;
-	BOOLEAN EnableNtUserFindWindowExHook;
+    BOOLEAN EnableNtUserQueryWindowHook;
+    BOOLEAN EnableNtUserBuildHwndListHook;
+    BOOLEAN EnableNtUserFindWindowExHook;
+    BOOLEAN EnableNtSetDebugFilterStateHook;
 
 
 
-	t_NtSetInformationThread dNtSetInformationThread;
-	t_NtQuerySystemInformation dNtQuerySystemInformation;
-	t_NtSetInformationProcess dNtSetInformationProcess;
-	t_NtQueryInformationProcess dNtQueryInformationProcess;
-	t_NtQueryObject dNtQueryObject;
-	t_NtYieldExecution dNtYieldExecution;
-	t_NtGetContextThread dNtGetContextThread;
-	t_NtSetContextThread dNtSetContextThread;
-	t_KiUserExceptionDispatcher dKiUserExceptionDispatcher;
-	t_NtContinue dNtContinue;
-	t_NtClose dNtClose;
+    t_NtSetInformationThread dNtSetInformationThread;
+    t_NtQuerySystemInformation dNtQuerySystemInformation;
+    t_NtSetInformationProcess dNtSetInformationProcess;
+    t_NtQueryInformationProcess dNtQueryInformationProcess;
+    t_NtQueryObject dNtQueryObject;
+    t_NtYieldExecution dNtYieldExecution;
+    t_NtGetContextThread dNtGetContextThread;
+    t_NtSetContextThread dNtSetContextThread;
+    t_KiUserExceptionDispatcher dKiUserExceptionDispatcher;
+    t_NtContinue dNtContinue;
+    t_NtClose dNtClose;
 
-	t_GetTickCount dGetTickCount;
-	t_BlockInput dBlockInput;
+    t_GetTickCount dGetTickCount;
+    t_BlockInput dBlockInput;
 
-	t_NtUserFindWindowEx dNtUserFindWindowEx;
+    t_NtUserFindWindowEx dNtUserFindWindowEx;
 } HOOK_DLL_EXCHANGE;
 
 #define HOOK_ERROR_SUCCESS 0
