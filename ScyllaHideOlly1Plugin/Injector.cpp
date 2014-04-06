@@ -2,6 +2,7 @@
 #include "..\InjectorCLI\RemoteHook.h"
 #include "..\InjectorCLI\RemotePebHider.h"
 
+
 extern struct HideOptions pHideOptions;
 
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
@@ -218,9 +219,12 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtQuerySystemInformationHook = pHideOptions.NtQuerySystemInformation;
     data->EnableNtQueryObjectHook = pHideOptions.NtQueryObject;
     data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
+
     data->EnableNtGetContextThreadHook = pHideOptions.ProtectDrx;
     data->EnableNtSetContextThreadHook = pHideOptions.ProtectDrx;
     data->EnableNtContinueHook = pHideOptions.ProtectDrx;
+	data->EnableKiUserExceptionDispatcherHook = pHideOptions.ProtectDrx;
+
     data->EnableNtUserFindWindowExHook = pHideOptions.NtUserFindWindowEx;
     data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
     data->EnableNtUserQueryWindowHook = pHideOptions.NtUserQueryWindow;
