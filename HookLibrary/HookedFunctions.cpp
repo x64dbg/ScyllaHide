@@ -12,16 +12,6 @@ void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes);
 void FilterObject(POBJECT_TYPE_INFORMATION pObject);
 void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded);
 
-typedef struct _SAVE_DEBUG_REGISTERS {
-	DWORD dwThreadId;
-	DWORD   Dr0;
-	DWORD   Dr1;
-	DWORD   Dr2;
-	DWORD   Dr3;
-	DWORD   Dr6;
-	DWORD   Dr7;
-} SAVE_DEBUG_REGISTERS;
-
 SAVE_DEBUG_REGISTERS ArrayDebugRegister[100] = { 0 }; //Max 100 threads
 
 
@@ -42,7 +32,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
     if (SystemInformationClass == SystemKernelDebuggerInformation || SystemInformationClass == SystemProcessInformation)
     {
         NTSTATUS ntStat = DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
-        if (NT_SUCCESS(ntStat))
+		if (NT_SUCCESS(ntStat) && SystemInformation != 0 && SystemInformationLength != 0)
         {
             if (SystemInformationClass == SystemKernelDebuggerInformation)
             {
@@ -179,19 +169,15 @@ NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
     return ntStat;
 }
 
-int slotIndex = 0;
-
 void NTAPI HandleKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame)
 {
 	if (ContextFrame && (ContextFrame->ContextFlags & CONTEXT_DEBUG_REGISTERS))
 	{
-		ArrayDebugRegister[slotIndex].dwThreadId = GetCurrentThreadId();
-		ArrayDebugRegister[slotIndex].Dr0 = ContextFrame->Dr0;
-		ArrayDebugRegister[slotIndex].Dr1 = ContextFrame->Dr1;
-		ArrayDebugRegister[slotIndex].Dr2 = ContextFrame->Dr2;
-		ArrayDebugRegister[slotIndex].Dr3 = ContextFrame->Dr3;
-		ArrayDebugRegister[slotIndex].Dr6 = ContextFrame->Dr6;
-		ArrayDebugRegister[slotIndex].Dr7 = ContextFrame->Dr7;
+		int slotIndex = ThreadDebugContextFindFreeSlotIndex();
+		if (slotIndex != -1)
+		{
+			ThreadDebugContextSaveContext(slotIndex, ContextFrame);
+		}
 
 		ContextFrame->Dr0 = 0;
 		ContextFrame->Dr1 = 0;
@@ -202,10 +188,11 @@ void NTAPI HandleKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT
 	}
 }
 
-VOID __declspec(naked) NTAPI HookedKiUserExceptionDispatcher()// (PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame) //remove DRx Registers
+VOID NAKED NTAPI HookedKiUserExceptionDispatcher()// (PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame) //remove DRx Registers
 {
 	//MOV ECX,DWORD PTR SS:[ESP+4] <- ContextFrame
 	//MOV EBX,DWORD PTR SS:[ESP] <- pExcptRec
+#ifndef _WIN64
 	__asm {
 			MOV EAX, [ESP + 4]
 			MOV ECX, [ESP]
@@ -214,6 +201,7 @@ VOID __declspec(naked) NTAPI HookedKiUserExceptionDispatcher()// (PEXCEPTION_REC
 			CALL HandleKiUserExceptionDispatcher
 			jmp DllExchange.dKiUserExceptionDispatcher
 	}
+#endif
 
     //return DllExchange.dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
 }
@@ -234,14 +222,20 @@ NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert) //re
 		//wsprintfA(text, "HookedNtContinue return %X", _ReturnAddress());
 		//MessageBoxA(0, text, "debug", 0);
 
-		if (retAddress >= KiUserExceptionDispatcherAddress && retAddress < (KiUserExceptionDispatcherAddress + 0x200))
+		if (retAddress >= KiUserExceptionDispatcherAddress && retAddress < (KiUserExceptionDispatcherAddress + 0x100))
 		{
-			ThreadContext->Dr0 = ArrayDebugRegister[slotIndex].Dr0;
-			ThreadContext->Dr1 = ArrayDebugRegister[slotIndex].Dr1;
-			ThreadContext->Dr2 = ArrayDebugRegister[slotIndex].Dr2;
-			ThreadContext->Dr3 = ArrayDebugRegister[slotIndex].Dr3;
-			ThreadContext->Dr6 = ArrayDebugRegister[slotIndex].Dr6;
-			ThreadContext->Dr7 = ArrayDebugRegister[slotIndex].Dr7;
+			int index = ThreadDebugContextFindExistingSlotIndex();
+			if (index != -1)
+			{
+				ThreadContext->Dr0 = ArrayDebugRegister[index].Dr0;
+				ThreadContext->Dr1 = ArrayDebugRegister[index].Dr1;
+				ThreadContext->Dr2 = ArrayDebugRegister[index].Dr2;
+				ThreadContext->Dr3 = ArrayDebugRegister[index].Dr3;
+				ThreadContext->Dr6 = ArrayDebugRegister[index].Dr6;
+				ThreadContext->Dr7 = ArrayDebugRegister[index].Dr7;
+				ThreadDebugContextRemoveEntry(index);
+			}
+
 		}
     }
 

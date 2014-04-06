@@ -22,3 +22,8 @@ bool IsWindowClassBad(PUNICODE_STRING lpszClass);
 
 size_t _wcslen(const wchar_t* sc);
 size_t _strlen(const char* sc);
+
+int ThreadDebugContextFindFreeSlotIndex();
+int ThreadDebugContextFindExistingSlotIndex();
+void ThreadDebugContextRemoveEntry(const int index);
+void ThreadDebugContextSaveContext(const int index, const PCONTEXT ThreadContext);

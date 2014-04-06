@@ -6,6 +6,22 @@
 #define STATUS_PORT_NOT_SET        ((NTSTATUS)0xC0000353L)
 #define STATUS_HANDLE_NOT_CLOSABLE ((NTSTATUS)0xC0000235L)
 
+#ifndef _WIN64
+#define NAKED __declspec(naked)
+#else
+#define NAKED
+#endif
+
+typedef struct _SAVE_DEBUG_REGISTERS {
+	DWORD dwThreadId;
+	DWORD_PTR Dr0;
+	DWORD_PTR Dr1;
+	DWORD_PTR Dr2;
+	DWORD_PTR Dr3;
+	DWORD_PTR Dr6;
+	DWORD_PTR Dr7;
+} SAVE_DEBUG_REGISTERS;
+
 //DbgBreakPoint
 
 NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass, PVOID ThreadInformation, ULONG ThreadInformationLength);

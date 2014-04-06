@@ -1,4 +1,5 @@
 #include "HookHelper.h"
+#include "HookedFunctions.h"
 #include "HookMain.h"
 #include <tlhelp32.h>
 #include "ntdllext.h"
@@ -49,6 +50,7 @@ const WCHAR * BadWindowClassList[] = {
 };
 
 extern HOOK_DLL_EXCHANGE DllExchange;
+extern SAVE_DEBUG_REGISTERS ArrayDebugRegister[100];
 
 bool IsProcessBad(PUNICODE_STRING process)
 {
@@ -334,4 +336,49 @@ size_t _wcslen(const wchar_t* sc)
 	while (sc[count] != L'\0')
 		count++;
 	return count;
+}
+
+void ThreadDebugContextRemoveEntry(const int index)
+{
+	ArrayDebugRegister[index].dwThreadId = 0;
+}
+
+void ThreadDebugContextSaveContext(const int index, const PCONTEXT ThreadContext)
+{
+	ArrayDebugRegister[index].dwThreadId = GetCurrentThreadId();
+	ArrayDebugRegister[index].Dr0 = ThreadContext->Dr0;
+	ArrayDebugRegister[index].Dr1 = ThreadContext->Dr1;
+	ArrayDebugRegister[index].Dr2 = ThreadContext->Dr2;
+	ArrayDebugRegister[index].Dr3 = ThreadContext->Dr3;
+	ArrayDebugRegister[index].Dr6 = ThreadContext->Dr6;
+	ArrayDebugRegister[index].Dr7 = ThreadContext->Dr7;
+}
+
+int ThreadDebugContextFindExistingSlotIndex()
+{
+	for (int i = 0; i < _countof(ArrayDebugRegister); i++)
+	{
+		if (ArrayDebugRegister[i].dwThreadId != 0)
+		{
+			if (ArrayDebugRegister[i].dwThreadId == GetCurrentThreadId())
+			{
+				return i;
+			}
+		}
+	}
+
+	return -1;
+}
+
+int ThreadDebugContextFindFreeSlotIndex()
+{
+	for (int i = 0; i < _countof(ArrayDebugRegister); i++)
+	{
+		if (ArrayDebugRegister[i].dwThreadId == 0)
+		{
+			return i;
+		}
+	}
+
+	return -1;
 }
