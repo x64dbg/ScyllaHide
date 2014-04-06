@@ -30,6 +30,9 @@
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Plugin.h">
@@ -48,6 +51,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InjectorCLI\ReadNtConfig.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
