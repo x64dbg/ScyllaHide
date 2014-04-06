@@ -26,7 +26,7 @@ extern DWORD dwThreadid;
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 
-static void ScyllaHide(DWORD ProcessId) 
+static void ScyllaHide(DWORD ProcessId)
 {
     startInjection(ProcessId, ScyllaHideDllPath);
 }
@@ -34,20 +34,20 @@ static void ScyllaHide(DWORD ProcessId)
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
-	{
-		GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
-		WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
-		if (temp)
-		{
-			temp++;
-			*temp = 0;
-			wcscpy(ScyllaHideDllPath, NtApiIniPath);
-			wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-			wcscat(NtApiIniPath, NtApiIniFilename);
-		}
+    {
+        GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
+        WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
+        if (temp)
+        {
+            temp++;
+            *temp = 0;
+            wcscpy(ScyllaHideDllPath, NtApiIniPath);
+            wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
+            wcscat(NtApiIniPath, NtApiIniFilename);
+        }
 
         hinst=hi;
-	}
+    }
     return 1;
 };
 
@@ -165,7 +165,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         case IDOK: {
             //save options to ini
             SaveOptions(hWnd);
-            MessageBoxA(hWnd, "Please restart Olly to apply changes !", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+            MessageBoxA(hWnd, "Please restart target (CTRL+F2) to apply changes !", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
             EndDialog(hWnd, NULL);
             break;
         }
