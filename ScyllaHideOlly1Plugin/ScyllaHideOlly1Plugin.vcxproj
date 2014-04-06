@@ -85,11 +85,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
+    <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
+    <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
     <ClCompile Include="Injector.cpp" />
     <ClCompile Include="ScyllaHideOlly1Plugin.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
+    <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
+    <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
     <ClInclude Include="Injector.h" />
     <ClInclude Include="Plugin.h" />
     <ClInclude Include="resource.h" />
