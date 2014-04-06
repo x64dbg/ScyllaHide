@@ -66,7 +66,7 @@ int wmain(int argc, wchar_t* argv[])
 		targetPid = GetProcessIdByName(L"scylla_x64.exe");//scylla_x64
 		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\x64\\Release\\HookLibrary.dll";
 #else
-		targetPid = GetProcessIdByName(L"VMProtect.vmp.exe");//GetProcessIdByName(L"ThemidaTest.exe");//GetProcessIdByName(L"VMProtect.vmp.exe");//GetProcessIdByName(L"scylla_x86.exe");
+		targetPid = GetProcessIdByName(L"ThemidaTest.exe");//GetProcessIdByName(L"ThemidaTest.exe");//GetProcessIdByName(L"VMProtect.vmp.exe");//GetProcessIdByName(L"scylla_x86.exe");
 		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\Release\\HookLibrary.dll";
 #endif
 	}
@@ -96,6 +96,8 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 
 	HMODULE hUser = GetModuleHandleW(L"user32.dll");
 	HMODULE hUserRemote = GetModuleBaseRemote(hProcess, L"user32.dll");
+
+	DllExchangeLoader.hDllImage = (HMODULE)imageBase;
 
 	void * HookedNtSetInformationThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetInformationThread") + imageBase);
 	void * HookedNtQuerySystemInformation = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQuerySystemInformation") + imageBase);
@@ -151,14 +153,27 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 		if (DllExchangeLoader.NtUserQueryWindowRVA)
 		{
 			_NtUserQueryWindow = (t_NtUserQueryWindow)((DWORD_PTR)hUserRemote + DllExchangeLoader.NtUserQueryWindowRVA);
+			DllExchangeLoader.NtUserQueryWindow = _NtUserQueryWindow;
+		}
+		else
+		{
+			printf("Warning: NtUserQueryWindowRVA not found!\n");
 		}
 		if (DllExchangeLoader.NtUserBuildHwndListRVA)
 		{
 			_NtUserBuildHwndList = (t_NtUserBuildHwndList)((DWORD_PTR)hUserRemote + DllExchangeLoader.NtUserBuildHwndListRVA);
 		}
+		else
+		{
+			printf("Warning: NtUserBuildHwndListRVA not found!\n");
+		}
 		if (DllExchangeLoader.NtUserFindWindowExRVA)
 		{
 			_NtUserFindWindowEx = (t_NtUserFindWindowEx)((DWORD_PTR)hUserRemote + DllExchangeLoader.NtUserFindWindowExRVA);
+		}
+		else
+		{
+			printf("Warning: NtUserFindWindowExRVA not found!\n");
 		}
 		t_BlockInput _BlockInput = (t_BlockInput)GetProcAddress(hUser, "BlockInput");
 
@@ -180,12 +195,15 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 	if (DllExchangeLoader.EnableNtYieldExecutionHook == TRUE) HOOK(NtYieldExecution);
 	if (DllExchangeLoader.EnableNtGetContextThreadHook == TRUE) HOOK(NtGetContextThread);
 	if (DllExchangeLoader.EnableNtSetContextThreadHook == TRUE) HOOK(NtSetContextThread);
-	//if (DllExchangeLoader.EnableKiUserExceptionDispatcherHook == TRUE) HOOK(KiUserExceptionDispatcher);
+	if (DllExchangeLoader.EnableKiUserExceptionDispatcherHook == TRUE) HOOK(KiUserExceptionDispatcher);
 	if (DllExchangeLoader.EnableNtContinueHook == TRUE) HOOK(NtContinue);
 	if (DllExchangeLoader.EnableNtCloseHook == TRUE) HOOK(NtClose);
 	if (DllExchangeLoader.EnableGetTickCountHook == TRUE) HOOK(GetTickCount);
 	if (DllExchangeLoader.EnableOutputDebugStringHook == TRUE) HOOK_NOTRAMP(OutputDebugStringA);
 	if (DllExchangeLoader.EnableNtSetDebugFilterStateHook == TRUE) HOOK_NOTRAMP(NtSetDebugFilterState);
+
+	DllExchangeLoader.dwProtectedProcessId = 0; //for olly plugins
+	DllExchangeLoader.EnableProtectProcessId = FALSE;
 }
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
@@ -198,6 +216,8 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 		DWORD exchangeDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "DllExchange");
 
 		StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
+
+
 
 		if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
 		{
@@ -472,70 +492,7 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
 	DllExchangeLoader.EnableProtectProcessId = ReadIniSettingsInt(L"EnableProtectProcessId", iniFile);
 }
 
-OSVERSIONINFOEXW osver = { 0 };
-SYSTEM_INFO si = { 0 };
 
-void QueryOsInfo()
-{
-	typedef void (WINAPI *t_GetNativeSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
-	t_GetNativeSystemInfo _GetNativeSystemInfo = (t_GetNativeSystemInfo)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetNativeSystemInfo");
-	if (_GetNativeSystemInfo)
-	{
-		_GetNativeSystemInfo(&si);
-	}
-	else
-	{
-		GetSystemInfo(&si);
-	}
-
-	osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-	GetVersionEx((LPOSVERSIONINFO)&osver);
-}
-
-DWORD ReadApiFromIni(const WCHAR * name, const WCHAR * section) //rva
-{
-	WCHAR buf[100] = { 0 };
-	if (GetPrivateProfileStringW(section, name, L"0", buf, _countof(buf), NtApiIniPath) > 0)
-	{
-		return wcstoul(buf, 0, 16);
-	}
-
-	return 0;
-}
-
-
-void ReadNtApiInformation()
-{
-	WCHAR OsId[300] = { 0 };
-	WCHAR temp[50] = { 0 };
-	QueryOsInfo();
-#ifdef _WIN64
-	wsprintfW(OsId, L"%02X%02X%02X%02X%02X%02X_x64", (DWORD)osver.dwMajorVersion, (DWORD)osver.dwMinorVersion, (DWORD)osver.wServicePackMajor, (DWORD)osver.wServicePackMinor, (DWORD)osver.wProductType, (DWORD)si.wProcessorArchitecture);
-#else
-	wsprintfW(OsId, L"%02X%02X%02X%02X%02X%02X_x86", (DWORD)osver.dwMajorVersion, (DWORD)osver.dwMinorVersion, (DWORD)osver.wServicePackMajor, (DWORD)osver.wServicePackMinor, (DWORD)osver.wProductType, (DWORD)si.wProcessorArchitecture);
-#endif
-	HMODULE hUser = GetModuleHandleW(L"user32.dll");
-	PIMAGE_DOS_HEADER pDosUser = (PIMAGE_DOS_HEADER)hUser;
-	PIMAGE_NT_HEADERS pNtUser = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosUser + pDosUser->e_lfanew);
-
-	if (pNtUser->Signature != IMAGE_NT_SIGNATURE)
-	{
-		printf("Wrong User NT Header\n");
-		return;
-	}
-	wsprintfW(temp, L"%08X", pNtUser->OptionalHeader.AddressOfEntryPoint);
-	wcscat(OsId, L"_");
-	wcscat(OsId, temp);
-
-	DllExchangeLoader.NtUserBuildHwndListRVA = ReadApiFromIni(L"NtUserBuildHwndList", OsId);
-	DllExchangeLoader.NtUserFindWindowExRVA = ReadApiFromIni(L"NtUserFindWindowEx", OsId);
-	DllExchangeLoader.NtUserQueryWindowRVA = ReadApiFromIni(L"NtUserQueryWindow", OsId);
-
-	if (!DllExchangeLoader.NtUserBuildHwndListRVA || !DllExchangeLoader.NtUserFindWindowExRVA || !DllExchangeLoader.NtUserQueryWindowRVA)
-	{
-		printf("NT APIs missing %S %S\n", OsId, NtApiIniPath);
-	}
-}
 
 
 
