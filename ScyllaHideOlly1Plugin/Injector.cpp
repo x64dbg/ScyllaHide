@@ -21,6 +21,7 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     HMODULE hUser = GetModuleHandleW(L"user32.dll");
     HMODULE hUserRemote = GetModuleBaseRemote(hProcess, L"user32.dll");
 
+	DllExchangeLoader.hDllImage = (HMODULE)imageBase;
     void * HookedNtSetInformationThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetInformationThread") + imageBase);
     void * HookedNtQuerySystemInformation = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQuerySystemInformation") + imageBase);
     void * HookedNtQueryInformationProcess = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQueryInformationProcess") + imageBase);
@@ -104,7 +105,7 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     if (DllExchangeLoader.EnableNtYieldExecutionHook == TRUE) HOOK(NtYieldExecution);
     if (DllExchangeLoader.EnableNtGetContextThreadHook == TRUE) HOOK(NtGetContextThread);
     if (DllExchangeLoader.EnableNtSetContextThreadHook == TRUE) HOOK(NtSetContextThread);
-    //if (DllExchangeLoader.EnableKiUserExceptionDispatcherHook == TRUE) HOOK(KiUserExceptionDispatcher);
+    if (DllExchangeLoader.EnableKiUserExceptionDispatcherHook == TRUE) HOOK(KiUserExceptionDispatcher);
     if (DllExchangeLoader.EnableNtContinueHook == TRUE) HOOK(NtContinue);
     if (DllExchangeLoader.EnableNtCloseHook == TRUE) HOOK(NtClose);
     if (DllExchangeLoader.EnableGetTickCountHook == TRUE) HOOK(GetTickCount);
@@ -157,7 +158,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath)
         }
         else
         {
-            _Error("[ScyllaHide] Cannot find HookLibrary.dll");
+            _Error("[ScyllaHide] Cannot find %S", dllPath);
         }
         CloseHandle(hProcess);
     }
@@ -224,30 +225,4 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
     data->EnableNtUserQueryWindowHook = pHideOptions.NtUserQueryWindow;
     data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
-}
-
-DWORD SetDebugPrivileges()
-{
-    DWORD err = 0;
-    TOKEN_PRIVILEGES Debug_Privileges;
-    if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid)) return GetLastError();
-
-    HANDLE hToken = 0;
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
-    {
-        err = GetLastError();
-        if (hToken) CloseHandle(hToken);
-        return err;
-    }
-
-    Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-    Debug_Privileges.PrivilegeCount = 1;
-
-    if (!AdjustTokenPrivileges(hToken, false, &Debug_Privileges, 0, NULL, NULL))
-    {
-        err = GetLastError();
-        if (hToken) CloseHandle(hToken);
-    }
-
-    return err;
 }
