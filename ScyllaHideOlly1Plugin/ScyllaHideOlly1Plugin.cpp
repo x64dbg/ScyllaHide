@@ -6,6 +6,9 @@
 struct HideOptions pHideOptions;
 
 #define SCYLLAHIDE_VERSION "0.1"
+const WCHAR ScyllaHideDllFilename[] = L"HookLibrary.dll";
+const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
+
 
 //olly definitions
 #define PLUGIN_VERSION 110
@@ -20,18 +23,31 @@ HWND hwmain; // Handle of main OllyDbg window
 extern HANDLE hThread;
 extern DWORD dwThreadid;
 
-static void ScyllaHide(DWORD ProcessId) {
-    WCHAR * dllPath = 0;
+WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
+WCHAR NtApiIniPath[MAX_PATH] = {0};
 
-    dllPath = L".\\HookLibrary.dll";
-
-    SetDebugPrivileges();
-    startInjection(ProcessId, dllPath);
+static void ScyllaHide(DWORD ProcessId) 
+{
+    startInjection(ProcessId, ScyllaHideDllPath);
 }
 
-BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved) {
+BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
+{
     if (reason==DLL_PROCESS_ATTACH)
+	{
+		GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
+		WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
+		if (temp)
+		{
+			temp++;
+			*temp = 0;
+			wcscpy(ScyllaHideDllPath, NtApiIniPath);
+			wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
+			wcscat(NtApiIniPath, NtApiIniFilename);
+		}
+
         hinst=hi;
+	}
     return 1;
 };
 
