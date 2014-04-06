@@ -16,7 +16,7 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     HMODULE hUser = GetModuleHandleW(L"user32.dll");
     HMODULE hUserRemote = GetModuleBaseRemote(hProcess, L"user32.dll");
 
-	DllExchangeLoader.hDllImage = (HMODULE)imageBase;
+    DllExchangeLoader.hDllImage = (HMODULE)imageBase;
     void * HookedNtSetInformationThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetInformationThread") + imageBase);
     void * HookedNtQuerySystemInformation = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQuerySystemInformation") + imageBase);
     void * HookedNtQueryInformationProcess = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQueryInformationProcess") + imageBase);
@@ -204,23 +204,23 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
     data->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
 
-	data->EnableBlockInputHook = TRUE;
-	data->EnableGetTickCountHook = TRUE;
-	data->EnableKiUserExceptionDispatcherHook = TRUE;
-	data->EnableNtCloseHook = TRUE;
-	data->EnableNtContinueHook = TRUE;
-	data->EnableNtGetContextThreadHook = TRUE;
-	data->EnableNtQueryInformationProcessHook = TRUE;
-	data->EnableNtQueryObjectHook = TRUE;
-	data->EnableNtQuerySystemInformationHook = TRUE;
-	data->EnableNtSetContextThreadHook = TRUE;
-	data->EnableNtSetDebugFilterStateHook = TRUE;
-	data->EnableNtSetInformationThreadHook = TRUE;
-	data->EnableNtUserBuildHwndListHook = TRUE;
-	data->EnableNtUserFindWindowExHook = TRUE;
-	data->EnableNtUserQueryWindowHook = TRUE;
-	data->EnableNtYieldExecutionHook = TRUE;
-	data->EnableOutputDebugStringHook = TRUE;
-	data->EnablePebHiding = TRUE;
-	data->EnableProtectProcessId = TRUE;
+    data->EnableBlockInputHook = TRUE;
+    data->EnableGetTickCountHook = TRUE;
+    data->EnableKiUserExceptionDispatcherHook = TRUE;
+    data->EnableNtCloseHook = TRUE;
+    data->EnableNtContinueHook = TRUE;
+    data->EnableNtGetContextThreadHook = TRUE;
+    data->EnableNtQueryInformationProcessHook = TRUE;
+    data->EnableNtQueryObjectHook = TRUE;
+    data->EnableNtQuerySystemInformationHook = TRUE;
+    data->EnableNtSetContextThreadHook = TRUE;
+    data->EnableNtSetDebugFilterStateHook = TRUE;
+    data->EnableNtSetInformationThreadHook = TRUE;
+    data->EnableNtUserBuildHwndListHook = FALSE;
+    data->EnableNtUserFindWindowExHook = FALSE;
+    data->EnableNtUserQueryWindowHook = FALSE;
+    data->EnableNtYieldExecutionHook = TRUE;
+    data->EnableOutputDebugStringHook = TRUE;
+    data->EnablePebHiding = TRUE;
+    data->EnableProtectProcessId = TRUE;
 }
