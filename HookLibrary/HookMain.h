@@ -14,6 +14,9 @@ typedef DWORD(WINAPI * t_OutputDebugStringA)(LPCSTR lpOutputString); //Kernel32.
 typedef DWORD(WINAPI * t_OutputDebugStringW)(LPCWSTR lpOutputString); //Kernel32.dll
 //WIN 7 X64: OutputDebugStringW -> OutputDebugStringA
 
+#pragma pack(push)
+#pragma pack(1)
+
 typedef struct _HOOK_DLL_EXCHANGE {
     HMODULE hDllImage;
     HMODULE hNtdll;
@@ -76,6 +79,8 @@ typedef struct _HOOK_DLL_EXCHANGE {
 	DWORD dwProtectedProcessId;
 	BOOLEAN EnableProtectProcessId;
 } HOOK_DLL_EXCHANGE;
+
+#pragma pack(pop)
 
 #define HOOK_ERROR_SUCCESS 0
 #define HOOK_ERROR_RESOLVE_IMPORT 1
