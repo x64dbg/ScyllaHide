@@ -17,6 +17,7 @@ struct HideOptions {
     int NtUserBuildHwndList;
     int NtUserQueryWindow;
     int NtSetDebugFilterState;
+    int NtClose;
 };
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);

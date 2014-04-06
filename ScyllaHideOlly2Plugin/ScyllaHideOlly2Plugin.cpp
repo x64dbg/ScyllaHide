@@ -59,6 +59,7 @@ static int opt_NtUserFindWindowEx;
 static int opt_NtUserBuildHwndList;
 static int opt_NtUserQueryWindow;
 static int opt_NtSetDebugFilterState;
+static int opt_NtClose;
 
 static t_control scyllahideoptions[] = {
     {   CA_COMMENT, -1, 0, 0, 0, 0, NULL,
@@ -117,15 +118,19 @@ static t_control scyllahideoptions[] = {
         L"NtSetDebugFilterState",
         L"NtSetDebugFilterState"
     },
-    {   CA_GROUP, -1, 85, 20, 120, 155, NULL,
+    {   CA_CHECK, OPT_14, 90, 174, 120, 10, &opt_NtSetDebugFilterState,
+        L"NtClose",
+        L"NtClose"
+    },
+    {   CA_GROUP, -1, 85, 20, 120, 167, NULL,
         L"Debugger Hiding",
         NULL
     },
-    {   CA_CHECK, OPT_13, 90, 190, 120, 10, &opt_ProtectDRx,
+    {   CA_CHECK, OPT_13, 90, 200, 120, 10, &opt_ProtectDRx,
         L"Protect DRx",
         L"NtGetContextThread, NtSetContextThread, NtContinue"
     },
-    {   CA_GROUP, -1, 85, 180, 120, 25, NULL,
+    {   CA_GROUP, -1, 85, 190, 120, 25, NULL,
         L"DRx Protection",
         NULL
     },
@@ -175,8 +180,8 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode) {
 
 static void ScyllaHide(DWORD ProcessId) {
 
-	Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
-	ReadNtApiInformation();
+    Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
+    ReadNtApiInformation();
     startInjection(ProcessId, ScyllaHideDllPath);
 }
 
@@ -199,21 +204,21 @@ void UpdateHideOptions()
 }
 
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved) {
-	if (reason==DLL_PROCESS_ATTACH)
-	{
-		GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
-		WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
-		if (temp)
-		{
-			temp++;
-			*temp = 0;
-			wcscpy(ScyllaHideDllPath, NtApiIniPath);
-			wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-			wcscat(NtApiIniPath, NtApiIniFilename);
-		}
+    if (reason==DLL_PROCESS_ATTACH)
+    {
+        GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
+        WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
+        if (temp)
+        {
+            temp++;
+            *temp = 0;
+            wcscpy(ScyllaHideDllPath, NtApiIniPath);
+            wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
+            wcscat(NtApiIniPath, NtApiIniFilename);
+        }
 
-		hinst=hi;
-	}
+        hinst=hi;
+    }
     return TRUE;
 };
 
@@ -245,6 +250,7 @@ extc int __cdecl ODBG2_Plugininit(void) {
     Getfromini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",&opt_NtUserBuildHwndList);
     Getfromini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",&opt_NtUserQueryWindow);
     Getfromini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",&opt_NtSetDebugFilterState);
+    Getfromini(NULL,PLUGINNAME,L"NtClose",L"%i",&opt_NtClose);
 
     UpdateHideOptions();
 
@@ -276,6 +282,8 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp) {
         Writetoini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",opt_NtUserBuildHwndList);
         Writetoini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",opt_NtUserQueryWindow);
         Writetoini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",opt_NtSetDebugFilterState);
+        Writetoini(NULL,PLUGINNAME,L"NtClose",L"%i",opt_NtClose);
+
         UpdateHideOptions();
 
         MessageBoxW(hwollymain, L"Please restart the target to apply changes !", L"[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
