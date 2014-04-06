@@ -22,8 +22,6 @@ static DWORD ProcessId;
 static bool once = false;
 HWND hwmain; // Handle of main OllyDbg window
 
-extern HANDLE hThread;
-extern DWORD dwThreadid;
 
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
@@ -56,7 +54,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 
         hinst=hi;
     }
-    return 1;
+    return TRUE;
 };
 
 void SaveOptions(HWND hWnd) {
@@ -259,9 +257,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
     case CREATE_PROCESS_DEBUG_EVENT:
     {
         hProcess=debugevent->u.CreateProcessInfo.hProcess;
-        hThread = debugevent->u.CreateProcessInfo.hThread;
         ProcessId=debugevent->dwProcessId;
-        dwThreadid=debugevent->dwThreadId;
     }
     break;
 

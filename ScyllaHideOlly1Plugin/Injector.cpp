@@ -7,8 +7,6 @@ extern struct HideOptions pHideOptions;
 
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
-HANDLE hThread = 0;
-DWORD dwThreadid = 0;
 
 #define HOOK(name) DllExchangeLoader.d##name = (t_##name)DetourCreateRemote(hProcess,_##name, Hooked##name, true)
 #define HOOK_NOTRAMP(name) DetourCreateRemote(hProcess,_##name, Hooked##name, false)

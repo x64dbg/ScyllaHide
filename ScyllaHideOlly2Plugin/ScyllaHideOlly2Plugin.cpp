@@ -7,11 +7,19 @@
 #include "plugin.h"
 #include "Injector.h"
 
+#include "..\InjectorCLI\ReadNtConfig.h"
+
 //scyllaHide definitions
 struct HideOptions pHideOptions;
 
 #define PLUGINNAME     L"ScyllaHide"
 #define VERSION        L"0.1"
+
+const WCHAR ScyllaHideDllFilename[] = L"HookLibrary.dll";
+const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
+
+WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
+WCHAR NtApiIniPath[MAX_PATH] = {0};
 
 //forward definitions
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode);
@@ -166,18 +174,29 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode) {
 //menus
 
 static void ScyllaHide(DWORD ProcessId) {
-    WCHAR * dllPath = 0;
 
-    dllPath = L".\\HookLibrary.dll";
-
-    SetDebugPrivileges();
-    startInjection(ProcessId, dllPath);
+	Message(0, L"[ScyllaHide] Reading NT API Information %s\n", NtApiIniPath);
+	ReadNtApiInformation();
+    startInjection(ProcessId, ScyllaHideDllPath);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved) {
-    if (reason==DLL_PROCESS_ATTACH)
-        hinst=hi;
-    return 1;
+	if (reason==DLL_PROCESS_ATTACH)
+	{
+		GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
+		WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
+		if (temp)
+		{
+			temp++;
+			*temp = 0;
+			wcscpy(ScyllaHideDllPath, NtApiIniPath);
+			wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
+			wcscat(NtApiIniPath, NtApiIniFilename);
+		}
+
+		hinst=hi;
+	}
+    return TRUE;
 };
 
 //register plugin

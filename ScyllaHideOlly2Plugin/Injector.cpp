@@ -155,7 +155,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath)
         }
         else
         {
-            Error(L"[ScyllaHide] Cannot find %S", dllPath);
+            Error(L"[ScyllaHide] Cannot find %s", dllPath);
         }
         CloseHandle(hProcess);
     }
@@ -227,28 +227,3 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
 }
 
-DWORD SetDebugPrivileges()
-{
-    DWORD err = 0;
-    TOKEN_PRIVILEGES Debug_Privileges;
-    if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid)) return GetLastError();
-
-    HANDLE hToken = 0;
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
-    {
-        err = GetLastError();
-        if (hToken) CloseHandle(hToken);
-        return err;
-    }
-
-    Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-    Debug_Privileges.PrivilegeCount = 1;
-
-    if (!AdjustTokenPrivileges(hToken, false, &Debug_Privileges, 0, NULL, NULL))
-    {
-        err = GetLastError();
-        if (hToken) CloseHandle(hToken);
-    }
-
-    return err;
-}
