@@ -130,7 +130,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
             //bool suc = StartSystemBreakpointInjection(dwThreadid, hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
             //if (suc)
             //{
-            _Message(0, "[ScyllaHide] Injection successful, Imagebase %p\n", remoteImageBase);
+            _Message(0, "[ScyllaHide] Injection successful, Imagebase %p", remoteImageBase);
             //}
             //else
             //{
@@ -139,7 +139,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
         }
         else
         {
-            _Message(0, "[ScyllaHide] Failed to write exchange struct\n");
+            _Message(0, "[ScyllaHide] Failed to write exchange struct");
         }
     }
 }
@@ -163,7 +163,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath)
     }
     else
     {
-        _Error("[ScyllaHide] Cannot open process handle %d\n", targetPid);
+        _Error("[ScyllaHide] Cannot open process handle %d", targetPid);
     }
 }
 

@@ -128,7 +128,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 
             //if (exitCode == HOOK_ERROR_SUCCESS)
             //{
-            Message(0, L"[ScyllaHide] Injection successful, Imagebase %p\n", remoteImageBase);
+            Message(0, L"[ScyllaHide] Injection successful, Imagebase %p", remoteImageBase);
             //}
             //else
             //{
@@ -137,7 +137,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
         }
         else
         {
-            Message(0, L"[ScyllaHide] Failed to write exchange struct\n");
+            Message(0, L"[ScyllaHide] Failed to write exchange struct");
         }
     }
 }
@@ -161,7 +161,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath)
     }
     else
     {
-        Error(L"[ScyllaHide] Cannot open process handle %d\n", targetPid);
+        Error(L"[ScyllaHide] Cannot open process handle %d", targetPid);
     }
 }
 

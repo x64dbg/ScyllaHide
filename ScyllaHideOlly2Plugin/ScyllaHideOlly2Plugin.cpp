@@ -175,7 +175,7 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode) {
 
 static void ScyllaHide(DWORD ProcessId) {
 
-	Message(0, L"[ScyllaHide] Reading NT API Information %s\n", NtApiIniPath);
+	Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
 	ReadNtApiInformation();
     startInjection(ProcessId, ScyllaHideDllPath);
 }

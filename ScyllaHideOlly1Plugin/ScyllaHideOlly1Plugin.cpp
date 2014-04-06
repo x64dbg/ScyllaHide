@@ -30,7 +30,7 @@ extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 
 static void ScyllaHide(DWORD ProcessId)
 {
-    _Message(0, "[ScyllaHide] Reading NT API Information %S\n", NtApiIniPath);
+    _Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
     ReadNtApiInformation();
     //_Message(0, "[ScyllaHide] NtUserFindWindowEx %X\n", DllExchangeLoader.NtUserFindWindowExRVA);
 
