@@ -142,12 +142,14 @@
   <ItemGroup>
     <ClCompile Include="DynamicMapping.cpp" />
     <ClCompile Include="CliMain.cpp" />
+    <ClCompile Include="ReadNtConfig.cpp" />
     <ClCompile Include="RemoteHook.cpp" />
     <ClCompile Include="RemotePebHider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DynamicMapping.h" />
     <ClInclude Include="ntdll.h" />
+    <ClInclude Include="ReadNtConfig.h" />
     <ClInclude Include="RemoteHook.h" />
     <ClInclude Include="RemotePebHider.h" />
   </ItemGroup>

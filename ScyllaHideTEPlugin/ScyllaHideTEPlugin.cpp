@@ -1,37 +1,69 @@
 #include <windows.h>
 #include "TitanEngine.h"
 #include "Injector.h"
+#include "..\InjectorCLI\ReadNtConfig.h"
 
-static DWORD ProcessId;
+const WCHAR ScyllaHideDllFilename[] = L"HookLibrary.dll";
+const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
-BOOL APIENTRY DllMain(HINSTANCE hi, DWORD reason, LPVOID)
+static WCHAR ScyllaHideDllPath[MAX_PATH] = { 0 };
+WCHAR NtApiIniPath[MAX_PATH] = { 0 };
+
+BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
 {
-    switch(reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hi);
-        break;
-    }
-    return TRUE;
+	if (reason == DLL_PROCESS_ATTACH)
+	{
+		GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
+		WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
+		if (temp)
+		{
+			temp++;
+			*temp = 0;
+			wcscpy(ScyllaHideDllPath, NtApiIniPath);
+			wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
+			wcscat(NtApiIniPath, NtApiIniFilename);
+		}
+	}
+	return TRUE;
+};
+
+static DWORD SetDebugPrivileges()
+{
+	DWORD err = 0;
+	TOKEN_PRIVILEGES Debug_Privileges;
+	if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid)) return GetLastError();
+
+	HANDLE hToken = 0;
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+	{
+		err = GetLastError();
+		if (hToken) CloseHandle(hToken);
+		return err;
+	}
+
+	Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+	Debug_Privileges.PrivilegeCount = 1;
+
+	if (!AdjustTokenPrivileges(hToken, false, &Debug_Privileges, 0, NULL, NULL))
+	{
+		err = GetLastError();
+		if (hToken) CloseHandle(hToken);
+	}
+
+	return err;
 }
 
-static void ScyllaHide(DWORD ProcessId) {
-    WCHAR * dllPath = 0;
-
-#ifdef _WIN64
-    dllPath = L".\\plugins\\x64\\HookLibrary.dll";
-#else
-    dllPath = L".\\plugins\\x86\\HookLibrary.dll";
-#endif
-
-    SetDebugPrivileges();
-    startInjection(ProcessId, dllPath);
+static void ScyllaHide(DWORD ProcessId)
+{
+	SetDebugPrivileges(); //set debug privilege
+	ReadNtApiInformation(); //read rva stuff
+	startInjection(ProcessId, ScyllaHideDllPath); //inject
 }
 
 extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debugEvent, int CallReason)
 {
-    static HANDLE hProcess;
-    static ULONG_PTR startAddress;
+	static bool bHooked;
+	static DWORD ProcessId;
 
     switch(CallReason)
     {
@@ -41,9 +73,8 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
         {
         case CREATE_PROCESS_DEBUG_EVENT:
         {
-            hProcess=debugEvent->u.CreateProcessInfo.hProcess;
             ProcessId=debugEvent->dwProcessId;
-            startAddress = (ULONG_PTR)debugEvent->u.CreateProcessInfo.lpStartAddress;
+			bHooked = false;
         }
         break;
 
@@ -53,10 +84,11 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
             {
             case STATUS_BREAKPOINT:
             {
-                //are we at EP ? (dont try setting BP callback on EP, it will break e.g. TitanScript
-                if(debugEvent->u.Exception.ExceptionRecord.ExceptionAddress == (PVOID)startAddress) {
-                    ScyllaHide(ProcessId);
-                }
+				if (!bHooked)
+				{
+					bHooked = true;
+					ScyllaHide(ProcessId);
+				}
             }
             break;
             }

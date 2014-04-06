@@ -311,10 +311,18 @@ bool StartSystemBreakpointInjection(DWORD threadid, HANDLE hProcess, DWORD_PTR f
 		{
 			//wsprintfA(text, "%X", memory);
 			//MessageBoxA(0, text, text, 0);
-			PrepareInjectStub((DWORD)memory, (DWORD)imageBase, ctx.Eip, functionAddress, injectStub);
+#ifdef _WIN64 //x64
+			PrepareInjectStub((DWORD_PTR)memory, (DWORD_PTR)imageBase, ctx.Rip, functionAddress, injectStub);
+#else //x64
+			PrepareInjectStub((DWORD_PTR)memory, (DWORD_PTR)imageBase, ctx.Eip, functionAddress, injectStub);
+#endif //_WIN64
 			if (WriteProcessMemory(hProcess, memory, injectStub, GetInjectStubSize(), 0))
 			{
-				ctx.Eip = (DWORD)memory;
+#ifdef _WIN64 //x64
+				ctx.Rip = (DWORD_PTR)memory;
+#else //x64
+				ctx.Eip = (DWORD_PTR)memory;
+#endif //_WIN64
 				return (NtSetContextThread(hThread, &ctx) >= 0);
 			}
 
