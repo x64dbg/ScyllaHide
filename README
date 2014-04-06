@@ -30,4 +30,4 @@ Some Nt* WINAPI functions are not exported by a DLL, so it is necessary to get t
 from another source. The other source is the PDB file. The adresses can be resolved with this tool:
 https://bitbucket.org/NtQuery/pdb-getprocaddress
 It will download the PDB file from the Microsoft server to resolve the missing function adresses.
-Binary x86: https://bitbucket.org/NtQuery/scyllahide/downloads/NtApiToolx86.rar
+Binaries: https://bitbucket.org/NtQuery/scyllahide/downloads/NtApiTool.rar
