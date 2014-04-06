@@ -14,6 +14,7 @@ struct HideOptions pHideOptions;
 //globals
 static HINSTANCE hinst;
 static DWORD ProcessId;
+static bool once = false;
 HWND hwmain; // Handle of main OllyDbg window
 
 extern HANDLE hThread;
@@ -226,7 +227,6 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 //called for every debugloop pass
 extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent) {
     static HANDLE hProcess;
-	static bool once = false;
     //static ULONG_PTR startAddress;
 
     if(!debugevent)
@@ -268,3 +268,10 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
     break;
     }
 };
+
+//reset variables. new target started or restarted
+extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
+{
+    once = false;
+}
+
