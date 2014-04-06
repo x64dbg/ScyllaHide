@@ -12,6 +12,7 @@ Debugger Hiding:
 - NtUserBuildHwndList
 - NtUserFindWindowEx
 - NtUserQueryWindow
+- NtClose
 - GetTickCount
 - BlockInput
 - OutputDebugStringA
