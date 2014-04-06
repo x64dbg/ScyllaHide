@@ -24,6 +24,12 @@
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="..\InjectorCLI\RemoteHook.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="plugin.h">
@@ -33,6 +39,12 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InjectorCLI\RemoteHook.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InjectorCLI\RemotePebHider.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

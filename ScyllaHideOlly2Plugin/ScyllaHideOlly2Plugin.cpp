@@ -21,7 +21,7 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
 HINSTANCE hinst;
 static HANDLE hThread;
 static DWORD ProcessId;
-static ULONG_PTR startAddress;
+static bool once = false;
 //menus
 static t_menu mainmenu[] = {
     {   L"Options",
@@ -252,32 +252,11 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp) {
         Writetoini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",opt_NtUserQueryWindow);
         Writetoini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",opt_NtSetDebugFilterState);
 
-        MessageBoxW(hwollymain, L"Please restart Olly to apply changes !", L"[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+        MessageBoxW(hwollymain, L"Please restart the target to apply changes !", L"[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
     };
     // It makes no harm to return page descriptor on all messages.
     return scyllahideoptions;
 };
-
-//first time this gets called we are at EP
-extc void ODBG2_Pluginnotify(int code,void *data,ulong parm1,ulong parm2) {
-    switch(code) {
-    case PN_STATUS: {
-        switch(parm1) {
-        case STAT_PAUSED: {
-            CONTEXT ctx;
-            ctx.ContextFlags = CONTEXT_CONTROL;
-            GetThreadContext(hThread, &ctx);
-            DWORD eip2 = ctx.Eip - 1; //if we land here by BP, the eip is real eip+1 ?!
-            if(ctx.Eip == startAddress || eip2 == startAddress) {
-                ScyllaHide(ProcessId);
-            }
-            break;
-        }
-        }
-    }
-    break;
-    }
-}
 
 //called for every debugloop pass
 extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent) {
@@ -292,14 +271,33 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent) {
         hProcess = debugevent->u.CreateProcessInfo.hProcess;
         hThread = debugevent->u.CreateProcessInfo.hThread;
         ProcessId = debugevent->dwProcessId;
-        startAddress = (ULONG_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
+    }
+    break;
 
-        //we need this to break on EP if Olly is set to break on systembp first
-        Setint3breakpoint(startAddress, BP_ONESHOT, -1, -1, -1, -1, NULL, NULL, NULL);
+    case EXCEPTION_DEBUG_EVENT:
+    {
+        switch(debugevent->u.Exception.ExceptionRecord.ExceptionCode)
+        {
+        case STATUS_BREAKPOINT:
+        {
+            if (!once)
+            {
+                once = true;
+                ScyllaHide(ProcessId);
+            }
+        }
+        break;
+        }
     }
     break;
 
 
     break;
     }
+}
+
+//reset variables. new target started or restarted
+extc void ODBG2_Pluginreset(void)
+{
+    once = false;
 }
