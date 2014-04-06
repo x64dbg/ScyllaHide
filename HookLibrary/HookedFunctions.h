@@ -6,6 +6,12 @@
 #define STATUS_PORT_NOT_SET        ((NTSTATUS)0xC0000353L)
 #define STATUS_HANDLE_NOT_CLOSABLE ((NTSTATUS)0xC0000235L)
 
+#ifndef _WIN64
+#define NAKED __declspec(naked)
+#else
+#define NAKED
+#endif
+
 //DbgBreakPoint
 
 NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass, PVOID ThreadInformation, ULONG ThreadInformationLength);

@@ -14,12 +14,12 @@ void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded);
 
 typedef struct _SAVE_DEBUG_REGISTERS {
 	DWORD dwThreadId;
-	DWORD   Dr0;
-	DWORD   Dr1;
-	DWORD   Dr2;
-	DWORD   Dr3;
-	DWORD   Dr6;
-	DWORD   Dr7;
+	DWORD_PTR Dr0;
+	DWORD_PTR Dr1;
+	DWORD_PTR Dr2;
+	DWORD_PTR Dr3;
+	DWORD_PTR Dr6;
+	DWORD_PTR Dr7;
 } SAVE_DEBUG_REGISTERS;
 
 SAVE_DEBUG_REGISTERS ArrayDebugRegister[100] = { 0 }; //Max 100 threads
@@ -42,7 +42,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
     if (SystemInformationClass == SystemKernelDebuggerInformation || SystemInformationClass == SystemProcessInformation)
     {
         NTSTATUS ntStat = DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
-        if (NT_SUCCESS(ntStat))
+		if (NT_SUCCESS(ntStat) && SystemInformation != 0 && SystemInformationLength != 0)
         {
             if (SystemInformationClass == SystemKernelDebuggerInformation)
             {
@@ -202,10 +202,11 @@ void NTAPI HandleKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT
 	}
 }
 
-VOID __declspec(naked) NTAPI HookedKiUserExceptionDispatcher()// (PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame) //remove DRx Registers
+VOID NAKED NTAPI HookedKiUserExceptionDispatcher()// (PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame) //remove DRx Registers
 {
 	//MOV ECX,DWORD PTR SS:[ESP+4] <- ContextFrame
 	//MOV EBX,DWORD PTR SS:[ESP] <- pExcptRec
+#ifndef _WIN64
 	__asm {
 			MOV EAX, [ESP + 4]
 			MOV ECX, [ESP]
@@ -214,6 +215,7 @@ VOID __declspec(naked) NTAPI HookedKiUserExceptionDispatcher()// (PEXCEPTION_REC
 			CALL HandleKiUserExceptionDispatcher
 			jmp DllExchange.dKiUserExceptionDispatcher
 	}
+#endif
 
     //return DllExchange.dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
 }
