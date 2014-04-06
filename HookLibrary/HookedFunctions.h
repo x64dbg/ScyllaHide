@@ -12,6 +12,16 @@
 #define NAKED
 #endif
 
+typedef struct _SAVE_DEBUG_REGISTERS {
+	DWORD dwThreadId;
+	DWORD_PTR Dr0;
+	DWORD_PTR Dr1;
+	DWORD_PTR Dr2;
+	DWORD_PTR Dr3;
+	DWORD_PTR Dr6;
+	DWORD_PTR Dr7;
+} SAVE_DEBUG_REGISTERS;
+
 //DbgBreakPoint
 
 NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass, PVOID ThreadInformation, ULONG ThreadInformationLength);
