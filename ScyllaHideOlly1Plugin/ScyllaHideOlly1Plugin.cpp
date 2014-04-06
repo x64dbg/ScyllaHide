@@ -101,6 +101,9 @@ void SaveOptions(HWND hWnd) {
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_GETCHECK, 0, 0)) {
         pHideOptions.NtSetDebugFilterState = 1;
     } else pHideOptions.NtSetDebugFilterState = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_GETCHECK, 0, 0)) {
+        pHideOptions.NtClose = 1;
+    } else pHideOptions.NtClose = 0;
 
     //save all options
     _Pluginwriteinttoini(hinst, "PEB", pHideOptions.PEB);
@@ -117,6 +120,7 @@ void SaveOptions(HWND hWnd) {
     _Pluginwriteinttoini(hinst, "NtUserBuildHwndList", pHideOptions.NtUserBuildHwndList);
     _Pluginwriteinttoini(hinst, "NtUserQueryWindow", pHideOptions.NtUserQueryWindow);
     _Pluginwriteinttoini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
+    _Pluginwriteinttoini(hinst, "NtClose", pHideOptions.NtClose);
 }
 
 void LoadOptions() {
@@ -135,6 +139,7 @@ void LoadOptions() {
     pHideOptions.NtUserBuildHwndList = _Pluginreadintfromini(hinst, "NtUserBuildHwndList", pHideOptions.NtUserBuildHwndList);
     pHideOptions.NtUserQueryWindow = _Pluginreadintfromini(hinst, "NtUserQueryWindow", pHideOptions.NtUserQueryWindow);
     pHideOptions.NtSetDebugFilterState = _Pluginreadintfromini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
+    pHideOptions.NtClose = _Pluginreadintfromini(hinst, "NtClose", pHideOptions.NtClose);
 }
 
 //options dialog proc
@@ -159,6 +164,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_SETCHECK, pHideOptions.NtUserBuildHwndList, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_SETCHECK, pHideOptions.NtUserQueryWindow, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, pHideOptions.NtSetDebugFilterState, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, pHideOptions.NtClose, 0);
         break;
     }
     case WM_CLOSE: {
