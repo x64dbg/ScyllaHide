@@ -180,6 +180,24 @@ static void ScyllaHide(DWORD ProcessId) {
     startInjection(ProcessId, ScyllaHideDllPath);
 }
 
+void UpdateHideOptions()
+{
+    pHideOptions.PEB = opt_peb;
+    pHideOptions.NtSetInformationThread = opt_NtSetInformationThread;
+    pHideOptions.NtQueryInformationProcess = opt_NtQueryInformationProcess;
+    pHideOptions.NtQuerySystemInformation = opt_NtQuerySystemInformation;
+    pHideOptions.NtQueryObject = opt_NtQueryObject;
+    pHideOptions.NtYieldExecution = opt_NtYieldExecution;
+    pHideOptions.GetTickCount = opt_GetTickCount;
+    pHideOptions.OutputDebugStringA = opt_OutputDebugStringA;
+    pHideOptions.ProtectDrx = opt_ProtectDRx;
+    pHideOptions.NtUserFindWindowEx = opt_NtUserFindWindowEx;
+    pHideOptions.NtUserBuildHwndList = opt_NtUserBuildHwndList;
+    pHideOptions.NtUserQueryWindow = opt_NtUserQueryWindow;
+    pHideOptions.NtSetDebugFilterState = opt_NtSetDebugFilterState;
+    pHideOptions.NtClose = opt_NtClose;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved) {
 	if (reason==DLL_PROCESS_ATTACH)
 	{
@@ -228,19 +246,7 @@ extc int __cdecl ODBG2_Plugininit(void) {
     Getfromini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",&opt_NtUserQueryWindow);
     Getfromini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",&opt_NtSetDebugFilterState);
 
-    pHideOptions.PEB = opt_peb;
-    pHideOptions.NtSetInformationThread = opt_NtSetInformationThread;
-    pHideOptions.NtQueryInformationProcess = opt_NtQueryInformationProcess;
-    pHideOptions.NtQuerySystemInformation = opt_NtQuerySystemInformation;
-    pHideOptions.NtQueryObject = opt_NtQueryObject;
-    pHideOptions.NtYieldExecution = opt_NtYieldExecution;
-    pHideOptions.GetTickCount = opt_GetTickCount;
-    pHideOptions.OutputDebugStringA = opt_OutputDebugStringA;
-    pHideOptions.ProtectDrx = opt_ProtectDRx;
-    pHideOptions.NtUserFindWindowEx = opt_NtUserFindWindowEx;
-    pHideOptions.NtUserBuildHwndList = opt_NtUserBuildHwndList;
-    pHideOptions.NtUserQueryWindow = opt_NtUserQueryWindow;
-    pHideOptions.NtSetDebugFilterState = opt_NtSetDebugFilterState;
+    UpdateHideOptions();
 
     return 0;
 }
@@ -270,6 +276,7 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp) {
         Writetoini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",opt_NtUserBuildHwndList);
         Writetoini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",opt_NtUserQueryWindow);
         Writetoini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",opt_NtSetDebugFilterState);
+        UpdateHideOptions();
 
         MessageBoxW(hwollymain, L"Please restart the target to apply changes !", L"[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
     };
