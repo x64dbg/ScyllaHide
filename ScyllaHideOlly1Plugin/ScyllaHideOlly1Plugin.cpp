@@ -30,11 +30,11 @@ WCHAR NtApiIniPath[MAX_PATH] = {0};
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 
-static void ScyllaHide(DWORD ProcessId) 
+static void ScyllaHide(DWORD ProcessId)
 {
-	_Message(0, "[ScyllaHide] Reading NT API Information %S\n", NtApiIniPath);
-	ReadNtApiInformation();
-	//_Message(0, "[ScyllaHide] NtUserFindWindowEx %X\n", DllExchangeLoader.NtUserFindWindowExRVA);
+    _Message(0, "[ScyllaHide] Reading NT API Information %S\n", NtApiIniPath);
+    ReadNtApiInformation();
+    //_Message(0, "[ScyllaHide] NtUserFindWindowEx %X\n", DllExchangeLoader.NtUserFindWindowExRVA);
 
     startInjection(ProcessId, ScyllaHideDllPath);
 }
@@ -42,20 +42,20 @@ static void ScyllaHide(DWORD ProcessId)
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
-	{
-		GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
-		WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
-		if (temp)
-		{
-			temp++;
-			*temp = 0;
-			wcscpy(ScyllaHideDllPath, NtApiIniPath);
-			wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-			wcscat(NtApiIniPath, NtApiIniFilename);
-		}
+    {
+        GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
+        WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
+        if (temp)
+        {
+            temp++;
+            *temp = 0;
+            wcscpy(ScyllaHideDllPath, NtApiIniPath);
+            wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
+            wcscat(NtApiIniPath, NtApiIniFilename);
+        }
 
         hinst=hi;
-	}
+    }
     return 1;
 };
 
@@ -251,7 +251,6 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 //called for every debugloop pass
 extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent) {
     static HANDLE hProcess;
-    //static ULONG_PTR startAddress;
 
     if(!debugevent)
         return;
@@ -263,7 +262,6 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         hThread = debugevent->u.CreateProcessInfo.hThread;
         ProcessId=debugevent->dwProcessId;
         dwThreadid=debugevent->dwThreadId;
-        //startAddress = (ULONG_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
     }
     break;
 
@@ -273,10 +271,6 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         {
         case STATUS_BREAKPOINT:
         {
-            //are we at EP ?
-            //if(debugevent->u.Exception.ExceptionRecord.ExceptionAddress == (PVOID)startAddress) {
-            //    ScyllaHide(ProcessId);
-            //}
             if (!once)
             {
                 once = true;
