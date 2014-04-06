@@ -8,7 +8,12 @@ Debugger Hiding:
 - NtQueryInformationProcess - ProcessDebugFlags, ProcessDebugObjectHandle, ProcessDebugPort, ProcessBasicInformation
 - NtQueryObject - ObjectTypesInformation, ObjectTypeInformation
 - NtYieldExecution
+- NtSetDebugFilterState
+- NtUserBuildHwndList
+- NtUserFindWindowEx
+- NtUserQueryWindow
 - GetTickCount
+- BlockInput
 - OutputDebugStringA
 Protecting and Stealthing DRx (CONTEXT_DEBUG_REGISTERS):
 - NtGetContextThread
