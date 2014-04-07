@@ -225,6 +225,7 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
     data->EnableNtUserQueryWindowHook = pHideOptions.NtUserQueryWindow;
     data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
+	data->EnableNtCloseHook = pHideOptions.NtClose;
 
 	data->EnableProtectProcessId = TRUE;
 	data->dwProtectedProcessId = GetCurrentProcessId();
