@@ -2,7 +2,8 @@
 #include "..\HookLibrary\HookMain.h"
 #include "..\InjectorCLI\DynamicMapping.h"
 
-struct HideOptions {
+struct HideOptions
+{
     int PEB;
     int NtSetInformationThread;
     int NtQuerySystemInformation;

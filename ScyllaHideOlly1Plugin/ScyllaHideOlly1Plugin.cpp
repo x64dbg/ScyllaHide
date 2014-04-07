@@ -57,53 +57,99 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
     return TRUE;
 };
 
-void SaveOptions(HWND hWnd) {
+void SaveOptions(HWND hWnd)
+{
     //read all checkboxes
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_GETCHECK, 0, 0)) {
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.PEB = 1;
-    } else pHideOptions.PEB = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.PEB = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.NtSetInformationThread = 1;
-    } else pHideOptions.NtSetInformationThread = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.NtSetInformationThread = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.NtQuerySystemInformation = 1;
-    } else pHideOptions.NtQuerySystemInformation = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.NtQuerySystemInformation = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.NtQueryInformationProcess = 1;
-    } else pHideOptions.NtQueryInformationProcess = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.NtQueryInformationProcess = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.NtQueryObject = 1;
-    } else pHideOptions.NtQueryObject = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.NtQueryObject = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.NtYieldExecution = 1;
-    } else pHideOptions.NtYieldExecution = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.NtYieldExecution = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.GetTickCount = 1;
-    } else pHideOptions.GetTickCount = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.GetTickCount = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.OutputDebugStringA = 1;
-    } else pHideOptions.OutputDebugStringA = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.OutputDebugStringA = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.BlockInput = 1;
-    } else pHideOptions.BlockInput = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.BlockInput = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.ProtectDrx = 1;
-    } else pHideOptions.ProtectDrx = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.ProtectDrx = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.NtUserFindWindowEx = 1;
-    } else pHideOptions.NtUserFindWindowEx = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.NtUserFindWindowEx = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.NtUserBuildHwndList = 1;
-    } else pHideOptions.NtUserBuildHwndList = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.NtUserBuildHwndList = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.NtUserQueryWindow = 1;
-    } else pHideOptions.NtUserQueryWindow = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.NtUserQueryWindow = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.NtSetDebugFilterState = 1;
-    } else pHideOptions.NtSetDebugFilterState = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_GETCHECK, 0, 0)) {
+    }
+    else
+        pHideOptions.NtSetDebugFilterState = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_GETCHECK, 0, 0))
+    {
         pHideOptions.NtClose = 1;
-    } else pHideOptions.NtClose = 0;
+    }
+    else
+        pHideOptions.NtClose = 0;
 
     //save all options
     _Pluginwriteinttoini(hinst, "PEB", pHideOptions.PEB);
@@ -123,7 +169,8 @@ void SaveOptions(HWND hWnd) {
     _Pluginwriteinttoini(hinst, "NtClose", pHideOptions.NtClose);
 }
 
-void LoadOptions() {
+void LoadOptions()
+{
     //load all options
     pHideOptions.PEB = _Pluginreadintfromini(hinst, "PEB", pHideOptions.PEB);
     pHideOptions.NtSetInformationThread = _Pluginreadintfromini(hinst, "NtSetInformationThread", pHideOptions.NtSetInformationThread);
@@ -147,7 +194,8 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 {
     switch (message)
     {
-    case WM_INITDIALOG: {
+    case WM_INITDIALOG:
+    {
         LoadOptions();
 
         SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, pHideOptions.PEB, 0);
@@ -167,14 +215,18 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, pHideOptions.NtClose, 0);
         break;
     }
-    case WM_CLOSE: {
+    case WM_CLOSE:
+    {
         EndDialog(hWnd, NULL);
     }
     break;
 
-    case WM_COMMAND: {
-        switch(LOWORD(wParam)) {
-        case IDOK: {
+    case WM_COMMAND:
+    {
+        switch(LOWORD(wParam))
+        {
+        case IDOK:
+        {
             //save options to ini
             SaveOptions(hWnd);
             MessageBoxA(hWnd, "Please restart the target to apply changes !", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
@@ -185,7 +237,8 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     }
     break;
 
-    default: {
+    default:
+    {
         return FALSE;
     }
     }
@@ -194,13 +247,15 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 }
 
 //register plugin with name
-extern "C" int __declspec(dllexport) _ODBG_Plugindata(char shortname[32]) {
+extern "C" int __declspec(dllexport) _ODBG_Plugindata(char shortname[32])
+{
     strcpy(shortname,"ScyllaHide");
     return PLUGIN_VERSION;
 };
 
 //initialization happens in here
-extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw,unsigned long *features) {
+extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw,unsigned long *features)
+{
     if (ollydbgversion<PLUGIN_VERSION)
         return -1;
 
@@ -216,9 +271,12 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 };
 
 //add menu entries
-extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096],void *item) {
-    switch(origin) {
-    case PM_MAIN: {
+extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096],void *item)
+{
+    switch(origin)
+    {
+    case PM_MAIN:
+    {
         strcpy(data, "0 &Options|1 &About");
         return 1;
     }
@@ -231,14 +289,19 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
 }
 
 //handle plugin actions
-extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,void *item) {
-    if(origin==PM_MAIN) {
-        switch(action) {
-        case 0: {
+extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,void *item)
+{
+    if(origin==PM_MAIN)
+    {
+        switch(action)
+        {
+        case 0:
+        {
             DialogBox(hinst, MAKEINTRESOURCE(IDD_OPTIONS), hwmain, &OptionsProc);
             break;
         }
-        case 1: {
+        case 1:
+        {
             MessageBoxA(hwmain,
                         "ScyllaHide Plugin v"SCYLLAHIDE_VERSION"\n"
                         "(Anti-Anti-Debug in usermode)\n\n"
@@ -253,7 +316,8 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 }
 
 //called for every debugloop pass
-extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent) {
+extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
+{
     static HANDLE hProcess;
 
     if(!debugevent)

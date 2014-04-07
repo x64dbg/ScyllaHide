@@ -32,7 +32,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
     if (SystemInformationClass == SystemKernelDebuggerInformation || SystemInformationClass == SystemProcessInformation)
     {
         NTSTATUS ntStat = DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
-		if (NT_SUCCESS(ntStat) && SystemInformation != 0 && SystemInformationLength != 0)
+        if (NT_SUCCESS(ntStat) && SystemInformation != 0 && SystemInformationLength != 0)
         {
             if (SystemInformationClass == SystemKernelDebuggerInformation)
             {
@@ -171,36 +171,37 @@ NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
 
 void NTAPI HandleKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame)
 {
-	if (ContextFrame && (ContextFrame->ContextFlags & CONTEXT_DEBUG_REGISTERS))
-	{
-		int slotIndex = ThreadDebugContextFindFreeSlotIndex();
-		if (slotIndex != -1)
-		{
-			ThreadDebugContextSaveContext(slotIndex, ContextFrame);
-		}
+    if (ContextFrame && (ContextFrame->ContextFlags & CONTEXT_DEBUG_REGISTERS))
+    {
+        int slotIndex = ThreadDebugContextFindFreeSlotIndex();
+        if (slotIndex != -1)
+        {
+            ThreadDebugContextSaveContext(slotIndex, ContextFrame);
+        }
 
-		ContextFrame->Dr0 = 0;
-		ContextFrame->Dr1 = 0;
-		ContextFrame->Dr2 = 0;
-		ContextFrame->Dr3 = 0;
-		ContextFrame->Dr6 = 0;
-		ContextFrame->Dr7 = 0;
-	}
+        ContextFrame->Dr0 = 0;
+        ContextFrame->Dr1 = 0;
+        ContextFrame->Dr2 = 0;
+        ContextFrame->Dr3 = 0;
+        ContextFrame->Dr6 = 0;
+        ContextFrame->Dr7 = 0;
+    }
 }
 
 VOID NAKED NTAPI HookedKiUserExceptionDispatcher()// (PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame) //remove DRx Registers
 {
-	//MOV ECX,DWORD PTR SS:[ESP+4] <- ContextFrame
-	//MOV EBX,DWORD PTR SS:[ESP] <- pExcptRec
+    //MOV ECX,DWORD PTR SS:[ESP+4] <- ContextFrame
+    //MOV EBX,DWORD PTR SS:[ESP] <- pExcptRec
 #ifndef _WIN64
-	__asm {
-			MOV EAX, [ESP + 4]
-			MOV ECX, [ESP]
-			PUSH EAX
-			PUSH ECX
-			CALL HandleKiUserExceptionDispatcher
-			jmp DllExchange.dKiUserExceptionDispatcher
-	}
+    __asm
+    {
+        MOV EAX, [ESP + 4]
+        MOV ECX, [ESP]
+        PUSH EAX
+        PUSH ECX
+        CALL HandleKiUserExceptionDispatcher
+        jmp DllExchange.dKiUserExceptionDispatcher
+    }
 #endif
 
     //return DllExchange.dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
@@ -210,33 +211,33 @@ static DWORD_PTR KiUserExceptionDispatcherAddress = 0;
 
 NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert) //restore DRx Registers
 {
-	DWORD_PTR retAddress = (DWORD_PTR)_ReturnAddress();
-	if (!KiUserExceptionDispatcherAddress)
-	{
-		KiUserExceptionDispatcherAddress = (DWORD_PTR)GetProcAddress(DllExchange.hNtdll, "KiUserExceptionDispatcher");
-	}
+    DWORD_PTR retAddress = (DWORD_PTR)_ReturnAddress();
+    if (!KiUserExceptionDispatcherAddress)
+    {
+        KiUserExceptionDispatcherAddress = (DWORD_PTR)GetProcAddress(DllExchange.hNtdll, "KiUserExceptionDispatcher");
+    }
 
-	if (ThreadContext)
-	{
-		//char text[100];
-		//wsprintfA(text, "HookedNtContinue return %X", _ReturnAddress());
-		//MessageBoxA(0, text, "debug", 0);
+    if (ThreadContext)
+    {
+        //char text[100];
+        //wsprintfA(text, "HookedNtContinue return %X", _ReturnAddress());
+        //MessageBoxA(0, text, "debug", 0);
 
-		if (retAddress >= KiUserExceptionDispatcherAddress && retAddress < (KiUserExceptionDispatcherAddress + 0x100))
-		{
-			int index = ThreadDebugContextFindExistingSlotIndex();
-			if (index != -1)
-			{
-				ThreadContext->Dr0 = ArrayDebugRegister[index].Dr0;
-				ThreadContext->Dr1 = ArrayDebugRegister[index].Dr1;
-				ThreadContext->Dr2 = ArrayDebugRegister[index].Dr2;
-				ThreadContext->Dr3 = ArrayDebugRegister[index].Dr3;
-				ThreadContext->Dr6 = ArrayDebugRegister[index].Dr6;
-				ThreadContext->Dr7 = ArrayDebugRegister[index].Dr7;
-				ThreadDebugContextRemoveEntry(index);
-			}
+        if (retAddress >= KiUserExceptionDispatcherAddress && retAddress < (KiUserExceptionDispatcherAddress + 0x100))
+        {
+            int index = ThreadDebugContextFindExistingSlotIndex();
+            if (index != -1)
+            {
+                ThreadContext->Dr0 = ArrayDebugRegister[index].Dr0;
+                ThreadContext->Dr1 = ArrayDebugRegister[index].Dr1;
+                ThreadContext->Dr2 = ArrayDebugRegister[index].Dr2;
+                ThreadContext->Dr3 = ArrayDebugRegister[index].Dr3;
+                ThreadContext->Dr6 = ArrayDebugRegister[index].Dr6;
+                ThreadContext->Dr7 = ArrayDebugRegister[index].Dr7;
+                ThreadDebugContextRemoveEntry(index);
+            }
 
-		}
+        }
     }
 
     return DllExchange.dNtContinue(ThreadContext, RaiseAlert);
@@ -329,40 +330,40 @@ NTSTATUS NTAPI HookedNtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLE
 
 void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
 {
-	DWORD dwProcessId = 0;
+    DWORD dwProcessId = 0;
 
-	for (UINT i = 0; i < *pcHwndNeeded; i++)
-	{
-		if (DllExchange.EnableProtectProcessId == TRUE)
-		{
-			//GetWindowThreadProcessId(phwndFirst[i], &dwProcessId);
-			dwProcessId = (DWORD)DllExchange.NtUserQueryWindow(phwndFirst[i], WindowProcess);
-			if (dwProcessId == DllExchange.dwProtectedProcessId)
-			{
-				if (i > 0)
-				{
-					phwndFirst[i] = phwndFirst[i - 1]; //just override with previous
-				}
-				else
-				{
-					phwndFirst[i] = phwndFirst[i + 1];
-				}
-			}
-		}
-	}
+    for (UINT i = 0; i < *pcHwndNeeded; i++)
+    {
+        if (DllExchange.EnableProtectProcessId == TRUE)
+        {
+            //GetWindowThreadProcessId(phwndFirst[i], &dwProcessId);
+            dwProcessId = (DWORD)DllExchange.NtUserQueryWindow(phwndFirst[i], WindowProcess);
+            if (dwProcessId == DllExchange.dwProtectedProcessId)
+            {
+                if (i > 0)
+                {
+                    phwndFirst[i] = phwndFirst[i - 1]; //just override with previous
+                }
+                else
+                {
+                    phwndFirst[i] = phwndFirst[i + 1];
+                }
+            }
+        }
+    }
 
 }
 
 NTSTATUS NTAPI HookedNtUserBuildHwndList(HDESK hdesk, HWND hwndNext, BOOL fEnumChildren, DWORD idThread, UINT cHwndMax, HWND *phwndFirst, PUINT pcHwndNeeded)
 {
-	NTSTATUS ntStat = DllExchange.dNtUserBuildHwndList(hdesk, hwndNext, fEnumChildren, idThread, cHwndMax, phwndFirst, pcHwndNeeded);
+    NTSTATUS ntStat = DllExchange.dNtUserBuildHwndList(hdesk, hwndNext, fEnumChildren, idThread, cHwndMax, phwndFirst, pcHwndNeeded);
 
-	if (NT_SUCCESS(ntStat) && pcHwndNeeded != 0 && phwndFirst != 0)
-	{
-		FilterHwndList(phwndFirst, pcHwndNeeded);
-	}
+    if (NT_SUCCESS(ntStat) && pcHwndNeeded != 0 && phwndFirst != 0)
+    {
+        FilterHwndList(phwndFirst, pcHwndNeeded);
+    }
 
-	return ntStat;
+    return ntStat;
 }
 
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes)
@@ -397,7 +398,7 @@ void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo)
 
     while (TRUE)
     {
-		if (IsProcessBad(&pInfo->ImageName) || ((DllExchange.EnableProtectProcessId == TRUE) && (pInfo->UniqueProcessId == (HANDLE)DllExchange.dwProtectedProcessId)))
+        if (IsProcessBad(&pInfo->ImageName) || ((DllExchange.EnableProtectProcessId == TRUE) && (pInfo->UniqueProcessId == (HANDLE)DllExchange.dwProtectedProcessId)))
         {
             ZeroMemory(pInfo->ImageName.Buffer, pInfo->ImageName.Length);
 

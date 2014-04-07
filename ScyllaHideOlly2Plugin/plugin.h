@@ -35,7 +35,7 @@
 // 6. Read documentation!
 
 #if !defined(_UNICODE) && !defined(UNICODE)
-  #error This version must be compiled with UNICODE on
+#error This version must be compiled with UNICODE on
 #endif
 
 
@@ -43,12 +43,12 @@
 ////////////// PREFERRED SETTINGS AND FIXES FOR BORLAND COMPILERS //////////////
 
 #ifdef __BORLANDC__
-  #pragma option -a1                   // Byte alignment
-  #pragma option -K                    // Force unsigned characters!
-  // Redefinition of MAKELONG removes nasty warning under Borland Builder 4.0:
-  // boolean OR in one row with arithmetical shift.
-  #undef  MAKELONG
-  #define MAKELONG(lo,hi) ((LONG)(((WORD)(lo))|(((DWORD)((WORD)(hi)))<<16)))
+#pragma option -a1                   // Byte alignment
+#pragma option -K                    // Force unsigned characters!
+// Redefinition of MAKELONG removes nasty warning under Borland Builder 4.0:
+// boolean OR in one row with arithmetical shift.
+#undef  MAKELONG
+#define MAKELONG(lo,hi) ((LONG)(((WORD)(lo))|(((DWORD)((WORD)(hi)))<<16)))
 #endif
 
 
@@ -58,10 +58,10 @@
 // If you like Microsoft compiler, this will force byte alignment and verify
 // that character is set to unsigned.
 #ifdef _MSC_VER
-  #pragma pack(1)                      // Force byte alignment of structures
-  #ifndef _CHAR_UNSIGNED               // Verify that character is unsigned
-    #error Please set default char type to unsigned (option /J)
-  #endif
+#pragma pack(1)                      // Force byte alignment of structures
+#ifndef _CHAR_UNSIGNED               // Verify that character is unsigned
+#error Please set default char type to unsigned (option /J)
+#endif
 #endif
 
 
@@ -69,10 +69,10 @@
 //////////////////// PREFERRED SETTINGS AND FIXES FOR MINGW ////////////////////
 
 #ifdef __MINGW32__
-  #pragma pack(1)                      // Force byte alignment of structures
-  #ifndef __CHAR_UNSIGNED__            // Verify that character is unsigned
-    #error Please set default char type to unsigned (option -funsigned-char)
-  #endif
+#pragma pack(1)                      // Force byte alignment of structures
+#ifndef __CHAR_UNSIGNED__            // Verify that character is unsigned
+#error Please set default char type to unsigned (option -funsigned-char)
+#endif
 #endif
 
 
@@ -80,15 +80,15 @@
 ////////////////////////////// GLOBAL DEFINITIONS //////////////////////////////
 
 #ifndef _export
-  #define _export      __declspec(dllexport)
+#define _export      __declspec(dllexport)
 #endif
 
 #ifndef _import
-  #define _import      __declspec(dllimport)
+#define _import      __declspec(dllimport)
 #endif
 
 #ifndef _USERENTRY
-  #define _USERENTRY   __cdecl
+#define _USERENTRY   __cdecl
 #endif
 
 #define MAKEWP(lo,hi)  ((WPARAM)MAKELONG(lo,hi))
@@ -98,15 +98,15 @@
 #define HIINT(l)       ((signed short)(((DWORD)(l)>>16) & 0xFFFF))
 
 #ifndef MAXPATH
-  #define MAXPATH      MAX_PATH
+#define MAXPATH      MAX_PATH
 #endif
 
 #ifndef FIELD_OFFSET
-  #define FIELD_OFFSET(type,field) ((LONG)&(((type *)0)->field))
+#define FIELD_OFFSET(type,field) ((LONG)&(((type *)0)->field))
 #endif
 
 #ifndef arraysize
-  #define arraysize(x) (sizeof(x)/sizeof(x[0]))
+#define arraysize(x) (sizeof(x)/sizeof(x[0]))
 #endif
 
 #define TEXTLEN        256             // Max length of text string incl. '\0'
@@ -126,17 +126,17 @@ typedef unsigned long  ulong;          // Unsigned long
 // oddata.
 
 #ifdef __cplusplus
-  #define extc         extern "C" _export
-  #define stdapi(type) extern "C"               type __cdecl
-  #define varapi(type) extern "C"               type __cdecl
-  #define oddata(type) extern "C" const _import type
-  #define pentry(type) extern "C" _export       type __cdecl
+#define extc         extern "C" _export
+#define stdapi(type) extern "C"               type __cdecl
+#define varapi(type) extern "C"               type __cdecl
+#define oddata(type) extern "C" const _import type
+#define pentry(type) extern "C" _export       type __cdecl
 #else
-  #define extc         extern     _export
-  #define stdapi(type) extern                   type __cdecl
-  #define varapi(type) extern                   type __cdecl
-  #define oddata(type) extern     const _import type
-  #define pentry(type) extern     _export       type __cdecl
+#define extc         extern     _export
+#define stdapi(type) extern                   type __cdecl
+#define varapi(type) extern                   type __cdecl
+#define oddata(type) extern     const _import type
+#define pentry(type) extern     _export       type __cdecl
 #endif
 
 
@@ -245,18 +245,18 @@ varapi (void)    Error(wchar_t *format,...);
 varapi (void)    Conderror(int *cond,wchar_t *title,wchar_t *format,...);
 varapi (int)     Condyesno(int *cond,wchar_t *title,wchar_t *format,...);
 stdapi (int)     Stringfromini(wchar_t *section,wchar_t *key,wchar_t *s,
-                   int length);
+                               int length);
 stdapi (int)     Filefromini(wchar_t *key,wchar_t *name,wchar_t *defname);
 varapi (int)     Getfromini(wchar_t *file,wchar_t *section,wchar_t *key,
-                   wchar_t *format,...);
+                            wchar_t *format,...);
 varapi (int)     Writetoini(wchar_t *file,wchar_t *section,wchar_t *key,
-                   wchar_t *format,...);
+                            wchar_t *format,...);
 stdapi (int)     Filetoini(wchar_t *key,wchar_t *name);
 stdapi (void)    Deleteinisection(wchar_t *file,wchar_t *section);
 stdapi (int)     Getfromsettings(wchar_t *key,int defvalue);
 stdapi (void)    Addtosettings(wchar_t *key,int value);
 stdapi (void)    Replacegraphs(int mode,wchar_t *s,uchar *mask,
-                   int select,int n);
+                               int select,int n);
 stdapi (int)     Unicodetoascii(const wchar_t *w,int nw,char *s,int ns);
 stdapi (int)     Asciitounicode(const char *s,int ns,wchar_t *w,int nw);
 stdapi (int)     Unicodetoutf(const wchar_t *w,int nw,char *t,int nt);
@@ -269,25 +269,25 @@ stdapi (void *)  Memalloc(ulong size,int flags);
 stdapi (void)    Memfree(void *data);
 stdapi (void *)  Mempurge(void *data,int count,ulong itemsize,int *newcount);
 stdapi (void *)  Memdouble(void *data,int *pcount,ulong itemsize,
-                   int *failed,int flags);
+                           int *failed,int flags);
 stdapi (void *)  Virtalloc(ulong size,int flags);
 stdapi (void)    Virtfree(void *data);
 stdapi (int)     Broadcast(UINT msg,WPARAM wp,LPARAM lp);
 stdapi (int)     Browsefilename(wchar_t *title,wchar_t *name,wchar_t *args,
-                   wchar_t *currdir,wchar_t *defext,HWND hwnd,int mode);
+                                wchar_t *currdir,wchar_t *defext,HWND hwnd,int mode);
 stdapi (int)     Browsedirectory(HWND hw,wchar_t *comment,wchar_t *dir);
 stdapi (void)    Relativizepath(wchar_t *path);
 stdapi (void)    Absolutizepath(wchar_t *path);
 stdapi (int)     Confirmoverwrite(wchar_t *path);
 stdapi (int)     Labeladdress(wchar_t *text,ulong addr,ulong reladdr,int relreg,
-                   int index,uchar *mask,int *select,ulong mode);
+                              int index,uchar *mask,int *select,ulong mode);
 stdapi (int)     Simpleaddress(wchar_t *text,ulong addr,
-                   uchar *mask,int *select);
+                               uchar *mask,int *select);
 stdapi (void)    Heapsort(void *data,const int count,const int size,
-                   int (_USERENTRY *compare)(const void *,const void *));
+                          int (_USERENTRY *compare)(const void *,const void *));
 stdapi (void)    Heapsortex(void *data,const int count,const int size,
-                   int (_USERENTRY *compareex)(const void *,const void *,ulong),
-                   ulong lp);
+                            int (_USERENTRY *compareex)(const void *,const void *,ulong),
+                            ulong lp);
 stdapi (uchar *) Readfile(wchar_t *path,ulong fixsize,ulong *psize);
 stdapi (int)     Devicenametodosname(wchar_t *devname,wchar_t *dosname);
 stdapi (int)     Filenamefromhandle(HANDLE hfile,wchar_t *path);
@@ -321,9 +321,9 @@ varapi (wchar_t *) SetcaseW(wchar_t *s);
 varapi (int)     StrcopycaseA(char *dest,int n,const char *src);
 varapi (int)     StrcopycaseW(wchar_t *dest,int n,const wchar_t *src);
 varapi (int)     StrnstrA(char *data,int ndata,
-                   char *pat,int npat,int ignorecase);
+                          char *pat,int npat,int ignorecase);
 varapi (int)     StrnstrW(wchar_t *data,int ndata,
-                   wchar_t *pat,int npat,int ignorecase);
+                          wchar_t *pat,int npat,int ignorecase);
 varapi (int)     StrcmpW(const wchar_t *s1,const wchar_t *s2);
 varapi (ulong)   Div64by32(ulong low,ulong hi,ulong div);
 varapi (ulong)   CRCcalc(uchar *datacopy,ulong datasize);
@@ -336,10 +336,10 @@ varapi (void)    Clearfpu(void);
 ////////////////////// DATA COMPRESSION AND DECOMPRESSION //////////////////////
 
 stdapi (ulong)   Compress(uchar *bufin,ulong nbufin,
-                   uchar *bufout,ulong nbufout);
+                          uchar *bufout,ulong nbufout);
 stdapi (ulong)   Getoriginaldatasize(uchar *bufin,ulong nbufin);
 stdapi (ulong)   Decompress(uchar *bufin,ulong nbufin,
-                   uchar *bufout,ulong nbufout);
+                            uchar *bufout,ulong nbufout);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -378,20 +378,22 @@ stdapi (ulong)   Decompress(uchar *bufin,ulong nbufin,
 
 #ifdef FILE                            // Requires <stdio.h>
 
-typedef struct t_fileinfo {            // Length, date, CRC (MI_FILEINFO)
-  ulong          size;                 // Length of executable file
-  FILETIME       filetime;             // Time of last modification
-  ulong          crc;                  // CRC of executable file
-  int            issfx;                // Whether self-extractable
-  ulong          sfxentry;             // Offset of original entry after SFX
+typedef struct t_fileinfo              // Length, date, CRC (MI_FILEINFO)
+{
+    ulong          size;                 // Length of executable file
+    FILETIME       filetime;             // Time of last modification
+    ulong          crc;                  // CRC of executable file
+    int            issfx;                // Whether self-extractable
+    ulong          sfxentry;             // Offset of original entry after SFX
 } t_fileinfo;
 
-typedef struct t_tagfile {             // Descriptor of tagged file (reading)
-  FILE           *f;                   // File descriptor
-  ulong          filesize;             // File size
-  ulong          offset;               // Actual offset
-  ulong          tag;                  // Tag of next accessed record
-  ulong          recsize;              // Size of next accessed record
+typedef struct t_tagfile               // Descriptor of tagged file (reading)
+{
+    FILE           *f;                   // File descriptor
+    ulong          filesize;             // File size
+    ulong          offset;               // Actual offset
+    ulong          tag;                  // Tag of next accessed record
+    ulong          recsize;              // Size of next accessed record
 } t_tagfile;
 
 stdapi (FILE *)  Createtaggedfile(wchar_t *name,char *signature,ulong version);
@@ -405,20 +407,22 @@ stdapi (void)    Closetaggedfile(t_tagfile *tf);
 
 #endif
 
-typedef struct t_nameinfo {            // Header of name/data record (MI_NAME)
-  ulong          offs;                 // Offset in module
-  uchar          type;                 // Name/data type, one of NM_xxx/DT_xxx
+typedef struct t_nameinfo              // Header of name/data record (MI_NAME)
+{
+    ulong          offs;                 // Offset in module
+    uchar          type;                 // Name/data type, one of NM_xxx/DT_xxx
 } t_nameinfo;
 
-typedef struct t_uddsave {             // .udd file descriptor used by plugins
-  void           *file;                // .udd file
-  ulong          uddprefix;            // .udd tag prefix
+typedef struct t_uddsave               // .udd file descriptor used by plugins
+{
+    void           *file;                // .udd file
+    ulong          uddprefix;            // .udd tag prefix
 } t_uddsave;
 
 stdapi (int)     Pluginsaverecord(t_uddsave *psave,ulong tag,
-                   ulong size,void *data);
+                                  ulong size,void *data);
 stdapi (int)     Pluginpackedrecord(t_uddsave *psave,ulong tag,
-                   ulong size,void *data);
+                                    ulong size,void *data);
 stdapi (void)    Pluginmodulechanged(ulong addr);
 stdapi (int)     Plugingetuniquedatatype(void);
 stdapi (int)     Plugintempbreakpoint(ulong addr,ulong type,int forceint3);
@@ -450,24 +454,26 @@ stdapi (void)    Pluginshowoptions(struct t_control *options);
 #define SCAN_SYNTAX    8               // Syntactical error in errmsg
 #define SCAN_USER      10              // Base for user-defined types
 
-typedef struct t_scan {                // Scan descriptor
-  // Fill these fields before the first scan. Set line to 1 for 1-based numbers.
-  ulong          mode;                 // Scanning mode, set of SMODE_xxx
-  wchar_t        *src;                 // Pointer to UNICODE source data
-  ulong          length;               // Length of source data, characters
-  ulong          caret;                // Next processed symbol, characters
-  int            line;                 // Number of encountered EOLs
-  // Call to Scan() fills some of these fields with scan data.
-  union {
-    int          ival;                 // Scanned item as integer number
-    ulong        uval;                 // Scanned item as unsigned number
-  };
-  ulong          mask;                 // Binary mask for uval, SCAN_INT only
-  long double    fval;                 // Scanned item as floating number
-  wchar_t        text[TEXTLEN];        // Scanned item as a text string
-  int            ntext;                // Length of text, characters
-  wchar_t        errmsg[TEXTLEN];      // Error message
-  int            type;                 // Type of last scanned item, SCAN_xxx
+typedef struct t_scan                  // Scan descriptor
+{
+    // Fill these fields before the first scan. Set line to 1 for 1-based numbers.
+    ulong          mode;                 // Scanning mode, set of SMODE_xxx
+    wchar_t        *src;                 // Pointer to UNICODE source data
+    ulong          length;               // Length of source data, characters
+    ulong          caret;                // Next processed symbol, characters
+    int            line;                 // Number of encountered EOLs
+    // Call to Scan() fills some of these fields with scan data.
+    union
+    {
+        int          ival;                 // Scanned item as integer number
+        ulong        uval;                 // Scanned item as unsigned number
+    };
+    ulong          mask;                 // Binary mask for uval, SCAN_INT only
+    long double    fval;                 // Scanned item as floating number
+    wchar_t        text[TEXTLEN];        // Scanned item as a text string
+    int            ntext;                // Length of text, characters
+    wchar_t        errmsg[TEXTLEN];      // Error message
+    int            type;                 // Type of last scanned item, SCAN_xxx
 } t_scan;
 
 stdapi (int)     Skipspaces(t_scan *ps);
@@ -873,47 +879,50 @@ stdapi (int)     Optostring(wchar_t *s,int op);
 
 typedef int  MENUFUNC(struct t_table *,wchar_t *,ulong,int);
 
-typedef struct t_menu {                // Menu descriptor
-  wchar_t        *name;                // Menu command
-  wchar_t        *help;                // Explanation of command
-  int            shortcutid;           // Shortcut identifier, K_xxx
-  MENUFUNC       *menufunc;            // Function that executes menu command
-  struct t_menu  *submenu;             // Pointer to descriptor of popup menu
-  union {
-    ulong        index;                // Argument passed to menu function
-    HMENU        hsubmenu;             // Handle of pulldown menu
-  };
+typedef struct t_menu                  // Menu descriptor
+{
+    wchar_t        *name;                // Menu command
+    wchar_t        *help;                // Explanation of command
+    int            shortcutid;           // Shortcut identifier, K_xxx
+    MENUFUNC       *menufunc;            // Function that executes menu command
+    struct t_menu  *submenu;             // Pointer to descriptor of popup menu
+    union
+    {
+        ulong        index;                // Argument passed to menu function
+        HMENU        hsubmenu;             // Handle of pulldown menu
+    };
 } t_menu;
 
 stdapi (int)     Callmenufunction(struct t_table *pt,t_menu *pm,
-                   MENUFUNC *menufunc,ulong index);
+                                  MENUFUNC *menufunc,ulong index);
 
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN OLLYDBG WINDOW //////////////////////////////
 
-typedef enum t_status {                // Thread/process status
-  STAT_IDLE,                           // No process to debug
-  STAT_LOADING,                        // Loading new process
-  STAT_ATTACHING,                      // Attaching to the running process
-  STAT_RUNNING,                        // All threads are running
-  STAT_RUNTHR,                         // Single thread is running
-  STAT_STEPIN,                         // Stepping into, single thread
-  STAT_STEPOVER,                       // Stepping over, single thread
-  STAT_ANIMIN,                         // Animating into, single thread
-  STAT_ANIMOVER,                       // Animating over, single thread
-  STAT_TRACEIN,                        // Tracing into, single thread
-  STAT_TRACEOVER,                      // Tracing over, single thread
-  STAT_SFXRUN,                         // SFX using run trace, single thread
-  STAT_SFXHIT,                         // SFX using hit trace, single thread
-  STAT_SFXKNOWN,                       // SFX to known entry, single thread
-  STAT_TILLRET,                        // Stepping until return, single thread
-  STAT_OVERRET,                        // Stepping over return, single thread
-  STAT_TILLUSER,                       // Stepping till user code, single thread
-  STAT_PAUSING,                        // Process is requested to pause
-  STAT_PAUSED,                         // Process paused on debugging event
-  STAT_FINISHED,                       // Process is terminated but in memory
-  STAT_CLOSING                         // Process is requested to close/detach
+typedef enum t_status                  // Thread/process status
+{
+    STAT_IDLE,                           // No process to debug
+    STAT_LOADING,                        // Loading new process
+    STAT_ATTACHING,                      // Attaching to the running process
+    STAT_RUNNING,                        // All threads are running
+    STAT_RUNTHR,                         // Single thread is running
+    STAT_STEPIN,                         // Stepping into, single thread
+    STAT_STEPOVER,                       // Stepping over, single thread
+    STAT_ANIMIN,                         // Animating into, single thread
+    STAT_ANIMOVER,                       // Animating over, single thread
+    STAT_TRACEIN,                        // Tracing into, single thread
+    STAT_TRACEOVER,                      // Tracing over, single thread
+    STAT_SFXRUN,                         // SFX using run trace, single thread
+    STAT_SFXHIT,                         // SFX using hit trace, single thread
+    STAT_SFXKNOWN,                       // SFX to known entry, single thread
+    STAT_TILLRET,                        // Stepping until return, single thread
+    STAT_OVERRET,                        // Stepping over return, single thread
+    STAT_TILLUSER,                       // Stepping till user code, single thread
+    STAT_PAUSING,                        // Process is requested to pause
+    STAT_PAUSED,                         // Process paused on debugging event
+    STAT_FINISHED,                       // Process is terminated but in memory
+    STAT_CLOSING                         // Process is requested to close/detach
 } t_status;
 
 varapi (void)    Info(wchar_t *format,...);
@@ -1003,9 +1012,10 @@ stdapi (void)    Setstatus(t_status newstatus);
 #define NMOFS_EXPR     1               // Offset to breakpoint log expression
 #define NMOFS_TYPE     2               // Offset to expression decoding type
 
-typedef struct dt_iord {               // Descriptor of DT_IORD data
-  ulong          ord;                  // Ordinal
-  wchar_t        modname[SHORTNAME];   // Short name of the module
+typedef struct dt_iord                 // Descriptor of DT_IORD data
+{
+    ulong          ord;                  // Ordinal
+    wchar_t        modname[SHORTNAME];   // Short name of the module
 } dt_iord;
 
 #define NSWEXIT        256             // Max no. of switch exits, incl. default
@@ -1021,27 +1031,30 @@ typedef struct dt_iord {               // Descriptor of DT_IORD data
 #define   CASE_EXCPTN  0x00000040      // Interprete cases as exception codes
 #define CASE_SIGNED    0x00000080      // Interprete cases as signed
 
-typedef struct dt_switch {             // Switch descriptor DT_SWITCH
-  ulong          casemin;              // Minimal case
-  ulong          casemax;              // Maximal case
-  ulong          type;                 // Switch type, set of CASE_xxx
-  int            nexit;                // Number of exits including default
-  ulong          exitaddr[NSWEXIT];    // List of exits (point to dt_case)
+typedef struct dt_switch               // Switch descriptor DT_SWITCH
+{
+    ulong          casemin;              // Minimal case
+    ulong          casemax;              // Maximal case
+    ulong          type;                 // Switch type, set of CASE_xxx
+    int            nexit;                // Number of exits including default
+    ulong          exitaddr[NSWEXIT];    // List of exits (point to dt_case)
 } dt_switch;
 
-typedef struct dt_case {               // Switch exit descriptor DT_CASE
-  ulong          swbase;               // Address of a switch descriptor
-  ulong          type;                 // Switch type, set of CASE_xxx
-  int            ncase;                // Number of cases (1..64, 0: default)
-  ulong          value[NSWCASE];       // List of cases for exit
+typedef struct dt_case                 // Switch exit descriptor DT_CASE
+{
+    ulong          swbase;               // Address of a switch descriptor
+    ulong          type;                 // Switch type, set of CASE_xxx
+    int            ncase;                // Number of cases (1..64, 0: default)
+    ulong          value[NSWCASE];       // List of cases for exit
 } dt_case;
 
 // Flags indicating alternative forms of assembler mnemonics.
 #define MF_JZ          0x01            // JZ, JNZ instead of JE, JNE
 #define MF_JC          0x02            // JC, JNC instead of JAE, JB
 
-typedef struct dt_mnemo {              // Mnemonics decoding DT_MNEMO
-  uchar          flags;                // Set of MF_xxx
+typedef struct dt_mnemo                // Mnemonics decoding DT_MNEMO
+{
+    uchar          flags;                // Set of MF_xxx
 } dt_mnemo;
 
 stdapi (int)     Insertdata(ulong addr,int type,void *data,ulong datasize);
@@ -1051,15 +1064,15 @@ stdapi (void)    Startnextdata(ulong addr0,ulong addr1,int type);
 stdapi (ulong)   Findnextdata(ulong *addr,void *data,ulong datasize);
 stdapi (void)    Startnextdatalist(ulong addr0,ulong addr1,int *list,int n);
 stdapi (int)     Findnextdatalist(ulong *addr,int *type,
-                   void *data,ulong datasize);
+                                  void *data,ulong datasize);
 stdapi (int)     Isdataavailable(ulong addr,int type1,int type2,int type3);
 stdapi (int)     Isdatainrange(ulong addr0,ulong addr1,
-                   int type1,int type2,int type3);
+                               int type1,int type2,int type3);
 stdapi (void)    Deletedatarange(ulong addr0,ulong addr1,
-                   int type1,int type2,int type3);
+                                 int type1,int type2,int type3);
 stdapi (void)    Deletedatarangelist(ulong addr0,ulong addr1,int *list,int n);
 stdapi (int)     Quickinsertdata(ulong addr,int type,
-                   void *data,ulong datasize);
+                                 void *data,ulong datasize);
 stdapi (void)    Mergequickdata(void);
 stdapi (int)     DemanglenameW(wchar_t *name,wchar_t *undecorated,int recurs);
 stdapi (int)     InsertnameW(ulong addr,int type,wchar_t *s);
@@ -1068,21 +1081,22 @@ stdapi (int)     FindnameW(ulong addr,int type,wchar_t *name,int nname);
 stdapi (int)     FindnextnameW(ulong *addr,wchar_t *name,int nname);
 stdapi (void)    Startnextnamelist(ulong addr0,ulong addr1,int *list,int n);
 stdapi (int)     FindnextnamelistW(ulong *addr,int *type,
-                   wchar_t *name,int nname);
+                                   wchar_t *name,int nname);
 stdapi (int)     Findlabel(ulong addr,wchar_t *name,int firsttype);
 stdapi (int)     FindaddressW(wchar_t *name,struct t_module *pmod,
-                   ulong *addr,wchar_t *errtxt);
+                              ulong *addr,wchar_t *errtxt);
 
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// SIMPLE DATA FUNCTIONS ////////////////////////////
 
-typedef struct t_simple {              // Simple data container
-  uchar          *heap;                // Data heap
-  ulong          itemsize;             // Size of data element, bytes
-  int            maxitem;              // Size of allocated data heap, items
-  int            nitem;                // Actual number of data items
-  int            sorted;               // Whether data is sorted
+typedef struct t_simple                // Simple data container
+{
+    uchar          *heap;                // Data heap
+    ulong          itemsize;             // Size of data element, bytes
+    int            maxitem;              // Size of allocated data heap, items
+    int            nitem;                // Actual number of data items
+    int            sorted;               // Whether data is sorted
 } t_simple;
 
 stdapi (void)    Destroysimpledata(t_simple *pdat);
@@ -1109,12 +1123,13 @@ stdapi (void)    Deletesimpledatarange(t_simple *pdat,ulong addr0,ulong addr1);
 
 #define PRED_ESPKNOWN  (PRED_ESPRET|PRED_ESPOK)
 
-typedef struct sd_pred {               // Descriptor of predicted data
-  ulong          addr;                 // Address of predicted command
-  ushort         mode;                 // Combination of PRED_xxx
-  long           espconst;             // Offset of ESP to original ESP
-  long           ebpconst;             // Offset of EBP to original ESP
-  ulong          resconst;             // Constant in result of execution
+typedef struct sd_pred                 // Descriptor of predicted data
+{
+    ulong          addr;                 // Address of predicted command
+    ushort         mode;                 // Combination of PRED_xxx
+    long           espconst;             // Offset of ESP to original ESP
+    long           ebpconst;             // Offset of EBP to original ESP
+    ulong          resconst;             // Constant in result of execution
 } sd_pred;
 
 
@@ -1246,14 +1261,16 @@ typedef struct sd_pred {               // Descriptor of predicted data
 #define NL_EORD        0x00010000      // Associated export ordinal available
 #define NL_IORD        0x00020000      // Associated import ordinal available
 
-typedef struct t_sorthdr {             // Header of sorted data item
-  ulong          addr;                 // Base address of the entry
-  ulong          size;                 // Size of the entry
-  ulong          type;                 // Type and address extension, TY_xxx
+typedef struct t_sorthdr               // Header of sorted data item
+{
+    ulong          addr;                 // Base address of the entry
+    ulong          size;                 // Size of the entry
+    ulong          type;                 // Type and address extension, TY_xxx
 } t_sorthdr;
 
-typedef struct t_sorthdr_nosize {      // Header of SDM_NOSIZE item
-  ulong          addr;                 // Base address of the entry
+typedef struct t_sorthdr_nosize        // Header of SDM_NOSIZE item
+{
+    ulong          addr;                 // Base address of the entry
 } t_sorthdr_nosize;
 
 typedef int  SORTFUNC(const t_sorthdr *,const t_sorthdr *,const int);
@@ -1264,34 +1281,35 @@ typedef void DESTFUNC(t_sorthdr *);
 #define NBLOCK         2048            // Max number of data blocks
 #define BLOCKSIZE      1048576         // Size of single data block, bytes
 
-typedef struct t_sorted {              // Descriptor of sorted data
-  int            n;                    // Actual number of entries
-  int            nmax;                 // Maximal number of entries
-  ulong          itemsize;             // Size of single entry
-  int            mode;                 // Storage mode, set of SDM_xxx
-  void           *data;                // Sorted data, NULL if SDM_INDEXED
-  void           **block;              // NBLOCK sorted data blocks, or NULL
-  int            nblock;               // Number of allocated blocks
-  ulong          version;              // Changes on each modification
-  void           **dataptr;            // Pointers to data, sorted by address
-  int            selected;             // Index of selected entry
-  ulong          seladdr;              // Base address of selected entry
-  ulong          selsubaddr;           // Subaddress of selected entry
-  SORTFUNC       *sortfunc;            // Function which sorts data or NULL
-  DESTFUNC       *destfunc;            // Destructor function or NULL
-  int            sort;                 // Sorting criterium (column)
-  int            sorted;               // Whether indexes are sorted
-  int            *sortindex;           // Indexes, sorted by criterium
+typedef struct t_sorted                // Descriptor of sorted data
+{
+    int            n;                    // Actual number of entries
+    int            nmax;                 // Maximal number of entries
+    ulong          itemsize;             // Size of single entry
+    int            mode;                 // Storage mode, set of SDM_xxx
+    void           *data;                // Sorted data, NULL if SDM_INDEXED
+    void           **block;              // NBLOCK sorted data blocks, or NULL
+    int            nblock;               // Number of allocated blocks
+    ulong          version;              // Changes on each modification
+    void           **dataptr;            // Pointers to data, sorted by address
+    int            selected;             // Index of selected entry
+    ulong          seladdr;              // Base address of selected entry
+    ulong          selsubaddr;           // Subaddress of selected entry
+    SORTFUNC       *sortfunc;            // Function which sorts data or NULL
+    DESTFUNC       *destfunc;            // Destructor function or NULL
+    int            sort;                 // Sorting criterium (column)
+    int            sorted;               // Whether indexes are sorted
+    int            *sortindex;           // Indexes, sorted by criterium
 } t_sorted;
 
 stdapi (void)    Destroysorteddata(t_sorted *sd);
 stdapi (int)     Createsorteddata(t_sorted *sd,ulong itemsize,int nexp,
-                   SORTFUNC *sortfunc,DESTFUNC *destfunc,int mode);
+                                  SORTFUNC *sortfunc,DESTFUNC *destfunc,int mode);
 stdapi (void)    Deletesorteddata(t_sorted *sd,ulong addr,ulong subaddr);
 stdapi (int)     Deletesorteddatarange(t_sorted *sd,ulong addr0,ulong addr1);
 stdapi (void *)  Addsorteddata(t_sorted *sd,void *item);
 stdapi (int)     Replacesorteddatarange(t_sorted *sd,void *data,int n,
-                   ulong addr0,ulong addr1);
+                                        ulong addr0,ulong addr1);
 stdapi (void)    Renumeratesorteddata(t_sorted *sd);
 stdapi (int)     Confirmsorteddata(t_sorted *sd,int confirm);
 stdapi (int)     Deletenonconfirmedsorteddata(t_sorted *sd);
@@ -1329,22 +1347,23 @@ stdapi (int)     Issortedinit(t_sorted *sd);
 #define   BAR_SPHEX    0x00005000      // Hexadecimal, spell symbol by symbol
 #define   BAR_SPNONE   0x0000F000      // Column is excluded from speech
 
-typedef struct t_bar {                 // Descriptor of columns in table window
-  // These variables must be filled before table window is created.
-  int            nbar;                 // Number of columns
-  int            visible;              // Bar visible
-  wchar_t        *name[NBAR];          // Column names (may be NULL)
-  wchar_t        *expl[NBAR];          // Explanations of columns
-  int            mode[NBAR];           // Combination of bits BAR_xxx
-  int            defdx[NBAR];          // Default widths of columns, chars
-  // These variables are initialized by window creation function.
-  int            dx[NBAR];             // Actual widths of columns, pixels
-  int            captured;             // One of CAPT_xxx
-  int            active;               // Info about where mouse was captured
-  int            scrollvx;             // X scrolling speed
-  int            scrollvy;             // Y scrolling speed
-  int            prevx;                // Previous X mouse coordinate
-  int            prevy;                // Previous Y mouse coordinate
+typedef struct t_bar                   // Descriptor of columns in table window
+{
+    // These variables must be filled before table window is created.
+    int            nbar;                 // Number of columns
+    int            visible;              // Bar visible
+    wchar_t        *name[NBAR];          // Column names (may be NULL)
+    wchar_t        *expl[NBAR];          // Explanations of columns
+    int            mode[NBAR];           // Combination of bits BAR_xxx
+    int            defdx[NBAR];          // Default widths of columns, chars
+    // These variables are initialized by window creation function.
+    int            dx[NBAR];             // Actual widths of columns, pixels
+    int            captured;             // One of CAPT_xxx
+    int            active;               // Info about where mouse was captured
+    int            scrollvx;             // X scrolling speed
+    int            scrollvy;             // Y scrolling speed
+    int            prevx;                // Previous X mouse coordinate
+    int            prevy;                // Previous Y mouse coordinate
 } t_bar;
 
 #define TABLE_USERDEF  0x00000001      // User-drawn table
@@ -1426,14 +1445,15 @@ typedef struct t_bar {                 // Descriptor of columns in table window
 #define DRAW_RAWDATA   0x00008000      // Don't convert glyphs and multibytes
 #define DRAW_NEW       0x00010000      // Use highlighted foreground
 
-typedef struct t_drawheader {          // Draw descriptor for TABLE_USERDEF
-  int            line;                 // Line in window
-  int            n;                    // Total number of visible lines
-  ulong          nextaddr;             // First address on next line, or 0
-  // Following elements can be freely used by drawing routine. They do not
-  // change between calls within one table.
-  ulong          addr;                 // Custom data
-  uchar          s[TEXTLEN];           // Custom data
+typedef struct t_drawheader            // Draw descriptor for TABLE_USERDEF
+{
+    int            line;                 // Line in window
+    int            n;                    // Total number of visible lines
+    ulong          nextaddr;             // First address on next line, or 0
+    // Following elements can be freely used by drawing routine. They do not
+    // change between calls within one table.
+    ulong          addr;                 // Custom data
+    uchar          s[TEXTLEN];           // Custom data
 } t_drawheader;
 
 // Constants used for scrolling and selection.
@@ -1453,42 +1473,43 @@ typedef struct t_drawheader {          // Draw descriptor for TABLE_USERDEF
 typedef long TABFUNC(struct t_table *,HWND,UINT,WPARAM,LPARAM);
 typedef int  UPDATEFUNC(struct t_table *);
 typedef int  DRAWFUNC(wchar_t *,uchar *,int *,struct t_table *,
-  t_sorthdr *,int,void *);
+                      t_sorthdr *,int,void *);
 typedef void TABSELFUNC(struct t_table *,int,int);
 
-typedef struct t_table {               // Window with sorted data and bar
-  // These variables must be filled before table window is created.
-  wchar_t        name[SHORTNAME];      // Name used to save/restore position
-  int            mode;                 // Combination of bits TABLE_xxx
-  t_sorted       sorted;               // Sorted data
-  int            subtype;              // User-defined subtype
-  t_bar          bar;                  // Description of bar
-  int            bottomspace;          // Height of free space on the bottom
-  int            minwidth;             // Minimal width of the table, pixels
-  TABFUNC        *tabfunc;             // Custom message function or NULL
-  UPDATEFUNC     *updatefunc;          // Data update function or NULL
-  DRAWFUNC       *drawfunc;            // Drawing function
-  TABSELFUNC     *tableselfunc;        // Callback indicating selection change
-  t_menu         *menu;                // Menu descriptor
-  // Table functions neither initialize nor use these variables.
-  ulong          custommode;           // User-defined custom data
-  void           *customdata;          // Pointer to more custom data
-  // These variables are initialized and/or used by table functions.
-  HWND           hparent;              // Handle of MDI container or NULL
-  HWND           hstatus;              // Handle of status bar or NULL
-  HWND           hw;                   // Handle of child table or NULL
-  HWND           htooltip;             // Handle of tooltip window or NULL
-  int            font;                 // Index of font used by window
-  int            scheme;               // Colour scheme used by window
-  int            hilite;               // Highlighting scheme used by window
-  int            hscroll;              // Whether horizontal scroll visible
-  int            xshift;               // Shift in X direction, pixels
-  int            offset;               // First displayed row
-  int            colsel;               // Column in TABLE_COLSEL window
-  ulong          version;              // Version of sorted on last update
-  ulong          timerdraw;            // Timer redraw is active (period, ms)
-  RECT           rcprev;               // Temporary storage for old position
-  int            rtback;               // Back step in run trace, 0 - actual
+typedef struct t_table                 // Window with sorted data and bar
+{
+    // These variables must be filled before table window is created.
+    wchar_t        name[SHORTNAME];      // Name used to save/restore position
+    int            mode;                 // Combination of bits TABLE_xxx
+    t_sorted       sorted;               // Sorted data
+    int            subtype;              // User-defined subtype
+    t_bar          bar;                  // Description of bar
+    int            bottomspace;          // Height of free space on the bottom
+    int            minwidth;             // Minimal width of the table, pixels
+    TABFUNC        *tabfunc;             // Custom message function or NULL
+    UPDATEFUNC     *updatefunc;          // Data update function or NULL
+    DRAWFUNC       *drawfunc;            // Drawing function
+    TABSELFUNC     *tableselfunc;        // Callback indicating selection change
+    t_menu         *menu;                // Menu descriptor
+    // Table functions neither initialize nor use these variables.
+    ulong          custommode;           // User-defined custom data
+    void           *customdata;          // Pointer to more custom data
+    // These variables are initialized and/or used by table functions.
+    HWND           hparent;              // Handle of MDI container or NULL
+    HWND           hstatus;              // Handle of status bar or NULL
+    HWND           hw;                   // Handle of child table or NULL
+    HWND           htooltip;             // Handle of tooltip window or NULL
+    int            font;                 // Index of font used by window
+    int            scheme;               // Colour scheme used by window
+    int            hilite;               // Highlighting scheme used by window
+    int            hscroll;              // Whether horizontal scroll visible
+    int            xshift;               // Shift in X direction, pixels
+    int            offset;               // First displayed row
+    int            colsel;               // Column in TABLE_COLSEL window
+    ulong          version;              // Version of sorted on last update
+    ulong          timerdraw;            // Timer redraw is active (period, ms)
+    RECT           rcprev;               // Temporary storage for old position
+    int            rtback;               // Back step in run trace, 0 - actual
 } t_table;
 
 #define GWL_USR_TABLE  0               // Offset to pointer to t_table
@@ -1540,10 +1561,10 @@ stdapi (int)     Getcharacterwidth(t_table *pt,int column);
 stdapi (void)    Defaultbar(t_table *pt);
 stdapi (int)     Linecount(t_table *pt);
 stdapi (int)     Gettabletext(t_table *pt,int row,int column,
-                   wchar_t *text,uchar *tmask,int *tselect);
+                              wchar_t *text,uchar *tmask,int *tselect);
 stdapi (int)     Gettableselectionxy(t_table *pt,int column,POINT *coord);
 stdapi (int)     Maketableareavisible(t_table *pt,int column,
-                   int x0,int y0,int x1,int y1);
+                                      int x0,int y0,int x1,int y1);
 stdapi (int)     Movetableselection(t_table *pt,int n);
 stdapi (int)     Settableselection(t_table *pt,int selected);
 stdapi (int)     Removetableselection(t_table *pt);
@@ -1554,11 +1575,11 @@ stdapi (HGLOBAL) Copytableselection(t_table *pt,int column);
 stdapi (HGLOBAL) Copywholetable(t_table *pt,int compatible);
 stdapi (HWND)    Createottablewindow(HWND hparent,t_table *pt,RECT *rpos);
 stdapi (HWND)    Createtablewindow(t_table *pt,int nrow,int ncolumn,
-                   HINSTANCE hi,wchar_t *icon,wchar_t *title);
+                                   HINSTANCE hi,wchar_t *icon,wchar_t *title);
 stdapi (HWND)    Activatetablewindow(t_table *pt);
 stdapi (HWND)    Createtablechild(t_table *pt,wchar_t *classname,wchar_t *name,
-                   wchar_t *help,ulong style,int x,int y,int dx,int dy,
-                   int idalign);
+                                  wchar_t *help,ulong style,int x,int y,int dx,int dy,
+                                  int idalign);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1569,43 +1590,45 @@ stdapi (HWND)    Createtablechild(t_table *pt,wchar_t *classname,wchar_t *name,
 #define BLK_VDIV       2               // Divide vertically
 #define BLK_TABLE      3               // Leaf that describes table window
 
-typedef struct t_block {               // Block descriptor
-  int            index;                // Index of pos record in the .ini file
-  int            type;                 // One of BLK_xxx
-  int            percent;              // Percent of block in left/top subblock
-  int            offset;               // Offset of dividing line, pixels
-  struct t_block *blk1;                // Top/left subblock, NULL if leaf
-  int            minp1;                // Min size of 1st subblock, pixels
-  int            maxc1;                // Max size of 1st subblock, chars, or 0
-  struct t_block *blk2;                // Bottom/right subblock, NULL if leaf
-  int            minp2;                // Min size of 2nd subblock, pixels
-  int            maxc2;                // Max size of 2nd subblock, chars, or 0
-  t_table        *table;               // Descriptor of table window
-  wchar_t        tabname[SHORTNAME];   // Tab (tab window only)
-  wchar_t        title[TEXTLEN];       // Title (tab window) or speech name
-  wchar_t        status[TEXTLEN];      // Status (tab window only)
+typedef struct t_block                 // Block descriptor
+{
+    int            index;                // Index of pos record in the .ini file
+    int            type;                 // One of BLK_xxx
+    int            percent;              // Percent of block in left/top subblock
+    int            offset;               // Offset of dividing line, pixels
+    struct t_block *blk1;                // Top/left subblock, NULL if leaf
+    int            minp1;                // Min size of 1st subblock, pixels
+    int            maxc1;                // Max size of 1st subblock, chars, or 0
+    struct t_block *blk2;                // Bottom/right subblock, NULL if leaf
+    int            minp2;                // Min size of 2nd subblock, pixels
+    int            maxc2;                // Max size of 2nd subblock, chars, or 0
+    t_table        *table;               // Descriptor of table window
+    wchar_t        tabname[SHORTNAME];   // Tab (tab window only)
+    wchar_t        title[TEXTLEN];       // Title (tab window) or speech name
+    wchar_t        status[TEXTLEN];      // Status (tab window only)
 } t_block;
 
-typedef struct t_frame {               // Descriptor of frame or tab window
-  // These variables must be filled before frame window is created.
-  wchar_t        name[SHORTNAME];      // Name used to save/restore position
-  int            herebit;              // Must be 0 for plugins
-  int            mode;                 // Combination of bits TABLE_xxx
-  t_block        *block;               // Pointer to block tree
-  t_menu         *menu;                // Menu descriptor (tab window only)
-  int            scheme;               // Colour scheme used by window
-  // These variables are initialized by frame creation function.
-  HWND           hw;                   // Handle of MDI container or NULL
-  HWND           htab;                 // Handle of tab control
-  WNDPROC        htabwndproc;          // Original WndProc of tab control
-  int            capturedtab;          // Tab captured on middle mouse click
-  HWND           hstatus;              // Handle of status bar or NULL
-  t_block        *active;              // Active table (has focus) or NULL
-  t_block        *captured;            // Block that captured mouse or NULL
-  int            captureoffset;        // Offset on mouse capture
-  int            capturex;             // Mouse screen X coordinate on capture
-  int            capturey;             // Mouse screen Y coordinate on capture
-  wchar_t        title[TEXTLEN];       // Frame or tab window title
+typedef struct t_frame                 // Descriptor of frame or tab window
+{
+    // These variables must be filled before frame window is created.
+    wchar_t        name[SHORTNAME];      // Name used to save/restore position
+    int            herebit;              // Must be 0 for plugins
+    int            mode;                 // Combination of bits TABLE_xxx
+    t_block        *block;               // Pointer to block tree
+    t_menu         *menu;                // Menu descriptor (tab window only)
+    int            scheme;               // Colour scheme used by window
+    // These variables are initialized by frame creation function.
+    HWND           hw;                   // Handle of MDI container or NULL
+    HWND           htab;                 // Handle of tab control
+    WNDPROC        htabwndproc;          // Original WndProc of tab control
+    int            capturedtab;          // Tab captured on middle mouse click
+    HWND           hstatus;              // Handle of status bar or NULL
+    t_block        *active;              // Active table (has focus) or NULL
+    t_block        *captured;            // Block that captured mouse or NULL
+    int            captureoffset;        // Offset on mouse capture
+    int            capturex;             // Mouse screen X coordinate on capture
+    int            capturey;             // Mouse screen Y coordinate on capture
+    wchar_t        title[TEXTLEN];       // Frame or tab window title
 } t_frame;
 
 stdapi (HWND)    Createframewindow(t_frame *pf,wchar_t *icon,wchar_t *title);
@@ -1731,33 +1754,35 @@ stdapi (int)     Setactivetab(t_frame *pf,int index);
 #define G_RA           0x3C            // Horizontal line with right arrow
 #define G_DA           0x3D            // Vertical line with down arrow
 
-typedef struct t_font {                // Font descriptor
-  LOGFONT        logfont;              // System font description
-  int            stockindex;           // Index for system stock fonts
-  int            hadjtop;              // Height adjustment on top, pixels
-  int            hadjbot;              // Height adjustment on bottom, pixels
-  wchar_t        name[TEXTLEN];        // Internal font name
-  HFONT          hfont;                // Font handle
-  int            isstock;              // Don't destroy hfont, taken from stock
-  int            isfullunicode;        // Whether UNICODE is fully supported
-  int            width;                // Average font width
-  int            height;               // Font height
+typedef struct t_font                  // Font descriptor
+{
+    LOGFONT        logfont;              // System font description
+    int            stockindex;           // Index for system stock fonts
+    int            hadjtop;              // Height adjustment on top, pixels
+    int            hadjbot;              // Height adjustment on bottom, pixels
+    wchar_t        name[TEXTLEN];        // Internal font name
+    HFONT          hfont;                // Font handle
+    int            isstock;              // Don't destroy hfont, taken from stock
+    int            isfullunicode;        // Whether UNICODE is fully supported
+    int            width;                // Average font width
+    int            height;               // Font height
 } t_font;
 
-typedef struct t_scheme {              // Descriptor of colour scheme
-  wchar_t        name[TEXTLEN];        // Internal scheme name
-  COLORREF       textcolor[NDRAW];     // Foreground colours (in DRAW_COLOR)
-  COLORREF       bkcolor[NDRAW];       // Background colours (in DRAW_COLOR)
-  int            hiliteoperands;       // Used only by highlighting schemes
-  int            hilitemodified;       // Used only by highlighting schemes
-  HBRUSH         bkbrush;              // Ordinary background brush
-  HBRUSH         selbkbrush;           // Selected background brush
-  HBRUSH         auxbrush;             // Auxiliary brush
-  HPEN           graphpen;             // Pen for normal graphical elements
-  HPEN           lopen;                // Pen for grayed graphical elements
-  HPEN           hipen;                // Pen for hilited graphical elements
-  HPEN           auxpen;               // Pen for auxiliary graphical elements
-  HPEN           ulpen;                // Pen to underline text
+typedef struct t_scheme                // Descriptor of colour scheme
+{
+    wchar_t        name[TEXTLEN];        // Internal scheme name
+    COLORREF       textcolor[NDRAW];     // Foreground colours (in DRAW_COLOR)
+    COLORREF       bkcolor[NDRAW];       // Background colours (in DRAW_COLOR)
+    int            hiliteoperands;       // Used only by highlighting schemes
+    int            hilitemodified;       // Used only by highlighting schemes
+    HBRUSH         bkbrush;              // Ordinary background brush
+    HBRUSH         selbkbrush;           // Selected background brush
+    HBRUSH         auxbrush;             // Auxiliary brush
+    HPEN           graphpen;             // Pen for normal graphical elements
+    HPEN           lopen;                // Pen for grayed graphical elements
+    HPEN           hipen;                // Pen for hilited graphical elements
+    HPEN           auxpen;               // Pen for auxiliary graphical elements
+    HPEN           ulpen;                // Pen to underline text
 } t_scheme;
 
 stdapi (int)     Getmonitorrect(int x,int y,RECT *rc);
@@ -1790,24 +1815,25 @@ stdapi (int)     Findstockobject(ulong gdihandle,wchar_t *name,int nname);
 #define MSP_PROCPAR    3               // Contains Process Parameters
 #define MSP_ENV        4               // Contains environment
 
-typedef struct t_memory {              // Descriptor of memory block
-  ulong          base;                 // Base address of memory block
-  ulong          size;                 // Size of memory block
-  ulong          type;                 // Service information, TY_xxx+MEM_xxx
-  int            special;              // Extension of type, one of MSP_xxx
-  ulong          owner;                // Address of owner of the memory
-  ulong          initaccess;           // Initial read/write access
-  ulong          access;               // Actual status and read/write access
-  ulong          threadid;             // Block belongs to this thread or 0
-  wchar_t        sectname[SHORTNAME];  // Null-terminated section name
-  uchar          *copy;                // Copy used in CPU window or NULL
-  uchar          *decode;              // Decoding information or NULL
+typedef struct t_memory                // Descriptor of memory block
+{
+    ulong          base;                 // Base address of memory block
+    ulong          size;                 // Size of memory block
+    ulong          type;                 // Service information, TY_xxx+MEM_xxx
+    int            special;              // Extension of type, one of MSP_xxx
+    ulong          owner;                // Address of owner of the memory
+    ulong          initaccess;           // Initial read/write access
+    ulong          access;               // Actual status and read/write access
+    ulong          threadid;             // Block belongs to this thread or 0
+    wchar_t        sectname[SHORTNAME];  // Null-terminated section name
+    uchar          *copy;                // Copy used in CPU window or NULL
+    uchar          *decode;              // Decoding information or NULL
 } t_memory;
 
 stdapi (void)    Flushmemorycache(void);
 stdapi (ulong)   Readmemory(void *buf,ulong addr,ulong size,int mode);
 stdapi (ulong)   Readmemoryex(void *buf,ulong addr,ulong size,int mode,
-                   ulong threadid);
+                              ulong threadid);
 stdapi (ulong)   Writememory(const void *buf,ulong addr,ulong size,int mode);
 stdapi (t_memory *) Findmemory(ulong addr);
 stdapi (uchar *) Finddecode(ulong addr,ulong *psize);
@@ -1815,9 +1841,9 @@ stdapi (int)     Guardmemory(ulong base,ulong size,int guard);
 stdapi (int)     Listmemory(void);
 stdapi (HGLOBAL) Copymemoryhex(ulong addr,ulong size);
 stdapi (int)     Pastememoryhex(ulong addr,ulong size,
-                   int ensurebackup,int removeanalysis);
+                                int ensurebackup,int removeanalysis);
 stdapi (int)     Editmemory(HWND hparent,ulong addr,ulong size,
-                   int ensurebackup,int removeanalysis,int x,int y,int font);
+                            int ensurebackup,int removeanalysis,int x,int y,int font);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1843,39 +1869,44 @@ stdapi (int)     Editmemory(HWND hparent,ulong addr,ulong size,
                        ((jmp)->type>=JT_NETJUMP && (jmp)->type<=JT_NETSW))
 #define Iscall(jmp)    ((jmp)->type==JT_CALL || (jmp)->type==JT_SWCALL)
 
-typedef struct t_jmp {                 // Descriptor of recognized jump or call
-  ulong          from;                 // Address of jump/call command
-  ulong          dest;                 // Adress of jump/call destination
-  uchar          type;                 // Jump/call type, one of JT_xxx
+typedef struct t_jmp                   // Descriptor of recognized jump or call
+{
+    ulong          from;                 // Address of jump/call command
+    ulong          dest;                 // Adress of jump/call destination
+    uchar          type;                 // Jump/call type, one of JT_xxx
 } t_jmp;
 
-typedef struct t_exe {                 // Description of executable module
-  ulong          base;                 // Module base
-  ulong          size;                 // Module size
-  int            adjusted;             // Whether base is already adjusted
-  wchar_t        path[MAXPATH];        // Full module path
+typedef struct t_exe                   // Description of executable module
+{
+    ulong          base;                 // Module base
+    ulong          size;                 // Module size
+    int            adjusted;             // Whether base is already adjusted
+    wchar_t        path[MAXPATH];        // Full module path
 } t_exe;
 
-typedef struct t_jmpdata {             // Jump table
-  ulong          modbase;              // Base of module owning jump table
-  ulong          modsize;              // Size of module owning jump table
-  t_jmp          *jmpdata;             // Jump data, sorted by source
-  int            *jmpindex;            // Indices to jmpdata, sorted by dest
-  int            maxjmp;               // Total number of elements in arrays
-  int            njmp;                 // Number of used elements in arrays
-  int            nsorted;              // Number of sorted elements in arrays
-  int            dontsort;             // Do not sort data implicitly
-  t_exe          *exe;                 // Pointed modules, unsorted
-  int            maxexe;               // Allocated number of elements in exe
-  int            nexe;                 // Number of used elements in exe
+typedef struct t_jmpdata               // Jump table
+{
+    ulong          modbase;              // Base of module owning jump table
+    ulong          modsize;              // Size of module owning jump table
+    t_jmp          *jmpdata;             // Jump data, sorted by source
+    int            *jmpindex;            // Indices to jmpdata, sorted by dest
+    int            maxjmp;               // Total number of elements in arrays
+    int            njmp;                 // Number of used elements in arrays
+    int            nsorted;              // Number of sorted elements in arrays
+    int            dontsort;             // Do not sort data implicitly
+    t_exe          *exe;                 // Pointed modules, unsorted
+    int            maxexe;               // Allocated number of elements in exe
+    int            nexe;                 // Number of used elements in exe
 } t_jmpdata;
 
-typedef struct t_jmpcall {             // Descriptor of found jump or call
-  ulong          addr;                 // Source or destination address
-  union {
-    int          type;                 // Jump/call type, one of JT_xxx
-    ulong        swcase;               // First switch case
-  };
+typedef struct t_jmpcall               // Descriptor of found jump or call
+{
+    ulong          addr;                 // Source or destination address
+    union
+    {
+        int          type;                 // Jump/call type, one of JT_xxx
+        ulong        swcase;               // First switch case
+    };
 } t_jmpcall;
 
 stdapi (int)     Addjump(t_jmpdata *pdat,ulong from,ulong dest,int type);
@@ -1883,19 +1914,20 @@ stdapi (void)    Sortjumpdata(t_jmpdata *pdat);
 stdapi (t_jmp *) Findjumpfrom(ulong from);
 stdapi (int)     Findlocaljumpsto(ulong dest,ulong *buf,int nbuf);
 stdapi (int)     Findlocaljumpscallsto(ulong dest,t_jmpcall *jmpcall,
-                   int njmpcall);
+                                       int njmpcall);
 stdapi (int)     Arelocaljumpscallstorange(ulong addr0,ulong addr1);
 stdapi (int)     Findglobalcallsto(ulong dest,ulong *buf,int nbuf);
 stdapi (int)     Findglobaljumpscallsto(ulong dest,t_jmpcall *jmpcall,
-                   int njmpcall);
+                                        int njmpcall);
 
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// SETS OF RANGES ////////////////////////////////
 
-typedef struct t_range {
-  ulong        rmin;                   // Low range limit
-  ulong        rmax;                   // High range limit (INCLUDED!)
+typedef struct t_range
+{
+    ulong        rmin;                   // Low range limit
+    ulong        rmax;                   // High range limit (INCLUDED!)
 } t_range;
 
 stdapi (int)     Initset(t_range *set,ulong nmax);
@@ -1905,9 +1937,9 @@ stdapi (ulong)   Getsetcount(const t_range *set);
 stdapi (int)     Getrangecount(const t_range *set);
 stdapi (int)     Isinset(const t_range *set,ulong value);
 stdapi (int)     Getrangebymember(const t_range *set,ulong value,
-                   ulong *rmin,ulong *rmax);
+                                  ulong *rmin,ulong *rmax);
 stdapi (int)     Getrangebyindex(const t_range *set,int index,
-                   ulong *rmin,ulong *rmax);
+                                 ulong *rmin,ulong *rmax);
 stdapi (int)     Addrange(t_range *set,ulong rmin,ulong rmax);
 stdapi (int)     Removerange(t_range *set,ulong rmin,ulong rmax);
 
@@ -1926,31 +1958,33 @@ stdapi (int)     Removerange(t_range *set,ulong rmin,ulong rmax);
 
 #define MAXNEST        32              // Limit of displayed nesting levels
 
-typedef struct t_nesthdr {             // Header of nested data range
-  ulong          addr0;                // First address occupied by range
-  ulong          addr1;                // Last occupied address (included!)
-  ulong          type;                 // Level and user-defined type, TY_xxx
-  ulong          aprev;                // First address of previous range
+typedef struct t_nesthdr               // Header of nested data range
+{
+    ulong          addr0;                // First address occupied by range
+    ulong          addr1;                // Last occupied address (included!)
+    ulong          type;                 // Level and user-defined type, TY_xxx
+    ulong          aprev;                // First address of previous range
 } t_nesthdr;
 
 typedef void NDDEST(t_nesthdr *);
 
-typedef struct t_nested {              // Descriptor of nested data
-  int            n;                    // Actual number of elements
-  int            nmax;                 // Maximal number of elements
-  ulong          itemsize;             // Size of single element
-  void           *data;                // Ordered nested data
-  ulong          version;              // Changes on each modification
-  NDDEST         *destfunc;            // Destructor function or NULL
+typedef struct t_nested                // Descriptor of nested data
+{
+    int            n;                    // Actual number of elements
+    int            nmax;                 // Maximal number of elements
+    ulong          itemsize;             // Size of single element
+    void           *data;                // Ordered nested data
+    ulong          version;              // Changes on each modification
+    NDDEST         *destfunc;            // Destructor function or NULL
 } t_nested;
 
 stdapi (void)    Destroynesteddata(t_nested *nd);
 stdapi (int)     Createnesteddata(t_nested *nd,ulong itemsize,int nexp,
-                   NDDEST *destfunc);
+                                  NDDEST *destfunc);
 stdapi (void *)  Addnesteddata(t_nested *nd,void *item);
 stdapi (void)    Deletenestedrange(t_nested *nd,ulong addr0,ulong addr1);
 stdapi (int)     Getnestingpattern(t_nested *nd,ulong addr,wchar_t *pat,
-                   int npat,uchar *mask,int showentry,int *isend);
+                                   int npat,uchar *mask,int showentry,int *isend);
 stdapi (int)     Getnestingdepth(t_nested *nd,ulong addr);
 stdapi (void *)  Findnesteddata(t_nested *nd,ulong addr,int level);
 
@@ -2025,91 +2059,97 @@ stdapi (int)     Uddtonesteddata(t_nested *nd,void *data,ulong base,ulong size);
 
 #define MDTCOUNT       64              // Number of .NET MetaData tables
 
-typedef struct t_secthdr {             // Extract from IMAGE_SECTION_HEADER
-  wchar_t        sectname[12];         // Null-terminated section name
-  ulong          base;                 // Address of section in memory
-  ulong          size;                 // Size of section loaded into memory
-  ulong          type;                 // Set of SHT_xxx
-  ulong          fileoffset;           // Offset of section in file
-  ulong          rawsize;              // Size of section in file
-  ulong          characteristics;      // Set of IMAGE_SCN_xxx
+typedef struct t_secthdr               // Extract from IMAGE_SECTION_HEADER
+{
+    wchar_t        sectname[12];         // Null-terminated section name
+    ulong          base;                 // Address of section in memory
+    ulong          size;                 // Size of section loaded into memory
+    ulong          type;                 // Set of SHT_xxx
+    ulong          fileoffset;           // Offset of section in file
+    ulong          rawsize;              // Size of section in file
+    ulong          characteristics;      // Set of IMAGE_SCN_xxx
 } t_secthdr;
 
-typedef struct t_premod {              // Preliminary module descriptor
-  ulong          base;                 // Base address of the module
-  ulong          size;                 // Size of module or 1
-  ulong          type;                 // Service information, TY_xxx+MOD_xxx
-  ulong          entry;                // Address of <ModuleEntryPoint> or 0
-  wchar_t        path[MAXPATH];        // Full name of the module
+typedef struct t_premod                // Preliminary module descriptor
+{
+    ulong          base;                 // Base address of the module
+    ulong          size;                 // Size of module or 1
+    ulong          type;                 // Service information, TY_xxx+MOD_xxx
+    ulong          entry;                // Address of <ModuleEntryPoint> or 0
+    wchar_t        path[MAXPATH];        // Full name of the module
 } t_premod;
 
-typedef struct t_netstream {           // Location of default .NET stream
-  ulong          base;                 // Base address in memory
-  ulong          size;                 // Stream size, bytes
+typedef struct t_netstream             // Location of default .NET stream
+{
+    ulong          base;                 // Base address in memory
+    ulong          size;                 // Stream size, bytes
 } t_netstream;
 
-typedef struct t_metadata {            // Descriptor of .NET MetaData table
-  ulong          base;                 // Location in memory or NULL if absent
-  ulong          rowcount;             // Number of rows or 0 if absent
-  ulong          rowsize;              // Size of single row, bytes, or 0
-  ushort         nameoffs;             // Offset of name field
-  ushort         namesize;             // Size of name or 0 if absent
+typedef struct t_metadata              // Descriptor of .NET MetaData table
+{
+    ulong          base;                 // Location in memory or NULL if absent
+    ulong          rowcount;             // Number of rows or 0 if absent
+    ulong          rowsize;              // Size of single row, bytes, or 0
+    ushort         nameoffs;             // Offset of name field
+    ushort         namesize;             // Size of name or 0 if absent
 } t_metadata;
 
-typedef struct t_module {              // Descriptor of executable module
-  ulong          base;                 // Base address of module
-  ulong          size;                 // Size of memory occupied by module
-  ulong          type;                 // Service information, TY_xxx+MOD_xxx
-  wchar_t        modname[SHORTNAME];   // Short name of the module
-  wchar_t        path[MAXPATH];        // Full name of the module
-  wchar_t        version[TEXTLEN];     // Version of executable file
-  ulong          fixupbase;            // Base of image in executable file
-  ulong          codebase;             // Base address of module code block
-  ulong          codesize;             // Size of module code block
-  ulong          entry;                // Address of <ModuleEntryPoint> or 0
-  ulong          sfxentry;             // Address of SFX-packed entry or 0
-  ulong          winmain;              // Address of WinMain or 0
-  ulong          database;             // Base address of module data block
-  ulong          edatabase;            // Base address of export data table
-  ulong          edatasize;            // Size of export data table
-  ulong          idatatable;           // Base address of import data table
-  ulong          iatbase;              // Base of Import Address Table
-  ulong          iatsize;              // Size of IAT
-  ulong          relocbase;            // Base address of relocation table
-  ulong          relocsize;            // Size of relocation table
-  ulong          resbase;              // Base address of resources
-  ulong          ressize;              // Size of resources
-  ulong          tlsbase;              // Base address of TLS directory table
-  ulong          tlssize;              // Size of TLS directory table
-  ulong          tlscallback;          // Address of first TLS callback or 0
-  ulong          netentry;             // .NET entry (MOD_NETAPP only)
-  ulong          clibase;              // .NET CLI header base (MOD_NETAPP)
-  ulong          clisize;              // .NET CLI header base (MOD_NETAPP)
-  t_netstream    netstr[NETSTREAM];    // Locations of default .NET streams
-  t_metadata     metadata[MDTCOUNT];   // Descriptors of .NET MetaData tables
-  ulong          sfxbase;              // Base of memory block with SFX
-  ulong          sfxsize;              // Size of memory block with SFX
-  ulong          rawhdrsize;           // Size of PE header in file
-  ulong          memhdrsize;           // Size of PE header in memory
-  int            nsect;                // Number of sections in the module
-  t_secthdr      *sect;                // Extract from section headers
-  int            nfixup;               // Number of 32-bit fixups
-  ulong          *fixup;               // Array of 32-bit fixups
-  t_jmpdata      jumps;                // Jumps and calls from this module
-  t_nested       loopnest;             // Loop brackets
-  t_nested       argnest;              // Call argument brackets
-  t_simple       predict;              // Predicted ESP, EBP & results (sd_pred)
-  t_sorted       strings;              // Resource strings (t_string)
-  int            saveudd;              // UDD-relevant data is changed
-  int            ncallmod;             // No. of called modules (max. NCALLMOD)
-  wchar_t        callmod[NCALLMOD][SHORTNAME]; // List of called modules
+typedef struct t_module                // Descriptor of executable module
+{
+    ulong          base;                 // Base address of module
+    ulong          size;                 // Size of memory occupied by module
+    ulong          type;                 // Service information, TY_xxx+MOD_xxx
+    wchar_t        modname[SHORTNAME];   // Short name of the module
+    wchar_t        path[MAXPATH];        // Full name of the module
+    wchar_t        version[TEXTLEN];     // Version of executable file
+    ulong          fixupbase;            // Base of image in executable file
+    ulong          codebase;             // Base address of module code block
+    ulong          codesize;             // Size of module code block
+    ulong          entry;                // Address of <ModuleEntryPoint> or 0
+    ulong          sfxentry;             // Address of SFX-packed entry or 0
+    ulong          winmain;              // Address of WinMain or 0
+    ulong          database;             // Base address of module data block
+    ulong          edatabase;            // Base address of export data table
+    ulong          edatasize;            // Size of export data table
+    ulong          idatatable;           // Base address of import data table
+    ulong          iatbase;              // Base of Import Address Table
+    ulong          iatsize;              // Size of IAT
+    ulong          relocbase;            // Base address of relocation table
+    ulong          relocsize;            // Size of relocation table
+    ulong          resbase;              // Base address of resources
+    ulong          ressize;              // Size of resources
+    ulong          tlsbase;              // Base address of TLS directory table
+    ulong          tlssize;              // Size of TLS directory table
+    ulong          tlscallback;          // Address of first TLS callback or 0
+    ulong          netentry;             // .NET entry (MOD_NETAPP only)
+    ulong          clibase;              // .NET CLI header base (MOD_NETAPP)
+    ulong          clisize;              // .NET CLI header base (MOD_NETAPP)
+    t_netstream    netstr[NETSTREAM];    // Locations of default .NET streams
+    t_metadata     metadata[MDTCOUNT];   // Descriptors of .NET MetaData tables
+    ulong          sfxbase;              // Base of memory block with SFX
+    ulong          sfxsize;              // Size of memory block with SFX
+    ulong          rawhdrsize;           // Size of PE header in file
+    ulong          memhdrsize;           // Size of PE header in memory
+    int            nsect;                // Number of sections in the module
+    t_secthdr      *sect;                // Extract from section headers
+    int            nfixup;               // Number of 32-bit fixups
+    ulong          *fixup;               // Array of 32-bit fixups
+    t_jmpdata      jumps;                // Jumps and calls from this module
+    t_nested       loopnest;             // Loop brackets
+    t_nested       argnest;              // Call argument brackets
+    t_simple       predict;              // Predicted ESP, EBP & results (sd_pred)
+    t_sorted       strings;              // Resource strings (t_string)
+    int            saveudd;              // UDD-relevant data is changed
+    int            ncallmod;             // No. of called modules (max. NCALLMOD)
+    wchar_t        callmod[NCALLMOD][SHORTNAME]; // List of called modules
 } t_module;
 
 // Keep t_aqueue identical with the header of t_module!
-typedef struct t_aqueue {              // Descriptor of module to be analysed
-  ulong          base;                 // Base address of module
-  ulong          size;                 // Size of memory occupied by module
-  ulong          type;                 // Service information, TY_xxx+MOD_xxx
+typedef struct t_aqueue                // Descriptor of module to be analysed
+{
+    ulong          base;                 // Base address of module
+    ulong          size;                 // Size of memory occupied by module
+    ulong          type;                 // Service information, TY_xxx+MOD_xxx
 } t_aqueue;
 
 stdapi (t_module *) Findmodule(ulong addr);
@@ -2126,26 +2166,27 @@ stdapi (int)     Getexportfrommemory(ulong addr,wchar_t *s);
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////// LIST OF DEBUGGEE'S WINDOWS //////////////////////////
 
-typedef struct t_window {              // Description of window
-  ulong          hwnd;                 // Window's handle
-  ulong          dummy;                // Must be 1
-  ulong          type;                 // Type of window, TY_xxx+WN_xxx
-  ulong          parenthw;             // Handle of parent or 0
-  ulong          winproc;              // Address of WinProc or 0
-  ulong          threadid;             // ID of the owning thread
-  ulong          exstyle;              // Extended style
-  ulong          style;                // Style
-  ulong          id;                   // Identifier
-  ulong          classproc;            // Address of default (class) WinProc
-  RECT           windowrect;           // Window position, screen coordinates
-  RECT           clientrect;           // Client position, screen coordinates
-  int            child;                // Index of next child
-  int            sibling;              // Index of next sibling
-  int            byparent;             // Index when sorted by parent
-  int            level;                // Level in genealogy (0: topmost)
-  wchar_t        title[TEXTLEN];       // Window's title or text
-  wchar_t        classname[TEXTLEN];   // Class name
-  wchar_t        tree[MAXNEST];        // Tree display
+typedef struct t_window                // Description of window
+{
+    ulong          hwnd;                 // Window's handle
+    ulong          dummy;                // Must be 1
+    ulong          type;                 // Type of window, TY_xxx+WN_xxx
+    ulong          parenthw;             // Handle of parent or 0
+    ulong          winproc;              // Address of WinProc or 0
+    ulong          threadid;             // ID of the owning thread
+    ulong          exstyle;              // Extended style
+    ulong          style;                // Style
+    ulong          id;                   // Identifier
+    ulong          classproc;            // Address of default (class) WinProc
+    RECT           windowrect;           // Window position, screen coordinates
+    RECT           clientrect;           // Client position, screen coordinates
+    int            child;                // Index of next child
+    int            sibling;              // Index of next sibling
+    int            byparent;             // Index when sorted by parent
+    int            level;                // Level in genealogy (0: topmost)
+    wchar_t        title[TEXTLEN];       // Window's title or text
+    wchar_t        classname[TEXTLEN];   // Class name
+    wchar_t        tree[MAXNEST];        // Tree display
 } t_window;
 
 
@@ -2158,27 +2199,30 @@ typedef struct t_window {              // Description of window
 #define NA_CLOSE       2               // Close namelist
 #define NA_CLOSEALL    3               // Close all namelists
 
-typedef struct t_namecast {            // Structure passed on broadcast
-  ulong          base;                 // Module base, 0 - list of all names
-  t_table        *table;               // Filled when broadcast stops
+typedef struct t_namecast              // Structure passed on broadcast
+{
+    ulong          base;                 // Module base, 0 - list of all names
+    t_table        *table;               // Filled when broadcast stops
 } t_namecast;
 
-typedef struct t_namelist {            // Element of namelist sorted data
-  ulong          addr;                 // Base address of the entry
-  ulong          size;                 // Size of the entry, always 1
-  ulong          type;                 // Type & addr extension, TY_xxx+NL_xxx
+typedef struct t_namelist              // Element of namelist sorted data
+{
+    ulong          addr;                 // Base address of the entry
+    ulong          size;                 // Size of the entry, always 1
+    ulong          type;                 // Type & addr extension, TY_xxx+NL_xxx
 } t_namelist;
 
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// RESOURCES ///////////////////////////////////
 
-typedef struct t_string {              // Descriptor of resource string
-  ulong          id;                   // Identifier associated with the string
-  ulong          dummy;                // Always 1
-  ulong          addr;                 // Address of string in memory
-  ulong          count;                // String size, UNICODE characters!
-  int            language;             // Language, one of LANG_xxx
+typedef struct t_string                // Descriptor of resource string
+{
+    ulong          id;                   // Identifier associated with the string
+    ulong          dummy;                // Always 1
+    ulong          addr;                 // Address of string in memory
+    ulong          count;                // String size, UNICODE characters!
+    int            language;             // Language, one of LANG_xxx
 } t_string;
 
 stdapi (int)     Getmodulestring(t_module *pm,ulong id,wchar_t *s);
@@ -2191,9 +2235,10 @@ stdapi (int)     Getmodulestring(t_module *pm,ulong id,wchar_t *s);
 
 // Attention, for the sake of the compatibility between the different OllyDbg
 // versions, never, ever change existing elements, only add new!
-typedef struct t_savearea {
-  ulong          magic;                // Validity marker, must be SAVEMAGIC
-  wchar_t        dumpstr[SHORTNAME];   // Last structure decoding in dump
+typedef struct t_savearea
+{
+    ulong          magic;                // Validity marker, must be SAVEMAGIC
+    wchar_t        dumpstr[SHORTNAME];   // Last structure decoding in dump
 } t_savearea;
 
 
@@ -2243,70 +2288,73 @@ typedef struct t_savearea {
 // Attention, number of memory fields is limited by the run trace!
 #define NMEMFIELD      2               // Number of memory fields in t_reg
 
-typedef struct t_memfield {            // Descriptor of memory field
-  ulong          addr;                 // Address of data in memory
-  ulong          size;                 // Data size (0 - no data)
-  uchar          data[16];             // Data
+typedef struct t_memfield              // Descriptor of memory field
+{
+    ulong          addr;                 // Address of data in memory
+    ulong          size;                 // Data size (0 - no data)
+    uchar          data[16];             // Data
 } t_memfield;
 
 // Thread registers.
-typedef struct t_reg {                 // Excerpt from context
-  ulong          status;               // Status of registers, set of RV_xxx
-  ulong          threadid;             // ID of thread that owns registers
-  ulong          ip;                   // Instruction pointer (EIP)
-  ulong          r[NREG];              // EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI
-  ulong          flags;                // Flags
-  ulong          s[NSEG];              // Segment registers ES,CS,SS,DS,FS,GS
-  ulong          base[NSEG];           // Segment bases
-  ulong          limit[NSEG];          // Segment limits
-  uchar          big[NSEG];            // Default size (0-16, 1-32 bit)
-  uchar          dummy[2];             // Reserved, used for data alignment
-  int            top;                  // Index of top-of-stack
-  long double    f[NREG];              // Float registers, f[top] - top of stack
-  uchar          tag[NREG];            // Float tags (0x3 - empty register)
-  ulong          fst;                  // FPU status word
-  ulong          fcw;                  // FPU control word
-  ulong          ferrseg;              // Selector of last detected FPU error
-  ulong          feroffs;              // Offset of last detected FPU error
-  ulong          dr[NREG];             // Debug registers
-  ulong          lasterror;            // Last thread error or 0xFFFFFFFF
-  uchar          ssereg[NREG][16];     // SSE registers
-  ulong          mxcsr;                // SSE control and status register
-  t_memfield     mem[NMEMFIELD];       // Known memory fields from run trace
+typedef struct t_reg                   // Excerpt from context
+{
+    ulong          status;               // Status of registers, set of RV_xxx
+    ulong          threadid;             // ID of thread that owns registers
+    ulong          ip;                   // Instruction pointer (EIP)
+    ulong          r[NREG];              // EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI
+    ulong          flags;                // Flags
+    ulong          s[NSEG];              // Segment registers ES,CS,SS,DS,FS,GS
+    ulong          base[NSEG];           // Segment bases
+    ulong          limit[NSEG];          // Segment limits
+    uchar          big[NSEG];            // Default size (0-16, 1-32 bit)
+    uchar          dummy[2];             // Reserved, used for data alignment
+    int            top;                  // Index of top-of-stack
+    long double    f[NREG];              // Float registers, f[top] - top of stack
+    uchar          tag[NREG];            // Float tags (0x3 - empty register)
+    ulong          fst;                  // FPU status word
+    ulong          fcw;                  // FPU control word
+    ulong          ferrseg;              // Selector of last detected FPU error
+    ulong          feroffs;              // Offset of last detected FPU error
+    ulong          dr[NREG];             // Debug registers
+    ulong          lasterror;            // Last thread error or 0xFFFFFFFF
+    uchar          ssereg[NREG][16];     // SSE registers
+    ulong          mxcsr;                // SSE control and status register
+    t_memfield     mem[NMEMFIELD];       // Known memory fields from run trace
 } t_reg;
 
-typedef struct t_thread {              // Information about active threads
-  ulong          threadid;             // Thread identifier
-  ulong          dummy;                // Always 1
-  ulong          type;                 // Service information, TY_xxx+THR_xxx
-  int            ordinal;              // Thread's ordinal number (1-based)
-  wchar_t        name[SHORTNAME];      // Short name of the thread
-  HANDLE         thread;               // Thread handle, for OllyDbg only!
-  ulong          tib;                  // Thread Information Block
-  ulong          entry;                // Thread entry point
-  CONTEXT        context;              // Actual context of the thread
-  t_reg          reg;                  // Actual contents of registers
-  int            regvalid;             // Whether reg and context are valid
-  t_reg          oldreg;               // Previous contents of registers
-  int            oldregvalid;          // Whether oldreg is valid
-  int            suspendrun;           // Suspended for run (0 or 1)
-  int            suspendcount;         // Temporarily suspended (0..inf)
-  int            suspenduser;          // Suspended by user (0 or 1)
-  int            trapset;              // Single-step trap set by OllyDbg
-  int            trapincontext;        // Trap is catched in exception context
-  ulong          rtprotocoladdr;       // Address of destination to protocol
-  int            ignoreonce;           // Ignore list, IGNO_xxx
-  int            drvalid;              // Contents of dr is valid
-  ulong          dr[NREG];             // Expected state of DR0..3,7
-  int            hwmasked;             // Temporarily masked hardware breaks
-  int            hwreported;           // Reported breakpoint expressions
-  // Thread-related information gathered by Updatethreaddata().
-  HWND           hw;                   // One of windows owned by thread
-  ulong          usertime;             // Time in user mode, 100u units or -1
-  ulong          systime;              // Time in system mode, 100u units or -1
-  // Thread-related information gathered by Listmemory().
-  ulong          stacktop;             // Top of thread's stack
-  ulong          stackbottom;          // Bottom of thread's stack
+typedef struct t_thread                // Information about active threads
+{
+    ulong          threadid;             // Thread identifier
+    ulong          dummy;                // Always 1
+    ulong          type;                 // Service information, TY_xxx+THR_xxx
+    int            ordinal;              // Thread's ordinal number (1-based)
+    wchar_t        name[SHORTNAME];      // Short name of the thread
+    HANDLE         thread;               // Thread handle, for OllyDbg only!
+    ulong          tib;                  // Thread Information Block
+    ulong          entry;                // Thread entry point
+    CONTEXT        context;              // Actual context of the thread
+    t_reg          reg;                  // Actual contents of registers
+    int            regvalid;             // Whether reg and context are valid
+    t_reg          oldreg;               // Previous contents of registers
+    int            oldregvalid;          // Whether oldreg is valid
+    int            suspendrun;           // Suspended for run (0 or 1)
+    int            suspendcount;         // Temporarily suspended (0..inf)
+    int            suspenduser;          // Suspended by user (0 or 1)
+    int            trapset;              // Single-step trap set by OllyDbg
+    int            trapincontext;        // Trap is catched in exception context
+    ulong          rtprotocoladdr;       // Address of destination to protocol
+    int            ignoreonce;           // Ignore list, IGNO_xxx
+    int            drvalid;              // Contents of dr is valid
+    ulong          dr[NREG];             // Expected state of DR0..3,7
+    int            hwmasked;             // Temporarily masked hardware breaks
+    int            hwreported;           // Reported breakpoint expressions
+    // Thread-related information gathered by Updatethreaddata().
+    HWND           hw;                   // One of windows owned by thread
+    ulong          usertime;             // Time in user mode, 100u units or -1
+    ulong          systime;              // Time in system mode, 100u units or -1
+    // Thread-related information gathered by Listmemory().
+    ulong          stacktop;             // Top of thread's stack
+    ulong          stackbottom;          // Bottom of thread's stack
 } t_thread;
 
 stdapi (t_thread *) Findthread(ulong threadid);
@@ -2673,58 +2721,63 @@ stdapi (void)    Registermodifiedbyuser(t_thread *pthr);
 #define NSTKMOD        24              // Max no. of predicted stack mod addr
 #define NMEM           2               // Number of predicted memory locations
 
-typedef struct t_modrm {               // ModRM decoding
-  ulong          size;                 // Total size with SIB and disp, bytes
-  struct t_modrm *psib;                // Pointer to SIB table or NULL
-  ulong          dispsize;             // Size of displacement or 0 if none
-  ulong          features;             // Operand features, set of OP_xxx
-  int            reg;                  // Register index or REG_UNDEF
-  int            defseg;               // Default selector (SEG_xxx)
-  uchar          scale[NREG];          // Scales of registers in memory address
-  ulong          aregs;                // List of registers used in address
-  int            basereg;              // Register used as base or REG_UNDEF
-  wchar_t        ardec[SHORTNAME];     // Register part of address, INTEL fmt
-  wchar_t        aratt[SHORTNAME];     // Register part of address, AT&T fmt
+typedef struct t_modrm                 // ModRM decoding
+{
+    ulong          size;                 // Total size with SIB and disp, bytes
+    struct t_modrm *psib;                // Pointer to SIB table or NULL
+    ulong          dispsize;             // Size of displacement or 0 if none
+    ulong          features;             // Operand features, set of OP_xxx
+    int            reg;                  // Register index or REG_UNDEF
+    int            defseg;               // Default selector (SEG_xxx)
+    uchar          scale[NREG];          // Scales of registers in memory address
+    ulong          aregs;                // List of registers used in address
+    int            basereg;              // Register used as base or REG_UNDEF
+    wchar_t        ardec[SHORTNAME];     // Register part of address, INTEL fmt
+    wchar_t        aratt[SHORTNAME];     // Register part of address, AT&T fmt
 } t_modrm;
 
-typedef struct t_predict {             // Prediction of execution
-  ulong          addr;                 // Predicted EIP or NULL if uncertain
-  ulong          one;                  // Must be 1
-  ulong          type;                 // Type, TY_xxx/PR_xxx
-  ushort         flagsmeaning;         // Set of DX_ZEROMASK|DX_CARRYMASK
-  ulong          rstate[NREG];         // State of register, set of PST_xxx
-  ulong          rconst[NREG];         // Constant related to register
-  ulong          jmpstate;             // State of EIP after jump or return
-  ulong          jmpconst;             // Constant related to jump or return
-  ulong          espatpushbp;          // Offset of ESP at PUSH EBP
-  int            nstack;               // Number of valid stack entries
-  struct {
-    long         soffset;              // Offset of data on stack (signed!)
-    ulong        sstate;               // State of stack data, set of PST_xxx
-    ulong        sconst;               // Constant related to stack data
-  } stack[NSTACK];
-  int            nstkmod;              // Number of valid stkmod addresses
-  ulong          stkmod[NSTKMOD];      // Addresses of stack modifications
-  int            nmem;                 // Number of valid memory entries
-  struct {
-    ulong        maddr;                // Address of doubleword variable
-    ulong        mstate;               // State of memory, set of PST_xxx
-    ulong        mconst;               // Constant related to memory data
-  } mem[NMEM];
-  ulong          resstate;             // State of result of command execution
-  ulong          resconst;             // Constant related to result
+typedef struct t_predict               // Prediction of execution
+{
+    ulong          addr;                 // Predicted EIP or NULL if uncertain
+    ulong          one;                  // Must be 1
+    ulong          type;                 // Type, TY_xxx/PR_xxx
+    ushort         flagsmeaning;         // Set of DX_ZEROMASK|DX_CARRYMASK
+    ulong          rstate[NREG];         // State of register, set of PST_xxx
+    ulong          rconst[NREG];         // Constant related to register
+    ulong          jmpstate;             // State of EIP after jump or return
+    ulong          jmpconst;             // Constant related to jump or return
+    ulong          espatpushbp;          // Offset of ESP at PUSH EBP
+    int            nstack;               // Number of valid stack entries
+    struct
+    {
+        long         soffset;              // Offset of data on stack (signed!)
+        ulong        sstate;               // State of stack data, set of PST_xxx
+        ulong        sconst;               // Constant related to stack data
+    } stack[NSTACK];
+    int            nstkmod;              // Number of valid stkmod addresses
+    ulong          stkmod[NSTKMOD];      // Addresses of stack modifications
+    int            nmem;                 // Number of valid memory entries
+    struct
+    {
+        ulong        maddr;                // Address of doubleword variable
+        ulong        mstate;               // State of memory, set of PST_xxx
+        ulong        mconst;               // Constant related to memory data
+    } mem[NMEM];
+    ulong          resstate;             // State of result of command execution
+    ulong          resconst;             // Constant related to result
 } t_predict;
 
-typedef struct t_callpredict {         // Simplified prediction
-  ulong          addr;                 // Predicted EIP or NULL if uncertain
-  ulong          one;                  // Must be 1
-  ulong          type;                 // Type of prediction, TY_xxx/PR_xxx
-  ulong          eaxstate;             // State of EAX, set of PST_xxx
-  ulong          eaxconst;             // Constant related to EAX
-  int            nstkmod;              // Number of valid stkmod addresses
-  ulong          stkmod[NSTKMOD];      // Addresses of stack modifications
-  ulong          resstate;             // State of result of command execution
-  ulong          resconst;             // Constant related to result
+typedef struct t_callpredict           // Simplified prediction
+{
+    ulong          addr;                 // Predicted EIP or NULL if uncertain
+    ulong          one;                  // Must be 1
+    ulong          type;                 // Type of prediction, TY_xxx/PR_xxx
+    ulong          eaxstate;             // State of EAX, set of PST_xxx
+    ulong          eaxconst;             // Constant related to EAX
+    int            nstkmod;              // Number of valid stkmod addresses
+    ulong          stkmod[NSTKMOD];      // Addresses of stack modifications
+    ulong          resstate;             // State of result of command execution
+    ulong          resconst;             // Constant related to result
 } t_callpredict;
 
 // Location of operand, only one bit is allowed.
@@ -2765,33 +2818,36 @@ typedef struct t_callpredict {         // Simplified prediction
 #define OP_ANYMEM      0x40000000      // Any memory location
 #define OP_ANY         0x80000000      // Any operand
 
-typedef struct t_operand {             // Description of disassembled operand
-  // Description of operand.
-  ulong          features;             // Operand features, set of OP_xxx
-  ulong          arg;                  // Operand type, set of B_xxx
-  int            optype;               // DEC_INT, DEC_FLOAT or DEC_UNKNOWN
-  int            opsize;               // Total size of data, bytes
-  int            granularity;          // Size of element (opsize exc. MMX/SSE)
-  int            reg;                  // REG_xxx (also ESP in POP) or REG_UNDEF
-  ulong          uses;                 // List of used regs (not in address!)
-  ulong          modifies;             // List of modified regs (not in addr!)
-  // Description of memory address.
-  int            seg;                  // Selector (SEG_xxx)
-  uchar          scale[NREG];          // Scales of registers in memory address
-  ulong          aregs;                // List of registers used in address
-  ulong          opconst;              // Constant or const part of address
-  // Value of operand.
-  ulong          offset;               // Offset to selector (usually addr)
-  ulong          selector;             // Immediate selector in far jump/call
-  ulong          addr;                 // Address of operand in memory
-  union {
-    ulong        u;                    // Value of operand (integer form)
-    signed long  s;                    // Value of operand (signed form)
-    uchar        value[16]; };         // Value of operand (general form)
-  uchar          actual[16];           // Actual memory (if OP_ACTVALID)
-  // Textual decoding.
-  wchar_t        text[TEXTLEN];        // Operand, decoded to text
-  wchar_t        comment[TEXTLEN];     // Commented address and contents
+typedef struct t_operand               // Description of disassembled operand
+{
+    // Description of operand.
+    ulong          features;             // Operand features, set of OP_xxx
+    ulong          arg;                  // Operand type, set of B_xxx
+    int            optype;               // DEC_INT, DEC_FLOAT or DEC_UNKNOWN
+    int            opsize;               // Total size of data, bytes
+    int            granularity;          // Size of element (opsize exc. MMX/SSE)
+    int            reg;                  // REG_xxx (also ESP in POP) or REG_UNDEF
+    ulong          uses;                 // List of used regs (not in address!)
+    ulong          modifies;             // List of modified regs (not in addr!)
+    // Description of memory address.
+    int            seg;                  // Selector (SEG_xxx)
+    uchar          scale[NREG];          // Scales of registers in memory address
+    ulong          aregs;                // List of registers used in address
+    ulong          opconst;              // Constant or const part of address
+    // Value of operand.
+    ulong          offset;               // Offset to selector (usually addr)
+    ulong          selector;             // Immediate selector in far jump/call
+    ulong          addr;                 // Address of operand in memory
+    union
+    {
+        ulong        u;                    // Value of operand (integer form)
+        signed long  s;                    // Value of operand (signed form)
+        uchar        value[16];
+    };         // Value of operand (general form)
+    uchar          actual[16];           // Actual memory (if OP_ACTVALID)
+    // Textual decoding.
+    wchar_t        text[TEXTLEN];        // Operand, decoded to text
+    wchar_t        comment[TEXTLEN];     // Commented address and contents
 } t_operand;
 
 // Prefix list.
@@ -2855,92 +2911,97 @@ typedef struct t_operand {             // Description of disassembled operand
 #define DAF_FALSE      0x00000002      // Condition is false
 #define DAF_ANYCOND    0x00000003      // Condition is not predictable
 
-typedef struct t_disasm {              // Disassembled command
-  // In the case that DA_HILITE flag is set, fill these members before calling
-  // Disasm(). Parameter hilitereg has priority over hiliteindex.
-  ulong          hilitereg;            // One of OP_SOMEREG if reg highlighting
-  int            hiregindex;           // Index of register to highlight
-  int            hiliteindex;          // Index of highlighting scheme (0: none)
-  // Starting from this point, no need to initialize the members of t_disasm.
-  ulong          ip;                   // Address of first command byte
-  ulong          size;                 // Full length of command, bytes
-  ulong          cmdtype;              // Type of command, D_xxx
-  ulong          exttype;              // More features, set of DX_xxx
-  ulong          prefixes;             // List of prefixes, set of PF_xxx
-  ulong          nprefix;              // Number of prefixes, including SSE2
-  ulong          memfixup;             // Offset of first 4-byte fixup or -1
-  ulong          immfixup;             // Offset of second 4-byte fixup or -1
-  int            errors;               // Set of DAE_xxx
-  int            warnings;             // Set of DAW_xxx
-  // Note that used registers are those which contents is necessary to create
-  // result. Modified registers are those which value is changed. For example,
-  // command MOV EAX,[EBX+ECX] uses EBX and ECX and modifies EAX. Command
-  // ADD ESI,EDI uses ESI and EDI and modifies ESI.
-  ulong          uses;                 // List of used registers
-  ulong          modifies;             // List of modified registers
-  // Useful shortcuts.
-  int            condition;            // Condition, one of DAF_xxx
-  ulong          jmpaddr;              // Jump/call destination or 0
-  ulong          memconst;             // Constant in memory address or 0
-  ulong          stackinc;             // Data size in ENTER/RETN/RETF
-  // Operands.
-  t_operand      op[NOPERAND];         // Operands
-  // Textual decoding.
-  wchar_t        dump[TEXTLEN];        // Hex dump of the command
-  wchar_t        result[TEXTLEN];      // Fully decoded command as text
-  uchar          mask[TEXTLEN];        // Mask to highlight result
-  int            maskvalid;            // Mask corresponds to result
-  wchar_t        comment[TEXTLEN];     // Comment that applies to whole command
+typedef struct t_disasm                // Disassembled command
+{
+    // In the case that DA_HILITE flag is set, fill these members before calling
+    // Disasm(). Parameter hilitereg has priority over hiliteindex.
+    ulong          hilitereg;            // One of OP_SOMEREG if reg highlighting
+    int            hiregindex;           // Index of register to highlight
+    int            hiliteindex;          // Index of highlighting scheme (0: none)
+    // Starting from this point, no need to initialize the members of t_disasm.
+    ulong          ip;                   // Address of first command byte
+    ulong          size;                 // Full length of command, bytes
+    ulong          cmdtype;              // Type of command, D_xxx
+    ulong          exttype;              // More features, set of DX_xxx
+    ulong          prefixes;             // List of prefixes, set of PF_xxx
+    ulong          nprefix;              // Number of prefixes, including SSE2
+    ulong          memfixup;             // Offset of first 4-byte fixup or -1
+    ulong          immfixup;             // Offset of second 4-byte fixup or -1
+    int            errors;               // Set of DAE_xxx
+    int            warnings;             // Set of DAW_xxx
+    // Note that used registers are those which contents is necessary to create
+    // result. Modified registers are those which value is changed. For example,
+    // command MOV EAX,[EBX+ECX] uses EBX and ECX and modifies EAX. Command
+    // ADD ESI,EDI uses ESI and EDI and modifies ESI.
+    ulong          uses;                 // List of used registers
+    ulong          modifies;             // List of modified registers
+    // Useful shortcuts.
+    int            condition;            // Condition, one of DAF_xxx
+    ulong          jmpaddr;              // Jump/call destination or 0
+    ulong          memconst;             // Constant in memory address or 0
+    ulong          stackinc;             // Data size in ENTER/RETN/RETF
+    // Operands.
+    t_operand      op[NOPERAND];         // Operands
+    // Textual decoding.
+    wchar_t        dump[TEXTLEN];        // Hex dump of the command
+    wchar_t        result[TEXTLEN];      // Fully decoded command as text
+    uchar          mask[TEXTLEN];        // Mask to highlight result
+    int            maskvalid;            // Mask corresponds to result
+    wchar_t        comment[TEXTLEN];     // Comment that applies to whole command
 } t_disasm;
 
-typedef struct t_opinfo {              // Operand in t_cmdinfo
-  ulong          features;             // Operand features, set of OP_xxx
-  ulong          arg;                  // Operand type, set of B_xxx
-  int            opsize;               // Total size of data, bytes
-  int            reg;                  // REG_xxx (also ESP in POP) or REG_UNDEF
-  int            seg;                  // Selector (SEG_xxx)
-  uchar          scale[NREG];          // Scales of registers in memory address
-  ulong          opconst;              // Constant or const part of address
+typedef struct t_opinfo                // Operand in t_cmdinfo
+{
+    ulong          features;             // Operand features, set of OP_xxx
+    ulong          arg;                  // Operand type, set of B_xxx
+    int            opsize;               // Total size of data, bytes
+    int            reg;                  // REG_xxx (also ESP in POP) or REG_UNDEF
+    int            seg;                  // Selector (SEG_xxx)
+    uchar          scale[NREG];          // Scales of registers in memory address
+    ulong          opconst;              // Constant or const part of address
 } t_opinfo;
 
-typedef struct t_cmdinfo {             // Information on command
-  ulong          ip;                   // Address of first command byte
-  ulong          size;                 // Full length of command, bytes
-  ulong          cmdtype;              // Type of command, D_xxx
-  ulong          prefixes;             // List of prefixes, set of PF_xxx
-  ulong          nprefix;              // Number of prefixes, including SSE2
-  ulong          memfixup;             // Offset of first 4-byte fixup or -1
-  ulong          immfixup;             // Offset of second 4-byte fixup or -1
-  int            errors;               // Set of DAE_xxx
-  ulong          jmpaddr;              // Jump/call destination or 0
-  ulong          stackinc;             // Data size in ENTER/RETN/RETF
-  t_opinfo       op[NOPERAND];         // Operands
+typedef struct t_cmdinfo               // Information on command
+{
+    ulong          ip;                   // Address of first command byte
+    ulong          size;                 // Full length of command, bytes
+    ulong          cmdtype;              // Type of command, D_xxx
+    ulong          prefixes;             // List of prefixes, set of PF_xxx
+    ulong          nprefix;              // Number of prefixes, including SSE2
+    ulong          memfixup;             // Offset of first 4-byte fixup or -1
+    ulong          immfixup;             // Offset of second 4-byte fixup or -1
+    int            errors;               // Set of DAE_xxx
+    ulong          jmpaddr;              // Jump/call destination or 0
+    ulong          stackinc;             // Data size in ENTER/RETN/RETF
+    t_opinfo       op[NOPERAND];         // Operands
 } t_cmdinfo;
 
 // ATTENTION, when making any changes to this structure, apply them to the
 // file Cmdemul.asm, too!
-typedef struct t_emu {                 // Parameters passed to emulation routine
-  ulong          operand[NOPERAND];    // I/O: Operands
-  ulong          opsize;               // IN:  Size of operands
-  ulong          memaddr;              // OUT: Save address, or 0 if none
-  ulong          memsize;              // OUT: Save size (1, 2 or 4 bytes)
-  ulong          memdata;              // OUT: Data to save
+typedef struct t_emu                   // Parameters passed to emulation routine
+{
+    ulong          operand[NOPERAND];    // I/O: Operands
+    ulong          opsize;               // IN:  Size of operands
+    ulong          memaddr;              // OUT: Save address, or 0 if none
+    ulong          memsize;              // OUT: Save size (1, 2 or 4 bytes)
+    ulong          memdata;              // OUT: Data to save
 } t_emu;
 
 typedef void TRACEFUNC(ulong *,ulong *,t_predict *,t_disasm *);
 typedef void __cdecl EMUFUNC(t_emu *,t_reg *);
 
-typedef struct t_bincmd {              // Description of 80x86 command
-  wchar_t        *name;                // Symbolic name for this command
-  ulong          cmdtype;              // Command's features, set of D_xxx
-  ulong          exttype;              // More features, set of DX_xxx
-  ulong          length;               // Length of main code (before ModRM/SIB)
-  ulong          mask;                 // Mask for first 4 bytes of the command
-  ulong          code;                 // Compare masked bytes with this
-  ulong          postbyte;             // Postbyte
-  ulong          arg[NOPERAND];        // Types of arguments, set of B_xxx
-  TRACEFUNC      *trace;               // Result prediction function
-  EMUFUNC        *emu;                 // Command emulation function
+typedef struct t_bincmd                // Description of 80x86 command
+{
+    wchar_t        *name;                // Symbolic name for this command
+    ulong          cmdtype;              // Command's features, set of D_xxx
+    ulong          exttype;              // More features, set of DX_xxx
+    ulong          length;               // Length of main code (before ModRM/SIB)
+    ulong          mask;                 // Mask for first 4 bytes of the command
+    ulong          code;                 // Compare masked bytes with this
+    ulong          postbyte;             // Postbyte
+    ulong          arg[NOPERAND];        // Types of arguments, set of B_xxx
+    TRACEFUNC      *trace;               // Result prediction function
+    EMUFUNC        *emu;                 // Command emulation function
 } t_bincmd;
 
 #define AMF_SAMEORDER  0x01            // Same order of index registers in addr
@@ -2959,29 +3020,32 @@ typedef struct t_bincmd {              // Description of 80x86 command
 #define AMP_ANYMEM     0x10            // Any memory operand is acceptable
 #define AMP_ANYOP      0x20            // Any operand is acceptable
 
-typedef struct t_modop {               // Operand in assembler model
-  uchar          features;             // Operand features, set of AMP_xxx
-  uchar          reg;                  // (Pseudo)register operand
-  uchar          scale[NPSEUDO];       // Scales of (pseudo)registers in address
-  ulong          opconst;              // Constant or const part of address
+typedef struct t_modop                 // Operand in assembler model
+{
+    uchar          features;             // Operand features, set of AMP_xxx
+    uchar          reg;                  // (Pseudo)register operand
+    uchar          scale[NPSEUDO];       // Scales of (pseudo)registers in address
+    ulong          opconst;              // Constant or const part of address
 } t_modop;
 
 // Assembler command model.
-typedef struct t_asmmod {              // Description of assembled command
-  uchar          code[MAXCMDSIZE];     // Binary code
-  uchar          mask[MAXCMDSIZE];     // Mask for binary code (0: bit ignored)
-  ulong          prefixes;             // List of prefixes, set of PF_xxx
-  uchar          ncode;                // Length of code w/o prefixes, bytes
-  uchar          features;             // Code features, set of AMF_xxx
-  uchar          postbyte;             // Postbyte (if AMF_POSTBYTE set)
-  uchar          noperand;             // Number of operands (no pseudooperands)
-  t_modop        op[NOPERAND];         // Description of operands
+typedef struct t_asmmod                // Description of assembled command
+{
+    uchar          code[MAXCMDSIZE];     // Binary code
+    uchar          mask[MAXCMDSIZE];     // Mask for binary code (0: bit ignored)
+    ulong          prefixes;             // List of prefixes, set of PF_xxx
+    uchar          ncode;                // Length of code w/o prefixes, bytes
+    uchar          features;             // Code features, set of AMF_xxx
+    uchar          postbyte;             // Postbyte (if AMF_POSTBYTE set)
+    uchar          noperand;             // Number of operands (no pseudooperands)
+    t_modop        op[NOPERAND];         // Description of operands
 } t_asmmod;
 
-typedef struct t_asmlist {             // Descriptor of the sequence of models
-  t_asmmod       *pasm;                // Pointer to the start of the sequence
-  int            length;               // Length of the sequence, models
-  wchar_t        comment[TEXTLEN];     // Comment to the sequence
+typedef struct t_asmlist               // Descriptor of the sequence of models
+{
+    t_asmmod       *pasm;                // Pointer to the start of the sequence
+    int            length;               // Length of the sequence, models
+    wchar_t        comment[TEXTLEN];     // Comment to the sequence
 } t_asmlist;
 
 #define DA_TEXT        0x00000001      // Decode command to text and comment
@@ -3007,14 +3071,14 @@ stdapi (int)     Printmmx(wchar_t *s,uchar *data);
 stdapi (int)     Commentcharacter(wchar_t *s,int c,int mode);
 stdapi (int)     Nameoffloat(wchar_t *s,uchar *data,ulong size);
 stdapi (ulong)   Disasm(uchar *cmd,ulong cmdsize,ulong ip,uchar *dec,
-                   t_disasm *da,int mode,t_reg *reg,
-                   t_predict *predict);
+                        t_disasm *da,int mode,t_reg *reg,
+                        t_predict *predict);
 stdapi (ulong)   Cmdinfo(uchar *cmd,ulong cmdsize,ulong cmdip,
-                   t_cmdinfo *ci,int cmdmode,t_reg *cmdreg);
+                         t_cmdinfo *ci,int cmdmode,t_reg *cmdreg);
 stdapi (ulong)   Disassembleforward(uchar *copy,ulong base,ulong size,
-                   ulong ip,ulong n,uchar *decode);
+                                    ulong ip,ulong n,uchar *decode);
 stdapi (ulong)   Disassembleback(uchar *copy,ulong base,ulong size,
-                   ulong ip,ulong n,uchar *decode);
+                                 ulong ip,ulong n,uchar *decode);
 stdapi (int)     Checkcondition(int code,ulong flags);
 stdapi (ulong)   Setcondition(int code,ulong flags);
 
@@ -3025,9 +3089,9 @@ stdapi (ulong)   Setcondition(int code,ulong flags);
 #define AM_SEARCH      AM_IMPRECISE
 
 stdapi (int)     Assembleallforms(wchar_t *src,ulong ip,t_asmmod *model,
-                   int maxmodel,int mode,wchar_t *errtxt);
+                                  int maxmodel,int mode,wchar_t *errtxt);
 stdapi (ulong)   Assemble(wchar_t *src,ulong ip,uchar *buf,ulong nbuf,int mode,
-                   wchar_t *errtxt);
+                          wchar_t *errtxt);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3078,28 +3142,29 @@ stdapi (ulong)   Assemble(wchar_t *src,ulong ip,uchar *buf,ulong nbuf,int mode,
 #define   A_NOLIST     0x00000011      // 8-bit list following no. prefix
 #define   A_ALIGN      0x00000012      // 8-bit alignment following unaligned.
 
-typedef struct t_netasm {              // Disassembled .NET CIL command
-  ulong          ip;                   // Address of first command byte
-  ulong          size;                 // Full length of command, bytes
-  ulong          cmdtype;              // Type of command, N_xxx
-  ulong          cmdsize;              // Size of command, bytes
-  ulong          opsize;               // Size of operand, bytes, or 0 if none
-  ulong          nswitch;              // Size of following switch table, dwords
-  ulong          jmpaddr;              // Single jump/call destination or 0
-  ulong          descriptor;           // Descriptor (xx)xxxxxx or 0
-  ulong          dataaddr;             // Address of pointed object/data or 0
-  int            errors;               // Set of DAE_xxx
-  // Description of operand.
-  ulong          optype;               // Operand type, set of A_xxx
-  wchar_t        optext[TEXTLEN];      // Operand, decoded to text
-  // Textual decoding.
-  wchar_t        dump[TEXTLEN];        // Hex dump of the command
-  wchar_t        result[TEXTLEN];      // Fully decoded command as text
-  wchar_t        comment[TEXTLEN];     // Comment that applies to whole command
+typedef struct t_netasm                // Disassembled .NET CIL command
+{
+    ulong          ip;                   // Address of first command byte
+    ulong          size;                 // Full length of command, bytes
+    ulong          cmdtype;              // Type of command, N_xxx
+    ulong          cmdsize;              // Size of command, bytes
+    ulong          opsize;               // Size of operand, bytes, or 0 if none
+    ulong          nswitch;              // Size of following switch table, dwords
+    ulong          jmpaddr;              // Single jump/call destination or 0
+    ulong          descriptor;           // Descriptor (xx)xxxxxx or 0
+    ulong          dataaddr;             // Address of pointed object/data or 0
+    int            errors;               // Set of DAE_xxx
+    // Description of operand.
+    ulong          optype;               // Operand type, set of A_xxx
+    wchar_t        optext[TEXTLEN];      // Operand, decoded to text
+    // Textual decoding.
+    wchar_t        dump[TEXTLEN];        // Hex dump of the command
+    wchar_t        result[TEXTLEN];      // Fully decoded command as text
+    wchar_t        comment[TEXTLEN];     // Comment that applies to whole command
 } t_netasm;
 
 stdapi (ulong)   Ndisasm(uchar *cmd,ulong size,ulong ip,t_netasm *da,
-                   int mode,t_module *pmod);
+                         int mode,t_module *pmod);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3122,43 +3187,47 @@ stdapi (ulong)   Ndisasm(uchar *cmd,ulong size,ulong ip,t_netasm *da,
 #define AO_ISCOUNT     0x20            // Argument is count of remaining args
 #define AO_NOTCOUNT    0x40            // Argument is not a count
 
-typedef struct t_procdata {            // Description of procedure
-  ulong          addr;                 // Address of entry point
-  ulong          size;                 // Size of simple procedure or 1
-  ulong          type;                 // Type of procedure, TY_xxx/PD_xxx
-  ulong          retsize;              // Size of return (if PD_RETSIZE)
-  ulong          localsize;            // Size of reserved locals, 0 - unknown
-  ulong          savedebp;             // Offset of cmd after PUSH EBP, 0 - none
-  ulong          features;             // Type of known code, RAW_xxx
-  char           generic[12];          // Generic name (without _INTERN_)
-  int            narg;                 // No. of stack DWORDs (PD_NARG/VARARG)
-  int            nguess;               // Number of guessed args (if PD_NGUESS)
-  int            npush;                // Number of pushed args (if PD_NPUSH)
-  int            usedarg;              // Min. number of accessed arguments
-  uchar          preserved;            // Preserved registers
-  uchar          argopt[NGUESS];       // Guessed argument options, AO_xxx
+typedef struct t_procdata              // Description of procedure
+{
+    ulong          addr;                 // Address of entry point
+    ulong          size;                 // Size of simple procedure or 1
+    ulong          type;                 // Type of procedure, TY_xxx/PD_xxx
+    ulong          retsize;              // Size of return (if PD_RETSIZE)
+    ulong          localsize;            // Size of reserved locals, 0 - unknown
+    ulong          savedebp;             // Offset of cmd after PUSH EBP, 0 - none
+    ulong          features;             // Type of known code, RAW_xxx
+    char           generic[12];          // Generic name (without _INTERN_)
+    int            narg;                 // No. of stack DWORDs (PD_NARG/VARARG)
+    int            nguess;               // Number of guessed args (if PD_NGUESS)
+    int            npush;                // Number of pushed args (if PD_NPUSH)
+    int            usedarg;              // Min. number of accessed arguments
+    uchar          preserved;            // Preserved registers
+    uchar          argopt[NGUESS];       // Guessed argument options, AO_xxx
 } t_procdata;
 
-typedef struct t_argnest {             // Header of call arguments bracket
-  ulong          addr0;                // First address occupied by range
-  ulong          addr1;                // Last occupied address (included!)
-  ulong          type;                 // Level and user-defined type, TY_xxx
-  ulong          aprev;                // First address of previous range
+typedef struct t_argnest               // Header of call arguments bracket
+{
+    ulong          addr0;                // First address occupied by range
+    ulong          addr1;                // Last occupied address (included!)
+    ulong          type;                 // Level and user-defined type, TY_xxx
+    ulong          aprev;                // First address of previous range
 } t_argnest;
 
 #define NLOOPVAR       4               // Max number of loop variables
 
-typedef struct t_loopnest {            // Header of loop bracket
-  ulong          addr0;                // First address occupied by range
-  ulong          addr1;                // Last occupied address (included!)
-  ulong          type;                 // Level and user-defined type, TY_xxx
-  ulong          aprev;                // First address of previous range
-  ulong          eoffs;                // Offset of entry point from addr0
-  struct {                             // Loop registers and variables
-    uchar        type;                 // Combination of PRED_xxx
-    long         espoffset;            // For locals, offset to original ESP
-    long         increment;            // Increment after loop
-  } loopvar[NLOOPVAR];
+typedef struct t_loopnest              // Header of loop bracket
+{
+    ulong          addr0;                // First address occupied by range
+    ulong          addr1;                // Last occupied address (included!)
+    ulong          type;                 // Level and user-defined type, TY_xxx
+    ulong          aprev;                // First address of previous range
+    ulong          eoffs;                // Offset of entry point from addr0
+    struct                               // Loop registers and variables
+    {
+        uchar        type;                 // Combination of PRED_xxx
+        long         espoffset;            // For locals, offset to original ESP
+        long         increment;            // Increment after loop
+    } loopvar[NLOOPVAR];
 } t_loopnest;
 
 stdapi (ulong)   Getpackednetint(uchar *code,ulong size,ulong *value);
@@ -3173,29 +3242,30 @@ stdapi (int)     Maybecommand(ulong addr,int requireanalysis);
 #define SF_BPUNREL     0x00000002      // Predicted EBP is unreliable
 #define SF_VIRTUAL     0x00000004      // DBGHELP: EBP is undefined
 
-typedef struct t_sframe {              // Stack frame descriptor
-  // Input parameters, fill before call to Findretaddrdata().
-  ulong          eip;                  // Address of command that owns frame
-  ulong          esp;                  // ESP at EIP
-  ulong          ebp;                  // EBP at EIP, or 0 if unknown
-  // Parameters used by DBGHELP.DLL, initialize only before the first call.
-  int            firstcall;            // First call to Findretaddrdata()
-  HANDLE         thread;               // Thread handle
-  CONTEXT        context;              // Copy of CONTEXT, fill on first call
-  int            contextvalid;         // Whether context contains valid data
-  // Output parameters.
-  ulong          status;               // Set of SF_xxx
-  ulong          oldeip;               // Address of CALL or 0 if unknown
-  ulong          oldesp;               // ESP at CALL or 0 if unknown
-  ulong          oldebp;               // EBP at CALL or 0 if unknown
-  ulong          retpos;               // Address of return in stack
-  ulong          procaddr;             // Entry of current function or 0
-  // Parameters used by DBGHELP.DLL, don't initialize!
-  #ifdef STACKFRAME64                  // Requires <dbghelp.h>
+typedef struct t_sframe                // Stack frame descriptor
+{
+    // Input parameters, fill before call to Findretaddrdata().
+    ulong          eip;                  // Address of command that owns frame
+    ulong          esp;                  // ESP at EIP
+    ulong          ebp;                  // EBP at EIP, or 0 if unknown
+    // Parameters used by DBGHELP.DLL, initialize only before the first call.
+    int            firstcall;            // First call to Findretaddrdata()
+    HANDLE         thread;               // Thread handle
+    CONTEXT        context;              // Copy of CONTEXT, fill on first call
+    int            contextvalid;         // Whether context contains valid data
+    // Output parameters.
+    ulong          status;               // Set of SF_xxx
+    ulong          oldeip;               // Address of CALL or 0 if unknown
+    ulong          oldesp;               // ESP at CALL or 0 if unknown
+    ulong          oldebp;               // EBP at CALL or 0 if unknown
+    ulong          retpos;               // Address of return in stack
+    ulong          procaddr;             // Entry of current function or 0
+    // Parameters used by DBGHELP.DLL, don't initialize!
+#ifdef STACKFRAME64                  // Requires <dbghelp.h>
     STACKFRAME64 sf;                   // Stack frame for StackWalk64()
-  #else
+#else
     uchar        dummy[264];           // Replaces STACKFRAME64
-  #endif
+#endif
 } t_sframe;
 
 stdapi (ulong)   Isretaddr(ulong retaddr,ulong *procaddr);
@@ -3255,71 +3325,76 @@ stdapi (int)     Findretaddrdata(t_sframe *pf,ulong base,ulong size);
 #define FN_STDFUNC     (FN_PASCAL|FN_EBX|FN_EBP|FN_ESI|FN_EDI)
 #define FN_STDC        (FN_C|FN_EBX|FN_EBP|FN_ESI|FN_EDI)
 
-typedef struct t_argdec {              // Descriptor of function argument
-  ulong          mode;                 // Value descriptor, set of ADEC_xxx
-  ulong          value;                // Value on the stack
-  ulong          pushaddr;             // Address of command that pushed data
-  wchar_t        prtype[SHORTNAME];    // Type of argument with ARG_xxx prefix
-  wchar_t        name[TEXTLEN];        // Decoded name of argument
-  wchar_t        text[TEXTLEN];        // Decoded value (if valid or predicted)
+typedef struct t_argdec                // Descriptor of function argument
+{
+    ulong          mode;                 // Value descriptor, set of ADEC_xxx
+    ulong          value;                // Value on the stack
+    ulong          pushaddr;             // Address of command that pushed data
+    wchar_t        prtype[SHORTNAME];    // Type of argument with ARG_xxx prefix
+    wchar_t        name[TEXTLEN];        // Decoded name of argument
+    wchar_t        text[TEXTLEN];        // Decoded value (if valid or predicted)
 } t_argdec;
 
-typedef struct t_strdec {              // Decoded structure item
-  ulong          size;                 // Item size, bytes
-  ulong          addr;                 // Address of the first byte
-  ulong          value;                // Item value (only if size<=4!)
-  uchar          valuevalid;           // Whether value is valid
-  uchar          dec;                  // One of DEC_TYPEMASK subfields
-  uchar          decsize;              // Size of decoding element
-  uchar          reserved;             // Reserved for the future
-  wchar_t        prtype[SHORTNAME];    // Type of item with ARG_xxx prefix
-  wchar_t        name[TEXTLEN];        // Name of item
-  wchar_t        text[TEXTLEN];        // Decoded value
+typedef struct t_strdec                // Decoded structure item
+{
+    ulong          size;                 // Item size, bytes
+    ulong          addr;                 // Address of the first byte
+    ulong          value;                // Item value (only if size<=4!)
+    uchar          valuevalid;           // Whether value is valid
+    uchar          dec;                  // One of DEC_TYPEMASK subfields
+    uchar          decsize;              // Size of decoding element
+    uchar          reserved;             // Reserved for the future
+    wchar_t        prtype[SHORTNAME];    // Type of item with ARG_xxx prefix
+    wchar_t        name[TEXTLEN];        // Name of item
+    wchar_t        text[TEXTLEN];        // Decoded value
 } t_strdec;
 
-typedef struct t_rawdata {             // Header of raw data block
-  ulong          size;                 // Data size, bytes
-  ulong          hasmask;              // Data is followed by mask
-  ulong          features;             // Data features
+typedef struct t_rawdata               // Header of raw data block
+{
+    ulong          size;                 // Data size, bytes
+    ulong          hasmask;              // Data is followed by mask
+    ulong          features;             // Data features
 } t_rawdata;                           // Data & mask immediately follow header
 
-typedef struct t_argloc {              // Information about stack args & locals
-  ulong          fntype;               // Calling convention, set of FN_xxx
-  int            retfeatures;          // Return features, set of ARG_xxx
-  int            retsize;              // Size of returned value
-  wchar_t        rettype[SHORTNAME];   // Type of the returned value
-  int            argvalid;             // Whether arg[] below is valid
-  struct {                             // List of arguments
-    int          features;             // Argument features, set of ARG_xxx
-    int          size;                 // Size of argument on the stack
-    wchar_t      name[TEXTLEN];        // Name of the argument
-    wchar_t      type[SHORTNAME];      // Type of the argument
-  } arg[NARG];
+typedef struct t_argloc                // Information about stack args & locals
+{
+    ulong          fntype;               // Calling convention, set of FN_xxx
+    int            retfeatures;          // Return features, set of ARG_xxx
+    int            retsize;              // Size of returned value
+    wchar_t        rettype[SHORTNAME];   // Type of the returned value
+    int            argvalid;             // Whether arg[] below is valid
+    struct                               // List of arguments
+    {
+        int          features;             // Argument features, set of ARG_xxx
+        int          size;                 // Size of argument on the stack
+        wchar_t      name[TEXTLEN];        // Name of the argument
+        wchar_t      type[SHORTNAME];      // Type of the argument
+    } arg[NARG];
 } t_argloc;
 
 stdapi (int)     Getconstantbyname(wchar_t *name,ulong *value);
 stdapi (int)     Getconstantbyvalue(wchar_t *groupname,
-                   ulong value,wchar_t *name);
+                                    ulong value,wchar_t *name);
 stdapi (int)     Decodetype(ulong data,wchar_t *type,wchar_t *text,int ntext);
 stdapi (int)     Fillcombowithgroup(HWND hw,wchar_t *groupname,
-                   int sortbyname,ulong select);
+                                    int sortbyname,ulong select);
 stdapi (int)     Fillcombowithstruct(HWND hw,wchar_t *prefix,wchar_t *select);
 stdapi (t_rawdata *) Getrawdata(wchar_t *name);
 stdapi (int)     Substitutehkeyprefix(wchar_t *key);
 stdapi (int)     Decodeknownbyname(wchar_t *name,t_procdata *pd,
-                   t_argdec adec[NARG],wchar_t *rettype,int nexp);
+                                   t_argdec adec[NARG],wchar_t *rettype,int nexp);
 stdapi (int)     Decodeknownbyaddr(ulong addr,t_procdata *pd,
-                   t_argdec adec[NARG],wchar_t *rettype,wchar_t *name,
-                   int nexp,int follow);
+                                   t_argdec adec[NARG],wchar_t *rettype,wchar_t *name,
+                                   int nexp,int follow);
 stdapi (int)     Isnoreturn(ulong addr);
 stdapi (int)     Decodeargument(t_module *pmod,wchar_t *prtype,void *data,
-                   int ndata,wchar_t *text,int ntext,int *nontriv);
+                                int ndata,wchar_t *text,int ntext,int *nontriv);
 stdapi (int)     Getstructureitemcount(wchar_t *name,ulong *size);
 stdapi (int)     Findstructureitembyoffset(wchar_t *name,ulong offset);
 stdapi (int)     Decodestructure(wchar_t *name,ulong addr,int item0,
-                   t_strdec *str,int nstr);
+                                 t_strdec *str,int nstr);
 stdapi (ulong)   Getstructureitemvalue(uchar *code,ulong ncode,
-                   wchar_t *name,wchar_t *itemname,void *value,ulong nvalue);
+                                       wchar_t *name,wchar_t *itemname,void *value,ulong nvalue);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3350,37 +3425,41 @@ stdapi (ulong)   Getstructureitemvalue(uchar *code,ulong ncode,
 
 #define EXPR_SIGDWORD  (EXPR_DWORD|EXPR_SIGNED)
 
-typedef struct t_result {              // Result of expression's evaluation
-  int            lvaltype;             // Type of expression, EXPR_xxx
-  ulong          lvaladdr;             // Address of lvalue or NULL
-  int            datatype;             // Type of data, EXPR_xxx
-  int            repcount;             // Repeat count (0..32, 0 means default)
-  union {
-    uchar        data[10];             // Value as set of bytes
-    ulong        u;                    // Value as address or unsigned integer
-    long         l;                    // Value as signed integer
-    long double  f; };                 // Value as 80-bit float
-  wchar_t        value[TEXTLEN];       // Value decoded to string
+typedef struct t_result                // Result of expression's evaluation
+{
+    int            lvaltype;             // Type of expression, EXPR_xxx
+    ulong          lvaladdr;             // Address of lvalue or NULL
+    int            datatype;             // Type of data, EXPR_xxx
+    int            repcount;             // Repeat count (0..32, 0 means default)
+    union
+    {
+        uchar        data[10];             // Value as set of bytes
+        ulong        u;                    // Value as address or unsigned integer
+        long         l;                    // Value as signed integer
+        long double  f;
+    };                 // Value as 80-bit float
+    wchar_t        value[TEXTLEN];       // Value decoded to string
 } t_result;
 
-typedef struct t_watch {               // Watch descriptor
-  ulong          addr;                 // 0-based watch index
-  ulong          size;                 // Reserved, always 1
-  ulong          type;                 // Service information, TY_xxx
-  wchar_t        expr[TEXTLEN];        // Watch expression
+typedef struct t_watch                 // Watch descriptor
+{
+    ulong          addr;                 // 0-based watch index
+    ulong          size;                 // Reserved, always 1
+    ulong          type;                 // Service information, TY_xxx
+    wchar_t        expr[TEXTLEN];        // Watch expression
 } t_watch;
 
 stdapi (int)     Cexpression(wchar_t *expression,uchar *cexpr,int nexpr,
-                   int *explen,wchar_t *err,ulong mode);
+                             int *explen,wchar_t *err,ulong mode);
 stdapi (int)     Exprcount(uchar *cexpr);
 stdapi (int)     Eexpression(t_result *result,wchar_t *expl,uchar *cexpr,
-                   int index,uchar *data,ulong base,ulong size,ulong threadid,
-                   ulong a,ulong b,ulong mode);
+                             int index,uchar *data,ulong base,ulong size,ulong threadid,
+                             ulong a,ulong b,ulong mode);
 stdapi (int)     Expression(t_result *result,wchar_t *expression,uchar *data,
-                   ulong base,ulong size,ulong threadid,ulong a,ulong b,
-                   ulong mode);
+                            ulong base,ulong size,ulong threadid,ulong a,ulong b,
+                            ulong mode);
 stdapi (int)     Fastexpression(t_result *result,ulong addr,int type,
-                   ulong threadid);
+                                ulong threadid);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3532,115 +3611,118 @@ stdapi (int)     Fastexpression(t_result *result,ulong addr,int type,
 
 #define NSEARCHCMD     128             // Max number of assembler search models
 
-typedef struct t_control {             // Descriptor of dialog control
-  ulong          type;                 // Type of control, CA_xxx
-  int            id;                   // Control's ID or -1 if unimportant
-  int            x;                    // X coordinate, chars/4
-  int            y;                    // Y coordinate, chars/8
-  int            dx;                   // X size, chars/4
-  int            dy;                   // Y size, chars/8
-  int            *var;                 // Pointer to control variable or NULL
-  wchar_t        *text;                // Name or contents of the control
-  wchar_t        *help;                // Tooltip or NULL
-  int            oldvar;               // Copy of control variable, internal
+typedef struct t_control               // Descriptor of dialog control
+{
+    ulong          type;                 // Type of control, CA_xxx
+    int            id;                   // Control's ID or -1 if unimportant
+    int            x;                    // X coordinate, chars/4
+    int            y;                    // Y coordinate, chars/8
+    int            dx;                   // X size, chars/4
+    int            dy;                   // Y size, chars/8
+    int            *var;                 // Pointer to control variable or NULL
+    wchar_t        *text;                // Name or contents of the control
+    wchar_t        *help;                // Tooltip or NULL
+    int            oldvar;               // Copy of control variable, internal
 } t_control;
 
-typedef struct t_dialog {              // Descriptor of OllyDbg dialog
-  t_control      *controls;            // List of controls to place in dialog
-  wchar_t        *title;               // Pointer to the dialog's title
-  int            focus;                // ID of control with focus
-  int            item;                 // Index of processing item
-  ulong          u;                    // Doubleword data
-  uchar          data[16];             // Data in other formats
-  ulong          addr0;                // Address
-  ulong          addr1;                // Address
-  int            letter;               // First character entered in dialog
-  int            x;                    // X reference screen coordinate
-  int            y;                    // Y reference screen coordinate
-  int            fi;                   // Index of font to use in dialog
-  int            mode;                 // Dialog operation mode, set of DIA_xxx
-  int            cesav[8];             // NM_xxx of CA_CESAVn
-  HFONT          fixfont;              // Fixed font used in dialog
-  int            isfullunicode;        // Whether fixfont UNICODE
-  int            fixdx;                // Width of dialog fixed font
-  int            fixdy;                // Height of dialog fixed font
-  HWND           htooltip;             // Handle of tooltip window
-  HWND           hwwarn;               // Handle of WARN control, if any
-  int            initdone;             // WM_INITDIALOG finished
+typedef struct t_dialog                // Descriptor of OllyDbg dialog
+{
+    t_control      *controls;            // List of controls to place in dialog
+    wchar_t        *title;               // Pointer to the dialog's title
+    int            focus;                // ID of control with focus
+    int            item;                 // Index of processing item
+    ulong          u;                    // Doubleword data
+    uchar          data[16];             // Data in other formats
+    ulong          addr0;                // Address
+    ulong          addr1;                // Address
+    int            letter;               // First character entered in dialog
+    int            x;                    // X reference screen coordinate
+    int            y;                    // Y reference screen coordinate
+    int            fi;                   // Index of font to use in dialog
+    int            mode;                 // Dialog operation mode, set of DIA_xxx
+    int            cesav[8];             // NM_xxx of CA_CESAVn
+    HFONT          fixfont;              // Fixed font used in dialog
+    int            isfullunicode;        // Whether fixfont UNICODE
+    int            fixdx;                // Width of dialog fixed font
+    int            fixdy;                // Height of dialog fixed font
+    HWND           htooltip;             // Handle of tooltip window
+    HWND           hwwarn;               // Handle of WARN control, if any
+    int            initdone;             // WM_INITDIALOG finished
 } t_dialog;
 
 // ATTENTION, size of structure t_hexstr must not exceed DATALEN!
-typedef struct t_hexstr {              // Data for hex/text search
-  ulong          n;                    // Data length, bytes
-  ulong          nmax;                 // Maximal data length, bytes
-  uchar          data[HEXLEN];         // Data
-  uchar          mask[HEXLEN];         // Mask, 0 bits are masked
+typedef struct t_hexstr                // Data for hex/text search
+{
+    ulong          n;                    // Data length, bytes
+    ulong          nmax;                 // Maximal data length, bytes
+    uchar          data[HEXLEN];         // Data
+    uchar          mask[HEXLEN];         // Mask, 0 bits are masked
 } t_hexstr;
 
 typedef int  BROWSECODEFUNC(int,void *,ulong *,wchar_t *);
 
 stdapi (t_control *) Findcontrol(HWND hw);
 stdapi (int)     Defaultactions(HWND hparent,t_control *pctr,
-                   WPARAM wp,LPARAM lp);
+                                WPARAM wp,LPARAM lp);
 stdapi (void)    Addstringtocombolist(HWND hc,wchar_t *s);
 stdapi (int)     Preparedialog(HWND hw,t_dialog *pdlg);
 stdapi (int)     Endotdialog(HWND hw,int result);
 stdapi (int)     Getregister(HWND hparent,int reg,ulong *data,int letter,
-                   int x,int y,int fi,int mode);
+                             int x,int y,int fi,int mode);
 stdapi (int)     Getinteger(HWND hparent,wchar_t *title,ulong *data,int letter,
-                   int x,int y,int fi,int mode);
+                            int x,int y,int fi,int mode);
 stdapi (int)     Getdword(HWND hparent,wchar_t *title,ulong *data,int letter,
-                   int x,int y,int fi,int mode);
+                          int x,int y,int fi,int mode);
 stdapi (int)     Getlasterrorcode(HWND hparent,wchar_t *title,ulong *data,
-                   int letter,int x,int y,int fi);
+                                  int letter,int x,int y,int fi);
 stdapi (int)     Getaddressrange(HWND hparent,wchar_t *title,
-                   ulong *rmin,ulong *rmax,int x,int y,int fi,int mode);
+                                 ulong *rmin,ulong *rmax,int x,int y,int fi,int mode);
 stdapi (int)     Getexceptionrange(HWND hparent,wchar_t *title,
-                   ulong *rmin,ulong *rmax,int x,int y,int fi);
+                                   ulong *rmin,ulong *rmax,int x,int y,int fi);
 stdapi (int)     Getstructuretype(HWND hparent,wchar_t *title,wchar_t *text,
-                   wchar_t *strname,int x,int y,int fi);
+                                  wchar_t *strname,int x,int y,int fi);
 stdapi (int)     Getfpureg(HWND hparent,int reg,void *data,int letter,
-                   int x,int y,int fi);
+                           int x,int y,int fi);
 stdapi (int)     Get3dnow(HWND hparent,wchar_t *title,void *data,int letter,
-                   int x,int y,int fi,int mode);
+                          int x,int y,int fi,int mode);
 stdapi (int)     Getfloat(HWND hparent,wchar_t *title,void *data,int letter,
-                   int x,int y,int fi,int mode);
+                          int x,int y,int fi,int mode);
 stdapi (int)     Getmmx(HWND hparent,wchar_t *title,void *data,int letter,
-                   int x,int y,int fi);
+                        int x,int y,int fi);
 stdapi (int)     Getsse(HWND hparent,wchar_t *title,void *data,int letter,
-                   int x,int y,int fi,int mode);
+                        int x,int y,int fi,int mode);
 stdapi (int)     Getstring(HWND hparent,wchar_t *title,wchar_t *s,int length,
-                   int savetype,int letter,int x,int y,int fi,int mode);
+                           int savetype,int letter,int x,int y,int fi,int mode);
 stdapi (int)     Getdwordexpression(HWND hparent,wchar_t *title,ulong *u,
-                   ulong threadid,int savetype,int x,int y,int fi,int mode);
+                                    ulong threadid,int savetype,int x,int y,int fi,int mode);
 stdapi (int)     Getgotoexpression(HWND hparent,wchar_t *title,ulong *u,
-                   ulong threadid,int savetype,int x,int y,int fi,int mode);
+                                   ulong threadid,int savetype,int x,int y,int fi,int mode);
 stdapi (int)     Asmindump(HWND hparent,wchar_t *title,struct t_dump *pd,
-                   int letter,int x,int y,int fi,int mode);
+                           int letter,int x,int y,int fi,int mode);
 stdapi (int)     Getasmsearchmodel(HWND hparent,wchar_t *title,t_asmmod *model,
-                   int nmodel,int x,int y,int fi,int mode);
+                                   int nmodel,int x,int y,int fi,int mode);
 stdapi (int)     Getseqsearchmodel(HWND hparent,wchar_t *title,t_asmmod *model,
-                   int nmodel,int x,int y,int fi,int mode);
+                                   int nmodel,int x,int y,int fi,int mode);
 stdapi (int)     Binaryedit(HWND hparent,wchar_t *title,t_hexstr *hstr,
-                   int letter,int x,int y,int fi,int mode);
+                            int letter,int x,int y,int fi,int mode);
 stdapi (int)     Getpredefinedtypebyindex(int fnindex,wchar_t *type);
 stdapi (int)     Getindexbypredefinedtype(wchar_t *type);
 stdapi (int)     Condbreakpoint(HWND hparent,ulong *addr,int naddr,
-                   wchar_t *title,int x,int y,int fi);
+                                wchar_t *title,int x,int y,int fi);
 stdapi (int)     Condlogbreakpoint(HWND hparent,ulong *addr,int naddr,
-                   int fnindex,wchar_t *title,int x,int y,int fi);
+                                   int fnindex,wchar_t *title,int x,int y,int fi);
 stdapi (int)     Membreakpoint(HWND hparent,ulong addr,ulong size,
-                   int x,int y,int fi,int mode);
+                               int x,int y,int fi,int mode);
 stdapi (int)     Memlogbreakpoint(HWND hparent,ulong addr,ulong size,
-                   int x,int y,int fi,int mode);
+                                  int x,int y,int fi,int mode);
 stdapi (int)     Hardbreakpoint(HWND hparent,ulong addr,
-                   int x,int y,int fi,int mode);
+                                int x,int y,int fi,int mode);
 stdapi (int)     Hardlogbreakpoint(HWND hparent,ulong addr,int fnindex,
-                   int x,int y,int fi,int mode);
+                                   int x,int y,int fi,int mode);
 stdapi (void)    Setrtcond(HWND hparent,int x,int y,int fi);
 stdapi (void)    Setrtprot(HWND hparent,int x,int y,int fi);
 stdapi (ulong)   Browsecodelocations(HWND hparent,wchar_t *title,
-                   BROWSECODEFUNC *bccallback,void *data);
+                                     BROWSECODEFUNC *bccallback,void *data);
 stdapi (int)     Fillcombowithcodepages(HWND hw,int select);
 
 
@@ -3723,25 +3805,25 @@ stdapi (int)     Fillcombowithcodepages(HWND hw,int select);
 #define COMM_ALL       0xFFFFFFFF      // Add all possible comments
 
 stdapi (int)     Stringtotext(wchar_t *data,int ndata,wchar_t *text,int ntext,
-                   int stopatzero);
+                              int stopatzero);
 stdapi (int)     Isstring(ulong addr,int isstatic,wchar_t *symb,int nsymb);
 stdapi (int)     Squeezename(wchar_t *dest,int ndest,wchar_t *src,int nsrc);
 stdapi (void)    Uncapitalize(wchar_t *s);
 stdapi (int)     Decoderelativeoffset(ulong addr,int addrmode,
-                   wchar_t *symb,int nsymb);
+                                      wchar_t *symb,int nsymb);
 stdapi (int)     Decodeaddress(ulong addr,ulong amod,int mode,
-                   wchar_t *symb,int nsymb,wchar_t *comment);
+                               wchar_t *symb,int nsymb,wchar_t *comment);
 stdapi (int)     Decodearglocal(ulong ip,ulong offs,ulong datasize,
-                   wchar_t *name,int len);
+                                wchar_t *name,int len);
 stdapi (int)     Getanalysercomment(struct t_module *pmod,ulong addr,
-                   wchar_t *comment,int len);
+                                    wchar_t *comment,int len);
 stdapi (int)     Getswitchcomment(ulong addr,wchar_t *comment,int len);
 stdapi (int)     Getloopcomment(struct t_module *pmod,ulong addr,int level,
-                   wchar_t *comment,int len);
+                                wchar_t *comment,int len);
 stdapi (int)     Getproccomment(ulong addr,ulong acall,
-                   wchar_t *comment,int len,int argonly);
+                                wchar_t *comment,int len,int argonly);
 stdapi (int)     Commentaddress(ulong addr,int typelist,
-                   wchar_t *comment,int len);
+                                wchar_t *comment,int len);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3839,31 +3921,32 @@ varapi (void)    Addtolist(ulong addr,int color,wchar_t *format,...);
 
 typedef void DUMPSELFUNC(struct t_dump *,int);
 
-typedef struct t_dump {                // Descriptor of dump data and window
-  ulong          base;                 // Start of memory block or file
-  ulong          size;                 // Size of memory block or file
-  ulong          dumptype;             // Dump type, DU_xxx+count+size=DUMP_xxx
-  ulong          menutype;             // Menu type, set of DMT_xxx
-  ulong          itemwidth;            // Width of one item, characters
-  ulong          threadid;             // Use decoding and registers if not 0
-  t_table        table;                // Dump window is a custom table
-  ulong          addr;                 // Address of first visible byte
-  ulong          sel0;                 // Address of first selected byte
-  ulong          sel1;                 // Last selected byte (not included!)
-  ulong          selstart;             // Addr of first byte of selection start
-  ulong          selend;               // Addr of first byte of selection end
-  uchar          *filecopy;            // Copy of the file or NULL
-  wchar_t        path[MAXPATH];        // Name of displayed file
-  uchar          *backup;              // Old backup of memory/file or NULL
-  wchar_t        strname[SHORTNAME];   // Name of the structure to decode
-  uchar          *decode;              // Local decoding information or NULL
-  wchar_t        bkpath[MAXPATH];      // Name of last used backup file
-  int            relreg;               // Addresses relative to register
-  ulong          reladdr;              // Addresses relative to this address
-  ulong          hilitereg;            // One of OP_SOMEREG if reg highlighting
-  int            hiregindex;           // Index of register to highlight
-  ulong          graylimit;            // Gray data below this address
-  DUMPSELFUNC    *dumpselfunc;         // Callback indicating change of sel0
+typedef struct t_dump                  // Descriptor of dump data and window
+{
+    ulong          base;                 // Start of memory block or file
+    ulong          size;                 // Size of memory block or file
+    ulong          dumptype;             // Dump type, DU_xxx+count+size=DUMP_xxx
+    ulong          menutype;             // Menu type, set of DMT_xxx
+    ulong          itemwidth;            // Width of one item, characters
+    ulong          threadid;             // Use decoding and registers if not 0
+    t_table        table;                // Dump window is a custom table
+    ulong          addr;                 // Address of first visible byte
+    ulong          sel0;                 // Address of first selected byte
+    ulong          sel1;                 // Last selected byte (not included!)
+    ulong          selstart;             // Addr of first byte of selection start
+    ulong          selend;               // Addr of first byte of selection end
+    uchar          *filecopy;            // Copy of the file or NULL
+    wchar_t        path[MAXPATH];        // Name of displayed file
+    uchar          *backup;              // Old backup of memory/file or NULL
+    wchar_t        strname[SHORTNAME];   // Name of the structure to decode
+    uchar          *decode;              // Local decoding information or NULL
+    wchar_t        bkpath[MAXPATH];      // Name of last used backup file
+    int            relreg;               // Addresses relative to register
+    ulong          reladdr;              // Addresses relative to this address
+    ulong          hilitereg;            // One of OP_SOMEREG if reg highlighting
+    int            hiregindex;           // Index of register to highlight
+    ulong          graylimit;            // Gray data below this address
+    DUMPSELFUNC    *dumpselfunc;         // Callback indicating change of sel0
 } t_dump;
 
 stdapi (void)    Setdumptype(t_dump *pd,ulong dumptype);
@@ -3879,8 +3962,8 @@ stdapi (int)     Getextproclimits(ulong addr,ulong *amin,ulong *amax);
 stdapi (int)     Newdumpselection(t_dump *pd,ulong addr,ulong size);
 stdapi (t_dump *) Findfiledump(wchar_t *path);
 stdapi (HWND)    Createdumpwindow(wchar_t *title,ulong base,ulong size,
-                   wchar_t *path,ulong dumptype,ulong sel0,ulong sel1,
-                   wchar_t *strname);
+                                  wchar_t *path,ulong dumptype,ulong sel0,ulong sel1,
+                                  wchar_t *strname);
 stdapi (HWND)    Embeddumpwindow(HWND hw,t_dump *pd,ulong dumptype);
 
 
@@ -3923,24 +4006,26 @@ stdapi (HWND)    Embeddumpwindow(HWND hw,t_dump *pd,ulong dumptype);
 #define CSEQ_IGNORECMD 0x00000001      // Ignore non-influencing commands
 #define CSEQ_ALLOWJMP  0x00000002      // Allow jumps from outside
 
-typedef struct t_found {               // Search result
-  ulong          addr;                 // Address of found item
-  ulong          size;                 // Size of found item, or 0 on error
+typedef struct t_found                 // Search result
+{
+    ulong          addr;                 // Address of found item
+    ulong          size;                 // Size of found item, or 0 on error
 } t_found;
 
-typedef struct t_search {              // Descriptor of found item
-  ulong          addr;                 // Address of found item
-  ulong          size;                 // Must be 1
-  ulong          type;                 // Type of found item, TY_xxx+SE_xxx
-  ulong          data;                 // Mode-related data
-  ulong          seqlen;               // Length of command sequence
+typedef struct t_search                // Descriptor of found item
+{
+    ulong          addr;                 // Address of found item
+    ulong          size;                 // Must be 1
+    ulong          type;                 // Type of found item, TY_xxx+SE_xxx
+    ulong          data;                 // Mode-related data
+    ulong          seqlen;               // Length of command sequence
 } t_search;
 
 stdapi (ulong)   Comparecommand(uchar *cmd,ulong cmdsize,ulong cmdip,
-                   t_asmmod *model,int nmodel,int *pa,int *pb,t_disasm *da);
+                                t_asmmod *model,int nmodel,int *pa,int *pb,t_disasm *da);
 stdapi (ulong)   Comparesequence(uchar *cmd,ulong cmdsize,ulong cmdip,
-                   uchar *decode,t_asmmod *model,int nmodel,int mode,
-                   int *pa,int *pb,t_disasm *da,ulong *amatch,int namatch);
+                                 uchar *decode,t_asmmod *model,int nmodel,int mode,
+                                 int *pa,int *pb,t_disasm *da,ulong *amatch,int namatch);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3948,12 +4033,13 @@ stdapi (ulong)   Comparesequence(uchar *cmd,ulong cmdsize,ulong cmdip,
 
 #define PATCHSIZE      512             // Maximal patch size, bytes
 
-typedef struct t_patch {
-  ulong          addr;                 // Base address of patch in memory
-  ulong          size;                 // Size of patch, bytes
-  ulong          type;                 // Type of patch, set of TY_xxx
-  uchar          orig[PATCHSIZE];      // Original code
-  uchar          mod[PATCHSIZE];       // Patched code
+typedef struct t_patch
+{
+    ulong          addr;                 // Base address of patch in memory
+    ulong          size;                 // Size of patch, bytes
+    ulong          type;                 // Type of patch, set of TY_xxx
+    uchar          orig[PATCHSIZE];      // Original code
+    uchar          mod[PATCHSIZE];       // Patched code
 } t_patch;
 
 
@@ -3965,52 +4051,56 @@ typedef struct t_patch {
 #define BA_PERMANENT   0x00000001      // Permanent INT3 BP_TEMP on system call
 #define BA_PLUGIN      0x80000000      // Pass notification to plugin
 
-typedef struct t_bpoint {              // INT3 breakpoints
-  ulong          addr;                 // Address of breakpoint
-  ulong          size;                 // Must be 1
-  ulong          type;                 // Type of breakpoint, TY_xxx+BP_xxx
-  ushort         fnindex;              // Index of predefined function
-  uchar          cmd;                  // First byte of original command
-  uchar          patch;                // Used only in .udd files
-  ulong          limit;                // Original pass count (0 if not set)
-  ulong          count;                // Actual pass count
-  ulong          actions;              // Actions, set of BA_xxx
+typedef struct t_bpoint                // INT3 breakpoints
+{
+    ulong          addr;                 // Address of breakpoint
+    ulong          size;                 // Must be 1
+    ulong          type;                 // Type of breakpoint, TY_xxx+BP_xxx
+    ushort         fnindex;              // Index of predefined function
+    uchar          cmd;                  // First byte of original command
+    uchar          patch;                // Used only in .udd files
+    ulong          limit;                // Original pass count (0 if not set)
+    ulong          count;                // Actual pass count
+    ulong          actions;              // Actions, set of BA_xxx
 } t_bpoint;
 
-typedef struct t_bpmem {               // Memory breakpoints
-  ulong          addr;                 // Address of breakpoint
-  ulong          size;                 // Size of the breakpoint, bytes
-  ulong          type;                 // Type of breakpoint, TY_xxx+BP_xxx
-  ulong          limit;                // Original pass count (0 if not set)
-  ulong          count;                // Actual pass count
+typedef struct t_bpmem                 // Memory breakpoints
+{
+    ulong          addr;                 // Address of breakpoint
+    ulong          size;                 // Size of the breakpoint, bytes
+    ulong          type;                 // Type of breakpoint, TY_xxx+BP_xxx
+    ulong          limit;                // Original pass count (0 if not set)
+    ulong          count;                // Actual pass count
 } t_bpmem;
 
-typedef struct t_bppage {              // Pages with modified attributes
-  ulong          base;                 // Base address of memory page
-  ulong          size;                 // Always PAGESIZE
-  ulong          type;                 // Set of TY_xxx+BP_ACCESSMASK
-  ulong          oldaccess;            // Initial access
-  ulong          newaccess;            // Modified (actual) access
+typedef struct t_bppage                // Pages with modified attributes
+{
+    ulong          base;                 // Base address of memory page
+    ulong          size;                 // Always PAGESIZE
+    ulong          type;                 // Set of TY_xxx+BP_ACCESSMASK
+    ulong          oldaccess;            // Initial access
+    ulong          newaccess;            // Modified (actual) access
 } t_bppage;
 
-typedef struct t_bphard {              // Hardware breakpoints
-  ulong          index;                // Index of the breakpoint (0..NHARD-1)
-  ulong          dummy;                // Must be 1
-  ulong          type;                 // Type of the breakpoint, TY_xxx+BP_xxx
-  ulong          addr;                 // Address of breakpoint
-  ulong          size;                 // Size of the breakpoint, bytes
-  int            fnindex;              // Index of predefined function
-  ulong          limit;                // Original pass count (0 if not set)
-  ulong          count;                // Actual pass count
-  ulong          actions;              // Actions, set of BA_xxx
-  ulong          modbase;              // Module base, used by .udd only
-  wchar_t        path[MAXPATH];        // Full module name, used by .udd only
+typedef struct t_bphard                // Hardware breakpoints
+{
+    ulong          index;                // Index of the breakpoint (0..NHARD-1)
+    ulong          dummy;                // Must be 1
+    ulong          type;                 // Type of the breakpoint, TY_xxx+BP_xxx
+    ulong          addr;                 // Address of breakpoint
+    ulong          size;                 // Size of the breakpoint, bytes
+    int            fnindex;              // Index of predefined function
+    ulong          limit;                // Original pass count (0 if not set)
+    ulong          count;                // Actual pass count
+    ulong          actions;              // Actions, set of BA_xxx
+    ulong          modbase;              // Module base, used by .udd only
+    wchar_t        path[MAXPATH];        // Full module name, used by .udd only
 } t_bphard;
 
 stdapi (int)     Removeint3breakpoint(ulong addr,ulong type);
 stdapi (int)     Setint3breakpoint(ulong addr,ulong type,int fnindex,
-                   int limit,int count,ulong actions,
-                   wchar_t *condition,wchar_t *expression,wchar_t *exprtype);
+                                   int limit,int count,ulong actions,
+                                   wchar_t *condition,wchar_t *expression,wchar_t *exprtype);
 stdapi (int)     Enableint3breakpoint(ulong addr,int enable);
 stdapi (int)     Confirmint3breakpoint(ulong addr);
 stdapi (int)     Confirmhardwarebreakpoint(ulong addr);
@@ -4018,13 +4108,13 @@ stdapi (int)     Confirmint3breakpointlist(ulong *addr,int naddr);
 stdapi (void)    Wipebreakpointrange(ulong addr0,ulong addr1);
 stdapi (int)     Removemembreakpoint(ulong addr);
 stdapi (int)     Setmembreakpoint(ulong addr,ulong size,ulong type,
-                   int limit,int count,wchar_t *condition,
-                   wchar_t *expression,wchar_t *exprtype);
+                                  int limit,int count,wchar_t *condition,
+                                  wchar_t *expression,wchar_t *exprtype);
 stdapi (int)     Enablemembreakpoint(ulong addr,int enable);
 stdapi (int)     Removehardbreakpoint(int index);
 stdapi (int)     Sethardbreakpoint(int index,ulong size,ulong type,int fnindex,
-                   ulong addr,int limit,int count,ulong actions,
-                   wchar_t *condition,wchar_t *expression,wchar_t *exprtype);
+                                   ulong addr,int limit,int count,ulong actions,
+                                   wchar_t *condition,wchar_t *expression,wchar_t *exprtype);
 stdapi (int)     Enablehardbreakpoint(int index,int enable);
 stdapi (int)     Findfreehardbreakslot(ulong type);
 
@@ -4055,21 +4145,23 @@ stdapi (int)     Findfreehardbreakslot(ulong type);
 
 #define NHISTORY       1024            // Length of history buffer, records
 
-typedef struct t_histrec {             // Walk history record
-  ulong          threadid;             // Thread ID, ignored by Dump pane
-  ulong          dumptype;             // Dump type, ignored by Disasm pane
-  ulong          addr;                 // Address of first visible line
-  ulong          sel0;                 // Begin of selection
-  ulong          sel1;                 // End of selection (not included)
+typedef struct t_histrec               // Walk history record
+{
+    ulong          threadid;             // Thread ID, ignored by Dump pane
+    ulong          dumptype;             // Dump type, ignored by Disasm pane
+    ulong          addr;                 // Address of first visible line
+    ulong          sel0;                 // Begin of selection
+    ulong          sel1;                 // End of selection (not included)
 } t_histrec;
 
 // Note that hnext points to the free record following the last written, and
 // hcurr points record that follows currently selected one.
-typedef struct t_history {             // Walk history data
-  t_histrec      h[NHISTORY];          // Circular buffer with history records
-  int            holdest;              // Index of oldest valid record in h
-  int            hnext;                // Index of first free record in h
-  int            hcurr;                // Index of record following actual in h
+typedef struct t_history               // Walk history data
+{
+    t_histrec      h[NHISTORY];          // Circular buffer with history records
+    int            holdest;              // Index of oldest valid record in h
+    int            hnext;                // Index of first free record in h
+    int            hcurr;                // Index of record following actual in h
 } t_history;
 
 stdapi (void)    Redrawcpudisasm(void);
@@ -4080,12 +4172,12 @@ stdapi (t_dump *) Getcpudisasmdump(void);
 stdapi (ulong)   Getcpudisasmselection(void);
 stdapi (t_table *) Getcpudisasmtable(void);
 stdapi (void)    Addtohistory(t_history *ph,ulong threadid,ulong dumptype,
-                   ulong addr,ulong sel0,ulong sel1);
+                              ulong addr,ulong sel0,ulong sel1);
 stdapi (int)     Walkhistory(t_history *ph,int dir,ulong *threadid,
-                   ulong *dumptype,ulong *addr,ulong *sel0,ulong *sel1);
+                             ulong *dumptype,ulong *addr,ulong *sel0,ulong *sel1);
 stdapi (int)     Checkhistory(t_history *ph,int dir,int *isnewest);
 stdapi (void)    Setcpu(ulong threadid,ulong asmaddr,ulong dumpaddr,
-                   ulong selsize,ulong stackaddr,int mode);
+                        ulong selsize,ulong stackaddr,int mode);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -4166,36 +4258,38 @@ stdapi (void)    Setcpu(ulong threadid,ulong asmaddr,ulong dumpaddr,
 #define SFM_RUNTRACE   0               // Use run trace to extract SFX
 #define SFM_HITTRACE   1               // Use hit trace to extract SFX
 
-typedef struct t_rtcond {              // Run trace break condition
-  // These fields are saved to .udd data directly.
-  int            options;              // Set of RTC_xxx
-  ulong          inrange0;             // Start of in range
-  ulong          inrange1;             // End of in range (not included)
-  ulong          outrange0;            // Start of out range
-  ulong          outrange1;            // End of out range (not included)
-  ulong          count;                // Stop count
-  ulong          currcount;            // Actual command count
-  int            memaccess[NRANGE];    // Type of access (0:R, 1:W, 2:R/W)
-  ulong          memrange0[NRANGE];    // Start of memory range
-  ulong          memrange1[NRANGE];    // End of memory range
-  // These fields are saved to .udd data truncated by first null.
-  wchar_t        cond[NCOND][TEXTLEN]; // Conditions as text
-  wchar_t        cmd[NCMD][TEXTLEN];   // Matching commands
-  // These fields are not saved to .udd data.
-  uchar          ccomp[NCOND][TEXTLEN];// Precompiled conditions
-  int            validmodels;          // Valid command models, RTC_xxx
-  t_asmmod       model[NCMD][NSEARCHCMD]; // Command search models
-  int            nmodel[NCMD];         // Number of slots in each model
+typedef struct t_rtcond                // Run trace break condition
+{
+    // These fields are saved to .udd data directly.
+    int            options;              // Set of RTC_xxx
+    ulong          inrange0;             // Start of in range
+    ulong          inrange1;             // End of in range (not included)
+    ulong          outrange0;            // Start of out range
+    ulong          outrange1;            // End of out range (not included)
+    ulong          count;                // Stop count
+    ulong          currcount;            // Actual command count
+    int            memaccess[NRANGE];    // Type of access (0:R, 1:W, 2:R/W)
+    ulong          memrange0[NRANGE];    // Start of memory range
+    ulong          memrange1[NRANGE];    // End of memory range
+    // These fields are saved to .udd data truncated by first null.
+    wchar_t        cond[NCOND][TEXTLEN]; // Conditions as text
+    wchar_t        cmd[NCMD][TEXTLEN];   // Matching commands
+    // These fields are not saved to .udd data.
+    uchar          ccomp[NCOND][TEXTLEN];// Precompiled conditions
+    int            validmodels;          // Valid command models, RTC_xxx
+    t_asmmod       model[NCMD][NSEARCHCMD]; // Command search models
+    int            nmodel[NCMD];         // Number of slots in each model
 } t_rtcond;
 
-typedef struct t_rtprot {              // Run trace protocol condition
-  int            tracelogtype;         // Commands to protocol, one of RTL_xxx
-  int            memranges;            // 0x1: range 1, 0x2: range 2 active
-  int            memaccess[NRANGE];    // Type of access (0:R, 1:W, 2:R/W)
-  ulong          memrange0[NRANGE];    // Start of memory range
-  ulong          memrange1[NRANGE];    // End of memory range
-  int            rangeactive;          // Log only commands in the range
-  t_range        range[NRTPROT];       // Set of EIP ranges to protocol
+typedef struct t_rtprot                // Run trace protocol condition
+{
+    int            tracelogtype;         // Commands to protocol, one of RTL_xxx
+    int            memranges;            // 0x1: range 1, 0x2: range 2 active
+    int            memaccess[NRANGE];    // Type of access (0:R, 1:W, 2:R/W)
+    ulong          memrange0[NRANGE];    // Start of memory range
+    ulong          memrange1[NRANGE];    // End of memory range
+    int            rangeactive;          // Log only commands in the range
+    t_range        range[NRTPROT];       // Set of EIP ranges to protocol
 } t_rtprot;
 
 stdapi (void)    Suspendallthreads(void);
@@ -4224,36 +4318,39 @@ stdapi (int)     Isguid(ulong addr,wchar_t *name,int nname);
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// SOURCE CODE //////////////////////////////////
 
-typedef struct t_srcline {             // Descriptor of source line
-  ulong          offset;               // Offset in source text
-  int            nextent;              // Number of code extents (-1: unknown)
-  int            extent;               // Index of first extent (nextent>0)
+typedef struct t_srcline               // Descriptor of source line
+{
+    ulong          offset;               // Offset in source text
+    int            nextent;              // Number of code extents (-1: unknown)
+    int            extent;               // Index of first extent (nextent>0)
 } t_srcline;
 
-typedef struct t_srcext {              // Descriptor of code extent
-  ulong          amin;                 // Address of the first command
-  ulong          amax;                 // Address of last command, included
+typedef struct t_srcext                // Descriptor of code extent
+{
+    ulong          amin;                 // Address of the first command
+    ulong          amax;                 // Address of last command, included
 } t_srcext;
 
-typedef struct t_source {              // Descriptor of source file
-  ulong          addr;                 // Module base plus file index
-  ulong          size;                 // Dummy parameter, must be 1
-  ulong          type;                 // Type, TY_xxx+SRC_xxx
-  wchar_t        path[MAXPATH];        // File path
-  int            nameoffs;             // Name offset in path, characters
-  char           *text;                // Source code in UTF-8 format or NULL
-  t_srcline      *line;                // nline+1 line descriptors or NULL
-  int            nline;                // Number of lines (0: as yet unknown)
-  t_srcext       *extent;              // List of code extents
-  int            maxextent;            // Capacity of extent table
-  int            nextent;              // Current number of extents
-  int            lastline;             // Last selected line
-  int            lastoffset;           // Last topmost visible line
+typedef struct t_source                // Descriptor of source file
+{
+    ulong          addr;                 // Module base plus file index
+    ulong          size;                 // Dummy parameter, must be 1
+    ulong          type;                 // Type, TY_xxx+SRC_xxx
+    wchar_t        path[MAXPATH];        // File path
+    int            nameoffs;             // Name offset in path, characters
+    char           *text;                // Source code in UTF-8 format or NULL
+    t_srcline      *line;                // nline+1 line descriptors or NULL
+    int            nline;                // Number of lines (0: as yet unknown)
+    t_srcext       *extent;              // List of code extents
+    int            maxextent;            // Capacity of extent table
+    int            nextent;              // Current number of extents
+    int            lastline;             // Last selected line
+    int            lastoffset;           // Last topmost visible line
 } t_source;
 
 stdapi (t_source *) Findsource(ulong base,wchar_t *path);
 stdapi (int)     Getsourceline(ulong base,wchar_t *path,int line,int skipspaces,
-                   wchar_t *text,wchar_t *fname,t_srcext **extent,int *nextent);
+                               wchar_t *text,wchar_t *fname,t_srcext **extent,int *nextent);
 stdapi (int)     Showsourcecode(ulong base,wchar_t *path,int line);
 
 
@@ -4265,25 +4362,26 @@ stdapi (int)     Showsourcecode(ulong base,wchar_t *path,int line);
 #define AE_APP         1               // Exception in the application
 #define AE_SYS         2               // System exception, don't pass
 
-typedef struct t_run {                 // Run status of debugged application
-  t_status       status;               // Operation mode, one of STAT_xxx
-  ulong          threadid;             // ID of single running thread, 0 if all
-  ulong          tpausing;             // Tick count when pausing was requested
-  int            wakestep;             // 0: wait, 1: waked, 2: warned
-  ulong          eip;                  // EIP at last debugging event
-  ulong          ecx;                  // ECX at last debugging event
-  ulong          restoreint3addr;      // Address of temporarily removed INT3
-  ulong          stepoverdest;         // Destination of STAT_STEPOVER
-  int            updatebppage;         // Update temporarily removed bppage's
-  DEBUG_EVENT    de;                   // Information from WaitForDebugEvent()
-  int            indebugevent;         // Paused on event, threads suspended
-  int            netevent;             // Event is from .NET debugger
-  int            isappexception;       // Exception in application, AE_xxx
-  ulong          lastexception;        // Last exception in application or 0
-  int            suspended;            // Suspension counter
-  int            suspendonpause;       // Whether first suspension on pause
-  int            updatedebugreg;       // 1: set, -1: reset HW breakpoints
-  int            dregmodified;         // Debug regs modified by application
+typedef struct t_run                   // Run status of debugged application
+{
+    t_status       status;               // Operation mode, one of STAT_xxx
+    ulong          threadid;             // ID of single running thread, 0 if all
+    ulong          tpausing;             // Tick count when pausing was requested
+    int            wakestep;             // 0: wait, 1: waked, 2: warned
+    ulong          eip;                  // EIP at last debugging event
+    ulong          ecx;                  // ECX at last debugging event
+    ulong          restoreint3addr;      // Address of temporarily removed INT3
+    ulong          stepoverdest;         // Destination of STAT_STEPOVER
+    int            updatebppage;         // Update temporarily removed bppage's
+    DEBUG_EVENT    de;                   // Information from WaitForDebugEvent()
+    int            indebugevent;         // Paused on event, threads suspended
+    int            netevent;             // Event is from .NET debugger
+    int            isappexception;       // Exception in application, AE_xxx
+    ulong          lastexception;        // Last exception in application or 0
+    int            suspended;            // Suspension counter
+    int            suspendonpause;       // Whether first suspension on pause
+    int            updatedebugreg;       // 1: set, -1: reset HW breakpoints
+    int            dregmodified;         // Debug regs modified by application
 } t_run;
 
 
@@ -4407,25 +4505,25 @@ oddata (t_table) srccode;              // Source code
 #define PE_PAUSE       0x00000004      // Exception by plugin, pause program
 
 pentry (int)         ODBG2_Pluginquery(int ollydbgversion,ulong *features,
-                       wchar_t pluginname[SHORTNAME],
-                       wchar_t pluginversion[SHORTNAME]);
+                                       wchar_t pluginname[SHORTNAME],
+                                       wchar_t pluginversion[SHORTNAME]);
 pentry (int)         ODBG2_Plugininit(void);
 pentry (void)        ODBG2_Pluginanalyse(t_module *pmod);
 pentry (void)        ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent);
 pentry (int)         ODBG2_Pluginexception(t_run *prun,const t_disasm *da,
-                       t_thread *pthr,t_reg *preg,wchar_t *message);
+        t_thread *pthr,t_reg *preg,wchar_t *message);
 pentry (void)        ODBG2_Plugintempbreakpoint(ulong addr,
-                       const t_disasm *da,t_thread *pthr,t_reg *preg);
+        const t_disasm *da,t_thread *pthr,t_reg *preg);
 pentry (void)        ODBG2_Pluginnotify(int code,void *data,
-                       ulong parm1,ulong parm2);
+                                        ulong parm1,ulong parm2);
 pentry (int)         ODBG2_Plugindump(t_dump *pd,wchar_t *s,uchar *mask,
-                       int n,int *select,ulong addr,int column);
+                                      int n,int *select,ulong addr,int column);
 pentry (t_menu *)    ODBG2_Pluginmenu(wchar_t *type);
 pentry (t_control *) ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp);
 pentry (void)        ODBG2_Pluginsaveudd(t_uddsave *psave,t_module *pmod,
-                       int ismainmodule);
+        int ismainmodule);
 pentry (void)        ODBG2_Pluginuddrecord(t_module *pmod,int ismainmodule,
-                       ulong tag,ulong size,void *data);
+        ulong tag,ulong size,void *data);
 pentry (void)        ODBG2_Pluginreset(void);
 pentry (int)         ODBG2_Pluginclose(void);
 pentry (void)        ODBG2_Plugindestroy(void);

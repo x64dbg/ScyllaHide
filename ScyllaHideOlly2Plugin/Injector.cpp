@@ -215,7 +215,7 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtQuerySystemInformationHook = pHideOptions.NtQuerySystemInformation;
     data->EnableNtQueryObjectHook = pHideOptions.NtQueryObject;
     data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
-	data->EnableNtCloseHook = pHideOptions.NtClose;
+    data->EnableNtCloseHook = pHideOptions.NtClose;
 
     data->EnableNtGetContextThreadHook = pHideOptions.ProtectDrx;
     data->EnableNtSetContextThreadHook = pHideOptions.ProtectDrx;
@@ -226,9 +226,9 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
     data->EnableNtUserQueryWindowHook = pHideOptions.NtUserQueryWindow;
     data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
-	data->EnableNtCloseHook = pHideOptions.NtClose;
+    data->EnableNtCloseHook = pHideOptions.NtClose;
 
-	data->EnableProtectProcessId = TRUE;
-	data->dwProtectedProcessId = GetCurrentProcessId();
+    data->EnableProtectProcessId = TRUE;
+    data->dwProtectedProcessId = GetCurrentProcessId();
 }
 

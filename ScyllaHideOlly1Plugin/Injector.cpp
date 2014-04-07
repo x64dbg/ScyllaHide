@@ -20,7 +20,7 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     HMODULE hUser = GetModuleHandleW(L"user32.dll");
     HMODULE hUserRemote = GetModuleBaseRemote(hProcess, L"user32.dll");
 
-	DllExchangeLoader.hDllImage = (HMODULE)imageBase;
+    DllExchangeLoader.hDllImage = (HMODULE)imageBase;
     void * HookedNtSetInformationThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetInformationThread") + imageBase);
     void * HookedNtQuerySystemInformation = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQuerySystemInformation") + imageBase);
     void * HookedNtQueryInformationProcess = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQueryInformationProcess") + imageBase);
@@ -217,19 +217,19 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtQuerySystemInformationHook = pHideOptions.NtQuerySystemInformation;
     data->EnableNtQueryObjectHook = pHideOptions.NtQueryObject;
     data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
-	data->EnableNtCloseHook = pHideOptions.NtClose;
+    data->EnableNtCloseHook = pHideOptions.NtClose;
 
     data->EnableNtGetContextThreadHook = pHideOptions.ProtectDrx;
     data->EnableNtSetContextThreadHook = pHideOptions.ProtectDrx;
     data->EnableNtContinueHook = pHideOptions.ProtectDrx;
-	data->EnableKiUserExceptionDispatcherHook = pHideOptions.ProtectDrx;
+    data->EnableKiUserExceptionDispatcherHook = pHideOptions.ProtectDrx;
 
     data->EnableNtUserFindWindowExHook = pHideOptions.NtUserFindWindowEx;
     data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
     data->EnableNtUserQueryWindowHook = pHideOptions.NtUserQueryWindow;
     data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
-	data->EnableNtCloseHook = pHideOptions.NtClose;
+    data->EnableNtCloseHook = pHideOptions.NtClose;
 
-	data->EnableProtectProcessId = TRUE;
-	data->dwProtectedProcessId = GetCurrentProcessId();
+    data->EnableProtectProcessId = TRUE;
+    data->dwProtectedProcessId = GetCurrentProcessId();
 }

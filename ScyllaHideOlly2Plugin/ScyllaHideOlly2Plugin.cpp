@@ -31,12 +31,15 @@ static HANDLE hThread;
 static DWORD ProcessId;
 static bool once = false;
 //menus
-static t_menu mainmenu[] = {
-    {   L"Options",
+static t_menu mainmenu[] =
+{
+    {
+        L"Options",
         L"Select Hiding Options",
         K_NONE, Moptions, NULL, 0
     },
-    {   L"|About",
+    {
+        L"|About",
         L"About ScyllaHide plugin",
         K_NONE, Mabout, NULL, 0
     },
@@ -61,90 +64,112 @@ static int opt_NtUserQueryWindow;
 static int opt_NtSetDebugFilterState;
 static int opt_NtClose;
 
-static t_control scyllahideoptions[] = {
-    {   CA_COMMENT, -1, 0, 0, 0, 0, NULL,
+static t_control scyllahideoptions[] =
+{
+    {
+        CA_COMMENT, -1, 0, 0, 0, 0, NULL,
         PLUGINNAME,
         NULL
     },
-    {   CA_TITLE, OPT_TITLE, 80, 4, 160, 15, NULL,
+    {
+        CA_TITLE, OPT_TITLE, 80, 4, 160, 15, NULL,
         PLUGINNAME,
         NULL
     },
-    {   CA_CHECK, OPT_1, 90, 30, 120, 10, &opt_peb,
+    {
+        CA_CHECK, OPT_1, 90, 30, 120, 10, &opt_peb,
         L"Hide fromPEB",
         L"BeingDebugged, NtGlobalFlag, Heap Flags"
     },
-    {   CA_CHECK, OPT_2, 90, 42, 120, 10, &opt_NtSetInformationThread,
+    {
+        CA_CHECK, OPT_2, 90, 42, 120, 10, &opt_NtSetInformationThread,
         L"NtSetInformationThread",
         L"ThreadHideFromDebugger"
     },
-    {   CA_CHECK, OPT_3, 90, 54, 120, 10, &opt_NtQuerySystemInformation,
+    {
+        CA_CHECK, OPT_3, 90, 54, 120, 10, &opt_NtQuerySystemInformation,
         L"NtQuerySystemInformation",
         L"SystemKernelDebuggerInformation, SystemProcessInformation"
     },
-    {   CA_CHECK, OPT_4, 90, 66, 120, 10, &opt_NtQueryInformationProcess,
+    {
+        CA_CHECK, OPT_4, 90, 66, 120, 10, &opt_NtQueryInformationProcess,
         L"NtQueryInformationProcess",
         L"ProcessDebugFlags, ProcessDebugObjectHandle, ProcessDebugPort, ProcessBasicInformation"
     },
-    {   CA_CHECK, OPT_5, 90, 78, 120, 10, &opt_NtQueryObject,
+    {
+        CA_CHECK, OPT_5, 90, 78, 120, 10, &opt_NtQueryObject,
         L"NtQueryObject",
         L"ObjectTypesInformation, ObjectTypeInformation"
     },
-    {   CA_CHECK, OPT_6, 90, 90, 120, 10, &opt_NtYieldExecution,
+    {
+        CA_CHECK, OPT_6, 90, 90, 120, 10, &opt_NtYieldExecution,
         L"NtYieldExecution",
         L"NtYieldExecution"
     },
-    {   CA_CHECK, OPT_7, 90, 102, 120, 10, &opt_GetTickCount,
+    {
+        CA_CHECK, OPT_7, 90, 102, 120, 10, &opt_GetTickCount,
         L"GetTickCount",
         L"GetTickCount"
     },
-    {   CA_CHECK, OPT_8, 90, 114, 120, 10, &opt_OutputDebugStringA,
+    {
+        CA_CHECK, OPT_8, 90, 114, 120, 10, &opt_OutputDebugStringA,
         L"OutputDebugStringA",
         L"OutputDebugStringA"
     },
-    {   CA_CHECK, OPT_9, 90, 126, 120, 10, &opt_NtUserFindWindowEx,
+    {
+        CA_CHECK, OPT_9, 90, 126, 120, 10, &opt_NtUserFindWindowEx,
         L"NtUserFindWindowEx",
         L"NtUserFindWindowEx"
     },
-    {   CA_CHECK, OPT_10, 90, 138, 120, 10, &opt_NtUserBuildHwndList,
+    {
+        CA_CHECK, OPT_10, 90, 138, 120, 10, &opt_NtUserBuildHwndList,
         L"NtUserBuildHwndList",
         L"NtUserBuildHwndList"
     },
-    {   CA_CHECK, OPT_11, 90, 150, 120, 10, &opt_NtUserQueryWindow,
+    {
+        CA_CHECK, OPT_11, 90, 150, 120, 10, &opt_NtUserQueryWindow,
         L"NtUserQueryWindow",
         L"NtUserQueryWindow"
     },
-    {   CA_CHECK, OPT_12, 90, 162, 120, 10, &opt_NtSetDebugFilterState,
+    {
+        CA_CHECK, OPT_12, 90, 162, 120, 10, &opt_NtSetDebugFilterState,
         L"NtSetDebugFilterState",
         L"NtSetDebugFilterState"
     },
-    {   CA_CHECK, OPT_14, 90, 174, 120, 10, &opt_NtSetDebugFilterState,
+    {
+        CA_CHECK, OPT_14, 90, 174, 120, 10, &opt_NtSetDebugFilterState,
         L"NtClose",
         L"NtClose"
     },
-    {   CA_GROUP, -1, 85, 20, 120, 167, NULL,
+    {
+        CA_GROUP, -1, 85, 20, 120, 167, NULL,
         L"Debugger Hiding",
         NULL
     },
-    {   CA_CHECK, OPT_13, 90, 200, 120, 10, &opt_ProtectDRx,
+    {
+        CA_CHECK, OPT_13, 90, 200, 120, 10, &opt_ProtectDRx,
         L"Protect DRx",
         L"NtGetContextThread, NtSetContextThread, NtContinue"
     },
-    {   CA_GROUP, -1, 85, 190, 120, 25, NULL,
+    {
+        CA_GROUP, -1, 85, 190, 120, 25, NULL,
         L"DRx Protection",
         NULL
     },
-    {   CA_END, -1, 0, 0, 0, 0, NULL,
+    {
+        CA_END, -1, 0, 0, 0, 0, NULL,
         NULL,
         NULL
     }
 };
 
 //Menu->Options
-static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode) {
+static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
+{
     if (mode==MENU_VERIFY)
         return MENU_NORMAL;
-    else if (mode==MENU_EXECUTE) {
+    else if (mode==MENU_EXECUTE)
+    {
         Pluginshowoptions(scyllahideoptions);
         return MENU_REDRAW;
     };
@@ -152,12 +177,14 @@ static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode) {
 }
 
 //Menu->About
-static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode) {
+static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode)
+{
     int n;
     wchar_t s[TEXTLEN];
     if (mode==MENU_VERIFY)
         return MENU_NORMAL;
-    else if (mode==MENU_EXECUTE) {
+    else if (mode==MENU_EXECUTE)
+    {
         // Debuggee should continue execution while message box is displayed.
         Resumeallthreads();
 
@@ -178,7 +205,8 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode) {
 }
 //menus
 
-static void ScyllaHide(DWORD ProcessId) {
+static void ScyllaHide(DWORD ProcessId)
+{
 
     Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
     ReadNtApiInformation();
@@ -203,7 +231,8 @@ void UpdateHideOptions()
     pHideOptions.NtClose = opt_NtClose;
 }
 
-BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved) {
+BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
+{
     if (reason==DLL_PROCESS_ATTACH)
     {
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
@@ -223,7 +252,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved) {
 };
 
 //register plugin
-extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginname[SHORTNAME],wchar_t pluginversion[SHORTNAME]) {
+extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginname[SHORTNAME],wchar_t pluginversion[SHORTNAME])
+{
     if (ollydbgversion<201)
         return 0;
 
@@ -234,7 +264,8 @@ extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginnam
 };
 
 //initialization happens in here
-extc int __cdecl ODBG2_Plugininit(void) {
+extc int __cdecl ODBG2_Plugininit(void)
+{
     //we cant read them directly to pHideOptions
     //because control vars need to be static and pHideOptions to be extern
     Getfromini(NULL,PLUGINNAME,L"PEB",L"%i",&opt_peb);
@@ -258,7 +289,8 @@ extc int __cdecl ODBG2_Plugininit(void) {
 }
 
 //setup menus
-extc t_menu* ODBG2_Pluginmenu(wchar_t *type) {
+extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
+{
     if (wcscmp(type,PWM_MAIN)==0)
         return mainmenu;
 
@@ -266,8 +298,10 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type) {
 };
 
 //options dialogproc
-extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp) {
-    if (msg==WM_CLOSE && wp!=0) {
+extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
+{
+    if (msg==WM_CLOSE && wp!=0)
+    {
         // User pressed OK in the Plugin options dialog. Options are updated, save them to the .ini file.
         Writetoini(NULL,PLUGINNAME,L"PEB",L"%i",opt_peb);
         Writetoini(NULL,PLUGINNAME,L"NtSetInformationThread",L"%i",opt_NtSetInformationThread);
@@ -293,7 +327,8 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp) {
 };
 
 //called for every debugloop pass
-extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent) {
+extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
+{
     static HANDLE hProcess;
 
     if(!debugevent)

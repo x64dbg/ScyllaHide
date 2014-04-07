@@ -86,7 +86,8 @@ typedef enum _KWAIT_REASON
     MaximumWaitReason
 } KWAIT_REASON;
 
-typedef enum _SECTION_INHERIT {
+typedef enum _SECTION_INHERIT
+{
     ViewShare = 1,
     ViewUnmap = 2
 } SECTION_INHERIT;
@@ -114,15 +115,15 @@ typedef struct _SYSTEM_SESSION_PROCESS_INFORMATION
 
 typedef struct _SYSTEM_KERNEL_DEBUGGER_INFORMATION
 {
-	BOOLEAN KernelDebuggerEnabled;
-	BOOLEAN KernelDebuggerNotPresent;
+    BOOLEAN KernelDebuggerEnabled;
+    BOOLEAN KernelDebuggerNotPresent;
 } SYSTEM_KERNEL_DEBUGGER_INFORMATION, *PSYSTEM_KERNEL_DEBUGGER_INFORMATION;
 
 typedef struct _LDT_INFORMATION
 {
-	ULONG Start;
-	ULONG Length;
-	LDT_ENTRY LdtEntries[1];
+    ULONG Start;
+    ULONG Length;
+    LDT_ENTRY LdtEntries[1];
 } PROCESS_LDT_INFORMATION, *PPROCESS_LDT_INFORMATION;
 
 typedef struct _SYSTEM_THREAD_INFORMATION
@@ -192,33 +193,33 @@ typedef struct _SYSTEM_PROCESS_INFORMATION
 
 typedef struct _PROCESS_BASIC_INFORMATION
 {
-	NTSTATUS ExitStatus;
-	PVOID PebBaseAddress;
-	ULONG_PTR AffinityMask;
-	KPRIORITY BasePriority;
-	HANDLE UniqueProcessId;
-	HANDLE InheritedFromUniqueProcessId;
+    NTSTATUS ExitStatus;
+    PVOID PebBaseAddress;
+    ULONG_PTR AffinityMask;
+    KPRIORITY BasePriority;
+    HANDLE UniqueProcessId;
+    HANDLE InheritedFromUniqueProcessId;
 } PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
 
 typedef struct _PROCESS_EXTENDED_BASIC_INFORMATION
 {
-	SIZE_T Size; // set to sizeof structure on input
-	PROCESS_BASIC_INFORMATION BasicInfo;
-	union
-	{
-		ULONG Flags;
-		struct
-		{
-			ULONG IsProtectedProcess : 1;
-			ULONG IsWow64Process : 1;
-			ULONG IsProcessDeleting : 1;
-			ULONG IsCrossSessionCreate : 1;
-			ULONG IsFrozen : 1;
-			ULONG IsBackground : 1;
-			ULONG IsStronglyNamed : 1;
-			ULONG SpareBits : 25;
-		};
-	};
+    SIZE_T Size; // set to sizeof structure on input
+    PROCESS_BASIC_INFORMATION BasicInfo;
+    union
+    {
+        ULONG Flags;
+        struct
+        {
+            ULONG IsProtectedProcess : 1;
+            ULONG IsWow64Process : 1;
+            ULONG IsProcessDeleting : 1;
+            ULONG IsCrossSessionCreate : 1;
+            ULONG IsFrozen : 1;
+            ULONG IsBackground : 1;
+            ULONG IsStronglyNamed : 1;
+            ULONG SpareBits : 25;
+        };
+    };
 } PROCESS_EXTENDED_BASIC_INFORMATION, *PPROCESS_EXTENDED_BASIC_INFORMATION;
 
 typedef struct _THREAD_BASIC_INFORMATION
@@ -246,8 +247,10 @@ typedef struct _SECTION_IMAGE_INFORMATION
     SIZE_T MaximumStackSize;
     SIZE_T CommittedStackSize;
     ULONG SubSystemType;
-    union {
-        struct {
+    union
+    {
+        struct
+        {
             USHORT SubSystemMinorVersion;
             USHORT SubSystemMajorVersion;
         };
@@ -264,7 +267,8 @@ typedef struct _SECTION_IMAGE_INFORMATION
     ULONG Reserved[ 1 ];
 } SECTION_IMAGE_INFORMATION, *PSECTION_IMAGE_INFORMATION;
 
-typedef struct _OBJECT_ATTRIBUTES {
+typedef struct _OBJECT_ATTRIBUTES
+{
     ULONG Length;
     HANDLE RootDirectory;
     PUNICODE_STRING ObjectName;
@@ -382,31 +386,31 @@ typedef struct _OBJECT_TYPES_INFORMATION
 
 typedef struct _OBJECT_HANDLE_FLAG_INFORMATION
 {
-	BOOLEAN Inherit;
-	BOOLEAN ProtectFromClose;
+    BOOLEAN Inherit;
+    BOOLEAN ProtectFromClose;
 } OBJECT_HANDLE_FLAG_INFORMATION, *POBJECT_HANDLE_FLAG_INFORMATION;
 
 typedef struct _RTL_DEBUG_INFORMATION
 {
-	HANDLE SectionHandleClient;
-	PVOID ViewBaseClient;
-	PVOID ViewBaseTarget;
-	ULONG_PTR ViewBaseDelta;
-	HANDLE EventPairClient;
-	HANDLE EventPairTarget;
-	HANDLE TargetProcessId;
-	HANDLE TargetThreadHandle;
-	ULONG Flags;
-	SIZE_T OffsetFree;
-	SIZE_T CommitSize;
-	SIZE_T ViewSize;
-	PVOID Modules; //PRTL_PROCESS_MODULES
-	PVOID BackTraces; //PRTL_PROCESS_BACKTRACES
-	PVOID Heaps; //PRTL_PROCESS_HEAPS
-	PVOID Locks; //PRTL_PROCESS_LOCKS
-	PVOID SpecificHeap;
-	HANDLE TargetProcessHandle;
-	PVOID Reserved[ 6 ];
+    HANDLE SectionHandleClient;
+    PVOID ViewBaseClient;
+    PVOID ViewBaseTarget;
+    ULONG_PTR ViewBaseDelta;
+    HANDLE EventPairClient;
+    HANDLE EventPairTarget;
+    HANDLE TargetProcessId;
+    HANDLE TargetThreadHandle;
+    ULONG Flags;
+    SIZE_T OffsetFree;
+    SIZE_T CommitSize;
+    SIZE_T ViewSize;
+    PVOID Modules; //PRTL_PROCESS_MODULES
+    PVOID BackTraces; //PRTL_PROCESS_BACKTRACES
+    PVOID Heaps; //PRTL_PROCESS_HEAPS
+    PVOID Locks; //PRTL_PROCESS_LOCKS
+    PVOID SpecificHeap;
+    HANDLE TargetProcessHandle;
+    PVOID Reserved[ 6 ];
 } RTL_DEBUG_INFORMATION, *PRTL_DEBUG_INFORMATION;
 
 typedef
@@ -419,24 +423,27 @@ VOID
 
 
 //0x22C FlsHighIndex, x64 0x0350
-typedef struct _RTL_UNKNOWN_FLS_DATA {
-	PVOID unk2;
-	PVOID address;
-	PVOID unk3;
-	PVOID unk4;
+typedef struct _RTL_UNKNOWN_FLS_DATA
+{
+    PVOID unk2;
+    PVOID address;
+    PVOID unk3;
+    PVOID unk4;
 } RTL_UNKNOWN_FLS_DATA,*PRTL_UNKNOWN_FLS_DATA;
 
 typedef struct _FLS_CALLBACK_INFO //0x20C PEB FlsCallback, x64 0x320
 {
-	PVOID unk1;
-	PVOID unk2;
-	PVOID address;
-	PVOID unk3;
-	PVOID unk4;
+    PVOID unk1;
+    PVOID unk2;
+    PVOID address;
+    PVOID unk3;
+    PVOID unk4;
 } FLS_CALLBACK_INFO, *PFLS_CALLBACK_INFO;
 
-typedef struct _IO_STATUS_BLOCK {
-    union {
+typedef struct _IO_STATUS_BLOCK
+{
+    union
+    {
         NTSTATUS Status;
         PVOID Pointer;
     };
@@ -445,12 +452,12 @@ typedef struct _IO_STATUS_BLOCK {
 } IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
 
 typedef
-    VOID
-    (NTAPI *PIO_APC_ROUTINE) (
+VOID
+(NTAPI *PIO_APC_ROUTINE) (
     IN PVOID ApcContext,
     IN PIO_STATUS_BLOCK IoStatusBlock,
     IN ULONG Reserved
-    );
+);
 
 typedef struct _PS_ATTRIBUTE
 {
@@ -1244,7 +1251,7 @@ NtOpenSymbolicLinkObject (
     __out PHANDLE LinkHandle,
     __in ACCESS_MASK DesiredAccess,
     __in POBJECT_ATTRIBUTES ObjectAttributes
-    );
+);
 
 NTSYSCALLAPI
 NTSTATUS
@@ -1696,68 +1703,68 @@ NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtQueryDebugFilterState (
-	__in ULONG ComponentId,
-	__in ULONG Level
+    __in ULONG ComponentId,
+    __in ULONG Level
 );
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtSetDebugFilterState (
-	__in ULONG ComponentId,
-	__in ULONG Level,
-	__in BOOLEAN State
+    __in ULONG ComponentId,
+    __in ULONG Level,
+    __in BOOLEAN State
 );
 
 NTSYSAPI
 NTSTATUS
 NTAPI
-	RtlQueryProcessHeapInformation (
-	IN OUT PRTL_DEBUG_INFORMATION Buffer
+RtlQueryProcessHeapInformation (
+    IN OUT PRTL_DEBUG_INFORMATION Buffer
 );
 
 NTSYSAPI
 PRTL_DEBUG_INFORMATION
 NTAPI
 RtlCreateQueryDebugBuffer (
-	IN ULONG MaximumCommit OPTIONAL,
-	IN BOOLEAN UseEventPair
+    IN ULONG MaximumCommit OPTIONAL,
+    IN BOOLEAN UseEventPair
 );
 
 NTSYSAPI
 NTSTATUS
 NTAPI
 RtlQueryProcessDebugInformation (
-	IN HANDLE UniqueProcessId,
-	IN ULONG Flags,
-	IN OUT PRTL_DEBUG_INFORMATION Buffer
+    IN HANDLE UniqueProcessId,
+    IN ULONG Flags,
+    IN OUT PRTL_DEBUG_INFORMATION Buffer
 );
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtSetLdtEntries (
-	__in ULONG Selector0,
-	__in ULONG Entry0Low,
-	__in ULONG Entry0Hi,
-	__in ULONG Selector1,
-	__in ULONG Entry1Low,
-	__in ULONG Entry1Hi
+    __in ULONG Selector0,
+    __in ULONG Entry0Low,
+    __in ULONG Entry0Hi,
+    __in ULONG Selector1,
+    __in ULONG Entry1Low,
+    __in ULONG Entry1Hi
 );
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 RtlProcessFlsData (
-	PRTL_UNKNOWN_FLS_DATA Buffer
+    PRTL_UNKNOWN_FLS_DATA Buffer
 );
 
 NTSYSCALLAPI
 VOID
 WINAPI
 RtlRestoreContext (
-	_In_  PCONTEXT ContextRecord,
-	_In_  PEXCEPTION_RECORD ExceptionRecord
+    _In_  PCONTEXT ContextRecord,
+    _In_  PEXCEPTION_RECORD ExceptionRecord
 );
 
 

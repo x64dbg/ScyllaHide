@@ -3,21 +3,21 @@
 
 typedef struct _SameTebFlags
 {
-	union
-	{
-		struct
-		{
-			USHORT DbgSafeThunkCall : 1;
-			USHORT DbgInDebugPrint : 1;
-			USHORT DbgHasFiberData : 1;
-			USHORT DbgSkipThreadAttach : 1;
-			USHORT DbgWerInShipAssertCode : 1;
-			USHORT DbgIssuedInitialBp : 1;
-			USHORT DbgClonedThread : 1;
-			USHORT SpareSameTebBits : 9;
-		};
-		USHORT SameTebFlags;
-	};
+    union
+    {
+        struct
+        {
+            USHORT DbgSafeThunkCall : 1;
+            USHORT DbgInDebugPrint : 1;
+            USHORT DbgHasFiberData : 1;
+            USHORT DbgSkipThreadAttach : 1;
+            USHORT DbgWerInShipAssertCode : 1;
+            USHORT DbgIssuedInitialBp : 1;
+            USHORT DbgClonedThread : 1;
+            USHORT SpareSameTebBits : 9;
+        };
+        USHORT SameTebFlags;
+    };
 } SameTebFlags;
 
 #ifdef _WIN64
