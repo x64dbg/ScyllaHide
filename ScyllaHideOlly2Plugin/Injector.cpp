@@ -215,6 +215,7 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtQuerySystemInformationHook = pHideOptions.NtQuerySystemInformation;
     data->EnableNtQueryObjectHook = pHideOptions.NtQueryObject;
     data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
+	data->EnableNtCloseHook = pHideOptions.NtClose;
 
     data->EnableNtGetContextThreadHook = pHideOptions.ProtectDrx;
     data->EnableNtSetContextThreadHook = pHideOptions.ProtectDrx;
