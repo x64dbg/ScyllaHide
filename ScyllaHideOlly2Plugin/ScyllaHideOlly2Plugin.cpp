@@ -27,9 +27,7 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
 
 //globals
 HINSTANCE hinst;
-static HANDLE hThread;
-static DWORD ProcessId;
-static bool once = false;
+
 //menus
 static t_menu mainmenu[] =
 {
@@ -137,7 +135,7 @@ static t_control scyllahideoptions[] =
         L"NtSetDebugFilterState"
     },
     {
-        CA_CHECK, OPT_14, 90, 174, 120, 10, &opt_NtSetDebugFilterState,
+        CA_CHECK, OPT_14, 90, 174, 120, 10, &opt_NtClose,
         L"NtClose",
         L"NtClose"
     },
@@ -329,7 +327,8 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
 //called for every debugloop pass
 extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 {
-    static HANDLE hProcess;
+	static DWORD ProcessId;
+	static bool bHooked;
 
     if(!debugevent)
         return;
@@ -337,9 +336,8 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
     {
     case CREATE_PROCESS_DEBUG_EVENT:
     {
-        hProcess = debugevent->u.CreateProcessInfo.hProcess;
-        hThread = debugevent->u.CreateProcessInfo.hThread;
         ProcessId = debugevent->dwProcessId;
+		bHooked = false;
     }
     break;
 
@@ -349,9 +347,9 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         {
         case STATUS_BREAKPOINT:
         {
-            if (!once)
+            if (!bHooked)
             {
-                once = true;
+				bHooked = true;
                 ScyllaHide(ProcessId);
             }
         }
@@ -359,14 +357,5 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         }
     }
     break;
-
-
-    break;
     }
-}
-
-//reset variables. new target started or restarted
-extc void ODBG2_Pluginreset(void)
-{
-    once = false;
 }
