@@ -55,6 +55,7 @@ static int opt_NtQueryObject;
 static int opt_NtYieldExecution;
 static int opt_GetTickCount;
 static int opt_OutputDebugStringA;
+static int opt_BlockInput;
 static int opt_ProtectDRx;
 static int opt_NtUserFindWindowEx;
 static int opt_NtUserBuildHwndList;
@@ -76,7 +77,7 @@ static t_control scyllahideoptions[] =
     },
     {
         CA_CHECK, OPT_1, 90, 30, 120, 10, &opt_peb,
-        L"Hide fromPEB",
+        L"Hide from PEB",
         L"BeingDebugged, NtGlobalFlag, Heap Flags"
     },
     {
@@ -114,43 +115,48 @@ static t_control scyllahideoptions[] =
         L"OutputDebugStringA",
         L"OutputDebugStringA"
     },
+	{
+		CA_CHECK, OPT_9, 90, 126, 120, 10, &opt_BlockInput,
+		L"BlockInput",
+		L"BlockInput"
+	},
     {
-        CA_CHECK, OPT_9, 90, 126, 120, 10, &opt_NtUserFindWindowEx,
+        CA_CHECK, OPT_10, 90, 138, 120, 10, &opt_NtUserFindWindowEx,
         L"NtUserFindWindowEx",
         L"NtUserFindWindowEx"
     },
     {
-        CA_CHECK, OPT_10, 90, 138, 120, 10, &opt_NtUserBuildHwndList,
+        CA_CHECK, OPT_11, 90, 150, 120, 10, &opt_NtUserBuildHwndList,
         L"NtUserBuildHwndList",
         L"NtUserBuildHwndList"
     },
     {
-        CA_CHECK, OPT_11, 90, 150, 120, 10, &opt_NtUserQueryWindow,
+        CA_CHECK, OPT_12, 90, 162, 120, 10, &opt_NtUserQueryWindow,
         L"NtUserQueryWindow",
         L"NtUserQueryWindow"
     },
     {
-        CA_CHECK, OPT_12, 90, 162, 120, 10, &opt_NtSetDebugFilterState,
+        CA_CHECK, OPT_13, 90, 174, 120, 10, &opt_NtSetDebugFilterState,
         L"NtSetDebugFilterState",
         L"NtSetDebugFilterState"
     },
     {
-        CA_CHECK, OPT_14, 90, 174, 120, 10, &opt_NtClose,
+        CA_CHECK, OPT_14, 90, 186, 120, 10, &opt_NtClose,
         L"NtClose",
         L"NtClose"
     },
     {
-        CA_GROUP, -1, 85, 20, 120, 167, NULL,
+        CA_GROUP, -1, 85, 20, 120, 178, NULL,
         L"Debugger Hiding",
         NULL
     },
     {
-        CA_CHECK, OPT_13, 90, 200, 120, 10, &opt_ProtectDRx,
+        CA_CHECK, OPT_15, 90, 212, 120, 10, &opt_ProtectDRx,
         L"Protect DRx",
         L"NtGetContextThread, NtSetContextThread, NtContinue"
     },
     {
-        CA_GROUP, -1, 85, 190, 120, 25, NULL,
+        CA_GROUP, -1, 85, 202, 120, 25, NULL,
         L"DRx Protection",
         NULL
     },
@@ -205,7 +211,6 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode)
 
 static void ScyllaHide(DWORD ProcessId)
 {
-
     Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
     ReadNtApiInformation();
     startInjection(ProcessId, ScyllaHideDllPath);
@@ -221,6 +226,7 @@ void UpdateHideOptions()
     pHideOptions.NtYieldExecution = opt_NtYieldExecution;
     pHideOptions.GetTickCount = opt_GetTickCount;
     pHideOptions.OutputDebugStringA = opt_OutputDebugStringA;
+	pHideOptions.BlockInput = opt_BlockInput;
     pHideOptions.ProtectDrx = opt_ProtectDRx;
     pHideOptions.NtUserFindWindowEx = opt_NtUserFindWindowEx;
     pHideOptions.NtUserBuildHwndList = opt_NtUserBuildHwndList;
@@ -274,6 +280,7 @@ extc int __cdecl ODBG2_Plugininit(void)
     Getfromini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",&opt_NtYieldExecution);
     Getfromini(NULL,PLUGINNAME,L"GetTickCount",L"%i",&opt_GetTickCount);
     Getfromini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",&opt_OutputDebugStringA);
+	Getfromini(NULL,PLUGINNAME,L"BlockInput",L"%i",&opt_BlockInput);
     Getfromini(NULL,PLUGINNAME,L"ProtectDRx",L"%i",&opt_ProtectDRx);
     Getfromini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",&opt_NtUserFindWindowEx);
     Getfromini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",&opt_NtUserBuildHwndList);
@@ -309,6 +316,7 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
         Writetoini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",opt_NtYieldExecution);
         Writetoini(NULL,PLUGINNAME,L"GetTickCount",L"%i",opt_GetTickCount);
         Writetoini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",opt_OutputDebugStringA);
+		Writetoini(NULL,PLUGINNAME,L"BlockInput",L"%i",opt_BlockInput);
         Writetoini(NULL,PLUGINNAME,L"ProtectDRx",L"%i",opt_ProtectDRx);
         Writetoini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",opt_NtUserFindWindowEx);
         Writetoini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",opt_NtUserBuildHwndList);

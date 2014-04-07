@@ -217,8 +217,8 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtSetDebugFilterStateHook = TRUE;
     data->EnableNtSetInformationThreadHook = TRUE;
     data->EnableNtUserBuildHwndListHook = FALSE;
-    data->EnableNtUserFindWindowExHook = FALSE;
-    data->EnableNtUserQueryWindowHook = FALSE;
+    data->EnableNtUserFindWindowExHook = TRUE;
+    data->EnableNtUserQueryWindowHook = TRUE;
     data->EnableNtYieldExecutionHook = TRUE;
     data->EnableOutputDebugStringHook = TRUE;
     data->EnablePebHiding = TRUE;
