@@ -21,7 +21,7 @@ struct HideOptions
     int NtClose;
 };
 
-void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
-void startInjection(DWORD targetPid, const WCHAR * dllPath);
+void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess);
+void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess);
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
 void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data);

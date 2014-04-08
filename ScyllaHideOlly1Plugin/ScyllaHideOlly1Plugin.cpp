@@ -19,7 +19,7 @@ const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 //globals
 static HINSTANCE hinst;
 static DWORD ProcessId;
-static bool once = false;
+static bool bHooked = false;
 HWND hwmain; // Handle of main OllyDbg window
 
 
@@ -310,25 +310,21 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 //called for every debugloop pass
 extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
 {
-    static HANDLE hProcess;
-
     if(!debugevent)
         return;
     switch(debugevent->dwDebugEventCode)
     {
     case CREATE_PROCESS_DEBUG_EVENT:
     {
-        hProcess=debugevent->u.CreateProcessInfo.hProcess;
         ProcessId=debugevent->dwProcessId;
-		once = false;
+		bHooked = false;
     }
     break;
 
 	case LOAD_DLL_DEBUG_EVENT:
 	{
-		if (once)
+		if (bHooked)
 		{
-			ReadNtApiInformation();
 			startInjection(ProcessId, ScyllaHideDllPath, false);
 		}
 		break;
@@ -339,9 +335,9 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         {
         case STATUS_BREAKPOINT:
         {
-            if (!once)
+			if (!bHooked)
             {
-                once = true;
+				bHooked = true;
 				_Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
 				ReadNtApiInformation();
 				startInjection(ProcessId, ScyllaHideDllPath, true);
@@ -360,6 +356,6 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 //reset variables. new target started or restarted
 extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
 {
-    once = false;
+	bHooked = false;
 }
 

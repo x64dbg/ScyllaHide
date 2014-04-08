@@ -209,13 +209,6 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode)
 }
 //menus
 
-static void ScyllaHide(DWORD ProcessId)
-{
-    Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
-    ReadNtApiInformation();
-    startInjection(ProcessId, ScyllaHideDllPath);
-}
-
 void UpdateHideOptions()
 {
     pHideOptions.PEB = opt_peb;
@@ -348,7 +341,14 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 		bHooked = false;
     }
     break;
-
+	case LOAD_DLL_DEBUG_EVENT:
+	{
+		if (bHooked)
+		{
+			startInjection(ProcessId, ScyllaHideDllPath, false);
+		}
+		break;
+	}
     case EXCEPTION_DEBUG_EVENT:
     {
         switch(debugevent->u.Exception.ExceptionRecord.ExceptionCode)
@@ -358,7 +358,9 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
             if (!bHooked)
             {
 				bHooked = true;
-                ScyllaHide(ProcessId);
+				Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
+				ReadNtApiInformation();
+				startInjection(ProcessId, ScyllaHideDllPath, true);
             }
         }
         break;
