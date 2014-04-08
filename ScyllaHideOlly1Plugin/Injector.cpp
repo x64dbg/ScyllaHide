@@ -75,6 +75,7 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
         if (DllExchangeLoader.NtUserQueryWindowRVA)
         {
             _NtUserQueryWindow = (t_NtUserQueryWindow)((DWORD_PTR)hUserRemote + DllExchangeLoader.NtUserQueryWindowRVA);
+            DllExchangeLoader.NtUserQueryWindow = _NtUserQueryWindow;
         }
         if (DllExchangeLoader.NtUserBuildHwndListRVA)
         {
