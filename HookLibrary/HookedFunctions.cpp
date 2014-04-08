@@ -330,27 +330,30 @@ NTSTATUS NTAPI HookedNtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLE
 
 void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
 {
-    DWORD dwProcessId = 0;
+	DWORD dwProcessId = 0;
 
-    for (UINT i = 0; i < *pcHwndNeeded; i++)
-    {
-        if (DllExchange.EnableProtectProcessId == TRUE)
-        {
-            //GetWindowThreadProcessId(phwndFirst[i], &dwProcessId);
-            dwProcessId = (DWORD)DllExchange.NtUserQueryWindow(phwndFirst[i], WindowProcess);
-            if (dwProcessId == DllExchange.dwProtectedProcessId)
-            {
-                if (i > 0)
-                {
-                    phwndFirst[i] = phwndFirst[i - 1]; //just override with previous
-                }
-                else
-                {
-                    phwndFirst[i] = phwndFirst[i + 1];
-                }
-            }
-        }
-    }
+	if (DllExchange.EnableProtectProcessId == TRUE)
+	{
+		for (UINT i = 0; i < *pcHwndNeeded; i++)
+		{
+			if (phwndFirst[i] != 0)
+			{
+				//GetWindowThreadProcessId(phwndFirst[i], &dwProcessId);
+				dwProcessId = (DWORD)DllExchange.NtUserQueryWindow(phwndFirst[i], WindowProcess);
+				if (dwProcessId == DllExchange.dwProtectedProcessId)
+				{
+					if (i == 0)
+					{
+						phwndFirst[i] = phwndFirst[i + 1]; 
+					}
+					else
+					{
+						phwndFirst[i] = phwndFirst[i - 1]; //just override with previous
+					}
+				}
+			}
+		}
+	}
 
 }
 
