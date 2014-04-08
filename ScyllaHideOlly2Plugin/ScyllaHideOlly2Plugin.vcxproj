@@ -87,6 +87,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp" />
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
     <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp" />
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
@@ -95,6 +96,7 @@
     <ClCompile Include="ScyllaHideOlly2Plugin.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\InjectorCLI\ApplyHooking.h" />
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
     <ClInclude Include="..\InjectorCLI\ReadNtConfig.h" />
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
