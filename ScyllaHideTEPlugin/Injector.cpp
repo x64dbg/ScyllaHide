@@ -71,6 +71,7 @@ void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
         if (DllExchangeLoader.NtUserQueryWindowRVA)
         {
             _NtUserQueryWindow = (t_NtUserQueryWindow)((DWORD_PTR)hUserRemote + DllExchangeLoader.NtUserQueryWindowRVA);
+            DllExchangeLoader.NtUserQueryWindow = _NtUserQueryWindow;
         }
         if (DllExchangeLoader.NtUserBuildHwndListRVA)
         {
@@ -216,7 +217,7 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtSetContextThreadHook = TRUE;
     data->EnableNtSetDebugFilterStateHook = TRUE;
     data->EnableNtSetInformationThreadHook = TRUE;
-    data->EnableNtUserBuildHwndListHook = FALSE;
+    data->EnableNtUserBuildHwndListHook = TRUE;
     data->EnableNtUserFindWindowExHook = TRUE;
     data->EnableNtUserQueryWindowHook = TRUE;
     data->EnableNtYieldExecutionHook = TRUE;
