@@ -127,7 +127,7 @@ NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS Objec
 NTSTATUS NTAPI HookedNtYieldExecution()
 {
 	DllExchange.dNtYieldExecution();
-	return STATUS_SUCCESS;
+	return STATUS_ACCESS_DENIED; //better than STATUS_SUCCESS or STATUS_NO_YIELD_PERFORMED
 }
 
 NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadContext)
