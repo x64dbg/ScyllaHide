@@ -27,7 +27,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -39,7 +39,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ApplyHooking.cpp" />
     <ClCompile Include="DynamicMapping.cpp" />
     <ClCompile Include="CliMain.cpp" />
     <ClCompile Include="ReadNtConfig.cpp" />
@@ -147,6 +148,7 @@
     <ClCompile Include="RemotePebHider.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ApplyHooking.h" />
     <ClInclude Include="DynamicMapping.h" />
     <ClInclude Include="ntdll.h" />
     <ClInclude Include="ReadNtConfig.h" />
