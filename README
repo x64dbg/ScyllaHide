@@ -31,6 +31,9 @@ Plugins:
 - for OllyDbg1.10: Copy HookLibrary.dll and ScyllaHide.dll to your plugins directoy
 - for OllyDbg2.01: Copy HookLibrary.dll and ScyllaHide.dll to your plugins directoy
 
+NOTE: You need to put NtApiCollection.ini where ScyllaHide.dll is or the following hooks wont
+work: NtUserQueryWindow, NtUserBuildHwndList, NtUserFindWindowEx
+
 Info about NtApiCollection.ini:
 Some Nt* WINAPI functions are not exported by a DLL, so it is necessary to get the function adresses
 from another source. The other source is the PDB file. The adresses can be resolved with this tool:
