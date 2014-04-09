@@ -1,5 +1,8 @@
-ScyllaHide is a Anti-Anti-Debug library that hooks various
-functions in usermode to hide debugging.
+ScyllaHide is an open-source x64/x86 usermode Anti-Anti-Debug library. It hooks various
+functions in usermode to hide debugging. This will stay usermode! For kernelmode hooks use
+TitanHide.
+
+------------------------------------------------------
 
 Debugger Hiding:
 - PEB - BeingDebugged, NtGlobalFlag, Heap Flags
@@ -16,27 +19,39 @@ Debugger Hiding:
 - GetTickCount
 - BlockInput
 - OutputDebugStringA
-Protecting and Stealthing DRx (CONTEXT_DEBUG_REGISTERS):
+
+Protecting and Stealthing DRx (Hardware Breakpoints):
 - NtGetContextThread
 - NtSetContextThread
-- KiUserExceptionDispatcher
-- NtContinue
+- KiUserExceptionDispatcher (only x86)
+- NtContinue (only x86)
 
-Usage standalone:
+------------------------------------------------------
+
+Usage standalone (debugger-independent):
 InjectorCLI.exe <process name> <HookLibrary.dll path>
 
+For example:
+InjectorCLI.exe crackme.exe C:\HookLibrary.dll
+
+------------------------------------------------------
+
 Plugins:
-- for TitanEngine: Copy HookLibrary.dll and ScyllaHide.dll to plugins\x86\  
+- for TitanEngine: Copy HookLibrary.dll and ScyllaHide.dll to plugins\x86\ or plugins\x64\
   (can be combined with TitanHide which does kernelmode hiding)
-- for OllyDbg1.10: Copy HookLibrary.dll and ScyllaHide.dll to your plugins directoy
-- for OllyDbg2.01: Copy HookLibrary.dll and ScyllaHide.dll to your plugins directoy
+- for OllyDbg v1.10: Copy HookLibrary.dll and ScyllaHide.dll to your plugins directoy
+- for OllyDbg v2.01: Copy HookLibrary.dll and ScyllaHide.dll to your plugins directoy
+
+------------------------------------------------------
 
 ToDo:
 - x64 compatibility support
 - x64 Exception Support
 - Better (stealth) hooks
 
-NOTE: You need to put NtApiCollection.ini where ScyllaHide.dll is or the following hooks wont
+------------------------------------------------------
+
+NOTE: You need to put NtApiCollection.ini in the same directory as ScyllaHide.dll or the following hooks will not
 work: NtUserQueryWindow, NtUserBuildHwndList, NtUserFindWindowEx
 
 Info about NtApiCollection.ini:
