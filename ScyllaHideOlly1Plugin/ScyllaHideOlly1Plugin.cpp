@@ -19,7 +19,9 @@ const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 //globals
 static HINSTANCE hinst;
 static DWORD ProcessId;
+static DWORD_PTR epaddr;
 static bool bHooked = false;
+static bool bEPBreakRemoved = false;
 HWND hwmain; // Handle of main OllyDbg window
 
 
@@ -142,6 +144,12 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.NtClose = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.removeEPBreak = 1;
+    }
+    else
+        pHideOptions.removeEPBreak = 0;
 
     //save all options
     _Pluginwriteinttoini(hinst, "PEB", pHideOptions.PEB);
@@ -159,6 +167,7 @@ void SaveOptions(HWND hWnd)
     _Pluginwriteinttoini(hinst, "NtUserQueryWindow", pHideOptions.NtUserQueryWindow);
     _Pluginwriteinttoini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
     _Pluginwriteinttoini(hinst, "NtClose", pHideOptions.NtClose);
+    _Pluginwriteinttoini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
 }
 
 void LoadOptions()
@@ -179,6 +188,7 @@ void LoadOptions()
     pHideOptions.NtUserQueryWindow = _Pluginreadintfromini(hinst, "NtUserQueryWindow", pHideOptions.NtUserQueryWindow);
     pHideOptions.NtSetDebugFilterState = _Pluginreadintfromini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
     pHideOptions.NtClose = _Pluginreadintfromini(hinst, "NtClose", pHideOptions.NtClose);
+    pHideOptions.removeEPBreak = _Pluginreadintfromini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
 }
 
 //options dialog proc
@@ -205,6 +215,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_SETCHECK, pHideOptions.NtUserQueryWindow, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, pHideOptions.NtSetDebugFilterState, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, pHideOptions.NtClose, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
         break;
     }
     case WM_CLOSE:
@@ -310,6 +321,8 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 //called for every debugloop pass
 extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
 {
+
+
     if(!debugevent)
         return;
     switch(debugevent->dwDebugEventCode)
@@ -317,30 +330,33 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
     case CREATE_PROCESS_DEBUG_EVENT:
     {
         ProcessId=debugevent->dwProcessId;
-		bHooked = false;
+        bHooked = false;
+        epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
     }
     break;
 
-	case LOAD_DLL_DEBUG_EVENT:
-	{
-		if (bHooked)
-		{
-			startInjection(ProcessId, ScyllaHideDllPath, false);
-		}
-		break;
-	}
+    case LOAD_DLL_DEBUG_EVENT:
+    {
+        if (bHooked)
+        {
+            startInjection(ProcessId, ScyllaHideDllPath, false);
+        }
+        break;
+    }
     case EXCEPTION_DEBUG_EVENT:
     {
         switch(debugevent->u.Exception.ExceptionRecord.ExceptionCode)
         {
         case STATUS_BREAKPOINT:
         {
-			if (!bHooked)
+            if (!bHooked)
             {
-				bHooked = true;
-				_Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
-				ReadNtApiInformation();
-				startInjection(ProcessId, ScyllaHideDllPath, true);
+                // _Setbreakpoint(addr, 0x00000200, NULL);
+
+                bHooked = true;
+                _Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
+                ReadNtApiInformation();
+                startInjection(ProcessId, ScyllaHideDllPath, true);
             }
         }
         break;
@@ -353,9 +369,25 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
     }
 };
 
+extern "C" int __declspec(dllexport) _ODBG_Pausedex(int reason, int extdata, void* reg, DEBUG_EVENT *debugevent)
+{
+
+    if(!bEPBreakRemoved && pHideOptions.removeEPBreak) {
+        _Deletebreakpoints(epaddr,epaddr+1, 0);
+        bEPBreakRemoved = true;
+    }
+
+    return 0;
+}
+
+
+
+
+
 //reset variables. new target started or restarted
 extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
 {
-	bHooked = false;
+    bHooked = false;
+    bEPBreakRemoved = false;
 }
 
