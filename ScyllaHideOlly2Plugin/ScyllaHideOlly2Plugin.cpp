@@ -62,6 +62,7 @@ static int opt_NtUserBuildHwndList;
 static int opt_NtUserQueryWindow;
 static int opt_NtSetDebugFilterState;
 static int opt_NtClose;
+static WCHAR opt_ollyTitle[TEXTLEN] = {};
 
 static t_control scyllahideoptions[] =
 {
@@ -76,88 +77,104 @@ static t_control scyllahideoptions[] =
         NULL
     },
     {
-        CA_CHECK, OPT_1, 90, 30, 120, 10, &opt_peb,
+        CA_CHECK, OPT_1, 90, 30, 80, 10, &opt_peb,
         L"Hide from PEB",
         L"BeingDebugged, NtGlobalFlag, Heap Flags"
     },
     {
-        CA_CHECK, OPT_2, 90, 42, 120, 10, &opt_NtSetInformationThread,
+        CA_CHECK, OPT_2, 90, 42, 80, 10, &opt_NtSetInformationThread,
         L"NtSetInformationThread",
         L"ThreadHideFromDebugger"
     },
     {
-        CA_CHECK, OPT_3, 90, 54, 120, 10, &opt_NtQuerySystemInformation,
+        CA_CHECK, OPT_3, 90, 54, 80, 10, &opt_NtQuerySystemInformation,
         L"NtQuerySystemInformation",
         L"SystemKernelDebuggerInformation, SystemProcessInformation"
     },
     {
-        CA_CHECK, OPT_4, 90, 66, 120, 10, &opt_NtQueryInformationProcess,
+        CA_CHECK, OPT_4, 90, 66, 80, 10, &opt_NtQueryInformationProcess,
         L"NtQueryInformationProcess",
         L"ProcessDebugFlags, ProcessDebugObjectHandle, ProcessDebugPort, ProcessBasicInformation"
     },
     {
-        CA_CHECK, OPT_5, 90, 78, 120, 10, &opt_NtQueryObject,
+        CA_CHECK, OPT_5, 90, 78, 80, 10, &opt_NtQueryObject,
         L"NtQueryObject",
         L"ObjectTypesInformation, ObjectTypeInformation"
     },
     {
-        CA_CHECK, OPT_6, 90, 90, 120, 10, &opt_NtYieldExecution,
+        CA_CHECK, OPT_6, 90, 90, 80, 10, &opt_NtYieldExecution,
         L"NtYieldExecution",
         L"NtYieldExecution"
     },
     {
-        CA_CHECK, OPT_7, 90, 102, 120, 10, &opt_GetTickCount,
+        CA_CHECK, OPT_7, 90, 102, 80, 10, &opt_GetTickCount,
         L"GetTickCount",
         L"GetTickCount"
     },
     {
-        CA_CHECK, OPT_8, 90, 114, 120, 10, &opt_OutputDebugStringA,
+        CA_CHECK, OPT_8, 90, 114, 80, 10, &opt_OutputDebugStringA,
         L"OutputDebugStringA",
         L"OutputDebugStringA"
     },
-	{
-		CA_CHECK, OPT_9, 90, 126, 120, 10, &opt_BlockInput,
-		L"BlockInput",
-		L"BlockInput"
-	},
     {
-        CA_CHECK, OPT_10, 90, 138, 120, 10, &opt_NtUserFindWindowEx,
+        CA_CHECK, OPT_9, 90, 126, 80, 10, &opt_BlockInput,
+        L"BlockInput",
+        L"BlockInput"
+    },
+    {
+        CA_CHECK, OPT_10, 90, 138, 80, 10, &opt_NtUserFindWindowEx,
         L"NtUserFindWindowEx",
         L"NtUserFindWindowEx"
     },
     {
-        CA_CHECK, OPT_11, 90, 150, 120, 10, &opt_NtUserBuildHwndList,
+        CA_CHECK, OPT_11, 90, 150, 80, 10, &opt_NtUserBuildHwndList,
         L"NtUserBuildHwndList",
         L"NtUserBuildHwndList"
     },
     {
-        CA_CHECK, OPT_12, 90, 162, 120, 10, &opt_NtUserQueryWindow,
+        CA_CHECK, OPT_12, 90, 162, 80, 10, &opt_NtUserQueryWindow,
         L"NtUserQueryWindow",
         L"NtUserQueryWindow"
     },
     {
-        CA_CHECK, OPT_13, 90, 174, 120, 10, &opt_NtSetDebugFilterState,
+        CA_CHECK, OPT_13, 90, 174, 80, 10, &opt_NtSetDebugFilterState,
         L"NtSetDebugFilterState",
         L"NtSetDebugFilterState"
     },
     {
-        CA_CHECK, OPT_14, 90, 186, 120, 10, &opt_NtClose,
+        CA_CHECK, OPT_14, 90, 186, 80, 10, &opt_NtClose,
         L"NtClose",
         L"NtClose"
     },
     {
-        CA_GROUP, -1, 85, 20, 120, 178, NULL,
+        CA_GROUP, -1, 85, 20, 85, 178, NULL,
         L"Debugger Hiding",
         NULL
     },
     {
-        CA_CHECK, OPT_15, 90, 212, 120, 10, &opt_ProtectDRx,
+        CA_CHECK, OPT_15, 90, 212, 80, 10, &opt_ProtectDRx,
         L"Protect DRx",
         L"NtGetContextThread, NtSetContextThread, NtContinue"
     },
     {
-        CA_GROUP, -1, 85, 202, 120, 25, NULL,
+        CA_GROUP, -1, 85, 202, 80, 25, NULL,
         L"DRx Protection",
+        NULL
+    },
+    //second column
+    {
+        CA_TEXT, NULL, 180, 30, 30, 10, NULL,
+        L"Olly title",
+        L"Olly title"
+    },
+    {
+        CA_EDIT, OPT_16, 200, 30, 45, 10, NULL,
+        opt_ollyTitle,
+        L"Olly title"
+    },
+    {
+        CA_GROUP, -1, 175, 20, 70, 25, NULL,
+        L"Misc",
         NULL
     },
     {
@@ -219,13 +236,17 @@ void UpdateHideOptions()
     pHideOptions.NtYieldExecution = opt_NtYieldExecution;
     pHideOptions.GetTickCount = opt_GetTickCount;
     pHideOptions.OutputDebugStringA = opt_OutputDebugStringA;
-	pHideOptions.BlockInput = opt_BlockInput;
+    pHideOptions.BlockInput = opt_BlockInput;
     pHideOptions.ProtectDrx = opt_ProtectDRx;
     pHideOptions.NtUserFindWindowEx = opt_NtUserFindWindowEx;
     pHideOptions.NtUserBuildHwndList = opt_NtUserBuildHwndList;
     pHideOptions.NtUserQueryWindow = opt_NtUserQueryWindow;
     pHideOptions.NtSetDebugFilterState = opt_NtSetDebugFilterState;
     pHideOptions.NtClose = opt_NtClose;
+    wcscpy(pHideOptions.ollyTitle, opt_ollyTitle);
+
+    //change olly caption
+    SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
@@ -273,15 +294,19 @@ extc int __cdecl ODBG2_Plugininit(void)
     Getfromini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",&opt_NtYieldExecution);
     Getfromini(NULL,PLUGINNAME,L"GetTickCount",L"%i",&opt_GetTickCount);
     Getfromini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",&opt_OutputDebugStringA);
-	Getfromini(NULL,PLUGINNAME,L"BlockInput",L"%i",&opt_BlockInput);
+    Getfromini(NULL,PLUGINNAME,L"BlockInput",L"%i",&opt_BlockInput);
     Getfromini(NULL,PLUGINNAME,L"ProtectDRx",L"%i",&opt_ProtectDRx);
     Getfromini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",&opt_NtUserFindWindowEx);
     Getfromini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",&opt_NtUserBuildHwndList);
     Getfromini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",&opt_NtUserQueryWindow);
     Getfromini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",&opt_NtSetDebugFilterState);
     Getfromini(NULL,PLUGINNAME,L"NtClose",L"%i",&opt_NtClose);
+    Getfromini(NULL, PLUGINNAME, L"ollyTitle", L"%s", &opt_ollyTitle);
 
     UpdateHideOptions();
+
+    //change olly caption
+    SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
 
     return 0;
 }
@@ -309,13 +334,14 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
         Writetoini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",opt_NtYieldExecution);
         Writetoini(NULL,PLUGINNAME,L"GetTickCount",L"%i",opt_GetTickCount);
         Writetoini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",opt_OutputDebugStringA);
-		Writetoini(NULL,PLUGINNAME,L"BlockInput",L"%i",opt_BlockInput);
+        Writetoini(NULL,PLUGINNAME,L"BlockInput",L"%i",opt_BlockInput);
         Writetoini(NULL,PLUGINNAME,L"ProtectDRx",L"%i",opt_ProtectDRx);
         Writetoini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",opt_NtUserFindWindowEx);
         Writetoini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",opt_NtUserBuildHwndList);
         Writetoini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",opt_NtUserQueryWindow);
         Writetoini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",opt_NtSetDebugFilterState);
         Writetoini(NULL,PLUGINNAME,L"NtClose",L"%i",opt_NtClose);
+        Writetoini(NULL,PLUGINNAME,L"ollyTitle", L"%s",opt_ollyTitle);
 
         UpdateHideOptions();
 
@@ -328,8 +354,8 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
 //called for every debugloop pass
 extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 {
-	static DWORD ProcessId;
-	static bool bHooked;
+    static DWORD ProcessId;
+    static bool bHooked;
 
     if(!debugevent)
         return;
@@ -338,17 +364,17 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
     case CREATE_PROCESS_DEBUG_EVENT:
     {
         ProcessId = debugevent->dwProcessId;
-		bHooked = false;
+        bHooked = false;
     }
     break;
-	case LOAD_DLL_DEBUG_EVENT:
-	{
-		if (bHooked)
-		{
-			startInjection(ProcessId, ScyllaHideDllPath, false);
-		}
-		break;
-	}
+    case LOAD_DLL_DEBUG_EVENT:
+    {
+        if (bHooked)
+        {
+            startInjection(ProcessId, ScyllaHideDllPath, false);
+        }
+        break;
+    }
     case EXCEPTION_DEBUG_EVENT:
     {
         switch(debugevent->u.Exception.ExceptionRecord.ExceptionCode)
@@ -357,10 +383,10 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         {
             if (!bHooked)
             {
-				bHooked = true;
-				Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
-				ReadNtApiInformation();
-				startInjection(ProcessId, ScyllaHideDllPath, true);
+                bHooked = true;
+                Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
+                ReadNtApiInformation();
+                startInjection(ProcessId, ScyllaHideDllPath, true);
             }
         }
         break;

@@ -19,6 +19,7 @@ struct HideOptions
     int NtUserQueryWindow;
     int NtSetDebugFilterState;
     int NtClose;
+    WCHAR ollyTitle[256];
 };
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess);
