@@ -7,7 +7,7 @@
 //scyllaHide definitions
 struct HideOptions pHideOptions;
 
-#define SCYLLAHIDE_VERSION "0.1"
+#define SCYLLAHIDE_VERSION "0.1b"
 const WCHAR ScyllaHideDllFilename[] = L"HookLibrary.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
@@ -151,6 +151,9 @@ void SaveOptions(HWND hWnd)
     else
         pHideOptions.removeEPBreak = 0;
 
+    GetDlgItemTextA(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
+    SetWindowTextA(hwmain, pHideOptions.ollyTitle);
+
     //save all options
     _Pluginwriteinttoini(hinst, "PEB", pHideOptions.PEB);
     _Pluginwriteinttoini(hinst, "NtSetInformationThread", pHideOptions.NtSetInformationThread);
@@ -168,6 +171,7 @@ void SaveOptions(HWND hWnd)
     _Pluginwriteinttoini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
     _Pluginwriteinttoini(hinst, "NtClose", pHideOptions.NtClose);
     _Pluginwriteinttoini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
+    _Pluginwritestringtoini(hinst, "ollyTitle", pHideOptions.ollyTitle);
 }
 
 void LoadOptions()
@@ -189,6 +193,7 @@ void LoadOptions()
     pHideOptions.NtSetDebugFilterState = _Pluginreadintfromini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
     pHideOptions.NtClose = _Pluginreadintfromini(hinst, "NtClose", pHideOptions.NtClose);
     pHideOptions.removeEPBreak = _Pluginreadintfromini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
+    _Pluginreadstringfromini(hinst, "ollyTitle", pHideOptions.ollyTitle, "I can haz crack?");
 }
 
 //options dialog proc
@@ -216,6 +221,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, pHideOptions.NtSetDebugFilterState, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, pHideOptions.NtClose, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
+        SetDlgItemTextA(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
         break;
     }
     case WM_CLOSE:
@@ -281,12 +287,16 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
     case PM_MAIN:
     {
         strcpy(data, "0 &Options|1 &About");
+
+        //also patch olly title
+        SetWindowTextA(hwmain, pHideOptions.ollyTitle);
         return 1;
     }
 
     default:
         break;
     }
+
 
     return 0;
 }

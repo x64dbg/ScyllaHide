@@ -20,6 +20,7 @@ struct HideOptions
     int NtSetDebugFilterState;
     int NtClose;
     int removeEPBreak;
+    char ollyTitle[32];
 };
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess);
@@ -34,5 +35,7 @@ extern "C" void _Message(unsigned long addr,char *format,...);
 extern "C" void _Error(char *format,...);
 extern "C" int _Pluginwriteinttoini(HINSTANCE dllinst,char *key,int value);
 extern "C" int _Pluginreadintfromini(HINSTANCE dllinst,char *key,int def);
+extern "C" int _Pluginwritestringtoini(HINSTANCE dllinst,char *key,char *s);
+extern "C" int _Pluginreadstringfromini(HINSTANCE dllinst,char *key, char *s,char *def);
 extern "C" void _Deletebreakpoints(unsigned long addr0,unsigned long addr1,int silent);
 extern "C" int _Setbreakpoint(unsigned long addr,unsigned long type,unsigned char cmd);
