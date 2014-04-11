@@ -13,7 +13,7 @@
 struct HideOptions pHideOptions;
 
 #define PLUGINNAME     L"ScyllaHide"
-#define VERSION        L"0.1"
+#define VERSION        L"0.1a"
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibrary.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
@@ -157,7 +157,7 @@ static t_control scyllahideoptions[] =
         L"NtGetContextThread, NtSetContextThread, NtContinue"
     },
     {
-        CA_GROUP, -1, 85, 202, 80, 25, NULL,
+        CA_GROUP, -1, 85, 202, 85, 25, NULL,
         L"DRx Protection",
         NULL
     },
@@ -168,7 +168,7 @@ static t_control scyllahideoptions[] =
         L"Olly title"
     },
     {
-        CA_EDIT, OPT_16, 200, 30, 45, 10, NULL,
+        CA_EDIT, OPT_16, 200, 30, 40, 10, NULL,
         opt_ollyTitle,
         L"Olly title"
     },
@@ -323,6 +323,15 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
 //options dialogproc
 extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
 {
+    if(msg==WM_COMMAND) {
+        WORD bla = LOWORD(wp);
+        if(LOWORD(wp)==OPT_16) {
+            //yes this is hacky but for some reason CA_EDIT wont update its buffer
+            //so we need to get changes somehow else
+            HWND options = FindWindow(L"OD_EMPTY", L"Plugin options");
+            GetDlgItemTextW(options, OPT_16, opt_ollyTitle, 256);
+        }
+    }
     if (msg==WM_CLOSE && wp!=0)
     {
         // User pressed OK in the Plugin options dialog. Options are updated, save them to the .ini file.
