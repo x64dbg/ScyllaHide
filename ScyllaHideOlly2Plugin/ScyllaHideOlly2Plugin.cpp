@@ -329,7 +329,9 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
             //yes this is hacky but for some reason CA_EDIT wont update its buffer
             //so we need to get changes somehow else
             HWND options = FindWindow(L"OD_EMPTY", L"Plugin options");
-            GetDlgItemTextW(options, OPT_16, opt_ollyTitle, 256);
+            if(options) {
+                GetDlgItemTextW(options, OPT_16, opt_ollyTitle, 256);
+            }
         }
     }
     if (msg==WM_CLOSE && wp!=0)
