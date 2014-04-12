@@ -35,6 +35,8 @@ HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 WCHAR NtApiIniPath[MAX_PATH] = { 0 };
 WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
 
+#define PREFIX_PATH L"C:\\Projects\\ScyllaHide"
+
 int wmain(int argc, wchar_t* argv[])
 {
 	DWORD targetPid = 0;
@@ -65,10 +67,10 @@ int wmain(int argc, wchar_t* argv[])
 
 #ifdef _WIN64
 		targetPid = GetProcessIdByName(L"scylla_x64.exe");//scylla_x64
-		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\x64\\Release\\HookLibrary.dll";
+		dllPath = PREFIX_PATH L"\\Release\\HookLibraryx64.dll";
 #else
-		targetPid = GetProcessIdByName(L"DebugDetector.exe");//GetProcessIdByName(L"ThemidaTest.exe");//GetProcessIdByName(L"VMProtect.vmp.exe");//GetProcessIdByName(L"scylla_x86.exe");
-		dllPath = L"c:\\Users\\Admin\\documents\\visual studio 2013\\Projects\\ScyllaHide\\Release\\HookLibrary.dll";
+		targetPid = GetProcessIdByName(L"ThemidaTest.exe");//GetProcessIdByName(L"ThemidaTest.exe");//GetProcessIdByName(L"VMProtect.vmp.exe");//GetProcessIdByName(L"scylla_x86.exe");
+		dllPath = PREFIX_PATH L"\\Release\\HookLibraryx86.dll";
 #endif
 	}
 

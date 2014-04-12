@@ -1,6 +1,19 @@
 #include "RemoteHook.h"
 #include <windows.h>
 #include "distorm.h"
+#include "mnemonics.h"
+
+#if !defined(_WIN64)
+_DecodeType DecodingType = Decode32Bits;
+#else
+_DecodeType DecodingType = Decode64Bits;
+#endif
+
+#ifdef _WIN64
+const int minDetourLen = 2 + sizeof(DWORD)+sizeof(DWORD_PTR); //8+4+2=14
+#else
+const int minDetourLen = sizeof(DWORD)+1;
+#endif
 
 void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo)
 {
@@ -47,11 +60,109 @@ void * FixWindowsRedirects(void * address)
     return address;
 }
 
-#ifdef _WIN64
-const int minDetourLen = 2 + sizeof(DWORD)+sizeof(DWORD_PTR); //8+4+2=14
-#else
-const int minDetourLen = sizeof(DWORD)+1;
-#endif
+
+DWORD GetSysCallIndex32(BYTE * data)
+{
+	unsigned int DecodedInstructionsCount = 0;
+	_CodeInfo decomposerCi = {0};
+	_DInst decomposerResult[1] = {0};
+
+	decomposerCi.code = data;
+	decomposerCi.codeLen = MAXIMUM_INSTRUCTION_SIZE;
+	decomposerCi.dt = DecodingType;
+	decomposerCi.codeOffset = (LONG_PTR)data;
+
+	if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
+	{
+		if (decomposerResult[0].flags != FLAG_NOT_DECODABLE)
+		{
+			if (decomposerResult[0].opcode == I_MOV)
+			{
+				return decomposerResult[0].imm.dword;
+			}
+		}
+	}
+
+	return 0;
+}
+
+bool IsSysWow64()
+{
+	return ((DWORD)__readfsdword(0xC0) != 0);
+}
+
+DWORD GetJmpTableLocation(BYTE * data, int dataSize)
+{
+	DWORD SysWow64 = (DWORD)__readfsdword(0xC0);
+	if (SysWow64)
+	{
+		return SysWow64;
+	}
+	else
+	{
+
+	}
+
+	return 0;
+}
+
+DWORD GetFunctionSizeRETN( BYTE * data, int dataSize )
+{
+	unsigned int DecodedInstructionsCount = 0;
+	_CodeInfo decomposerCi = {0};
+	_DInst decomposerResult[100] = {0};
+
+	decomposerCi.code = data;
+	decomposerCi.codeLen = dataSize;
+	decomposerCi.dt = DecodingType;
+	decomposerCi.codeOffset = (LONG_PTR)data;
+
+	if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
+	{
+		for (unsigned int i = 0; i < DecodedInstructionsCount; i++) 
+		{
+			if (decomposerResult[i].flags != FLAG_NOT_DECODABLE)
+			{
+				if (decomposerResult[i].opcode == I_RET)
+				{
+					return ((DWORD_PTR)decomposerResult[i].addr + (DWORD_PTR)decomposerResult[i].size) - (DWORD_PTR)data;
+				}
+			}
+		}
+
+	}
+
+	return 0;
+}
+
+void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool notUsed)
+{
+	BYTE originalBytes[50] = { 0 };
+	BYTE tempSpace[1000] = { 0 };
+	PBYTE trampoline = 0;
+	DWORD protect;
+	bool success = false;
+
+	ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), 0);
+
+	DWORD sysCallIndex = GetSysCallIndex32(originalBytes);
+	DWORD funcSize = GetFunctionSizeRETN(originalBytes, sizeof(originalBytes));
+
+	if (funcSize && sysCallIndex)
+	{
+		trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, funcSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		if (!trampoline)
+			return 0;
+		WriteProcessMemory(hProcess, trampoline, originalBytes, funcSize, 0);
+	}
+
+	if (!success)
+	{
+		VirtualFree(trampoline, 0, MEM_RELEASE);
+		trampoline = 0;
+	}
+	return trampoline;
+}
 
 
 void * DetourCreateRemote(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
@@ -168,12 +279,6 @@ int GetDetourLen(const void * lpStart, const int minSize)
 
     return totalLen;
 }
-
-#if !defined(_WIN64)
-_DecodeType DecodingType = Decode32Bits;
-#else
-_DecodeType DecodingType = Decode64Bits;
-#endif
 
 int LengthDisassemble(LPVOID DisassmAddress)
 {

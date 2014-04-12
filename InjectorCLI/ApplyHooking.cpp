@@ -4,6 +4,7 @@
 #include "RemoteHook.h"
 
 #define HOOK(name) dllexchange->d##name = (t_##name)DetourCreateRemote(hProcess,_##name, Hooked##name, true)
+#define HOOK_NATIVE(name) dllexchange->d##name = (t_##name)DetourCreateRemoteNative(hProcess,_##name, Hooked##name, true)
 #define HOOK_NOTRAMP(name) DetourCreateRemote(hProcess,_##name, Hooked##name, false)
 
 void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
