@@ -160,6 +160,7 @@
     <ClInclude Include="ApplyHooking.h" />
     <ClInclude Include="distorm.h" />
     <ClInclude Include="DynamicMapping.h" />
+    <ClInclude Include="mnemonics.h" />
     <ClInclude Include="ReadNtConfig.h" />
     <ClInclude Include="RemoteHook.h" />
     <ClInclude Include="RemotePebHider.h" />
