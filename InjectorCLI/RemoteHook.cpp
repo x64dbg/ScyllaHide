@@ -2,6 +2,7 @@
 #include <windows.h>
 #include "distorm.h"
 #include "mnemonics.h"
+#include "ApplyHooking.h"
 
 #if !defined(_WIN64)
 _DecodeType DecodingType = Decode32Bits;
@@ -14,6 +15,13 @@ const int minDetourLen = 2 + sizeof(DWORD)+sizeof(DWORD_PTR); //8+4+2=14
 #else
 const int minDetourLen = sizeof(DWORD)+1;
 #endif
+
+
+extern void * HookedNativeCallInternal;
+extern void * NativeCallContinue;
+extern HOOK_NATIVE_CALL32 * HookNative;
+extern int countNativeHooks;
+extern bool onceNativeCallContinue;
 
 void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo)
 {
@@ -86,6 +94,8 @@ DWORD GetSysCallIndex32(BYTE * data)
 	return 0;
 }
 
+#ifndef _WIN64
+
 bool IsSysWow64()
 {
 	return ((DWORD)__readfsdword(0xC0) != 0);
@@ -106,6 +116,25 @@ DWORD GetJmpTableLocation(BYTE * data, int dataSize)
 	return 0;
 }
 
+
+
+DWORD GetCallDestination(BYTE * data, int dataSize)
+{
+	DWORD SysWow64 = (DWORD)__readfsdword(0xC0);
+	if (SysWow64)
+	{
+		return SysWow64;
+	}
+	else
+	{
+
+	}
+
+	return 0;
+}
+
+#endif
+
 DWORD GetFunctionSizeRETN( BYTE * data, int dataSize )
 {
 	unsigned int DecodedInstructionsCount = 0;
@@ -125,7 +154,7 @@ DWORD GetFunctionSizeRETN( BYTE * data, int dataSize )
 			{
 				if (decomposerResult[i].opcode == I_RET)
 				{
-					return ((DWORD_PTR)decomposerResult[i].addr + (DWORD_PTR)decomposerResult[i].size) - (DWORD_PTR)data;
+					return (DWORD)(((DWORD_PTR)decomposerResult[i].addr + (DWORD_PTR)decomposerResult[i].size) - (DWORD_PTR)data);
 				}
 			}
 		}
@@ -135,35 +164,128 @@ DWORD GetFunctionSizeRETN( BYTE * data, int dataSize )
 	return 0;
 }
 
-void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool notUsed)
+DWORD GetCallOffset( BYTE * data, int dataSize, DWORD * callSize )
 {
-	BYTE originalBytes[50] = { 0 };
+	unsigned int DecodedInstructionsCount = 0;
+	_CodeInfo decomposerCi = {0};
+	_DInst decomposerResult[100] = {0};
+
+	decomposerCi.code = data;
+	decomposerCi.codeLen = dataSize;
+	decomposerCi.dt = DecodingType;
+	decomposerCi.codeOffset = (LONG_PTR)data;
+
+	if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
+	{
+		for (unsigned int i = 0; i < DecodedInstructionsCount; i++) 
+		{
+			if (decomposerResult[i].flags != FLAG_NOT_DECODABLE)
+			{
+				if (decomposerResult[i].opcode == I_CALL || decomposerResult[i].opcode == I_CALL_FAR)
+				{
+					*callSize = decomposerResult[i].size;
+					return (DWORD)((DWORD_PTR)decomposerResult[i].addr - (DWORD_PTR)data);
+				}
+			}
+		}
+
+	}
+
+	return 0;
+}
+
+#ifndef _WIN64
+
+BYTE sysWowSpecialJmp[7] = { 0 };//EA 1E27E574 3300              JMP FAR 0033:74E5271E ; Far jump
+
+void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
+{
+	BYTE originalBytes[60] = { 0 };
+	BYTE changedBytes[60] = { 0 };
 	BYTE tempSpace[1000] = { 0 };
+
 	PBYTE trampoline = 0;
 	DWORD protect;
-	bool success = false;
 
 	ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), 0);
 
 	DWORD sysCallIndex = GetSysCallIndex32(originalBytes);
 	DWORD funcSize = GetFunctionSizeRETN(originalBytes, sizeof(originalBytes));
 
-	if (funcSize && sysCallIndex)
+	DWORD callSize = 0;
+	DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
+	DWORD callDestination = GetCallDestination(originalBytes, sizeof(originalBytes));
+
+	HookNative[countNativeHooks].eaxValue = sysCallIndex;
+	HookNative[countNativeHooks].hookedFunction = lpFuncDetour;
+	countNativeHooks++;
+
+	if (onceNativeCallContinue == false)
 	{
-		trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, funcSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		ReadProcessMemory(hProcess, (void*)callDestination, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0);
+		NativeCallContinue = VirtualAllocEx(hProcess, 0, sizeof(sysWowSpecialJmp), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		WriteProcessMemory(hProcess, NativeCallContinue, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0);
+	}
+
+
+	memset(changedBytes, 0x90, sizeof(changedBytes));
+	memcpy(changedBytes, originalBytes, funcSize - callOffset);
+
+	if (funcSize && sysCallIndex && createTramp)
+	{
+		trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, sizeof(changedBytes), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 		if (!trampoline)
 			return 0;
-		WriteProcessMemory(hProcess, trampoline, originalBytes, funcSize, 0);
+
+		changedBytes[callOffset] = 0x68; //PUSH
+		*((DWORD*)&changedBytes[callOffset+1]) = ((DWORD)trampoline+(DWORD)callOffset+5+7);
+		memcpy(changedBytes + callOffset + 5, sysWowSpecialJmp, sizeof(sysWowSpecialJmp));
+
+		memcpy(changedBytes + callOffset + 5 + 7, originalBytes + callOffset + callSize, funcSize - callOffset - callSize);
+
+		WriteProcessMemory(hProcess, trampoline, changedBytes, sizeof(changedBytes), 0);
 	}
 
-	if (!success)
+	if (onceNativeCallContinue == false)
 	{
-		VirtualFree(trampoline, 0, MEM_RELEASE);
-		trampoline = 0;
-	}
-	return trampoline;
-}
+		if (VirtualProtectEx(hProcess, (void *)callDestination, minDetourLen, PAGE_EXECUTE_READWRITE, &protect))
+		{
+			ZeroMemory(tempSpace, sizeof(tempSpace));
+			WriteJumper((PBYTE)callDestination, (PBYTE)HookedNativeCallInternal, tempSpace);
+			WriteProcessMemory(hProcess, (void *)callDestination, tempSpace, minDetourLen, 0);
 
+			VirtualProtectEx(hProcess, (void *)callDestination, minDetourLen, protect, &protect);
+			FlushInstructionCache(hProcess, (void *)callDestination, minDetourLen);
+		}
+		onceNativeCallContinue = true;
+	}
+
+
+	if (createTramp)
+	{
+		return trampoline;
+	}
+	else
+	{
+		return 0;
+	}
+}
+#endif
+
+#ifndef _WIN64
+void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
+{
+	if (IsSysWow64() == false)
+	{
+		//todo implement a solution
+		return DetourCreateRemote(hProcess, lpFuncOrig, lpFuncDetour, createTramp);
+	}
+	else
+	{
+		return DetourCreateRemoteNativeSysWow64(hProcess, lpFuncOrig, lpFuncDetour, createTramp);
+	}
+}
+#endif
 
 void * DetourCreateRemote(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
 {

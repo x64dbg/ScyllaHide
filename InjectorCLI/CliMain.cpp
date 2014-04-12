@@ -27,7 +27,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath);
 DWORD SetDebugPrivileges();
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
-void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase);
+bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase);
 void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data);
 
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
@@ -35,7 +35,7 @@ HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 WCHAR NtApiIniPath[MAX_PATH] = { 0 };
 WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
 
-#define PREFIX_PATH L"C:\\Projects\\ScyllaHide"
+#define PREFIX_PATH L"C:\\Users\\Admin\\Documents\\Visual Studio 2010\\Projects\\ScyllaHide"
 
 int wmain(int argc, wchar_t* argv[])
 {
@@ -90,12 +90,12 @@ int wmain(int argc, wchar_t* argv[])
 
 
 
-void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-	ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
-
 	DllExchangeLoader.dwProtectedProcessId = 0; //for olly plugins
 	DllExchangeLoader.EnableProtectProcessId = FALSE;
+
+	return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)

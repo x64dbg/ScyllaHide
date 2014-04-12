@@ -1,10 +1,12 @@
 #include "HookMain.h"
 #include "Hook.h"
-#include "ntdll.h"
+#include "..\ntdll\ntdll.h"
 #include "HookedFunctions.h"
 #include "PebHider.h"
 
+
 HOOK_DLL_EXCHANGE DllExchange = { 0 };
+
 
 void StartHiding();
 

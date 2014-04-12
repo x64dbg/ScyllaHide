@@ -331,53 +331,55 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 //called for every debugloop pass
 extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
 {
+	if(!debugevent)
+		return;
 
+	switch(debugevent->dwDebugEventCode)
+	{
+	case CREATE_PROCESS_DEBUG_EVENT:
+		{
+			ProcessId=debugevent->dwProcessId;
+			bHooked = false;
+			epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
+		}
+		break;
 
-    if(!debugevent)
-        return;
-    switch(debugevent->dwDebugEventCode)
-    {
-    case CREATE_PROCESS_DEBUG_EVENT:
-    {
-        ProcessId=debugevent->dwProcessId;
-        bHooked = false;
-        epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
-    }
-    break;
+	case LOAD_DLL_DEBUG_EVENT:
+		{
+			if (bHooked)
+			{
+				startInjection(ProcessId, ScyllaHideDllPath, false);
+			}
+			break;
+		}
+	case EXCEPTION_DEBUG_EVENT:
+		{
+			switch(debugevent->u.Exception.ExceptionRecord.ExceptionCode)
+			{
+			case STATUS_BREAKPOINT:
+				{
+					if (!bHooked)
+					{
+						bHooked = true;
+						_Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
+						ReadNtApiInformation();
+						startInjection(ProcessId, ScyllaHideDllPath, true);
+					}
 
-    case LOAD_DLL_DEBUG_EVENT:
-    {
-        if (bHooked)
-        {
-            startInjection(ProcessId, ScyllaHideDllPath, false);
-        }
-        break;
-    }
-    case EXCEPTION_DEBUG_EVENT:
-    {
-        switch(debugevent->u.Exception.ExceptionRecord.ExceptionCode)
-        {
-        case STATUS_BREAKPOINT:
-        {
-            if (!bHooked)
-            {
-                // _Setbreakpoint(addr, 0x00000200, NULL);
+					break;
+				}
 
-                bHooked = true;
-                _Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
-                ReadNtApiInformation();
-                startInjection(ProcessId, ScyllaHideDllPath, true);
-            }
-        }
-        break;
-        }
-    }
-    break;
+			case STATUS_ILLEGAL_INSTRUCTION:
+				{
+					//THEMIDA
+					break;
+				}
+			}
 
-
-    break;
-    }
-};
+			break;
+		}
+	}
+}
 
 extern "C" int __declspec(dllexport) _ODBG_Pausedex(int reason, int extdata, void* reg, DEBUG_EVENT *debugevent)
 {

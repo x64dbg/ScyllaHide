@@ -5,11 +5,24 @@
 
 #define HOOK(name) dllexchange->d##name = (t_##name)DetourCreateRemote(hProcess,_##name, Hooked##name, true)
 #define HOOK_NATIVE(name) dllexchange->d##name = (t_##name)DetourCreateRemoteNative(hProcess,_##name, Hooked##name, true)
+#define HOOK_NATIVE_NOTRAMP(name) DetourCreateRemoteNative(hProcess,_##name, Hooked##name, false)
 #define HOOK_NOTRAMP(name) DetourCreateRemote(hProcess,_##name, Hooked##name, false)
+
+void * HookedNativeCallInternal = 0;
+void * NativeCallContinue = 0;
+int countNativeHooks = 0;
+HOOK_NATIVE_CALL32 * HookNative = 0;
+bool onceNativeCallContinue = false;
 
 void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
 	HMODULE hNtdll = GetModuleHandleW(L"ntdll.dll");
+	
+#ifndef _WIN64
+	countNativeHooks = 0;
+	onceNativeCallContinue = false;
+	HookNative = dllexchange->HookNative;
+#endif
 
 	void * HookedNtSetInformationThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetInformationThread") + imageBase);
 	void * HookedNtQuerySystemInformation = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQuerySystemInformation") + imageBase);
@@ -23,6 +36,8 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
 	void * HookedNtContinue = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtContinue") + imageBase);
 	void * HookedNtClose = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtClose") + imageBase);
 	void * HookedNtSetDebugFilterState = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetDebugFilterState") + imageBase);
+
+	HookedNativeCallInternal = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNativeCallInternal") + imageBase);
 
 	t_NtSetInformationThread _NtSetInformationThread = (t_NtSetInformationThread)GetProcAddress(hNtdll, "NtSetInformationThread");
 	t_NtQuerySystemInformation _NtQuerySystemInformation = (t_NtQuerySystemInformation)GetProcAddress(hNtdll, "NtQuerySystemInformation");
@@ -38,27 +53,31 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
 	t_NtSetDebugFilterState _NtSetDebugFilterState = (t_NtSetDebugFilterState)GetProcAddress(hNtdll, "NtSetDebugFilterState");
 
 
-	if (dllexchange->EnableNtSetInformationThreadHook == TRUE) HOOK(NtSetInformationThread);
-	if (dllexchange->EnableNtQuerySystemInformationHook == TRUE) HOOK(NtQuerySystemInformation);
+	if (dllexchange->EnableNtSetInformationThreadHook == TRUE) HOOK_NATIVE(NtSetInformationThread);
+	if (dllexchange->EnableNtQuerySystemInformationHook == TRUE) HOOK_NATIVE(NtQuerySystemInformation);
 	if (dllexchange->EnableNtQueryInformationProcessHook == TRUE)
 	{
-		HOOK(NtQueryInformationProcess);
-		HOOK(NtSetInformationProcess);
+		HOOK_NATIVE(NtQueryInformationProcess);
+		HOOK_NATIVE(NtSetInformationProcess);
 	}
-	if (dllexchange->EnableNtQueryObjectHook == TRUE) HOOK(NtQueryObject);
-	if (dllexchange->EnableNtYieldExecutionHook == TRUE) HOOK(NtYieldExecution);
-	if (dllexchange->EnableNtGetContextThreadHook == TRUE) HOOK(NtGetContextThread);
-	if (dllexchange->EnableNtSetContextThreadHook == TRUE) HOOK(NtSetContextThread);
+	if (dllexchange->EnableNtQueryObjectHook == TRUE) HOOK_NATIVE(NtQueryObject);
+	if (dllexchange->EnableNtYieldExecutionHook == TRUE) HOOK_NATIVE(NtYieldExecution);
+	if (dllexchange->EnableNtGetContextThreadHook == TRUE) HOOK_NATIVE(NtGetContextThread);
+	if (dllexchange->EnableNtSetContextThreadHook == TRUE) HOOK_NATIVE(NtSetContextThread);
 
-	if (dllexchange->EnableNtCloseHook == TRUE) HOOK(NtClose);
-	if (dllexchange->EnableNtSetDebugFilterStateHook == TRUE) HOOK_NOTRAMP(NtSetDebugFilterState);
+	if (dllexchange->EnableNtCloseHook == TRUE) HOOK_NATIVE(NtClose);
+	if (dllexchange->EnableNtSetDebugFilterStateHook == TRUE) HOOK_NATIVE_NOTRAMP(NtSetDebugFilterState);
 
 #ifndef _WIN64
 	if (dllexchange->EnableKiUserExceptionDispatcherHook == TRUE) HOOK(KiUserExceptionDispatcher);
-	if (dllexchange->EnableNtContinueHook == TRUE) HOOK(NtContinue);
+	if (dllexchange->EnableNtContinueHook == TRUE) HOOK_NATIVE(NtContinue);
 #endif
 
 	dllexchange->isNtdllHooked = TRUE;
+
+#ifndef _WIN64
+	dllexchange->NativeCallContinue = NativeCallContinue;
+#endif
 }
 
 void ApplyKernel32Hook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
@@ -125,22 +144,28 @@ void ApplyUser32Hook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dl
 	}
 }
 
-void ApplyHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+bool ApplyHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
+	bool retVal = false;
 	dllexchange->hDllImage = (HMODULE)imageBase;
 
 	if (dllexchange->EnablePebHiding == TRUE) FixPebInProcess(hProcess);
 
 	if (dllexchange->isNtdllHooked == FALSE)
 	{
+		retVal = true;
 		ApplyNtdllHook(dllexchange, hProcess, dllMemory, imageBase);
 	}
 	if (dllexchange->isKernel32Hooked == FALSE)
 	{
+		retVal = true;
 		ApplyKernel32Hook(dllexchange, hProcess, dllMemory, imageBase);
 	}
 	if (dllexchange->isUser32Hooked == FALSE)
 	{
+		retVal = true;
 		ApplyUser32Hook(dllexchange, hProcess, dllMemory, imageBase);
 	}
+
+	return retVal;
 }

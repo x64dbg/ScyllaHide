@@ -247,6 +247,45 @@ NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert) //re
 	return DllExchange.dNtContinue(ThreadContext, RaiseAlert);
 }
 
+#ifndef _WIN64
+PVOID NTAPI HandleNativeCallInternal(DWORD eaxValue, DWORD ecxValue)
+{
+	for (int i = 0; i < _countof(DllExchange.HookNative); i++)
+	{
+		if (DllExchange.HookNative[i].eaxValue == eaxValue)
+		{
+			return DllExchange.HookNative[i].hookedFunction;
+		}
+	}
+
+	return 0;
+}
+#endif
+
+void NAKED NTAPI HookedNativeCallInternal()
+{
+#ifndef _WIN64
+	__asm
+	{
+		PUSHAD
+		PUSH ECX
+		PUSH EAX
+		CALL HandleNativeCallInternal
+		cmp eax, 0
+		je NoHook
+		POPAD
+		ADD ESP,4
+		PUSH ECX
+		PUSH EAX
+		CALL HandleNativeCallInternal
+		jmp eax
+NoHook:
+		POPAD
+		jmp DllExchange.NativeCallContinue
+	}
+#endif
+}
+
 NTSTATUS NTAPI HookedNtClose(HANDLE Handle)
 {
 	OBJECT_HANDLE_FLAG_INFORMATION flags;

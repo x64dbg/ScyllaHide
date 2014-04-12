@@ -5,17 +5,18 @@
 
 extern struct HideOptions pHideOptions;
 
+
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
+
 
 static LPVOID remoteImageBase = 0;
 
 
-void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-	ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
-
 	DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
 	DllExchangeLoader.EnableProtectProcessId = TRUE;
+	return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
@@ -26,8 +27,10 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 	if (newProcess == false)
 	{
 		_Message(0, "[ScyllaHide] Apply hooks again");
-		StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
-		WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
+		if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
+		{
+			WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
+		}
 	}
 	else
 	{

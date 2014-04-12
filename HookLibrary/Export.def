@@ -19,3 +19,4 @@ HookedOutputDebugStringA
 HookedNtUserFindWindowEx
 HookedNtUserBuildHwndList
 HookedNtSetDebugFilterState
+HookedNativeCallInternal

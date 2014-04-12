@@ -14,8 +14,14 @@ typedef DWORD(WINAPI * t_OutputDebugStringA)(LPCSTR lpOutputString); //Kernel32.
 typedef DWORD(WINAPI * t_OutputDebugStringW)(LPCWSTR lpOutputString); //Kernel32.dll
 //WIN 7 X64: OutputDebugStringW -> OutputDebugStringA
 
-#pragma pack(push)
-#pragma pack(1)
+#define MAX_NATIVE_HOOKS 20
+
+
+typedef struct _HOOK_NATIVE_CALL32 {
+	DWORD eaxValue;
+	DWORD ecxValue;
+	PVOID hookedFunction;
+} HOOK_NATIVE_CALL32;
 
 typedef struct _HOOK_DLL_EXCHANGE {
     HMODULE hDllImage;
@@ -83,9 +89,13 @@ typedef struct _HOOK_DLL_EXCHANGE {
 	BOOLEAN isNtdllHooked;
 	BOOLEAN isKernel32Hooked;
 	BOOLEAN isUser32Hooked;
+
+#ifndef _WIN64
+	HOOK_NATIVE_CALL32 HookNative[MAX_NATIVE_HOOKS];
+	PVOID NativeCallContinue;
+#endif
 } HOOK_DLL_EXCHANGE;
 
-#pragma pack(pop)
 
 #define HOOK_ERROR_SUCCESS 0
 #define HOOK_ERROR_RESOLVE_IMPORT 1
