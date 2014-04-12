@@ -1024,9 +1024,9 @@ typedef VOID     (NTAPI * t_RtlRestoreContext)(PCONTEXT ContextRecord, PEXCEPTIO
 #define NtUserFindWindowEx_FW_BOTH 0
 #define NtUserFindWindowEx_FW_16BIT 1
 #define NtUserFindWindowEx_FW_32BIT 2
-typedef HWND(NTAPI * t_NtUserFindWindowEx)(HWND hWndParent, HWND hWndChildAfter, PUNICODE_STRING lpszClass, PUNICODE_STRING lpszWindow, DWORD dwType);
+typedef HWND (NTAPI * t_NtUserFindWindowEx)(HWND hWndParent,HWND hWndChildAfter,PUNICODE_STRING lpszClass,PUNICODE_STRING lpszWindow,DWORD dwType);
 //EnumWindows
-typedef NTSTATUS(NTAPI * t_NtUserBuildHwndList)(HDESK hdesk, HWND hwndNext, BOOL fEnumChildren, DWORD idThread, UINT cHwndMax, HWND *phwndFirst, PUINT pcHwndNeeded);
+typedef NTSTATUS (NTAPI * t_NtUserBuildHwndList)(HDESK hdesk,HWND hwndNext, BOOL fEnumChildren, DWORD idThread, UINT cHwndMax, HWND *phwndFirst, PUINT pcHwndNeeded);
 
 typedef enum _WINDOWINFOCLASS
 {
@@ -1036,10 +1036,9 @@ typedef enum _WINDOWINFOCLASS
 	WindowIsHung = 5 //BOOL
 } WINDOWINFOCLASS;
 //GetWindowThreadProcessId
-typedef HANDLE(NTAPI * t_NtUserQueryWindow)(HWND hwnd, WINDOWINFOCLASS WindowInfo);
-typedef int (NTAPI * t_NtUserGetClassName)(HWND hwnd, BOOL bReal, PUNICODE_STRING pstrClassName);
-typedef int (NTAPI * t_NtUserInternalGetWindowText)(HWND hwnd, LPWSTR lpString, int nMaxCount);
-
+typedef HANDLE (NTAPI * t_NtUserQueryWindow)(HWND hwnd, WINDOWINFOCLASS WindowInfo);
+typedef int (NTAPI * t_NtUserGetClassName)(HWND hwnd,BOOL bReal,PUNICODE_STRING pstrClassName);
+typedef int (NTAPI * t_NtUserInternalGetWindowText)(HWND hwnd,LPWSTR lpString,int nMaxCount);
 
 #ifdef __cplusplus
 extern "C" {
