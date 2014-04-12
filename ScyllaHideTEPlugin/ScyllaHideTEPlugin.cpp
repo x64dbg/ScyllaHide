@@ -3,7 +3,12 @@
 #include "Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 
-const WCHAR ScyllaHideDllFilename[] = L"HookLibrary.dll";
+#ifdef _WIN64
+const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
+#else
+const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
+#endif
+
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
 static WCHAR ScyllaHideDllPath[MAX_PATH] = { 0 };

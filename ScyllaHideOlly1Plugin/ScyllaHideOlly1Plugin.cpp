@@ -8,7 +8,7 @@
 struct HideOptions pHideOptions;
 
 #define SCYLLAHIDE_VERSION "0.1b"
-const WCHAR ScyllaHideDllFilename[] = L"HookLibrary.dll";
+const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
 

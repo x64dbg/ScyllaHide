@@ -1,7 +1,7 @@
 #pragma once
 
 #include <windows.h>
-#include "ntdll.h"
+#include "..\ntdll\ntdll.h"
 
 typedef BOOL(WINAPI * t_DllMain)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 typedef void  (WINAPI * t_GetSystemTime)(LPSYSTEMTIME lpSystemTime); //Kernel32.dll

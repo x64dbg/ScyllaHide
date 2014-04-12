@@ -1,6 +1,6 @@
 #include "DynamicMapping.h"
 #include <Psapi.h>
-#include "ntdll.h"
+#include "..\ntdll\ntdll.h"
 
 #pragma comment(lib, "psapi.lib")
 

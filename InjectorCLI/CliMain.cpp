@@ -299,7 +299,7 @@ void CreateDummyUnicodeFile(const WCHAR * file)
 
 		HANDLE hFile = CreateFile(file, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 		WriteFile(hFile, &wBOM, sizeof(WORD), &NumberOfBytesWritten, NULL);
-		WriteFile(hFile, section, (wcslen(section) + 1)*(sizeof(WCHAR)), &NumberOfBytesWritten, NULL);
+		WriteFile(hFile, section, (DWORD)((wcslen(section) + 1)*(sizeof(WCHAR))), &NumberOfBytesWritten, NULL);
 		CloseHandle(hFile);
 	}
 }

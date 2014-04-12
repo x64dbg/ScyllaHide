@@ -1,5 +1,6 @@
 #include "RemotePebHider.h"
-#include "ntdll.h"
+#include "..\ntdll\ntdll.h"
+
 static bool isAtleastVista()
 {
     static bool isAtleastVista = false;
