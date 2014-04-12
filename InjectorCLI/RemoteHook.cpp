@@ -1,6 +1,6 @@
 #include "RemoteHook.h"
 #include <windows.h>
-
+#include "distorm.h"
 
 void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo)
 {
@@ -33,7 +33,7 @@ void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo, unsigned char *
 void * FixWindowsRedirects(void * address)
 {
     BYTE * pb = (BYTE *)address;
-    int len = (int)LDE((void *)address, 0);
+    int len = (int)LengthDisassemble((void *)address);
 
     if (len == 2 && pb[0] == 0xEB) //JMP SHORT
     {
@@ -161,10 +161,38 @@ int GetDetourLen(const void * lpStart, const int minSize)
 
     while (totalLen < minSize)
     {
-        len = (int)LDE((void *)lpDataPos, 0);
+        len = (int)LengthDisassemble((void *)lpDataPos);
         lpDataPos += len;
         totalLen += len;
     }
 
     return totalLen;
+}
+
+#if !defined(_WIN64)
+_DecodeType DecodingType = Decode32Bits;
+#else
+_DecodeType DecodingType = Decode64Bits;
+#endif
+
+int LengthDisassemble(LPVOID DisassmAddress)
+{
+	unsigned int DecodedInstructionsCount = 0;
+	_CodeInfo decomposerCi = {0};
+	_DInst decomposerResult[1] = {0};
+
+	decomposerCi.code = (BYTE *)DisassmAddress;
+	decomposerCi.codeLen = MAXIMUM_INSTRUCTION_SIZE;
+	decomposerCi.dt = DecodingType;
+	decomposerCi.codeOffset = (LONG_PTR)DisassmAddress;
+
+	if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
+	{
+		if (decomposerResult[0].flags != FLAG_NOT_DECODABLE)
+		{
+			return decomposerResult[0].size;
+		}
+	}
+
+	return -1;
 }
