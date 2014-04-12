@@ -404,12 +404,13 @@ void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo)
 {
 	if (!dwExplorerPid)
 	{
+		const USHORT explorerNameLength = (USHORT)_wcslen(ExplorerProcessName);
 		PSYSTEM_PROCESS_INFORMATION pTemp = pInfo;
 		while (TRUE)
 		{
 			if (pTemp->ImageName.Buffer && pTemp->ImageName.Length)
 			{
-				if (pTemp->ImageName.Length == _wcslen(ExplorerProcessName))
+				if (pTemp->ImageName.Length == explorerNameLength)
 				{
 					if (!_wcsnicmp(pTemp->ImageName.Buffer, ExplorerProcessName, pTemp->ImageName.Length))
 					{
