@@ -138,9 +138,9 @@ void ApplyUser32Hook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dl
 		}
 		t_BlockInput _BlockInput = (t_BlockInput)GetProcAddress(hUser, "BlockInput");
 
-		if (dllexchange->EnableBlockInputHook == TRUE) HOOK(BlockInput);
-		if (dllexchange->EnableNtUserFindWindowExHook == TRUE && _NtUserFindWindowEx != 0) HOOK(NtUserFindWindowEx);
-		if (dllexchange->EnableNtUserBuildHwndListHook == TRUE && _NtUserBuildHwndList != 0) HOOK(NtUserBuildHwndList);
+		if (dllexchange->EnableBlockInputHook == TRUE) HOOK_NATIVE(BlockInput);
+		if (dllexchange->EnableNtUserFindWindowExHook == TRUE && _NtUserFindWindowEx != 0) HOOK_NATIVE(NtUserFindWindowEx);
+		if (dllexchange->EnableNtUserBuildHwndListHook == TRUE && _NtUserBuildHwndList != 0) HOOK_NATIVE(NtUserBuildHwndList);
 	}
 }
 

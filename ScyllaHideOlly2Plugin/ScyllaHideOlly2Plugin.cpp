@@ -21,6 +21,8 @@ const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 
+extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+
 //forward definitions
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
@@ -376,6 +378,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
     {
         ProcessId = debugevent->dwProcessId;
         bHooked = false;
+		ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
     }
     break;
     case LOAD_DLL_DEBUG_EVENT:

@@ -341,6 +341,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 			ProcessId=debugevent->dwProcessId;
 			bHooked = false;
 			epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
+			ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 		}
 		break;
 
@@ -399,6 +400,7 @@ extern "C" int __declspec(dllexport) _ODBG_Pausedex(int reason, int extdata, voi
 //reset variables. new target started or restarted
 extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
 {
+	ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
     bHooked = false;
     bEPBreakRemoved = false;
 }

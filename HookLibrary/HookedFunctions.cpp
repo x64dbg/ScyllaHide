@@ -254,7 +254,17 @@ PVOID NTAPI HandleNativeCallInternal(DWORD eaxValue, DWORD ecxValue)
 	{
 		if (DllExchange.HookNative[i].eaxValue == eaxValue)
 		{
-			return DllExchange.HookNative[i].hookedFunction;
+			if (DllExchange.HookNative[i].ecxValue)
+			{
+				if (DllExchange.HookNative[i].ecxValue == ecxValue)
+				{
+					return DllExchange.HookNative[i].hookedFunction;
+				}
+			}
+			else
+			{
+				return DllExchange.HookNative[i].hookedFunction;
+			}
 		}
 	}
 

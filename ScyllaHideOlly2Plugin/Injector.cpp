@@ -10,12 +10,11 @@ HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
 static LPVOID remoteImageBase = 0;
 
-void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-	ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
-
 	DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
 	DllExchangeLoader.EnableProtectProcessId = TRUE;
+	return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
