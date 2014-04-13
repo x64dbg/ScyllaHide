@@ -1,5 +1,7 @@
 Version 0.2
 
+Warning: Since this version, ScyllaHide is not compatbile with Stealth64! You need to remove the Stealth64 plugin.
+
 - Stealth hooks for 32-bit targets to defeat protectors like Themida
 - Olly Plugin: Change olly caption
 - Olly v1 Plugin: Remove EP One-Shot Breakpoint for VMProtect
