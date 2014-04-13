@@ -40,8 +40,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)$(Configuration)\plugins\Olly2\</OutDir>
-    <TargetName>ScyllaHide</TargetName>
+    <OutDir>$(SolutionDir)$(Configuration)\plugins\</OutDir>
+    <TargetName>ScyllaHideOlly2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
