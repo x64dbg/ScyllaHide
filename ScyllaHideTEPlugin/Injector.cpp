@@ -5,12 +5,12 @@
 
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
-void StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-	ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
-
 	DllExchangeLoader.dwProtectedProcessId = 0; //for olly plugins
 	DllExchangeLoader.EnableProtectProcessId = FALSE;
+
+	return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)

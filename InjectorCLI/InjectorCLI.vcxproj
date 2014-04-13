@@ -102,6 +102,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -119,6 +120,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,6 +141,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,6 +152,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\distorm\decoder.c" />
+    <ClCompile Include="..\distorm\distorm.c" />
+    <ClCompile Include="..\distorm\instructions.c" />
+    <ClCompile Include="..\distorm\insts.c" />
+    <ClCompile Include="..\distorm\mnemonics.c" />
+    <ClCompile Include="..\distorm\operands.c" />
+    <ClCompile Include="..\distorm\prefix.c" />
+    <ClCompile Include="..\distorm\textdefs.c" />
+    <ClCompile Include="..\distorm\wstring.c" />
     <ClCompile Include="ApplyHooking.cpp" />
     <ClCompile Include="DynamicMapping.cpp" />
     <ClCompile Include="CliMain.cpp" />
@@ -157,6 +169,17 @@
     <ClCompile Include="RemotePebHider.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\distorm\config.h" />
+    <ClInclude Include="..\distorm\decoder.h" />
+    <ClInclude Include="..\distorm\distorm.h" />
+    <ClInclude Include="..\distorm\instructions.h" />
+    <ClInclude Include="..\distorm\insts.h" />
+    <ClInclude Include="..\distorm\mnemonics.h" />
+    <ClInclude Include="..\distorm\operands.h" />
+    <ClInclude Include="..\distorm\prefix.h" />
+    <ClInclude Include="..\distorm\textdefs.h" />
+    <ClInclude Include="..\distorm\wstring.h" />
+    <ClInclude Include="..\distorm\x86defs.h" />
     <ClInclude Include="ApplyHooking.h" />
     <ClInclude Include="distorm.h" />
     <ClInclude Include="DynamicMapping.h" />

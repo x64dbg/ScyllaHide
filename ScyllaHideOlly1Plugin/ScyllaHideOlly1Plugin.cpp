@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include "resource.h"
 #include "Injector.h"
@@ -7,7 +8,7 @@
 //scyllaHide definitions
 struct HideOptions pHideOptions;
 
-#define SCYLLAHIDE_VERSION "0.1b"
+#define SCYLLAHIDE_VERSION "0.2"
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 

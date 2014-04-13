@@ -12,19 +12,22 @@ Debugger Hiding:
 - NtQueryObject - ObjectTypesInformation, ObjectTypeInformation
 - NtYieldExecution
 - NtSetDebugFilterState
-- NtUserBuildHwndList
-- NtUserFindWindowEx
+- NtUserBuildHwndList - EnumWindows
+- NtUserFindWindowEx - FindWindowA/W, FindWindowExA/W
 - NtUserQueryWindow
 - NtClose
 - GetTickCount
 - BlockInput
-- OutputDebugStringA
+- OutputDebugStringA - OutputDebugStringW
 
 Protecting and Stealthing DRx (Hardware Breakpoints):
 - NtGetContextThread
 - NtSetContextThread
 - KiUserExceptionDispatcher (only x86)
 - NtContinue (only x86)
+
+Hooks:
+- Stealth hooks for 32-bit targets (Tested against Themida/VMProtect)
 
 ------------------------------------------------------
 
@@ -39,15 +42,14 @@ InjectorCLI.exe crackme.exe C:\HookLibrary.dll
 Plugins:
 - for TitanEngine: Copy HookLibrary.dll and ScyllaHide.dll to plugins\x86\ or plugins\x64\
   (can be combined with TitanHide which does kernelmode hiding)
-- for OllyDbg v1.10: Copy HookLibrary.dll and ScyllaHide.dll to your plugins directoy
-- for OllyDbg v2.01: Copy HookLibrary.dll and ScyllaHide.dll to your plugins directoy
+- for OllyDbg v1.10: Copy HookLibraryx86.dll and ScyllaHideOlly1.dll to your plugins directoy
+- for OllyDbg v2.01: Copy HookLibraryx86.dll and ScyllaHideOlly2.dll to your plugins directoy
 
 ------------------------------------------------------
 
 ToDo:
 - x64 compatibility support
 - x64 Exception Support
-- Better (stealth) hooks
 
 ------------------------------------------------------
 

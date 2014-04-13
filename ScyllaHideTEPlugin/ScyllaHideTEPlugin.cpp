@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include "TitanEngine.h"
 #include "Injector.h"
@@ -9,7 +10,12 @@ const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
+const DWORD PLUGIN_MAJOR_VERSION = 0;
+const DWORD PLUGIN_MINOR_VERSION = 2;
+
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
+
+extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 
 static WCHAR ScyllaHideDllPath[MAX_PATH] = { 0 };
 WCHAR NtApiIniPath[MAX_PATH] = { 0 };
@@ -80,6 +86,7 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
         {
             ProcessId=debugEvent->dwProcessId;
             bHooked = false;
+			ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
         }
         break;
 
@@ -107,9 +114,6 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
 
 extern "C" __declspec(dllexport) bool TitanRegisterPlugin(char* szPluginName, DWORD* titanPluginMajorVersion, DWORD* titanPluginMinorVersion)
 {
-    const DWORD PLUGIN_MAJOR_VERSION = 0;
-    const DWORD PLUGIN_MINOR_VERSION = 1;
-
     if(titanPluginMajorVersion && titanPluginMinorVersion)
     {
         *titanPluginMajorVersion = PLUGIN_MAJOR_VERSION;

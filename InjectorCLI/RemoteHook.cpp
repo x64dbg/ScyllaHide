@@ -318,7 +318,7 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 BYTE KiSystemCallJmpPatch[] = {0xE9, 0x00, 0x00, 0x00, 0x00, 0xEB, 0xF9};
 BYTE KiSystemCallBackup[20] = {0};
 DWORD KiSystemCallBackupSize = 0;
-
+#ifndef _WIN64
 void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
 {
 	PBYTE trampoline = 0;
@@ -371,6 +371,7 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void
 
 	return trampoline;
 }
+#endif
 #ifndef _WIN64
 void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
 {

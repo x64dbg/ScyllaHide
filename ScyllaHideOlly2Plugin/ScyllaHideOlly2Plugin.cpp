@@ -1,5 +1,4 @@
-//NOTE: Olly2 is unicode. Olly1 was not.
-
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,7 +12,7 @@
 struct HideOptions pHideOptions;
 
 #define PLUGINNAME     L"ScyllaHide"
-#define VERSION        L"0.1a"
+#define VERSION        L"0.2"
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";

@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #ifndef DISTORM_H
 #define DISTORM_H
 
-
 /*
  * 64 bit offsets support:
  * If the diStorm library you use was compiled with 64 bits offsets,
@@ -37,26 +36,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
 #if !(defined(DISTORM_STATIC) || defined(DISTORM_DYNAMIC))
-/* Define this macro for outer projects by default. */
-#define SUPPORT_64BIT_OFFSET
+	/* Define this macro for outer projects by default. */
+	#define SUPPORT_64BIT_OFFSET
 #endif
 
 /* TINYC has a problem with some 64bits library functions, so ignore 64 bit offsets. */
 #ifdef __TINYC__
-#undef SUPPORT_64BIT_OFFSET
+	#undef SUPPORT_64BIT_OFFSET
 #endif
 
 /* If your compiler doesn't support stdint.h, define your own 64 bits type. */
 #ifdef SUPPORT_64BIT_OFFSET
-#ifdef _MSC_VER
-#define OFFSET_INTEGER unsigned __int64
+	#ifdef _MSC_VER
+		#define OFFSET_INTEGER unsigned __int64
+	#else
+		#include <stdint.h>
+		#define OFFSET_INTEGER uint64_t
+	#endif
 #else
-#include <stdint.h>
-#define OFFSET_INTEGER uint64_t
-#endif
-#else
-/* 32 bit offsets are used. */
-#define OFFSET_INTEGER unsigned long
+	/* 32 bit offsets are used. */
+	#define OFFSET_INTEGER unsigned long
 #endif
 
 #ifdef _MSC_VER
@@ -73,7 +72,7 @@ typedef unsigned __int8		uint8_t;
 
 /* Support C++ compilers */
 #ifdef __cplusplus
-extern "C" {
+ extern "C" {
 #endif
 
 
@@ -116,90 +115,82 @@ extern "C" {
 
 
 /* Decodes modes of the disassembler, 16 bits or 32 bits or 64 bits for AMD64, x86-64. */
-typedef enum {
-    Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2
-}
-_DecodeType;
+typedef enum { Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2 } _DecodeType;
 
 typedef OFFSET_INTEGER _OffsetType;
 
-typedef struct
-{
-    _OffsetType codeOffset, nextOffset; /* nextOffset is OUT only. */
-    const uint8_t* code;
-    int codeLen; /* Using signed integer makes it easier to detect an underflow. */
-    _DecodeType dt;
-    unsigned int features;
+typedef struct {
+	_OffsetType codeOffset, nextOffset; /* nextOffset is OUT only. */
+	const uint8_t* code;
+	int codeLen; /* Using signed integer makes it easier to detect an underflow. */
+	_DecodeType dt;
+	unsigned int features;
 } _CodeInfo;
 
 typedef enum { O_NONE, O_REG, O_IMM, O_IMM1, O_IMM2, O_DISP, O_SMEM, O_MEM, O_PC, O_PTR } _OperandType;
 
-typedef union
-{
-    /* Used by O_IMM: */
-    int8_t sbyte;
-    uint8_t byte;
-    int16_t sword;
-    uint16_t word;
-    int32_t sdword;
-    uint32_t dword;
-    int64_t sqword; /* All immediates are SIGN-EXTENDED to 64 bits! */
-    uint64_t qword;
+typedef union {
+	/* Used by O_IMM: */
+	int8_t sbyte;
+	uint8_t byte;
+	int16_t sword;
+	uint16_t word;
+	int32_t sdword;
+	uint32_t dword;
+	int64_t sqword; /* All immediates are SIGN-EXTENDED to 64 bits! */
+	uint64_t qword;
 
-    /* Used by O_PC: (Use GET_TARGET_ADDR).*/
-    _OffsetType addr; /* It's a relative offset as for now. */
+	/* Used by O_PC: (Use GET_TARGET_ADDR).*/
+	_OffsetType addr; /* It's a relative offset as for now. */
 
-    /* Used by O_PTR: */
-    struct
-    {
-        uint16_t seg;
-        /* Can be 16 or 32 bits, size is in ops[n].size. */
-        uint32_t off;
-    } ptr;
+	/* Used by O_PTR: */
+	struct {
+		uint16_t seg;
+		/* Can be 16 or 32 bits, size is in ops[n].size. */
+		uint32_t off;
+	} ptr;
 
-    /* Used by O_IMM1 (i1) and O_IMM2 (i2). ENTER instruction only. */
-    struct
-    {
-        uint32_t i1;
-        uint32_t i2;
-    } ex;
+	/* Used by O_IMM1 (i1) and O_IMM2 (i2). ENTER instruction only. */
+	struct {
+		uint32_t i1;
+		uint32_t i2;
+	} ex;
 } _Value;
 
-typedef struct
-{
-    /* Type of operand:
-    	O_NONE: operand is to be ignored.
-    	O_REG: index holds global register index.
-    	O_IMM: instruction.imm.
-    	O_IMM1: instruction.imm.ex.i1.
-    	O_IMM2: instruction.imm.ex.i2.
-    	O_DISP: memory dereference with displacement only, instruction.disp.
-    	O_SMEM: simple memory dereference with optional displacement (a single register memory dereference).
-    	O_MEM: complex memory dereference (optional fields: s/i/b/disp).
-    	O_PC: the relative address of a branch instruction (instruction.imm.addr).
-    	O_PTR: the absolute target address of a far branch instruction (instruction.imm.ptr.seg/off).
-    */
-    uint8_t type; /* _OperandType */
+typedef struct {
+	/* Type of operand:
+		O_NONE: operand is to be ignored.
+		O_REG: index holds global register index.
+		O_IMM: instruction.imm.
+		O_IMM1: instruction.imm.ex.i1.
+		O_IMM2: instruction.imm.ex.i2.
+		O_DISP: memory dereference with displacement only, instruction.disp.
+		O_SMEM: simple memory dereference with optional displacement (a single register memory dereference).
+		O_MEM: complex memory dereference (optional fields: s/i/b/disp).
+		O_PC: the relative address of a branch instruction (instruction.imm.addr).
+		O_PTR: the absolute target address of a far branch instruction (instruction.imm.ptr.seg/off).
+	*/
+	uint8_t type; /* _OperandType */
 
-    /* Index of:
-    	O_REG: holds global register index
-    	O_SMEM: holds the 'base' register. E.G: [ECX], [EBX+0x1234] are both in operand.index.
-    	O_MEM: holds the 'index' register. E.G: [EAX*4] is in operand.index.
-    */
-    uint8_t index;
+	/* Index of:
+		O_REG: holds global register index
+		O_SMEM: holds the 'base' register. E.G: [ECX], [EBX+0x1234] are both in operand.index.
+		O_MEM: holds the 'index' register. E.G: [EAX*4] is in operand.index.
+	*/
+	uint8_t index;
 
-    /* Size of:
-    	O_REG: register
-    	O_IMM: instruction.imm
-    	O_IMM1: instruction.imm.ex.i1
-    	O_IMM2: instruction.imm.ex.i2
-    	O_DISP: instruction.disp
-    	O_SMEM: size of indirection.
-    	O_MEM: size of indirection.
-    	O_PC: size of the relative offset
-    	O_PTR: size of instruction.imm.ptr.off (16 or 32)
-    */
-    uint16_t size;
+	/* Size of:
+		O_REG: register
+		O_IMM: instruction.imm
+		O_IMM1: instruction.imm.ex.i1
+		O_IMM2: instruction.imm.ex.i2
+		O_DISP: instruction.disp
+		O_SMEM: size of indirection.
+		O_MEM: size of indirection.
+		O_PC: size of the relative offset
+		O_PTR: size of instruction.imm.ptr.off (16 or 32)
+	*/
+	uint16_t size;
 } _Operand;
 
 #define OPCODE_ID_NONE 0
@@ -240,45 +231,43 @@ typedef struct
 
 #define OPERANDS_NO (4)
 
-typedef struct
-{
-    /* Used by ops[n].type == O_IMM/O_IMM1&O_IMM2/O_PTR/O_PC. Its size is ops[n].size. */
-    _Value imm;
-    /* Used by ops[n].type == O_SMEM/O_MEM/O_DISP. Its size is dispSize. */
-    uint64_t disp;
-    /* Virtual address of first byte of instruction. */
-    _OffsetType addr;
-    /* General flags of instruction, holds prefixes and more, if FLAG_NOT_DECODABLE, instruction is invalid. */
-    uint16_t flags;
-    /* Unused prefixes mask, for each bit that is set that prefix is not used (LSB is byte [addr + 0]). */
-    uint16_t unusedPrefixesMask;
-    /* Mask of registers that were used in the operands, only used for quick look up, in order to know *some* operand uses that register class. */
-    uint16_t usedRegistersMask;
-    /* ID of opcode in the global opcode table. Use for mnemonic look up. */
-    uint16_t opcode;
-    /* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
-    _Operand ops[OPERANDS_NO];
-    /* Size of the whole instruction. */
-    uint8_t size;
-    /* Segment information of memory indirection, default segment, or overriden one, can be -1. Use SEGMENT macros. */
-    uint8_t segment;
-    /* Used by ops[n].type == O_MEM. Base global register index (might be R_NONE), scale size (2/4/8), ignored for 0 or 1. */
-    uint8_t base, scale;
-    uint8_t dispSize;
-    /* Meta defines the instruction set class, and the flow control flags. Use META macros. */
-    uint8_t meta;
-    /* The CPU flags that the instruction operates upon. */
-    uint8_t modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
+typedef struct {
+	/* Used by ops[n].type == O_IMM/O_IMM1&O_IMM2/O_PTR/O_PC. Its size is ops[n].size. */
+	_Value imm;
+	/* Used by ops[n].type == O_SMEM/O_MEM/O_DISP. Its size is dispSize. */
+	uint64_t disp;
+	/* Virtual address of first byte of instruction. */
+	_OffsetType addr;
+	/* General flags of instruction, holds prefixes and more, if FLAG_NOT_DECODABLE, instruction is invalid. */
+	uint16_t flags;
+	/* Unused prefixes mask, for each bit that is set that prefix is not used (LSB is byte [addr + 0]). */
+	uint16_t unusedPrefixesMask;
+	/* Mask of registers that were used in the operands, only used for quick look up, in order to know *some* operand uses that register class. */
+	uint16_t usedRegistersMask;
+	/* ID of opcode in the global opcode table. Use for mnemonic look up. */
+	uint16_t opcode;
+	/* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
+	_Operand ops[OPERANDS_NO];
+	/* Size of the whole instruction. */
+	uint8_t size;
+	/* Segment information of memory indirection, default segment, or overriden one, can be -1. Use SEGMENT macros. */
+	uint8_t segment;
+	/* Used by ops[n].type == O_MEM. Base global register index (might be R_NONE), scale size (2/4/8), ignored for 0 or 1. */
+	uint8_t base, scale;
+	uint8_t dispSize;
+	/* Meta defines the instruction set class, and the flow control flags. Use META macros. */
+	uint8_t meta;
+	/* The CPU flags that the instruction operates upon. */
+	uint8_t modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
 } _DInst;
 
 #ifndef DISTORM_LIGHT
 
 /* Static size of strings. Do not change this value. Keep Python wrapper in sync. */
 #define MAX_TEXT_SIZE (48)
-typedef struct
-{
-    unsigned int length;
-    unsigned char p[MAX_TEXT_SIZE]; /* p is a null terminated string. */
+typedef struct {
+	unsigned int length;
+	unsigned char p[MAX_TEXT_SIZE]; /* p is a null terminated string. */
 } _WString;
 
 /*
@@ -286,13 +275,12 @@ typedef struct
  * Used only for backward compatibility with diStorm64.
  * This structure holds all information the disassembler generates per instruction.
  */
-typedef struct
-{
-    _WString mnemonic; /* Mnemonic of decoded instruction, prefixed if required by REP, LOCK etc. */
-    _WString operands; /* Operands of the decoded instruction, up to 3 operands, comma-seperated. */
-    _WString instructionHex; /* Hex dump - little endian, including prefixes. */
-    unsigned int size; /* Size of decoded instruction. */
-    _OffsetType offset; /* Start offset of the decoded instruction. */
+typedef struct {
+	_WString mnemonic; /* Mnemonic of decoded instruction, prefixed if required by REP, LOCK etc. */
+	_WString operands; /* Operands of the decoded instruction, up to 3 operands, comma-seperated. */
+	_WString instructionHex; /* Hex dump - little endian, including prefixes. */
+	unsigned int size; /* Size of decoded instruction. */
+	_OffsetType offset; /* Start offset of the decoded instruction. */
 } _DecodedInst;
 
 #endif /* DISTORM_LIGHT */
@@ -302,7 +290,7 @@ typedef struct
 #define RM_CX 2     /* CL, CH, CX, ECX, RCX */
 #define RM_DX 4     /* DL, DH, DX, EDX, RDX */
 #define RM_BX 8     /* BL, BH, BX, EBX, RBX */
-#define RM_SP 0x10  /* SPL, SP, ESP, RSP */
+#define RM_SP 0x10  /* SPL, SP, ESP, RSP */ 
 #define RM_BP 0x20  /* BPL, BP, EBP, RBP */
 #define RM_SI 0x40  /* SIL, SI, ESI, RSI */
 #define RM_DI 0x80  /* DIL, DI, EDI, RDI */
@@ -441,28 +429,28 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
  */
 #ifdef SUPPORT_64BIT_OFFSET
 
-_DecodeResult distorm_decompose64(_CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
-#define distorm_decompose distorm_decompose64
+	_DecodeResult distorm_decompose64(_CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
+	#define distorm_decompose distorm_decompose64
 
 #ifndef DISTORM_LIGHT
-/* If distorm-light is defined, we won't export these text-formatting functionality. */
-_DecodeResult distorm_decode64(_OffsetType codeOffset, const unsigned char* code, int codeLen, _DecodeType dt, _DecodedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
-void distorm_format64(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result);
-#define distorm_decode distorm_decode64
-#define distorm_format distorm_format64
+	/* If distorm-light is defined, we won't export these text-formatting functionality. */
+	_DecodeResult distorm_decode64(_OffsetType codeOffset, const unsigned char* code, int codeLen, _DecodeType dt, _DecodedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
+	void distorm_format64(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result);
+	#define distorm_decode distorm_decode64
+	#define distorm_format distorm_format64
 #endif /*DISTORM_LIGHT*/
 
 #else /*SUPPORT_64BIT_OFFSET*/
 
-_DecodeResult distorm_decompose32(_CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
-#define distorm_decompose distorm_decompose32
+	_DecodeResult distorm_decompose32(_CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
+	#define distorm_decompose distorm_decompose32
 
 #ifndef DISTORM_LIGHT
-/* If distorm-light is defined, we won't export these text-formatting functionality. */
-_DecodeResult distorm_decode32(_OffsetType codeOffset, const unsigned char* code, int codeLen, _DecodeType dt, _DecodedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
-void distorm_format32(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result);
-#define distorm_decode distorm_decode32
-#define distorm_format distorm_format32
+	/* If distorm-light is defined, we won't export these text-formatting functionality. */
+	_DecodeResult distorm_decode32(_OffsetType codeOffset, const unsigned char* code, int codeLen, _DecodeType dt, _DecodedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
+	void distorm_format32(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result);
+	#define distorm_decode distorm_decode32
+	#define distorm_format distorm_format32
 #endif /*DISTORM_LIGHT*/
 
 #endif
