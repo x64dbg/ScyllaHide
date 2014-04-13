@@ -1,0 +1,9 @@
+Version 0.2
+
+- Stealth hooks for 32-bit targets to defeat protectors like Themida
+- Olly Plugin: Change olly caption
+- Olly v1 Plugin: Remove EP One-Shot Breakpoint for VMProtect
+
+Version 0.1
+
+- Init
