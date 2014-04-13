@@ -2,6 +2,7 @@
 #include <windows.h>
 #include "resource.h"
 #include "Injector.h"
+#include "olly1patches.h"
 
 #include "..\InjectorCLI\ReadNtConfig.h"
 
@@ -277,6 +278,10 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
     _Addtolist(0,0,"ScyllaHide Plugin v"SCYLLAHIDE_VERSION);
     _Addtolist(0,-1,"  Copyright (C) 2014 Aguila / cypher");
 
+    //do some Olly fixes
+    //fixBadPEBugs();
+    //fixForegroundWindow();
+
     return 0;
 };
 
@@ -332,55 +337,55 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 //called for every debugloop pass
 extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
 {
-	if(!debugevent)
-		return;
+    if(!debugevent)
+        return;
 
-	switch(debugevent->dwDebugEventCode)
-	{
-	case CREATE_PROCESS_DEBUG_EVENT:
-		{
-			ProcessId=debugevent->dwProcessId;
-			bHooked = false;
-			epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
-			ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
-		}
-		break;
+    switch(debugevent->dwDebugEventCode)
+    {
+    case CREATE_PROCESS_DEBUG_EVENT:
+    {
+        ProcessId=debugevent->dwProcessId;
+        bHooked = false;
+        epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
+        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+    }
+    break;
 
-	case LOAD_DLL_DEBUG_EVENT:
-		{
-			if (bHooked)
-			{
-				startInjection(ProcessId, ScyllaHideDllPath, false);
-			}
-			break;
-		}
-	case EXCEPTION_DEBUG_EVENT:
-		{
-			switch(debugevent->u.Exception.ExceptionRecord.ExceptionCode)
-			{
-			case STATUS_BREAKPOINT:
-				{
-					if (!bHooked)
-					{
-						bHooked = true;
-						_Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
-						ReadNtApiInformation();
-						startInjection(ProcessId, ScyllaHideDllPath, true);
-					}
+    case LOAD_DLL_DEBUG_EVENT:
+    {
+        if (bHooked)
+        {
+            startInjection(ProcessId, ScyllaHideDllPath, false);
+        }
+        break;
+    }
+    case EXCEPTION_DEBUG_EVENT:
+    {
+        switch(debugevent->u.Exception.ExceptionRecord.ExceptionCode)
+        {
+        case STATUS_BREAKPOINT:
+        {
+            if (!bHooked)
+            {
+                bHooked = true;
+                _Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
+                ReadNtApiInformation();
+                startInjection(ProcessId, ScyllaHideDllPath, true);
+            }
 
-					break;
-				}
+            break;
+        }
 
-			case STATUS_ILLEGAL_INSTRUCTION:
-				{
-					//THEMIDA
-					break;
-				}
-			}
+        case STATUS_ILLEGAL_INSTRUCTION:
+        {
+            //THEMIDA
+            break;
+        }
+        }
 
-			break;
-		}
-	}
+        break;
+    }
+    }
 }
 
 extern "C" int __declspec(dllexport) _ODBG_Pausedex(int reason, int extdata, void* reg, DEBUG_EVENT *debugevent)
@@ -401,7 +406,7 @@ extern "C" int __declspec(dllexport) _ODBG_Pausedex(int reason, int extdata, voi
 //reset variables. new target started or restarted
 extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
 {
-	ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+    ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
     bHooked = false;
     bEPBreakRemoved = false;
 }
