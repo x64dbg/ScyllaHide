@@ -1,6 +1,7 @@
 #include "olly1patches.h"
 #include <Windows.h>
 
+//taken from strongOD
 void fixBadPEBugs()
 {
     HANDLE hOlly = GetCurrentProcess();
@@ -60,6 +61,7 @@ void fixBadPEBugs()
     if(fixed) _Addtolist(0,-1,"Fixed PE-Bug at 0xC870A");
 }
 
+//taken from strongOD
 void fixForegroundWindow()
 {
     HANDLE hOlly = GetCurrentProcess();

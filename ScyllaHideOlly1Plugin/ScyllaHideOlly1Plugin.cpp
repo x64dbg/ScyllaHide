@@ -7,9 +7,9 @@
 #include "..\InjectorCLI\ReadNtConfig.h"
 
 //scyllaHide definitions
-struct HideOptions pHideOptions;
+struct HideOptions pHideOptions = {0};
 
-#define SCYLLAHIDE_VERSION "0.2"
+#define SCYLLAHIDE_VERSION "0.2a"
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
@@ -152,6 +152,12 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.removeEPBreak = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.fixOllyBugs = 1;
+    }
+    else
+        pHideOptions.fixOllyBugs = 0;
 
     GetDlgItemTextA(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
     SetWindowTextA(hwmain, pHideOptions.ollyTitle);
@@ -174,6 +180,7 @@ void SaveOptions(HWND hWnd)
     _Pluginwriteinttoini(hinst, "NtClose", pHideOptions.NtClose);
     _Pluginwriteinttoini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
     _Pluginwritestringtoini(hinst, "ollyTitle", pHideOptions.ollyTitle);
+    _Pluginwriteinttoini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
 }
 
 void LoadOptions()
@@ -196,6 +203,7 @@ void LoadOptions()
     pHideOptions.NtClose = _Pluginreadintfromini(hinst, "NtClose", pHideOptions.NtClose);
     pHideOptions.removeEPBreak = _Pluginreadintfromini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
     _Pluginreadstringfromini(hinst, "ollyTitle", pHideOptions.ollyTitle, "I can haz crack?");
+    pHideOptions.fixOllyBugs = _Pluginreadintfromini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
 }
 
 //options dialog proc
@@ -224,6 +232,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, pHideOptions.NtClose, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
         SetDlgItemTextA(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
+        SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
         break;
     }
     case WM_CLOSE:
@@ -272,15 +281,16 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
     hwmain=hw;
 
-    HideOptions pHideOptions = {0};
     LoadOptions();
 
     _Addtolist(0,0,"ScyllaHide Plugin v"SCYLLAHIDE_VERSION);
     _Addtolist(0,-1,"  Copyright (C) 2014 Aguila / cypher");
 
     //do some Olly fixes
-    //fixBadPEBugs();
-    //fixForegroundWindow();
+    if(pHideOptions.fixOllyBugs) {
+        fixBadPEBugs();
+        fixForegroundWindow();
+    }
 
     return 0;
 };

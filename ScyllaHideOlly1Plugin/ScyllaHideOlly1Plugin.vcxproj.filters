@@ -69,6 +69,9 @@
     <ClCompile Include="..\distorm\wstring.c">
       <Filter>Source Files\distorm</Filter>
     </ClCompile>
+    <ClCompile Include="olly1patches.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Plugin.h">
@@ -127,6 +130,9 @@
     </ClInclude>
     <ClInclude Include="..\distorm\x86defs.h">
       <Filter>Header Files\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="olly1patches.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

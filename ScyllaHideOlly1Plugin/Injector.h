@@ -20,6 +20,7 @@ struct HideOptions
     int NtSetDebugFilterState;
     int NtClose;
     int removeEPBreak;
+    int fixOllyBugs;
     char ollyTitle[32];
 };
 
