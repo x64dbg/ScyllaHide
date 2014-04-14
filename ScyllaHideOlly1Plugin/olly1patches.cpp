@@ -68,7 +68,7 @@ void fixForegroundWindow()
     DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
     BOOL fixed = false;
 
-    BYTE fgWinFix[] = {0x74}; //JMP (EB 1C) to JNZ (75 1C)
+    BYTE fgWinFix[] = {0xEB}; //JNZ (75 1C) to JMP (EB 1C)
     fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x3A1FB), &fgWinFix, sizeof(fgWinFix), NULL);
     if(fixed) _Addtolist(0,-1,"Fixed ForegroundWindow at 0x3A1FB");
 }
