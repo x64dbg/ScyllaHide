@@ -291,6 +291,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
         fixBadPEBugs();
         fixForegroundWindow();
     }
+    fixX64Bug();
 
     return 0;
 };

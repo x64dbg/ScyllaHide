@@ -72,3 +72,15 @@ void fixForegroundWindow()
     fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x3A1FB), &fgWinFix, sizeof(fgWinFix), NULL);
     if(fixed) _Addtolist(0,-1,"Fixed ForegroundWindow at 0x3A1FB");
 }
+
+//taken from http://waleedassar.blogspot.de/2012/03/ollydbg-v110-and-wow64.html
+void fixX64Bug()
+{
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+    BOOL fixed = false;
+
+    BYTE x64Patch[] = {0xEB}; //JE to JMP
+    fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x311C2), &x64Patch, sizeof(x64Patch), NULL);
+    if(fixed) _Addtolist(0,-1,"Patched single-step break on x64 at 0x311C2");
+}
