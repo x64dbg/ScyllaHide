@@ -24,10 +24,12 @@ void Test_NtQueryInformationProcess();
 void Test_FindWindow();
 void Test_NtSetDebugFilterState();
 void Test_NtGetContextThread();
+void Test_PEB();
 
 int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow)
 {
-	Test_NtGetContextThread();
+	Test_PEB();
+	//Test_NtGetContextThread();
 	//Test_NtSetDebugFilterState();
 	//Test_FindWindow();
 	//Test_NtSetInformationThread();
@@ -50,6 +52,68 @@ void ShowMessageBox(const char * format, ...)
 	MessageBoxA(0, text, "Text", 0);
 }
 
+void Test_PEB()
+{
+	BYTE BeingDebugged = 0;
+	DWORD NtGlobalFlags = 0;
+	DWORD_PTR processHeap = 0;
+	DWORD ForceFlags = 0;
+	DWORD Flags = 0;
+
+	DWORD_PTR pPeb = 0;
+#ifdef _WIN64
+#define PEB_BeingDebugged 0x2
+#define PEB_NtGlobalFlags 0xBC
+#define PEB_ProcessHeap 0x30
+	pPeb = (DWORD_PTR)__readgsqword(12 * sizeof(DWORD_PTR));
+#else
+#define PEB_BeingDebugged 0x2
+#define PEB_NtGlobalFlags 0x68
+#define PEB_ProcessHeap 0x18
+	pPeb = (DWORD_PTR)__readfsdword(12 * sizeof(DWORD_PTR));
+#endif
+
+	BeingDebugged = *((BYTE *)(pPeb + PEB_BeingDebugged));
+	NtGlobalFlags = *((DWORD *)(pPeb + PEB_NtGlobalFlags));
+	processHeap = *((DWORD_PTR *)(pPeb + PEB_ProcessHeap));
+
+	DWORD dwVersion = GetVersion();
+	DWORD dwMajorVersion = (DWORD)(LOBYTE(LOWORD(dwVersion)));
+	DWORD dwMinorVersion = (DWORD)(HIBYTE(LOWORD(dwVersion)));
+
+	int FlagsOffset = 0x0C;
+	int ForceFlagsOffset = 0x10;
+
+#ifdef _WIN64
+	if (dwMajorVersion >= 6)
+	{
+		FlagsOffset = 0x70;
+		ForceFlagsOffset = 0x74;	
+	}
+	else
+	{
+		FlagsOffset = 0x14;
+		ForceFlagsOffset = 0x18;
+	}
+#else
+	if (dwMajorVersion >= 6)
+	{
+		FlagsOffset = 0x40;
+		ForceFlagsOffset = 0x44;
+	}
+	else
+	{
+		FlagsOffset = 0x0C;
+		ForceFlagsOffset = 0x10;
+	}
+#endif
+
+	ForceFlags = *((DWORD *)(processHeap + ForceFlagsOffset));
+	Flags = *((DWORD *)(processHeap + FlagsOffset));
+
+	ShowMessageBox("BeingDebugged %u == 1?\r\nNtGlobalFlags 0x%X == 0x70?\r\n\r\nProcessHeap %p\r\n\r\nForceFlags != 0? %X Flags %X != 2?",BeingDebugged,NtGlobalFlags, processHeap,ForceFlags,Flags);
+
+}
 void Test_NtGetContextThread()
 {
 	CONTEXT ctx = { 0 };
