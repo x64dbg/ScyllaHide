@@ -158,6 +158,12 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.fixOllyBugs = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.x64Fix = 1;
+    }
+    else
+        pHideOptions.x64Fix = 0;
 
     GetDlgItemTextA(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
     SetWindowTextA(hwmain, pHideOptions.ollyTitle);
@@ -181,6 +187,7 @@ void SaveOptions(HWND hWnd)
     _Pluginwriteinttoini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
     _Pluginwritestringtoini(hinst, "ollyTitle", pHideOptions.ollyTitle);
     _Pluginwriteinttoini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
+    _Pluginwriteinttoini(hinst, "x64Fix", pHideOptions.x64Fix);
 }
 
 void LoadOptions()
@@ -204,6 +211,7 @@ void LoadOptions()
     pHideOptions.removeEPBreak = _Pluginreadintfromini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
     _Pluginreadstringfromini(hinst, "ollyTitle", pHideOptions.ollyTitle, "I can haz crack?");
     pHideOptions.fixOllyBugs = _Pluginreadintfromini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
+    pHideOptions.x64Fix = _Pluginreadintfromini(hinst, "x64Fix", pHideOptions.x64Fix);
 }
 
 //options dialog proc
@@ -233,6 +241,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
         SetDlgItemTextA(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
         SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
         break;
     }
     case WM_CLOSE:
@@ -291,7 +300,9 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
         fixBadPEBugs();
         fixForegroundWindow();
     }
-    fixX64Bug();
+    if(pHideOptions.x64Fix) {
+        fixX64Bug();
+    }
 
     return 0;
 };
@@ -409,10 +420,6 @@ extern "C" int __declspec(dllexport) _ODBG_Pausedex(int reason, int extdata, voi
 
     return 0;
 }
-
-
-
-
 
 //reset variables. new target started or restarted
 extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)

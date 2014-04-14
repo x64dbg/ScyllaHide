@@ -22,6 +22,7 @@ struct HideOptions
     int removeEPBreak;
     int fixOllyBugs;
     char ollyTitle[32];
+    int x64Fix;
 };
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess);
