@@ -125,8 +125,8 @@
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
     <ClInclude Include="Injector.h" />
+    <ClInclude Include="ollyplugindefinitions.h" />
     <ClInclude Include="olly1patches.h" />
-    <ClInclude Include="Plugin.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

@@ -74,9 +74,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Plugin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Injector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -132,6 +129,9 @@
       <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="olly1patches.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ollyplugindefinitions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

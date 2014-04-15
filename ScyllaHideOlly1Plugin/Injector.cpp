@@ -1,4 +1,5 @@
 #include "Injector.h"
+#include "ollyplugindefinitions.h"
 #include "..\InjectorCLI\RemoteHook.h"
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\\ApplyHooking.h"
@@ -14,57 +15,57 @@ static LPVOID remoteImageBase = 0;
 
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-	DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
-	DllExchangeLoader.EnableProtectProcessId = TRUE;
-	return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
+    DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
+    DllExchangeLoader.EnableProtectProcessId = TRUE;
+    return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 {
-	DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
-	DWORD exchangeDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "DllExchange");
+    DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
+    DWORD exchangeDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "DllExchange");
 
-	if (newProcess == false)
-	{
-		_Message(0, "[ScyllaHide] Apply hooks again");
-		if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
-		{
-			WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
-		}
-	}
-	else
-	{
-		remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
-		if (remoteImageBase)
-		{
-			FillExchangeStruct(hProcess, &DllExchangeLoader);
+    if (newProcess == false)
+    {
+        _Message(0, "[ScyllaHide] Apply hooks again");
+        if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
+        {
+            WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
+        }
+    }
+    else
+    {
+        remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
+        if (remoteImageBase)
+        {
+            FillExchangeStruct(hProcess, &DllExchangeLoader);
 
-			StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
+            StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
 
-			if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
-			{
-				//DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
+            if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
+            {
+                //DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
 
-				//bool suc = StartSystemBreakpointInjection(dwThreadid, hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
-				//if (suc)
-				//{
-				_Message(0, "[ScyllaHide] Injection successful, Imagebase %p", remoteImageBase);
-				//}
-				//else
-				//{
-				//    _Message(0, "[ScyllaHide] Injection failed Imagebase %p\n", remoteImageBase);
-				//}
-			}
-			else
-			{
-				_Message(0, "[ScyllaHide] Failed to write exchange struct");
-			}
-		}
-		else
-		{
-			_Message(0, "[ScyllaHide] Failed to map image!");
-		}
-	}
+                //bool suc = StartSystemBreakpointInjection(dwThreadid, hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
+                //if (suc)
+                //{
+                _Message(0, "[ScyllaHide] Injection successful, Imagebase %p", remoteImageBase);
+                //}
+                //else
+                //{
+                //    _Message(0, "[ScyllaHide] Injection failed Imagebase %p\n", remoteImageBase);
+                //}
+            }
+            else
+            {
+                _Message(0, "[ScyllaHide] Failed to write exchange struct");
+            }
+        }
+        else
+        {
+            _Message(0, "[ScyllaHide] Failed to map image!");
+        }
+    }
 }
 
 void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
@@ -75,7 +76,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
         BYTE * dllMemory = ReadFileToMemory(dllPath);
         if (dllMemory)
         {
-			startInjectionProcess(hProcess, dllMemory, newProcess);
+            startInjectionProcess(hProcess, dllMemory, newProcess);
             free(dllMemory);
         }
         else
@@ -153,8 +154,8 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
     data->EnableNtCloseHook = pHideOptions.NtClose;
 
-	data->isKernel32Hooked = FALSE;
-	data->isNtdllHooked = FALSE;
-	data->isUser32Hooked = FALSE;
+    data->isKernel32Hooked = FALSE;
+    data->isNtdllHooked = FALSE;
+    data->isUser32Hooked = FALSE;
 
 }
