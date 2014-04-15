@@ -403,6 +403,11 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         bHooked = false;
         epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
         ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+
+		//change olly caption again !
+		SetWindowTextA(hwmain, pHideOptions.ollyTitle);
+
+		//StartPebPatch1(ProcessId);
     }
     break;
 
@@ -422,6 +427,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         {
             if (!bHooked)
             {
+				
                 bHooked = true;
                 _Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
                 ReadNtApiInformation();

@@ -147,6 +147,7 @@ static int getHeapForceFlagsOffset(bool x64)
     }
 }
 
+//some debuggers manipulate StartUpInfo to start the debuged process and therefore can be detected...
 bool FixStartUpInfo( PEB_CURRENT* myPEB, HANDLE hProcess )
 {
 	RTL_USER_PROCESS_PARAMETERS * rtlProcessParam = (RTL_USER_PROCESS_PARAMETERS *)myPEB->ProcessParameters;
@@ -193,7 +194,7 @@ bool FixPebInProcess(HANDLE hProcess)
 		FixStartUpInfo(&myPEB, hProcess);
 
         //TODO: backup GlobalFlag
-        //myPEB.BeingDebugged = FALSE;
+        myPEB.BeingDebugged = FALSE;
         myPEB.NtGlobalFlag &= ~0x70;
 
 #ifndef _WIN64

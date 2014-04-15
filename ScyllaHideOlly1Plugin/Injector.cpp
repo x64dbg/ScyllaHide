@@ -13,10 +13,25 @@ HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 static LPVOID remoteImageBase = 0;
 
 
+void StartPebPatch1(DWORD targetPid)
+{
+	HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+	if (hProcess)
+	{
+		DllExchangeLoader.EnablePebHiding = pHideOptions.PEB;
+
+		ApplyPEBPatch(&DllExchangeLoader, hProcess);
+		CloseHandle(hProcess);
+	}
+}
+
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
     DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
     DllExchangeLoader.EnableProtectProcessId = TRUE;
+
+	ApplyPEBPatch(&DllExchangeLoader, hProcess);
+
     return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
 
@@ -70,7 +85,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 
 void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
 {
-    HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+    HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
     if (hProcess)
     {
         BYTE * dllMemory = ReadFileToMemory(dllPath);
