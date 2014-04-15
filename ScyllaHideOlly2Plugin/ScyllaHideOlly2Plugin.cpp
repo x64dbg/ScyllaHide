@@ -9,10 +9,10 @@
 #include "..\InjectorCLI\ReadNtConfig.h"
 
 //scyllaHide definitions
-struct HideOptions pHideOptions;
+struct HideOptions pHideOptions = {0};
 
 #define PLUGINNAME     L"ScyllaHide"
-#define VERSION        L"0.2"
+#define VERSION        L"0.2a"
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
@@ -24,6 +24,7 @@ extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 
 //forward definitions
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode);
+static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
 
 //globals
@@ -41,6 +42,21 @@ static t_menu mainmenu[] =
         L"|About",
         L"About ScyllaHide plugin",
         K_NONE, Mabout, NULL, 0
+    },
+    { NULL, NULL, K_NONE, NULL, NULL, 0 }
+};
+
+static t_menu threadmenu[] =
+{
+    {
+        L"Resume all Threads",
+        L"Resume all Threads",
+        K_NONE, Mthreads, NULL, 0
+    },
+    {
+        L"Suspend all Threads",
+        L"Suspend all Threads",
+        K_NONE, Mthreads, NULL, 1
     },
     { NULL, NULL, K_NONE, NULL, NULL, 0 }
 };
@@ -198,6 +214,49 @@ static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
     return MENU_ABSENT;
 }
 
+static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode)
+{
+    if (mode==MENU_VERIFY)
+        return MENU_NORMAL;
+    else if (mode==MENU_EXECUTE)
+    {
+        t_table threadWindow = thread;
+        int threadCount = threadWindow.sorted.n;
+        int threadSize = threadWindow.sorted.itemsize;
+        t_thread* threadData = (t_thread*)threadWindow.sorted.data;
+
+        switch(index)
+        {
+        case 0:
+        {
+            //Resumeallthreads(); doesnt work as expected
+            for(int i=0; i<threadCount; i++) {
+                ResumeThread(threadData->thread);
+
+                //yup this is super-hacky-pointer-kungfu but threadData++ wont work coz there
+                //is 0x20bytes extra data between thread elements
+                threadData = reinterpret_cast<t_thread*>((DWORD)threadData+threadSize);
+            }
+            break;
+        }
+        case 1:
+        {
+            //Suspendallthreads(); doesnt work as expected
+            for(int i=0; i<threadCount; i++) {
+                SuspendThread(threadData->thread);
+
+                //yup this is super-hacky-pointer-kungfu but threadData++ wont work coz there
+                //is 0x20bytes extra data between thread elements
+                threadData = reinterpret_cast<t_thread*>((DWORD)threadData+threadSize);
+            }
+            break;
+        }
+        }
+        return MENU_REDRAW;
+    };
+    return MENU_ABSENT;
+}
+
 //Menu->About
 static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode)
 {
@@ -317,6 +376,8 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
 {
     if (wcscmp(type,PWM_MAIN)==0)
         return mainmenu;
+    else if(wcscmp(type, PWM_THREADS)==0)
+        return threadmenu;
 
     return NULL;
 };
@@ -377,7 +438,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
     {
         ProcessId = debugevent->dwProcessId;
         bHooked = false;
-		ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
         //change olly caption again !
         SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
