@@ -147,6 +147,21 @@ static int getHeapForceFlagsOffset(bool x64)
     }
 }
 
+bool FixStartUpInfo( PEB_CURRENT* myPEB, HANDLE hProcess )
+{
+	RTL_USER_PROCESS_PARAMETERS * rtlProcessParam = (RTL_USER_PROCESS_PARAMETERS *)myPEB->ProcessParameters;
+
+	DWORD_PTR startOffset = (DWORD_PTR)&rtlProcessParam->StartingX;
+	DWORD patchSize = (DWORD_PTR)&rtlProcessParam->WindowFlags - (DWORD_PTR)&rtlProcessParam->StartingX;
+
+	LPVOID memoryZero = calloc(patchSize, 1);
+
+	bool retVal = (WriteProcessMemory(hProcess, (LPVOID)startOffset, memoryZero, patchSize, 0) != FALSE);
+	free(memoryZero);
+
+	return retVal;
+}
+
 bool FixPebInProcess(HANDLE hProcess)
 {
     PEB_CURRENT myPEB = { 0 };
@@ -175,9 +190,10 @@ bool FixPebInProcess(HANDLE hProcess)
         }
 #endif
 
+		FixStartUpInfo(&myPEB, hProcess);
 
         //TODO: backup GlobalFlag
-        myPEB.BeingDebugged = FALSE;
+        //myPEB.BeingDebugged = FALSE;
         myPEB.NtGlobalFlag &= ~0x70;
 
 #ifndef _WIN64
