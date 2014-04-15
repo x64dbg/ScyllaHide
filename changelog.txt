@@ -1,3 +1,9 @@
+Version 0.2a
+
+- Fix for Olly plugin caption reset
+- Fix STARTUPINFO structure, GetStartupInfoA/W
+- Threads?
+
 Version 0.2
 
 Warning: Since this version, ScyllaHide is not compatbile with Stealth64! You need to remove the Stealth64 plugin.
