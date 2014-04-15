@@ -378,6 +378,9 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         ProcessId = debugevent->dwProcessId;
         bHooked = false;
 		ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+
+        //change olly caption again !
+        SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
     }
     break;
     case LOAD_DLL_DEBUG_EVENT:
