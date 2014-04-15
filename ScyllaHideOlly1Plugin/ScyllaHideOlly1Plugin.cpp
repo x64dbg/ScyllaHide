@@ -2,6 +2,7 @@
 #include <windows.h>
 #include "resource.h"
 #include "Injector.h"
+#include "ollyplugindefinitions.h"
 #include "olly1patches.h"
 
 #include "..\InjectorCLI\ReadNtConfig.h"
@@ -12,11 +13,6 @@ struct HideOptions pHideOptions = {0};
 #define SCYLLAHIDE_VERSION "0.2a"
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
-
-
-//olly definitions
-#define PLUGIN_VERSION 110
-#define PM_MAIN 0
 
 //globals
 static HINSTANCE hinst;
@@ -320,6 +316,11 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
         SetWindowTextA(hwmain, pHideOptions.ollyTitle);
         return 1;
     }
+    case PM_THREADS:
+    {
+        strcpy(data, "0 &Resume all Threads, 1 &Suspend all Threads");
+        return 1;
+    }
 
     default:
         break;
@@ -332,8 +333,7 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
 //handle plugin actions
 extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,void *item)
 {
-    if(origin==PM_MAIN)
-    {
+    if(origin==PM_MAIN) {
         switch(action)
         {
         case 0:
@@ -352,6 +352,39 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
         }
         default:
             break;
+        }
+    } else if(origin==PM_THREADS) {
+        t_table* threadWindow = (t_table*)_Plugingetvalue(VAL_THREADS);
+        int threadCount = threadWindow->data.n;
+        int threadSize = threadWindow->data.itemsize;
+        t_thread* thread = (t_thread*)threadWindow->data.data;
+
+        switch(action)
+        {
+        case 0:
+        {
+            //resume
+            for(int i=0; i<threadCount; i++) {
+                ResumeThread(thread->thread);
+
+                //yup this is super-hacky-pointer-kungfu but thread++ wont work coz there
+                //is 0x20bytes extra data between thread elements
+                thread = reinterpret_cast<t_thread*>((DWORD)thread+threadSize);
+            }
+            break;
+        }
+        case 1:
+        {
+            //suspend
+            for(int i=0; i<threadCount; i++) {
+                SuspendThread(thread->thread);
+
+                //yup this is super-hacky-pointer-kungfu but thread++ wont work coz there
+                //is 0x20bytes extra data between thread elements
+                thread = reinterpret_cast<t_thread*>((DWORD)thread+threadSize);
+            }
+            break;
+        }
         }
     }
 }
