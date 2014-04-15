@@ -147,7 +147,7 @@ static int getHeapForceFlagsOffset(bool x64)
     }
 }
 
-//some debuggers manipulate StartUpInfo to start the debuged process and therefore can be detected...
+//some debuggers manipulate StartUpInfo to start the debugged process and therefore can be detected...
 bool FixStartUpInfo( PEB_CURRENT* myPEB, HANDLE hProcess )
 {
 	RTL_USER_PROCESS_PARAMETERS * rtlProcessParam = (RTL_USER_PROCESS_PARAMETERS *)myPEB->ProcessParameters;

@@ -49,7 +49,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 
 void startInjection(DWORD targetPid, const WCHAR * dllPath)
 {
-    HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+    HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
     if (hProcess)
     {
         BYTE * dllMemory = ReadFileToMemory(dllPath);
