@@ -144,12 +144,21 @@ void ApplyUser32Hook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dl
 	}
 }
 
+bool ApplyPEBPatch(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess)
+{
+	if (hProcess && dllexchange)
+	{
+		if (dllexchange->EnablePebHiding == TRUE) FixPebInProcess(hProcess);
+		return true;
+	}
+
+	return false;
+}
+
 bool ApplyHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
 	bool retVal = false;
-	dllexchange->hDllImage = (HMODULE)imageBase;
-
-	if (dllexchange->EnablePebHiding == TRUE) FixPebInProcess(hProcess);
+	dllexchange->hDllImage = (HMODULE)imageBase;	
 
 	if (dllexchange->isNtdllHooked == FALSE)
 	{

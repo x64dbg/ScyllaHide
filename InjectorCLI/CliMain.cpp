@@ -95,6 +95,8 @@ bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 	DllExchangeLoader.dwProtectedProcessId = 0; //for olly plugins
 	DllExchangeLoader.EnableProtectProcessId = FALSE;
 
+	ApplyPEBPatch(&DllExchangeLoader, hProcess);
+
 	return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
 
