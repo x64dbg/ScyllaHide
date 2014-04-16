@@ -6,6 +6,7 @@ Version 0.2a
 - x64 compatibility mode for Olly1
 - fix PE-Bugs for Olly1
 - fix FPU-Bug for Olly1
+- split "Protect DRx" into its options
 
 Version 0.2
 

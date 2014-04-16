@@ -106,12 +106,30 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.BlockInput = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_GETCHECK, 0, 0))
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.ProtectDrx = 1;
+        pHideOptions.NtGetContextThread = 1;
     }
     else
-        pHideOptions.ProtectDrx = 0;
+        pHideOptions.NtGetContextThread = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtSetContextThread = 1;
+    }
+    else
+        pHideOptions.NtSetContextThread = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtContinue = 1;
+    }
+    else
+        pHideOptions.NtContinue = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.KiUserExceptionDispatcher = 1;
+    }
+    else
+        pHideOptions.KiUserExceptionDispatcher = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_GETCHECK, 0, 0))
     {
         pHideOptions.NtUserFindWindowEx = 1;
@@ -174,7 +192,10 @@ void SaveOptions(HWND hWnd)
     _Pluginwriteinttoini(hinst, "GetTickCount", pHideOptions.GetTickCount);
     _Pluginwriteinttoini(hinst, "OutputDebugStringA", pHideOptions.OutputDebugStringA);
     _Pluginwriteinttoini(hinst, "BlockInput", pHideOptions.BlockInput);
-    _Pluginwriteinttoini(hinst, "ProtectDrx", pHideOptions.ProtectDrx);
+    _Pluginwriteinttoini(hinst, "NtGetContextThread", pHideOptions.NtGetContextThread);
+    _Pluginwriteinttoini(hinst, "NtSetContextThread", pHideOptions.NtSetContextThread);
+    _Pluginwriteinttoini(hinst, "NtContinue", pHideOptions.NtContinue);
+    _Pluginwriteinttoini(hinst, "KiUserExceptionDispatcher", pHideOptions.KiUserExceptionDispatcher);
     _Pluginwriteinttoini(hinst, "NtUserFindWindowEx", pHideOptions.NtUserFindWindowEx);
     _Pluginwriteinttoini(hinst, "NtUserBuildHwndList", pHideOptions.NtUserBuildHwndList);
     _Pluginwriteinttoini(hinst, "NtUserQueryWindow", pHideOptions.NtUserQueryWindow);
@@ -198,7 +219,10 @@ void LoadOptions()
     pHideOptions.GetTickCount = _Pluginreadintfromini(hinst, "GetTickCount", pHideOptions.GetTickCount);
     pHideOptions.OutputDebugStringA = _Pluginreadintfromini(hinst, "OutputDebugStringA", pHideOptions.OutputDebugStringA);
     pHideOptions.BlockInput = _Pluginreadintfromini(hinst, "BlockInput", pHideOptions.BlockInput);
-    pHideOptions.ProtectDrx = _Pluginreadintfromini(hinst, "ProtectDrx", pHideOptions.ProtectDrx);
+    pHideOptions.NtGetContextThread = _Pluginreadintfromini(hinst, "NtGetContextThread", pHideOptions.NtGetContextThread);
+    pHideOptions.NtSetContextThread = _Pluginreadintfromini(hinst, "NtSetContextThread", pHideOptions.NtSetContextThread);
+    pHideOptions.NtContinue = _Pluginreadintfromini(hinst, "NtContinue", pHideOptions.NtContinue);
+    pHideOptions.KiUserExceptionDispatcher = _Pluginreadintfromini(hinst, "KiUserExceptionDispatcher", pHideOptions.KiUserExceptionDispatcher);
     pHideOptions.NtUserFindWindowEx = _Pluginreadintfromini(hinst, "NtUserFindWindowEx", pHideOptions.NtUserFindWindowEx);
     pHideOptions.NtUserBuildHwndList = _Pluginreadintfromini(hinst, "NtUserBuildHwndList", pHideOptions.NtUserBuildHwndList);
     pHideOptions.NtUserQueryWindow = _Pluginreadintfromini(hinst, "NtUserQueryWindow", pHideOptions.NtUserQueryWindow);
@@ -228,7 +252,12 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_SETCHECK, pHideOptions.GetTickCount, 0);
         SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_SETCHECK, pHideOptions.OutputDebugStringA, 0);
         SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_SETCHECK, pHideOptions.BlockInput, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, pHideOptions.ProtectDrx, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, pHideOptions.NtGetContextThread, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_SETCHECK, pHideOptions.NtSetContextThread, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_SETCHECK, pHideOptions.NtContinue, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_SETCHECK, pHideOptions.KiUserExceptionDispatcher, 0);
+        if(pHideOptions.NtGetContextThread && pHideOptions.NtSetContextThread && pHideOptions.NtContinue && pHideOptions.KiUserExceptionDispatcher)
+            SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 1, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_SETCHECK, pHideOptions.NtUserFindWindowEx, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_SETCHECK, pHideOptions.NtUserBuildHwndList, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_SETCHECK, pHideOptions.NtUserQueryWindow, 0);
@@ -256,6 +285,35 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             SaveOptions(hWnd);
             MessageBoxA(hWnd, "Please restart the target to apply changes !", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
             EndDialog(hWnd, NULL);
+            break;
+        }
+        case IDC_PROTECTDRX:
+        {
+            WPARAM state;
+            (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_GETCHECK, 0, 0))?state=1:state=0;
+
+            //trigger child checkboxes
+            SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_SETCHECK, state, 0);
+
+            break;
+        }
+        case IDC_NTGETCONTEXTTHREAD:
+        case IDC_NTSETCONTEXTTHREAD:
+        case IDC_NTCONTINUE:
+        case IDC_KIUED:
+        {   //this is just for GUI continuity
+            int allChecked = 1;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_GETCHECK, 0, 0)) allChecked--;
+
+            if(allChecked<1) SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 0, 0);
+            else SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 1, 0);
+
             break;
         }
         }

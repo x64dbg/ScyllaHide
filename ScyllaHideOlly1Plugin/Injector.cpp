@@ -15,14 +15,14 @@ static LPVOID remoteImageBase = 0;
 
 void StartPebPatch1(DWORD targetPid)
 {
-	HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
-	if (hProcess)
-	{
-		DllExchangeLoader.EnablePebHiding = pHideOptions.PEB;
+    HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+    if (hProcess)
+    {
+        DllExchangeLoader.EnablePebHiding = pHideOptions.PEB;
 
-		ApplyPEBPatch(&DllExchangeLoader, hProcess);
-		CloseHandle(hProcess);
-	}
+        ApplyPEBPatch(&DllExchangeLoader, hProcess);
+        CloseHandle(hProcess);
+    }
 }
 
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
@@ -30,7 +30,7 @@ bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
     DllExchangeLoader.EnableProtectProcessId = TRUE;
 
-	ApplyPEBPatch(&DllExchangeLoader, hProcess);
+    ApplyPEBPatch(&DllExchangeLoader, hProcess);
 
     return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
@@ -158,10 +158,10 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
     data->EnableNtCloseHook = pHideOptions.NtClose;
 
-    data->EnableNtGetContextThreadHook = pHideOptions.ProtectDrx;
-    data->EnableNtSetContextThreadHook = pHideOptions.ProtectDrx;
-    data->EnableNtContinueHook = pHideOptions.ProtectDrx;
-    data->EnableKiUserExceptionDispatcherHook = pHideOptions.ProtectDrx;
+    data->EnableNtGetContextThreadHook = pHideOptions.NtGetContextThread;
+    data->EnableNtSetContextThreadHook = pHideOptions.NtSetContextThread;
+    data->EnableNtContinueHook = pHideOptions.NtContinue;
+    data->EnableKiUserExceptionDispatcherHook = pHideOptions.KiUserExceptionDispatcher;
 
     data->EnableNtUserFindWindowExHook = pHideOptions.NtUserFindWindowEx;
     data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
