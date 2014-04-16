@@ -30,6 +30,9 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
 //globals
 HINSTANCE hinst;
 
+HMODULE hNtdll = 0;
+bool specialPebFix = false;
+
 //menus
 static t_menu mainmenu[] =
 {
@@ -313,6 +316,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
+		hNtdll = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
         WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
         if (temp)
@@ -432,6 +436,23 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 
     if(!debugevent)
         return;
+
+
+	if (pHideOptions.PEB)
+	{
+		if (specialPebFix)
+		{
+			StartFixBeingDebugged(ProcessId, false);
+			specialPebFix = false;
+		}
+
+		if (debugevent->u.LoadDll.lpBaseOfDll == hNtdll)
+		{
+			StartFixBeingDebugged(ProcessId, true);
+			specialPebFix = true;
+		}
+	}
+
     switch(debugevent->dwDebugEventCode)
     {
     case CREATE_PROCESS_DEBUG_EVENT:
