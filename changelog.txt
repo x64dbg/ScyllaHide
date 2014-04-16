@@ -6,7 +6,7 @@ Version 0.2a
 - x64 compatibility mode for Olly1
 - fix PE-Bugs for Olly1
 - fix FPU-Bug for Olly1
-- split "Protect DRx" into its options
+- split "Protect DRx" into its options (ini option ProtectDRx now deprecated)
 - Fix PEB Patch bug, now Themida works on WinXP
 
 Version 0.2

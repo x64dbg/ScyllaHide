@@ -13,71 +13,71 @@ static LPVOID remoteImageBase = 0;
 
 void StartFixBeingDebugged(DWORD targetPid, bool setToNull)
 {
-	HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
-	if (hProcess)
-	{
-		DllExchangeLoader.EnablePebHiding = pHideOptions.PEB;
+    HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+    if (hProcess)
+    {
+        DllExchangeLoader.EnablePebHiding = pHideOptions.PEB;
 
-		FixPebBeingDebugged(hProcess, setToNull);
-		CloseHandle(hProcess);
-	}
+        FixPebBeingDebugged(hProcess, setToNull);
+        CloseHandle(hProcess);
+    }
 }
 
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-	DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
-	DllExchangeLoader.EnableProtectProcessId = TRUE;
+    DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
+    DllExchangeLoader.EnableProtectProcessId = TRUE;
 
-	DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_StartUpInfo;
-	ApplyPEBPatch(&DllExchangeLoader, hProcess, enableEverything);
+    DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_StartUpInfo;
+    ApplyPEBPatch(&DllExchangeLoader, hProcess, enableEverything);
 
-	return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
+    return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 {
-	DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
-	DWORD exchangeDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "DllExchange");
+    DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
+    DWORD exchangeDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "DllExchange");
 
-	if (newProcess == false)
-	{
-		Message(0, L"[ScyllaHide] Apply hooks again");
-		StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
-		WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
-	}
-	else
-	{
-		remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
-		if (remoteImageBase)
-		{
-			FillExchangeStruct(hProcess, &DllExchangeLoader);
+    if (newProcess == false)
+    {
+        Message(0, L"[ScyllaHide] Apply hooks again");
+        StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
+        WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
+    }
+    else
+    {
+        remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
+        if (remoteImageBase)
+        {
+            FillExchangeStruct(hProcess, &DllExchangeLoader);
 
 
-			StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
+            StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
 
-			if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
-			{
-				//DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
+            if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
+            {
+                //DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
 
-				//if (exitCode == HOOK_ERROR_SUCCESS)
-				//{
-				Message(0, L"[ScyllaHide] Injection successful, Imagebase %p", remoteImageBase);
-				//}
-				//else
-				//{
-				//    Message(0, L"[ScyllaHide] Injection failed, exit code %d Imagebase %p\n", exitCode, remoteImageBase);
-				//}
-			}
-			else
-			{
-				Message(0, L"[ScyllaHide] Failed to write exchange struct");
-			}
-		}
-		else
-		{
-			Message(0, L"[ScyllaHide] Failed to map image!");
-		}
-	}
+                //if (exitCode == HOOK_ERROR_SUCCESS)
+                //{
+                Message(0, L"[ScyllaHide] Injection successful, Imagebase %p", remoteImageBase);
+                //}
+                //else
+                //{
+                //    Message(0, L"[ScyllaHide] Injection failed, exit code %d Imagebase %p\n", exitCode, remoteImageBase);
+                //}
+            }
+            else
+            {
+                Message(0, L"[ScyllaHide] Failed to write exchange struct");
+            }
+        }
+        else
+        {
+            Message(0, L"[ScyllaHide] Failed to map image!");
+        }
+    }
 }
 
 void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
@@ -155,18 +155,18 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
     data->EnableNtCloseHook = pHideOptions.NtClose;
 
-    data->EnableNtGetContextThreadHook = pHideOptions.ProtectDrx;
-    data->EnableNtSetContextThreadHook = pHideOptions.ProtectDrx;
-    data->EnableNtContinueHook = pHideOptions.ProtectDrx;
-    data->EnableKiUserExceptionDispatcherHook = pHideOptions.ProtectDrx;
+    data->EnableNtGetContextThreadHook = pHideOptions.NtGetContextThread;
+    data->EnableNtSetContextThreadHook = pHideOptions.NtSetContextThread;
+    data->EnableNtContinueHook = pHideOptions.NtContinue;
+    data->EnableKiUserExceptionDispatcherHook = pHideOptions.KiUserExceptionDispatcher;
 
     data->EnableNtUserFindWindowExHook = pHideOptions.NtUserFindWindowEx;
     data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
     data->EnableNtUserQueryWindowHook = pHideOptions.NtUserQueryWindow;
     data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
 
-	data->isKernel32Hooked = FALSE;
-	data->isNtdllHooked = FALSE;
-	data->isUser32Hooked = FALSE;
+    data->isKernel32Hooked = FALSE;
+    data->isNtdllHooked = FALSE;
+    data->isUser32Hooked = FALSE;
 }
 

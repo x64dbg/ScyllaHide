@@ -3,16 +3,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <winnt.h>
-#include "plugin.h"
+#include "ScyllaHideOlly2Plugin.h"
 #include "Injector.h"
 
 #include "..\InjectorCLI\ReadNtConfig.h"
 
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
-
-#define PLUGINNAME     L"ScyllaHide"
-#define VERSION        L"0.2a"
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
@@ -22,187 +19,12 @@ WCHAR NtApiIniPath[MAX_PATH] = {0};
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 
-//forward definitions
-static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode);
-static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode);
-static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
-
 //globals
 HINSTANCE hinst;
 
 HMODULE hNtdll = 0;
 bool specialPebFix = false;
 
-//menus
-static t_menu mainmenu[] =
-{
-    {
-        L"Options",
-        L"Select Hiding Options",
-        K_NONE, Moptions, NULL, 0
-    },
-    {
-        L"|About",
-        L"About ScyllaHide plugin",
-        K_NONE, Mabout, NULL, 0
-    },
-    { NULL, NULL, K_NONE, NULL, NULL, 0 }
-};
-
-static t_menu threadmenu[] =
-{
-    {
-        L"Resume all Threads",
-        L"Resume all Threads",
-        K_NONE, Mthreads, NULL, 0
-    },
-    {
-        L"Suspend all Threads",
-        L"Suspend all Threads",
-        K_NONE, Mthreads, NULL, 1
-    },
-    { NULL, NULL, K_NONE, NULL, NULL, 0 }
-};
-
-//I'd rather directly use pHideOptions.PEB but these control
-//variables need to be static which pHideOptions cannot be because
-//Injector.cpp externs it :/
-static int opt_peb;
-static int opt_NtSetInformationThread;
-static int opt_NtQuerySystemInformation;
-static int opt_NtQueryInformationProcess;
-static int opt_NtQueryObject;
-static int opt_NtYieldExecution;
-static int opt_GetTickCount;
-static int opt_OutputDebugStringA;
-static int opt_BlockInput;
-static int opt_ProtectDRx;
-static int opt_NtUserFindWindowEx;
-static int opt_NtUserBuildHwndList;
-static int opt_NtUserQueryWindow;
-static int opt_NtSetDebugFilterState;
-static int opt_NtClose;
-static WCHAR opt_ollyTitle[TEXTLEN] = {};
-
-static t_control scyllahideoptions[] =
-{
-    {
-        CA_COMMENT, -1, 0, 0, 0, 0, NULL,
-        PLUGINNAME,
-        NULL
-    },
-    {
-        CA_TITLE, OPT_TITLE, 80, 4, 160, 15, NULL,
-        PLUGINNAME,
-        NULL
-    },
-    {
-        CA_CHECK, OPT_1, 90, 30, 80, 10, &opt_peb,
-        L"Hide from PEB",
-        L"BeingDebugged, NtGlobalFlag, Heap Flags"
-    },
-    {
-        CA_CHECK, OPT_2, 90, 42, 80, 10, &opt_NtSetInformationThread,
-        L"NtSetInformationThread",
-        L"ThreadHideFromDebugger"
-    },
-    {
-        CA_CHECK, OPT_3, 90, 54, 80, 10, &opt_NtQuerySystemInformation,
-        L"NtQuerySystemInformation",
-        L"SystemKernelDebuggerInformation, SystemProcessInformation"
-    },
-    {
-        CA_CHECK, OPT_4, 90, 66, 80, 10, &opt_NtQueryInformationProcess,
-        L"NtQueryInformationProcess",
-        L"ProcessDebugFlags, ProcessDebugObjectHandle, ProcessDebugPort, ProcessBasicInformation"
-    },
-    {
-        CA_CHECK, OPT_5, 90, 78, 80, 10, &opt_NtQueryObject,
-        L"NtQueryObject",
-        L"ObjectTypesInformation, ObjectTypeInformation"
-    },
-    {
-        CA_CHECK, OPT_6, 90, 90, 80, 10, &opt_NtYieldExecution,
-        L"NtYieldExecution",
-        L"NtYieldExecution"
-    },
-    {
-        CA_CHECK, OPT_7, 90, 102, 80, 10, &opt_GetTickCount,
-        L"GetTickCount",
-        L"GetTickCount"
-    },
-    {
-        CA_CHECK, OPT_8, 90, 114, 80, 10, &opt_OutputDebugStringA,
-        L"OutputDebugStringA",
-        L"OutputDebugStringA"
-    },
-    {
-        CA_CHECK, OPT_9, 90, 126, 80, 10, &opt_BlockInput,
-        L"BlockInput",
-        L"BlockInput"
-    },
-    {
-        CA_CHECK, OPT_10, 90, 138, 80, 10, &opt_NtUserFindWindowEx,
-        L"NtUserFindWindowEx",
-        L"NtUserFindWindowEx"
-    },
-    {
-        CA_CHECK, OPT_11, 90, 150, 80, 10, &opt_NtUserBuildHwndList,
-        L"NtUserBuildHwndList",
-        L"NtUserBuildHwndList"
-    },
-    {
-        CA_CHECK, OPT_12, 90, 162, 80, 10, &opt_NtUserQueryWindow,
-        L"NtUserQueryWindow",
-        L"NtUserQueryWindow"
-    },
-    {
-        CA_CHECK, OPT_13, 90, 174, 80, 10, &opt_NtSetDebugFilterState,
-        L"NtSetDebugFilterState",
-        L"NtSetDebugFilterState"
-    },
-    {
-        CA_CHECK, OPT_14, 90, 186, 80, 10, &opt_NtClose,
-        L"NtClose",
-        L"NtClose"
-    },
-    {
-        CA_GROUP, -1, 85, 20, 85, 178, NULL,
-        L"Debugger Hiding",
-        NULL
-    },
-    {
-        CA_CHECK, OPT_15, 90, 212, 80, 10, &opt_ProtectDRx,
-        L"Protect DRx",
-        L"NtGetContextThread, NtSetContextThread, NtContinue"
-    },
-    {
-        CA_GROUP, -1, 85, 202, 85, 25, NULL,
-        L"DRx Protection",
-        NULL
-    },
-    //second column
-    {
-        CA_TEXT, NULL, 180, 30, 30, 10, NULL,
-        L"Olly title",
-        L"Olly title"
-    },
-    {
-        CA_EDIT, OPT_16, 200, 30, 40, 10, NULL,
-        opt_ollyTitle,
-        L"Olly title"
-    },
-    {
-        CA_GROUP, -1, 175, 20, 70, 25, NULL,
-        L"Misc",
-        NULL
-    },
-    {
-        CA_END, -1, 0, 0, 0, 0, NULL,
-        NULL,
-        NULL
-    }
-};
 
 //Menu->Options
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
@@ -300,7 +122,10 @@ void UpdateHideOptions()
     pHideOptions.GetTickCount = opt_GetTickCount;
     pHideOptions.OutputDebugStringA = opt_OutputDebugStringA;
     pHideOptions.BlockInput = opt_BlockInput;
-    pHideOptions.ProtectDrx = opt_ProtectDRx;
+    pHideOptions.NtGetContextThread = opt_NtGetContextThread;
+    pHideOptions.NtSetContextThread = opt_NtSetContextThread;
+    pHideOptions.NtContinue = opt_NtContinue;
+    pHideOptions.KiUserExceptionDispatcher = opt_KiUserExceptionDispatcher;
     pHideOptions.NtUserFindWindowEx = opt_NtUserFindWindowEx;
     pHideOptions.NtUserBuildHwndList = opt_NtUserBuildHwndList;
     pHideOptions.NtUserQueryWindow = opt_NtUserQueryWindow;
@@ -316,7 +141,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
-		hNtdll = GetModuleHandleW(L"ntdll.dll");
+        hNtdll = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
         WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
         if (temp)
@@ -359,13 +184,18 @@ extc int __cdecl ODBG2_Plugininit(void)
     Getfromini(NULL,PLUGINNAME,L"GetTickCount",L"%i",&opt_GetTickCount);
     Getfromini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",&opt_OutputDebugStringA);
     Getfromini(NULL,PLUGINNAME,L"BlockInput",L"%i",&opt_BlockInput);
-    Getfromini(NULL,PLUGINNAME,L"ProtectDRx",L"%i",&opt_ProtectDRx);
+    Getfromini(NULL,PLUGINNAME,L"NtGetContextThread",L"%i",&opt_NtGetContextThread);
+    Getfromini(NULL,PLUGINNAME,L"NtSetContextThread",L"%i",&opt_NtSetContextThread);
+    Getfromini(NULL,PLUGINNAME,L"NtContinue",L"%i",&opt_NtContinue);
+    Getfromini(NULL,PLUGINNAME,L"KiUserExceptionDispatcher",L"%i",&opt_KiUserExceptionDispatcher);
     Getfromini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",&opt_NtUserFindWindowEx);
     Getfromini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",&opt_NtUserBuildHwndList);
     Getfromini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",&opt_NtUserQueryWindow);
     Getfromini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",&opt_NtSetDebugFilterState);
     Getfromini(NULL,PLUGINNAME,L"NtClose",L"%i",&opt_NtClose);
     Getfromini(NULL, PLUGINNAME, L"ollyTitle", L"%s", &opt_ollyTitle);
+
+    if(opt_NtGetContextThread && opt_NtSetContextThread && opt_NtContinue && opt_KiUserExceptionDispatcher) opt_ProtectDRx = 1;
 
     UpdateHideOptions();
 
@@ -390,14 +220,56 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
 extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
 {
     if(msg==WM_COMMAND) {
-        WORD bla = LOWORD(wp);
-        if(LOWORD(wp)==OPT_16) {
+        switch(LOWORD(wp)) {
+        case OPT_20: //olly title edit
+        {
             //yes this is hacky but for some reason CA_EDIT wont update its buffer
             //so we need to get changes somehow else
             HWND options = FindWindow(L"OD_EMPTY", L"Plugin options");
             if(options) {
                 GetDlgItemTextW(options, OPT_16, opt_ollyTitle, 256);
             }
+            break;
+        }
+        case OPT_19: //protect drx groupbox checkbox
+        {
+            WPARAM state;
+            HWND options = FindWindow(L"OD_EMPTY", L"Plugin options");
+            if(!options) break;
+
+            (BST_CHECKED == SendMessage(GetDlgItem(options, OPT_19), BM_GETCHECK, 0, 0))?state=1:state=0;
+
+            //trigger child checkboxes
+            SendMessage(GetDlgItem(options, OPT_15), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(options, OPT_16), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(options, OPT_17), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(options, OPT_18), BM_SETCHECK, state, 0);
+            opt_NtGetContextThread = state;
+            opt_NtSetContextThread = state;
+            opt_NtContinue = state;
+            opt_KiUserExceptionDispatcher = state;
+
+            break;
+        }
+        case OPT_15:
+        case OPT_16:
+        case OPT_17:
+        case OPT_18:
+        {   //this is just for GUI continuity
+            HWND options = FindWindow(L"OD_EMPTY", L"Plugin options");
+            if(!options) break;
+
+            int allChecked = 1;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(options, OPT_15), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(options, OPT_16), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(options, OPT_17), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(options, OPT_18), BM_GETCHECK, 0, 0)) allChecked--;
+
+            if(allChecked<1) SendMessage(GetDlgItem(options, OPT_19), BM_SETCHECK, 0, 0);
+            else SendMessage(GetDlgItem(options, OPT_19), BM_SETCHECK, 1, 0);
+
+            break;
+        }
         }
     }
     if (msg==WM_CLOSE && wp!=0)
@@ -412,7 +284,10 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
         Writetoini(NULL,PLUGINNAME,L"GetTickCount",L"%i",opt_GetTickCount);
         Writetoini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",opt_OutputDebugStringA);
         Writetoini(NULL,PLUGINNAME,L"BlockInput",L"%i",opt_BlockInput);
-        Writetoini(NULL,PLUGINNAME,L"ProtectDRx",L"%i",opt_ProtectDRx);
+        Writetoini(NULL,PLUGINNAME,L"NtGetContextThread",L"%i",opt_NtGetContextThread);
+        Writetoini(NULL,PLUGINNAME,L"NtSetContextThread",L"%i",opt_NtSetContextThread);
+        Writetoini(NULL,PLUGINNAME,L"NtContinue",L"%i",opt_NtContinue);
+        Writetoini(NULL,PLUGINNAME,L"KiUserExceptionDispatcher",L"%i",opt_KiUserExceptionDispatcher);
         Writetoini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",opt_NtUserFindWindowEx);
         Writetoini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",opt_NtUserBuildHwndList);
         Writetoini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",opt_NtUserQueryWindow);
@@ -438,20 +313,20 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         return;
 
 
-	if (pHideOptions.PEB)
-	{
-		if (specialPebFix)
-		{
-			StartFixBeingDebugged(ProcessId, false);
-			specialPebFix = false;
-		}
+    if (pHideOptions.PEB)
+    {
+        if (specialPebFix)
+        {
+            StartFixBeingDebugged(ProcessId, false);
+            specialPebFix = false;
+        }
 
-		if (debugevent->u.LoadDll.lpBaseOfDll == hNtdll)
-		{
-			StartFixBeingDebugged(ProcessId, true);
-			specialPebFix = true;
-		}
-	}
+        if (debugevent->u.LoadDll.lpBaseOfDll == hNtdll)
+        {
+            StartFixBeingDebugged(ProcessId, true);
+            specialPebFix = true;
+        }
+    }
 
     switch(debugevent->dwDebugEventCode)
     {

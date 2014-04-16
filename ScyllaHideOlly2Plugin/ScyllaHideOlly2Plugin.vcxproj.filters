@@ -125,5 +125,8 @@
     <ClInclude Include="..\distorm\x86defs.h">
       <Filter>Header Files\distorm</Filter>
     </ClInclude>
+    <ClInclude Include="ScyllaHideOlly2Plugin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

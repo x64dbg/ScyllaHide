@@ -127,6 +127,7 @@
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
     <ClInclude Include="Injector.h" />
     <ClInclude Include="plugin.h" />
+    <ClInclude Include="ScyllaHideOlly2Plugin.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -13,7 +13,10 @@ struct HideOptions
     int GetTickCount;
     int OutputDebugStringA;
     int BlockInput;
-    int ProtectDrx;
+    int NtGetContextThread;
+    int NtSetContextThread;
+    int NtContinue;
+    int KiUserExceptionDispatcher;
     int NtUserFindWindowEx;
     int NtUserBuildHwndList;
     int NtUserQueryWindow;
