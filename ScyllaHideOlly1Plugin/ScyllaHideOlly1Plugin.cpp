@@ -28,11 +28,14 @@ WCHAR NtApiIniPath[MAX_PATH] = {0};
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 
+HMODULE hNtdll = 0;
+bool specialPebFix = false;
 
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
+	    hNtdll = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
         WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
         if (temp)
@@ -453,6 +456,21 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 {
     if(!debugevent)
         return;
+		
+	if (pHideOptions.PEB)
+	{
+		if (specialPebFix)
+		{
+			StartFixBeingDebugged(ProcessId, false);
+			specialPebFix = false;
+		}
+
+		if (debugevent->u.LoadDll.lpBaseOfDll == hNtdll)
+		{
+			StartFixBeingDebugged(ProcessId, true);
+			specialPebFix = true;
+		}
+	}
 
     switch(debugevent->dwDebugEventCode)
     {
