@@ -7,6 +7,7 @@ Version 0.2a
 - fix PE-Bugs for Olly1
 - fix FPU-Bug for Olly1
 - split "Protect DRx" into its options
+- Fix PEB Patch bug, now Themida works on WinXP
 
 Version 0.2
 
