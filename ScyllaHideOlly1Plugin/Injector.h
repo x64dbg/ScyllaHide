@@ -28,6 +28,7 @@ struct HideOptions
     int x64Fix;
 };
 
+void StartFixBeingDebugged(DWORD targetPid, bool setToNull);
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess);
 void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess);
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);

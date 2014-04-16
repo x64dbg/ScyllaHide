@@ -13,14 +13,14 @@ HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 static LPVOID remoteImageBase = 0;
 
 
-void StartPebPatch1(DWORD targetPid)
+void StartFixBeingDebugged(DWORD targetPid, bool setToNull)
 {
     HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
     if (hProcess)
     {
         DllExchangeLoader.EnablePebHiding = pHideOptions.PEB;
 
-        ApplyPEBPatch(&DllExchangeLoader, hProcess);
+        FixPebBeingDebugged(hProcess, setToNull);
         CloseHandle(hProcess);
     }
 }
@@ -30,7 +30,8 @@ bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
     DllExchangeLoader.EnableProtectProcessId = TRUE;
 
-    ApplyPEBPatch(&DllExchangeLoader, hProcess);
+	DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_StartUpInfo;
+	ApplyPEBPatch(&DllExchangeLoader, hProcess, enableEverything);
 
     return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
