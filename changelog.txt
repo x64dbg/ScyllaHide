@@ -1,6 +1,6 @@
 Version 0.2a
 
-- Fix for Olly2 plugin caption reset
+- Fix for Olly plugins caption reset
 - Fix STARTUPINFO structure, GetStartupInfoA/W
 - Resume/Suspend all Threads in Thread window
 - x64 compatibility mode for Olly1
