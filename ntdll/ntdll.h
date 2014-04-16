@@ -1873,6 +1873,29 @@ CsrGetProcessId (
 	VOID
 );
 
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtQuerySystemTime (
+	__out PLARGE_INTEGER SystemTime
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtSetSystemTime (
+	__in_opt PLARGE_INTEGER SystemTime,
+	__out_opt PLARGE_INTEGER PreviousTime
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtQueryPerformanceCounter (
+	__out PLARGE_INTEGER PerformanceCounter,
+	__out_opt PLARGE_INTEGER PerformanceFrequency
+);
+
 #ifdef __cplusplus
 };
 #endif

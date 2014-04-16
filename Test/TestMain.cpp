@@ -8,6 +8,7 @@
 #include "..\ntdll\ntdll.h"
 #include <string>
 
+#pragma comment(lib,"Winmm.lib")
 #pragma comment(lib,"psapi.lib")
 
 #pragma comment(linker, "/ENTRY:WinMain")
@@ -25,10 +26,15 @@ void Test_FindWindow();
 void Test_NtSetDebugFilterState();
 void Test_NtGetContextThread();
 void Test_PEB();
+void Test_StartUpInfo();
+void Test_Time();
+
 
 int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow)
 {
-	Test_PEB();
+	Test_Time();
+	//Test_StartUpInfo();
+	//Test_PEB();
 	//Test_NtGetContextThread();
 	//Test_NtSetDebugFilterState();
 	//Test_FindWindow();
@@ -52,6 +58,44 @@ void ShowMessageBox(const char * format, ...)
 	MessageBoxA(0, text, "Text", 0);
 }
 
+void Test_Time()
+{
+	SYSTEMTIME systime;
+	SYSTEMTIME localtime;
+	LARGE_INTEGER sysTimeNative;
+	LARGE_INTEGER perform;
+	LARGE_INTEGER frequen;
+
+	LARGE_INTEGER performnative;
+	LARGE_INTEGER frequennative;
+
+	NtQuerySystemTime(&sysTimeNative);
+	
+	GetSystemTime(&systime);
+	GetLocalTime(&localtime);
+
+	QueryPerformanceCounter(&perform);
+	QueryPerformanceFrequency(&frequen);
+
+	NtQueryPerformanceCounter(&performnative, &frequennative);
+
+	DWORD tick = GetTickCount();
+	ULONGLONG tick64 = GetTickCount64();
+	DWORD time1 = timeGetTime();
+}
+
+void Test_StartUpInfo()
+{
+	STARTUPINFOA infoA = {0};
+	STARTUPINFOW infoW = {0};
+
+	GetStartupInfoW(&infoW);
+	GetStartupInfoA(&infoA);
+
+	ShowMessageBox("STARTUPINFOA\r\nOffset %X -> %X\r\nOffset %X -> %X\r\nOffset %X -> %X", offsetof(STARTUPINFOA, dwX),infoA.dwX,offsetof(STARTUPINFOA, dwY),infoA.dwY,offsetof(STARTUPINFOA, dwFillAttribute),infoA.dwFillAttribute);
+	ShowMessageBox("STARTUPINFOW\r\nOffset %X -> %X\r\nOffset %X -> %X\r\nOffset %X -> %X", offsetof(STARTUPINFOW, dwX),infoW.dwX,offsetof(STARTUPINFOW, dwY),infoW.dwY,offsetof(STARTUPINFOW, dwFillAttribute),infoW.dwFillAttribute);
+}
+
 void Test_PEB()
 {
 	BYTE BeingDebugged = 0;
@@ -59,6 +103,7 @@ void Test_PEB()
 	DWORD_PTR processHeap = 0;
 	DWORD ForceFlags = 0;
 	DWORD Flags = 0;
+	DWORD protectedHeap = 0;
 
 	DWORD_PTR pPeb = 0;
 #ifdef _WIN64
@@ -96,6 +141,7 @@ void Test_PEB()
 		ForceFlagsOffset = 0x18;
 	}
 #else
+
 	if (dwMajorVersion >= 6)
 	{
 		FlagsOffset = 0x40;
