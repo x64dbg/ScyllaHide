@@ -1,6 +1,6 @@
-ScyllaHide is an open-source x64/x86 usermode Anti-Anti-Debug library. It hooks various
-functions in usermode to hide debugging. This will stay usermode! For kernelmode hooks use
-TitanHide.
+ScyllaHide is an open-source x64/x86 usermode Anti-Anti-Debug library. It hooks 
+various functions in usermode to hide debugging. This will stay usermode! 
+For kernelmode hooks use TitanHide.
 
 ------------------------------------------------------
 
@@ -29,6 +29,16 @@ Protecting and Stealthing DRx (Hardware Breakpoints):
 Hooks:
 - Stealth hooks for 32-bit targets (Tested against Themida/VMProtect)
 
+Plugin specific:
+Olly1&2:
+- Change Olly title
+- Resume/Suspend all Threads in Thread window
+Olly1:
+- Fix PE-Bugs
+- Fix FPU Bug
+- x64 compatibility mode
+- Remove EP-Break
+
 ------------------------------------------------------
 
 Usage standalone (debugger-independent):
@@ -48,17 +58,17 @@ Plugins:
 ------------------------------------------------------
 
 ToDo:
-- x64 compatibility support
 - x64 Exception Support
 
 ------------------------------------------------------
 
-NOTE: You need to put NtApiCollection.ini in the same directory as ScyllaHide.dll or the following hooks will not
-work: NtUserQueryWindow, NtUserBuildHwndList, NtUserFindWindowEx
+NOTE: You need to put NtApiCollection.ini in the same directory as ScyllaHide.dll 
+or the following hooks will not work: 
+NtUserQueryWindow, NtUserBuildHwndList, NtUserFindWindowEx
 
 Info about NtApiCollection.ini:
-Some Nt* WINAPI functions are not exported by a DLL, so it is necessary to get the function adresses
-from another source. The other source is the PDB file. The adresses can be resolved with this tool:
-https://bitbucket.org/NtQuery/pdb-getprocaddress
+Some Nt* WINAPI functions are not exported by a DLL, so it is necessary to get 
+the function adresses from another source. The other source is the PDB file. 
+The adresses can be resolved with this tool: https://bitbucket.org/NtQuery/pdb-getprocaddress
 It will download the PDB file from the Microsoft server to resolve the missing function adresses.
 Binaries: https://bitbucket.org/NtQuery/scyllahide/downloads/NtApiTool.rar
