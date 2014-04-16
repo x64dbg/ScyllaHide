@@ -9,7 +9,6 @@ void fixBadPEBugs()
     BOOL fixed = false;
 
     BYTE peBug1Fix[] = {0xEB}; //JE (74 1C) to JMP (EB 1C)
-    LPVOID patchAddr = (LPVOID)(lpBaseAddr+0x5C671);
     fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x5C671), &peBug1Fix, sizeof(peBug1Fix), NULL);
     if(fixed) _Addtolist(0,-1,"Fixed PE-Bug at 0x5C671");
 
@@ -83,4 +82,19 @@ void fixX64Bug()
     BYTE x64Patch[] = {0xEB}; //JE to JMP
     fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x311C2), &x64Patch, sizeof(x64Patch), NULL);
     if(fixed) _Addtolist(0,-1,"Patched single-step break on x64 at 0x311C2");
+}
+
+//taken from POISON source https://tuts4you.com/download.php?view.2281
+void fixFPUBug()
+{
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+    BOOL fixed = false;
+
+    BYTE fpuBugFix[] = {0xDB};
+    BYTE buf[1];
+    ReadProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0xAA2F0), &buf, 1, NULL);
+    if(buf[0] == 0xDB)
+        fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0xAA2F2), &fpuBugFix, sizeof(fpuBugFix), NULL);
+    if(fixed) _Addtolist(0,-1,"Fixed FPU-Bug at 0xAA2F2");
 }

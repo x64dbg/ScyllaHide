@@ -5,6 +5,7 @@ Version 0.2a
 - Resume/Suspend all Threads in Thread window
 - x64 compatibility mode for Olly1
 - fix PE-Bugs for Olly1
+- fix FPU-Bug for Olly1
 
 Version 0.2
 
