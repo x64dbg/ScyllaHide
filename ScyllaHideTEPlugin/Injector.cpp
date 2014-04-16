@@ -10,7 +10,9 @@ bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 	DllExchangeLoader.dwProtectedProcessId = 0; //for olly plugins
 	DllExchangeLoader.EnableProtectProcessId = FALSE;
 
-	ApplyPEBPatch(&DllExchangeLoader, hProcess);
+	DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_StartUpInfo;
+
+	ApplyPEBPatch(&DllExchangeLoader, hProcess,enableEverything);
 
 	return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }

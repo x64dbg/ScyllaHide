@@ -174,4 +174,11 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS {
 
 } RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
 
-bool FixPebInProcess(HANDLE hProcess);
+#define PEB_PATCH_BeingDebugged 0x00000001      
+#define PEB_PATCH_NtGlobalFlag 0x00000002      
+#define PEB_PATCH_HeapFlags 0x00000004      
+#define PEB_PATCH_StartUpInfo 0x00000008      
+//#define PEB_PATCH_BeingDebugged      0x00000010  
+
+void FixPebBeingDebugged(HANDLE hProcess, bool SetToNull);
+bool FixPebInProcess(HANDLE hProcess, DWORD EnableFlags);

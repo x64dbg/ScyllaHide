@@ -153,7 +153,7 @@ bool FixStartUpInfo( PEB_CURRENT* myPEB, HANDLE hProcess )
 	RTL_USER_PROCESS_PARAMETERS * rtlProcessParam = (RTL_USER_PROCESS_PARAMETERS *)myPEB->ProcessParameters;
 
 	DWORD_PTR startOffset = (DWORD_PTR)&rtlProcessParam->StartingX;
-	DWORD patchSize = (DWORD_PTR)&rtlProcessParam->WindowFlags - (DWORD_PTR)&rtlProcessParam->StartingX;
+	DWORD_PTR patchSize = (DWORD_PTR)&rtlProcessParam->WindowFlags - (DWORD_PTR)&rtlProcessParam->StartingX;
 
 	LPVOID memoryZero = calloc(patchSize, 1);
 
@@ -163,14 +163,54 @@ bool FixStartUpInfo( PEB_CURRENT* myPEB, HANDLE hProcess )
 	return retVal;
 }
 
-bool FixPebInProcess(HANDLE hProcess)
+void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase)
+{
+	void * heapFlagsAddress = 0;
+	DWORD heapFlags = 0;
+	void * heapForceFlagsAddress = 0;
+	DWORD heapForceFlags = 0;
+#ifdef _WIN64
+	heapFlagsAddress = (void *)((LONG_PTR)myPEB.ProcessHeap + getHeapFlagsOffset(true));
+	heapForceFlagsAddress = (void *)((LONG_PTR)myPEB.ProcessHeap + getHeapForceFlagsOffset(true));
+#else
+	heapFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapFlagsOffset(false));
+	heapForceFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapForceFlagsOffset(false));
+#endif //_WIN64
+
+	if (ReadProcessMemory(hProcess, heapFlagsAddress, &heapFlags, sizeof(DWORD), 0))
+	{
+		heapFlags &= HEAP_GROWABLE;
+		WriteProcessMemory(hProcess, heapFlagsAddress, &heapFlags, sizeof(DWORD), 0);
+	}
+	if (ReadProcessMemory(hProcess, heapForceFlagsAddress, &heapForceFlags, sizeof(DWORD), 0))
+	{
+		heapForceFlags = 0;
+		WriteProcessMemory(hProcess, heapForceFlagsAddress, &heapForceFlags, sizeof(DWORD), 0);
+	}	
+}
+
+void FixPebBeingDebugged(HANDLE hProcess, bool SetToNull)
+{
+	PEB_CURRENT myPEB = { 0 };
+	void * AddressOfPEB = GetPEBLocation(hProcess);
+	ReadProcessMemory(hProcess, AddressOfPEB, (void*)&myPEB, 0x10, 0);
+
+	if (SetToNull)
+	{
+		myPEB.BeingDebugged = FALSE;
+	}
+	else
+	{
+		myPEB.BeingDebugged = TRUE;
+	}
+	WriteProcessMemory(hProcess, AddressOfPEB, (void*)&myPEB, 0x10, 0);
+}
+
+bool FixPebInProcess(HANDLE hProcess, DWORD EnableFlags)
 {
     PEB_CURRENT myPEB = { 0 };
     SIZE_T ueNumberOfBytesRead = 0;
-    void * heapFlagsAddress = 0;
-    DWORD heapFlags = 0;
-    void * heapForceFlagsAddress = 0;
-    DWORD heapForceFlags = 0;
+
 
 #ifndef _WIN64
     PEB64 myPEB64 = { 0 };
@@ -191,34 +231,34 @@ bool FixPebInProcess(HANDLE hProcess)
         }
 #endif
 
-		FixStartUpInfo(&myPEB, hProcess);
+		if (EnableFlags & PEB_PATCH_StartUpInfo) FixStartUpInfo(&myPEB, hProcess);
 
-        //TODO: backup GlobalFlag
-        myPEB.BeingDebugged = FALSE;
-        myPEB.NtGlobalFlag &= ~0x70;
+		if (EnableFlags & PEB_PATCH_BeingDebugged) myPEB.BeingDebugged = FALSE;
+        if (EnableFlags & PEB_PATCH_NtGlobalFlag) myPEB.NtGlobalFlag &= ~0x70;
 
 #ifndef _WIN64
-        myPEB64.BeingDebugged = FALSE;
-        myPEB64.NtGlobalFlag &= ~0x70;
+        if (EnableFlags & PEB_PATCH_BeingDebugged) myPEB64.BeingDebugged = FALSE;
+        if (EnableFlags & PEB_PATCH_NtGlobalFlag) myPEB64.NtGlobalFlag &= ~0x70;
 #endif
 
-        //TODO: backup heap flags
-#ifdef _WIN64
-        heapFlagsAddress = (void *)((LONG_PTR)myPEB.ProcessHeap + getHeapFlagsOffset(true));
-        heapForceFlagsAddress = (void *)((LONG_PTR)myPEB.ProcessHeap + getHeapForceFlagsOffset(true));
-#else
-        heapFlagsAddress = (void *)((LONG_PTR)myPEB.ProcessHeap + getHeapFlagsOffset(false));
-        heapForceFlagsAddress = (void *)((LONG_PTR)myPEB.ProcessHeap + getHeapForceFlagsOffset(false));
-#endif //_WIN64
-        ReadProcessMemory(hProcess, heapFlagsAddress, &heapFlags, sizeof(DWORD), 0);
-        ReadProcessMemory(hProcess, heapForceFlagsAddress, &heapForceFlags, sizeof(DWORD), 0);
+		if (EnableFlags & PEB_PATCH_HeapFlags)
+		{
+			FixHeapFlag(hProcess, myPEB.ProcessHeap);
+			if (myPEB.NumberOfHeaps > 0)
+			{
+				PVOID * heapArray = (PVOID *)calloc(myPEB.NumberOfHeaps, sizeof(PVOID));
+				if (heapArray)
+				{
+					ReadProcessMemory(hProcess, (PVOID)myPEB.ProcessHeaps, heapArray, myPEB.NumberOfHeaps*sizeof(PVOID), 0);
 
-        heapFlags &= HEAP_GROWABLE;
-        heapForceFlags = 0;
-
-        WriteProcessMemory(hProcess, heapFlagsAddress, &heapFlags, sizeof(DWORD), 0);
-        WriteProcessMemory(hProcess, heapForceFlagsAddress, &heapForceFlags, sizeof(DWORD), 0);
-
+					for (DWORD i = 0; i < myPEB.NumberOfHeaps; i++)
+					{
+						FixHeapFlag(hProcess, (DWORD_PTR)heapArray[i]);
+					}
+				}
+				free(heapArray);
+			}
+		}
 
         if (WriteProcessMemory(hProcess, AddressOfPEB, (void*)&myPEB, sizeof(PEB_CURRENT), &ueNumberOfBytesRead))
         {

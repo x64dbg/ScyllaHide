@@ -144,11 +144,12 @@ void ApplyUser32Hook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dl
 	}
 }
 
-bool ApplyPEBPatch(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess)
+bool ApplyPEBPatch(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, DWORD enableFlags)
 {
 	if (hProcess && dllexchange)
 	{
-		if (dllexchange->EnablePebHiding == TRUE) FixPebInProcess(hProcess);
+		//DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_StartUpInfo;
+		if (dllexchange->EnablePebHiding == TRUE) FixPebInProcess(hProcess, enableFlags);
 		return true;
 	}
 
