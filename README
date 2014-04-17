@@ -2,6 +2,9 @@ ScyllaHide is an open-source x64/x86 usermode Anti-Anti-Debug library. It hooks
 various functions in usermode to hide debugging. This will stay usermode! 
 For kernelmode hooks use TitanHide.
 
+Source code license:
+GNU General Public License v3 https://www.gnu.org/licenses/gpl-3.0.en.html
+
 ------------------------------------------------------
 
 Debugger Hiding:
