@@ -4,13 +4,13 @@
 #include "Injector.h"
 #include "ollyplugindefinitions.h"
 #include "olly1patches.h"
-
+#include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
 
-#define SCYLLAHIDE_VERSION "0.2a"
+#define SCYLLAHIDE_VERSION "0.3"
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 

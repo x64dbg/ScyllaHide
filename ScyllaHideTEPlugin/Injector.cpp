@@ -5,6 +5,8 @@
 
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
+
+
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
 	DllExchangeLoader.dwProtectedProcessId = 0; //for olly plugins

@@ -1,4 +1,4 @@
-Version 0.2a
+Version 0.3
 
 - Fix for Olly plugins caption reset
 - Fix STARTUPINFO structure, GetStartupInfoA/W

@@ -170,8 +170,8 @@ void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase)
 	void * heapForceFlagsAddress = 0;
 	DWORD heapForceFlags = 0;
 #ifdef _WIN64
-	heapFlagsAddress = (void *)((LONG_PTR)myPEB.ProcessHeap + getHeapFlagsOffset(true));
-	heapForceFlagsAddress = (void *)((LONG_PTR)myPEB.ProcessHeap + getHeapForceFlagsOffset(true));
+	heapFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapFlagsOffset(true));
+	heapForceFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapForceFlagsOffset(true));
 #else
 	heapFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapFlagsOffset(false));
 	heapForceFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapForceFlagsOffset(false));

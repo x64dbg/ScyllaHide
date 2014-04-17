@@ -18,8 +18,6 @@ void StartFixBeingDebugged(DWORD targetPid, bool setToNull)
     HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
     if (hProcess)
     {
-        DllExchangeLoader.EnablePebHiding = pHideOptions.PEB;
-
         FixPebBeingDebugged(hProcess, setToNull);
         CloseHandle(hProcess);
     }

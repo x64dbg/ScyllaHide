@@ -2,7 +2,7 @@
 #include "plugin.h"
 
 #define PLUGINNAME     L"ScyllaHide"
-#define VERSION        L"0.2a"
+#define VERSION        L"0.3"
 
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode);
