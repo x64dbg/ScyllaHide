@@ -4,8 +4,16 @@
 #pragma pack(1)                      // Force byte alignment of structures
 
 
+#define TY_STOPAN      0x00000080      // Stop animation if TY_ONESHOT
+#define TY_SET         0x00000100      // Code INT3 is in memory
+#define TY_ACTIVE      0x00000200      // Permanent breakpoint
+#define TY_DISABLED    0x00000400      // Permanent disabled breakpoint
 #define TY_ONESHOT     0x00000800      // Temporary stop
 #define TY_TEMP        0x00001000      // Temporary breakpoint
+#define TY_KEEPCODE    0x00002000      // Set and keep command code
+#define TY_KEEPCOND    0x00004000      // Keep condition unchanged (0: remove)
+#define TY_NOUPDATE    0x00008000      // Don't redraw breakpoint window
+#define TY_RTRACE      0x00010000      // Pseudotype of run trace breakpoint
 
 //olly definitions
 extern "C" void _Addtolist(long addr,int highlight,char *format,...);
