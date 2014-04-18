@@ -447,6 +447,17 @@ VOID
     __in_opt PVOID ApcArgument3
 );
 
+typedef struct _INITIAL_TEB
+{
+	struct {
+		PVOID OldStackBase;
+		PVOID OldStackLimit;
+	} OldInitialTeb;
+	PVOID StackBase;
+	PVOID StackLimit;
+	PVOID StackAllocationBase;
+} INITIAL_TEB, *PINITIAL_TEB;
+
 
 //0x22C FlsHighIndex, x64 0x0350
 typedef struct _RTL_UNKNOWN_FLS_DATA {
@@ -993,6 +1004,7 @@ typedef enum _FILE_INFORMATION_CLASS
 
 typedef NTSTATUS (NTAPI * t_NtClose)(HANDLE Handle);
 typedef NTSTATUS (NTAPI * t_NtContinue)(PCONTEXT ContextRecord,BOOLEAN TestAlert);
+typedef NTSTATUS (NTAPI * t_NtCreateThread)(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PCLIENT_ID ClientId,PCONTEXT ThreadContext,PINITIAL_TEB InitialTeb,BOOLEAN CreateSuspended);
 typedef NTSTATUS (NTAPI * t_NtCreateThreadEx)(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PVOID StartRoutine,PVOID Argument,ULONG CreateFlags,ULONG_PTR ZeroBits,SIZE_T StackSize,SIZE_T MaximumStackSize,PPS_ATTRIBUTE_LIST AttributeList);
 typedef NTSTATUS (NTAPI * t_NtGetContextThread)(HANDLE ThreadHandle,PCONTEXT ThreadContext);
 typedef NTSTATUS (NTAPI * t_NtOpenProcess)(PHANDLE ProcessHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,PCLIENT_ID ClientId);
@@ -1001,7 +1013,9 @@ typedef NTSTATUS (NTAPI * t_NtQueryDebugFilterState)(ULONG ComponentId,ULONG Lev
 typedef NTSTATUS (NTAPI * t_NtQueryInformationProcess)(HANDLE ProcessHandle,PROCESSINFOCLASS ProcessInformationClass,PVOID ProcessInformation,ULONG ProcessInformationLength,PULONG ReturnLength);
 typedef NTSTATUS (NTAPI * t_NtQueryInformationThread)(HANDLE ThreadHandle,THREADINFOCLASS ThreadInformationClass,PVOID ThreadInformation,ULONG ThreadInformationLength,PULONG ReturnLength);
 typedef NTSTATUS (NTAPI * t_NtQueryObject)(HANDLE Handle,OBJECT_INFORMATION_CLASS ObjectInformationClass,PVOID ObjectInformation,ULONG ObjectInformationLength,PULONG ReturnLength);
+typedef NTSTATUS (NTAPI * t_NtQueryPerformanceCounter)(PLARGE_INTEGER PerformanceCounter,PLARGE_INTEGER PerformanceFrequency);
 typedef NTSTATUS (NTAPI * t_NtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS SystemInformationClass,PVOID SystemInformation,ULONG SystemInformationLength,PULONG ReturnLength);
+typedef NTSTATUS (NTAPI * t_NtQuerySystemTime)(PLARGE_INTEGER SystemTime);
 typedef NTSTATUS (NTAPI * t_NtQueryVirtualMemory)(HANDLE ProcessHandle,PVOID BaseAddress,MEMORY_INFORMATION_CLASS MemoryInformationClass,PVOID MemoryInformation,SIZE_T MemoryInformationLength,PSIZE_T ReturnLength);
 typedef NTSTATUS (NTAPI * t_NtResumeProcess)(HANDLE ProcessHandle);
 typedef NTSTATUS (NTAPI * t_NtResumeThread)(HANDLE ThreadHandle,PULONG PreviousSuspendCount);
@@ -1010,6 +1024,7 @@ typedef NTSTATUS (NTAPI * t_NtSetDebugFilterState)(ULONG ComponentId,ULONG Level
 typedef NTSTATUS (NTAPI * t_NtSetInformationProcess)(HANDLE ProcessHandle,PROCESSINFOCLASS ProcessInformationClass,PVOID ProcessInformation,ULONG ProcessInformationLength);
 typedef NTSTATUS (NTAPI * t_NtSetInformationThread)(HANDLE ThreadHandle,THREADINFOCLASS ThreadInformationClass,PVOID ThreadInformation,ULONG ThreadInformationLength);
 typedef NTSTATUS (NTAPI * t_NtSetSystemInformation)(SYSTEM_INFORMATION_CLASS SystemInformationClass,PVOID SystemInformation,ULONG SystemInformationLength);
+typedef NTSTATUS (NTAPI * t_NtSetSystemTime)(PLARGE_INTEGER SystemTime,PLARGE_INTEGER PreviousTime);
 typedef NTSTATUS (NTAPI * t_NtSuspendProcess)(HANDLE ProcessHandle);
 typedef NTSTATUS (NTAPI * t_NtSuspendThread)(HANDLE ThreadHandle,PULONG PreviousSuspendCount);
 typedef NTSTATUS (NTAPI * t_NtSystemDebugControl)(SYSDBG_COMMAND Command,PVOID InputBuffer,ULONG InputBufferLength,PVOID OutputBuffer,ULONG OutputBufferLength,PULONG ReturnLength);
@@ -1017,7 +1032,6 @@ typedef NTSTATUS (NTAPI * t_NtTerminateProcess)(HANDLE ProcessHandle,NTSTATUS Ex
 typedef NTSTATUS (NTAPI * t_NtYieldExecution)(VOID);
 typedef VOID     (NTAPI * t_KiUserExceptionDispatcher)(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT ContextFrame);
 typedef VOID     (NTAPI * t_RtlRestoreContext)(PCONTEXT ContextRecord, PEXCEPTION_RECORD ExceptionRecord);
-
 
 //user32.dll native calls
 //FindWindow
@@ -1422,6 +1436,20 @@ NtCreateThreadEx (
     _In_opt_ SIZE_T StackSize,
     _In_opt_ SIZE_T MaximumStackSize,
     _In_opt_ PPS_ATTRIBUTE_LIST AttributeList
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtCreateThread (
+	__out PHANDLE ThreadHandle,
+	__in ACCESS_MASK DesiredAccess,
+	__in_opt POBJECT_ATTRIBUTES ObjectAttributes,
+	__in HANDLE ProcessHandle,
+	__out PCLIENT_ID ClientId,
+	__in PCONTEXT ThreadContext,
+	__in PINITIAL_TEB InitialTeb,
+	__in BOOLEAN CreateSuspended
 );
 
 NTSYSCALLAPI

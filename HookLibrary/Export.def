@@ -1,6 +1,5 @@
 LIBRARY
 EXPORTS
-InitDll
 DllExchange
 HookedNtSetInformationThread
 HookedNtQuerySystemInformation
@@ -20,3 +19,5 @@ HookedNtUserFindWindowEx
 HookedNtUserBuildHwndList
 HookedNtSetDebugFilterState
 HookedNativeCallInternal
+HookedNtCreateThread
+HookedNtCreateThreadEx

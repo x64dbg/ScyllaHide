@@ -36,6 +36,8 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
 	void * HookedNtContinue = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtContinue") + imageBase);
 	void * HookedNtClose = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtClose") + imageBase);
 	void * HookedNtSetDebugFilterState = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetDebugFilterState") + imageBase);
+	void * HookedNtCreateThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtCreateThread") + imageBase);
+	void * HookedNtCreateThreadEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtCreateThreadEx") + imageBase);
 
 	HookedNativeCallInternal = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNativeCallInternal") + imageBase);
 
@@ -51,7 +53,8 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
 	t_NtContinue _NtContinue = (t_NtContinue)GetProcAddress(hNtdll, "NtContinue");
 	t_NtClose _NtClose = (t_NtClose)GetProcAddress(hNtdll, "NtClose");
 	t_NtSetDebugFilterState _NtSetDebugFilterState = (t_NtSetDebugFilterState)GetProcAddress(hNtdll, "NtSetDebugFilterState");
-
+	t_NtCreateThread _NtCreateThread = (t_NtCreateThread)GetProcAddress(hNtdll, "NtCreateThread");
+	t_NtCreateThreadEx _NtCreateThreadEx = (t_NtCreateThreadEx)GetProcAddress(hNtdll, "NtCreateThreadEx");
 
 	if (dllexchange->EnableNtSetInformationThreadHook == TRUE) HOOK_NATIVE(NtSetInformationThread);
 	if (dllexchange->EnableNtQuerySystemInformationHook == TRUE) HOOK_NATIVE(NtQuerySystemInformation);
@@ -66,6 +69,9 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
 	if (dllexchange->EnableNtSetContextThreadHook == TRUE) HOOK_NATIVE(NtSetContextThread);
 
 	if (dllexchange->EnableNtCloseHook == TRUE) HOOK_NATIVE(NtClose);
+	if (dllexchange->EnableCreateThreadHook == TRUE) HOOK_NATIVE(NtCreateThread);
+	if (dllexchange->EnableCreateThreadHook == TRUE && _NtCreateThreadEx != 0) HOOK_NATIVE(NtCreateThreadEx);
+
 	if (dllexchange->EnableNtSetDebugFilterStateHook == TRUE) HOOK_NATIVE_NOTRAMP(NtSetDebugFilterState);
 
 #ifndef _WIN64

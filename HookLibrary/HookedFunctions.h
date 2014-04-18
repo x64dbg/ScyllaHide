@@ -3,8 +3,10 @@
 #include <windows.h>
 
 
-#define STATUS_PORT_NOT_SET        ((NTSTATUS)0xC0000353L)
+#define STATUS_PORT_NOT_SET ((NTSTATUS)0xC0000353L)
 #define STATUS_HANDLE_NOT_CLOSABLE ((NTSTATUS)0xC0000235L)
+#define STATUS_INSUFFICIENT_RESOURCES ((NTSTATUS)0xC000009AL)
+
 
 #ifndef _WIN64
 #define NAKED __declspec(naked)
@@ -37,6 +39,9 @@ NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCL
 NTSTATUS NTAPI HookedNtClose(HANDLE Handle);
 NTSTATUS NTAPI HookedNtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLEAN State);
 NTSTATUS NTAPI HookedNtUserBuildHwndList(HDESK hdesk, HWND hwndNext, BOOL fEnumChildren, DWORD idThread, UINT cHwndMax, HWND *phwndFirst, PUINT pcHwndNeeded);
+NTSTATUS NTAPI HookedNtCreateThread(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PCLIENT_ID ClientId,PCONTEXT ThreadContext,PINITIAL_TEB InitialTeb,BOOLEAN CreateSuspended);
+NTSTATUS NTAPI HookedNtCreateThreadEx(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PVOID StartRoutine,PVOID Argument,ULONG CreateFlags,ULONG_PTR ZeroBits,SIZE_T StackSize,SIZE_T MaximumStackSize,PPS_ATTRIBUTE_LIST AttributeList);
+
 
 BOOL WINAPI HookedBlockInput(BOOL fBlockIt);
 DWORD WINAPI HookedGetTickCount(void);

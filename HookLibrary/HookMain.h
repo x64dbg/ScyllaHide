@@ -4,11 +4,14 @@
 #include "..\ntdll\ntdll.h"
 
 typedef BOOL(WINAPI * t_DllMain)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
-typedef void  (WINAPI * t_GetSystemTime)(LPSYSTEMTIME lpSystemTime); //Kernel32.dll
-typedef void  (WINAPI * t_GetLocalTime)(LPSYSTEMTIME lpSystemTime); //Kernel32.dll
-typedef DWORD(WINAPI * t_timeGetTime)(void); //Winmm.dll
-typedef DWORD(WINAPI * t_GetTickCount)(void); //Kernel32.dll
-typedef BOOL(WINAPI * t_QueryPerformanceCounter)(LARGE_INTEGER *lpPerformanceCount); //Kernel32.dll
+
+typedef void  (WINAPI * t_GetSystemTime)(LPSYSTEMTIME lpSystemTime); //Kernel32.dll / kernelbase
+typedef void  (WINAPI * t_GetLocalTime)(LPSYSTEMTIME lpSystemTime); //Kernel32.dll / kernelbase
+typedef DWORD(WINAPI * t_timeGetTime)(void); //Winmm.dll -> sometimes GetTickCount
+typedef DWORD(WINAPI * t_GetTickCount)(void); //Kernel32.dll / kernelbase
+typedef BOOL(WINAPI * t_QueryPerformanceCounter)(LARGE_INTEGER *lpPerformanceCount); //Kernel32.dll -> ntdll.RtlQueryPerformanceCounter -> NO NATIVE CALL
+typedef BOOL(WINAPI * t_QueryPerformanceFrequency)(LARGE_INTEGER *lpFrequency); //kernel32.dll -> ntdll.RtlQueryPerformanceFrequency -> ntdll.ZwQueryPerformanceCounter
+
 typedef BOOL(WINAPI * t_BlockInput)(BOOL fBlockIt); //user32.dll
 typedef DWORD(WINAPI * t_OutputDebugStringA)(LPCSTR lpOutputString); //Kernel32.dll
 typedef DWORD(WINAPI * t_OutputDebugStringW)(LPCWSTR lpOutputString); //Kernel32.dll
@@ -43,6 +46,8 @@ typedef struct _HOOK_DLL_EXCHANGE {
     BOOLEAN EnableNtYieldExecutionHook;
     BOOLEAN EnableNtCloseHook;
 
+	BOOLEAN EnableCreateThreadHook;
+
     //Protect and Hide Hardware Breakpoints
     BOOLEAN EnableNtGetContextThreadHook;
     BOOLEAN EnableNtSetContextThreadHook;
@@ -72,6 +77,9 @@ typedef struct _HOOK_DLL_EXCHANGE {
     t_KiUserExceptionDispatcher dKiUserExceptionDispatcher;
     t_NtContinue dNtContinue;
     t_NtClose dNtClose;
+
+	t_NtCreateThreadEx dNtCreateThreadEx; //only since vista
+	t_NtCreateThread dNtCreateThread;
 
     t_GetTickCount dGetTickCount;
     t_BlockInput dBlockInput;
