@@ -1,3 +1,7 @@
+Version 0.3a
+
+- Added "Break on TLS" to Olly1
+
 Version 0.3
 
 - Fix for Olly plugins caption reset

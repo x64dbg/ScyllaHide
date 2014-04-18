@@ -41,6 +41,7 @@ Olly1:
 - Fix FPU Bug
 - x64 compatibility mode
 - Remove EP-Break
+- Break on TLS
 
 ------------------------------------------------------
 
