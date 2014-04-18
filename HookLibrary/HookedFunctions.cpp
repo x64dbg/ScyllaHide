@@ -435,10 +435,22 @@ NTSTATUS NTAPI HookedNtCreateThread(PHANDLE ThreadHandle,ACCESS_MASK DesiredAcce
 //WIN 7: CreateThread -> CreateRemoteThreadEx -> NtCreateThreadEx
 NTSTATUS NTAPI HookedNtCreateThreadEx(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PVOID StartRoutine,PVOID Argument,ULONG CreateFlags,ULONG_PTR ZeroBits,SIZE_T StackSize,SIZE_T MaximumStackSize,PPS_ATTRIBUTE_LIST AttributeList)
 {
-	if (ProcessHandle == NtCurrentProcess)
+	if (DllExchange.dNtSetInformationThread) //prevent hide from debugger
 	{
-		return STATUS_INSUFFICIENT_RESOURCES;//STATUS_INVALID_PARAMETER STATUS_INVALID_HANDLE STATUS_INSUFFICIENT_RESOURCES
+		if (CreateFlags & THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER)
+		{
+			CreateFlags ^= THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER;
+		}
 	}
+
+	if (DllExchange.EnableCreateThreadHook == TRUE)
+	{
+		if (ProcessHandle == NtCurrentProcess)
+		{
+			return STATUS_INSUFFICIENT_RESOURCES;//STATUS_INVALID_PARAMETER STATUS_INVALID_HANDLE STATUS_INSUFFICIENT_RESOURCES
+		}
+	}
+
 	return DllExchange.dNtCreateThreadEx(ThreadHandle, DesiredAccess, ObjectAttributes, ProcessHandle, StartRoutine, Argument, CreateFlags, ZeroBits, StackSize, MaximumStackSize,AttributeList);
 }
 
