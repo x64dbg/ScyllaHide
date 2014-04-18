@@ -107,7 +107,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 	if (remoteImageBase)
 	{
 		FillExchangeStruct(hProcess, &DllExchangeLoader);
-		DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
+		//DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
 		DWORD exchangeDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "DllExchange");
 
 		StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
@@ -354,6 +354,7 @@ void CreateDefaultSettings(const WCHAR * iniFile)
 	WriteIniSettings(L"NtYieldExecutionHook", L"1", iniFile);
 	WriteIniSettings(L"OutputDebugStringHook", L"1", iniFile);
 	WriteIniSettings(L"PebHiding", L"1", iniFile);
+	WriteIniSettings(L"CreateThreadHook", L"1", iniFile);
 
 	WriteIniSettings(L"EnableProtectProcessId", L"1", iniFile);
 }
@@ -383,6 +384,7 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
 	DllExchangeLoader.EnableNtYieldExecutionHook = ReadIniSettingsInt(L"NtYieldExecutionHook", iniFile);
 	DllExchangeLoader.EnableOutputDebugStringHook = ReadIniSettingsInt(L"OutputDebugStringHook", iniFile);
 	DllExchangeLoader.EnablePebHiding = ReadIniSettingsInt(L"PebHiding", iniFile);
+	DllExchangeLoader.EnableCreateThreadHook = ReadIniSettingsInt(L"CreateThreadHook", iniFile);
 
 	DllExchangeLoader.EnableProtectProcessId = ReadIniSettingsInt(L"EnableProtectProcessId", iniFile);
 }
