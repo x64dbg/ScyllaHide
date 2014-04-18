@@ -24,6 +24,7 @@ struct HideOptions
     int NtClose;
     int removeEPBreak;
     int fixOllyBugs;
+	int breakTLS;
     char ollyTitle[32];
     int x64Fix;
 };
