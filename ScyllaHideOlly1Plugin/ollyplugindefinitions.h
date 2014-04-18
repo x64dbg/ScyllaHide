@@ -3,6 +3,10 @@
 
 #pragma pack(1)                      // Force byte alignment of structures
 
+
+#define TY_ONESHOT     0x00000800      // Temporary stop
+#define TY_TEMP        0x00001000      // Temporary breakpoint
+
 //olly definitions
 extern "C" void _Addtolist(long addr,int highlight,char *format,...);
 extern "C" void _Message(unsigned long addr,char *format,...);
@@ -14,6 +18,7 @@ extern "C" int _Pluginreadstringfromini(HINSTANCE dllinst,char *key, char *s,cha
 extern "C" void _Deletebreakpoints(unsigned long addr0,unsigned long addr1,int silent);
 extern "C" int _Setbreakpoint(unsigned long addr,unsigned long type,unsigned char cmd);
 extern "C" int _Plugingetvalue(int type);
+extern "C" void _Tempbreakpoint(unsigned long addr,int mode);
 
 #define NBAR 17 // Max allowed number of segments in bar
 #define PLUGIN_VERSION 110
