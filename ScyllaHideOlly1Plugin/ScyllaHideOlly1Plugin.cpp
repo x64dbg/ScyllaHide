@@ -580,16 +580,21 @@ void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseOfImage)
     {
         if (pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress)
         {
+			_Message(0, "[ScyllaHide] TLS directory %X found", pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
+
             ReadProcessMemory(hProcess, (PVOID)((DWORD_PTR)baseOfImage + pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress), &tlsDir, sizeof(IMAGE_TLS_DIRECTORY), 0);
 
             if (tlsDir.AddressOfCallBacks)
             {
+				_Message(0, "[ScyllaHide] TLS AddressOfCallBacks %X found", tlsDir.AddressOfCallBacks);
+
                 ReadProcessMemory(hProcess, (PVOID)tlsDir.AddressOfCallBacks, callbacks, sizeof(callbacks), 0);
 
                 for (int i = 0; i < _countof(callbacks); i++)
                 {
                     if (callbacks[i])
                     {
+						_Message(0, "[ScyllaHide] TLS Callback %X found", callbacks[i]);
                         _Tempbreakpoint((DWORD)callbacks[i], TY_ONESHOT);
                     }
                     else
