@@ -37,7 +37,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
-	    hNtdll = GetModuleHandleW(L"ntdll.dll");
+        hNtdll = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
         WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
         if (temp)
@@ -183,6 +183,12 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.x64Fix = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.breakTLS = 1;
+    }
+    else
+        pHideOptions.breakTLS = 0;
 
     GetDlgItemTextA(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
     SetWindowTextA(hwmain, pHideOptions.ollyTitle);
@@ -210,6 +216,7 @@ void SaveOptions(HWND hWnd)
     _Pluginwritestringtoini(hinst, "ollyTitle", pHideOptions.ollyTitle);
     _Pluginwriteinttoini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
     _Pluginwriteinttoini(hinst, "x64Fix", pHideOptions.x64Fix);
+    _Pluginwriteinttoini(hinst, "breakTLS", pHideOptions.breakTLS);
 }
 
 void LoadOptions()
@@ -237,6 +244,7 @@ void LoadOptions()
     _Pluginreadstringfromini(hinst, "ollyTitle", pHideOptions.ollyTitle, "I can haz crack?");
     pHideOptions.fixOllyBugs = _Pluginreadintfromini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
     pHideOptions.x64Fix = _Pluginreadintfromini(hinst, "x64Fix", pHideOptions.x64Fix);
+    pHideOptions.breakTLS = _Pluginreadintfromini(hinst, "breakTLS", pHideOptions.breakTLS);
 }
 
 //options dialog proc
@@ -272,6 +280,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SetDlgItemTextA(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
         SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
         SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, pHideOptions.breakTLS, 0);
         break;
     }
     case WM_CLOSE:
@@ -458,27 +467,27 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 {
     if(!debugevent)
         return;
-		
-	if (pHideOptions.PEB)
-	{
-		if (specialPebFix)
-		{
-			StartFixBeingDebugged(ProcessId, false);
-			specialPebFix = false;
-		}
 
-		if (debugevent->u.LoadDll.lpBaseOfDll == hNtdll)
-		{
-			StartFixBeingDebugged(ProcessId, true);
-			specialPebFix = true;
-		}
-	}
+    if (pHideOptions.PEB)
+    {
+        if (specialPebFix)
+        {
+            StartFixBeingDebugged(ProcessId, false);
+            specialPebFix = false;
+        }
+
+        if (debugevent->u.LoadDll.lpBaseOfDll == hNtdll)
+        {
+            StartFixBeingDebugged(ProcessId, true);
+            specialPebFix = true;
+        }
+    }
 
     switch(debugevent->dwDebugEventCode)
     {
     case CREATE_PROCESS_DEBUG_EVENT:
     {
-		ImageBase = debugevent->u.CreateProcessInfo.lpBaseOfImage;
+        ImageBase = debugevent->u.CreateProcessInfo.lpBaseOfImage;
         ProcessId=debugevent->dwProcessId;
         bHooked = false;
         epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
@@ -487,7 +496,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         //change olly caption again !
         SetWindowTextA(hwmain, pHideOptions.ollyTitle);
 
-		
+
 
         //StartPebPatch1(ProcessId);
     }
@@ -509,7 +518,8 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         {
             if (!bHooked)
             {
-				ReadTlsAndSetBreakpoints(ProcessId, ImageBase);
+                if(pHideOptions.breakTLS)
+                    ReadTlsAndSetBreakpoints(ProcessId, ImageBase);
 
                 bHooked = true;
                 _Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
@@ -553,43 +563,43 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
 
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseOfImage)
 {
-	BYTE memory[0x1000] = {0};
-	IMAGE_TLS_DIRECTORY tlsDir = {0};
-	PVOID callbacks[64] = {0};
+    BYTE memory[0x1000] = {0};
+    IMAGE_TLS_DIRECTORY tlsDir = {0};
+    PVOID callbacks[64] = {0};
 
-	HANDLE hProcess = OpenProcess(PROCESS_VM_READ, 0, dwProcessId);
+    HANDLE hProcess = OpenProcess(PROCESS_VM_READ, 0, dwProcessId);
 
-	if (!hProcess)
-		return;
+    if (!hProcess)
+        return;
 
-	ReadProcessMemory(hProcess, baseOfImage, memory, sizeof(memory), 0);
+    ReadProcessMemory(hProcess, baseOfImage, memory, sizeof(memory), 0);
 
-	PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)memory;
-	PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
-	if (pNt->Signature == IMAGE_NT_SIGNATURE)
-	{
-		if (pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress)
-		{
-			ReadProcessMemory(hProcess, (PVOID)((DWORD_PTR)baseOfImage + pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress), &tlsDir, sizeof(IMAGE_TLS_DIRECTORY), 0);
+    PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)memory;
+    PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
+    if (pNt->Signature == IMAGE_NT_SIGNATURE)
+    {
+        if (pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress)
+        {
+            ReadProcessMemory(hProcess, (PVOID)((DWORD_PTR)baseOfImage + pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress), &tlsDir, sizeof(IMAGE_TLS_DIRECTORY), 0);
 
-			if (tlsDir.AddressOfCallBacks)
-			{
-				ReadProcessMemory(hProcess, (PVOID)tlsDir.AddressOfCallBacks, callbacks, sizeof(callbacks), 0);
+            if (tlsDir.AddressOfCallBacks)
+            {
+                ReadProcessMemory(hProcess, (PVOID)tlsDir.AddressOfCallBacks, callbacks, sizeof(callbacks), 0);
 
-				for (int i = 0; i < _countof(callbacks); i++)
-				{
-					if (callbacks[i])
-					{
-						_Tempbreakpoint((DWORD)callbacks[i], TY_ONESHOT);
-					}
-					else
-					{
-						break;
-					}
-				}
-			}
-		}
-	}
+                for (int i = 0; i < _countof(callbacks); i++)
+                {
+                    if (callbacks[i])
+                    {
+                        _Tempbreakpoint((DWORD)callbacks[i], TY_ONESHOT);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
-	CloseHandle(hProcess);
+    CloseHandle(hProcess);
 }
