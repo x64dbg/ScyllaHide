@@ -11,7 +11,7 @@ const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
 const DWORD PLUGIN_MAJOR_VERSION = 0;
-const DWORD PLUGIN_MINOR_VERSION = 3;
+const DWORD PLUGIN_MINOR_VERSION = 4;
 
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 

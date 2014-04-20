@@ -1,6 +1,7 @@
-Version 0.3a
+Version 0.4
 
-- Added "Break on TLS" to Olly1
+- Olly v1/v2 Plugins: Apply hooks without restarting
+- Olly v1 Plugin: Added "Break on TLS"
 
 Version 0.3
 
