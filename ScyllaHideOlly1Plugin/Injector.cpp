@@ -49,6 +49,8 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
     }
     else
     {
+		RestoreHooks(&DllExchangeLoader, hProcess);
+
         remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
         if (remoteImageBase)
         {

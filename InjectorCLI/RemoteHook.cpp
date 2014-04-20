@@ -261,8 +261,9 @@ DWORD GetCallOffset( BYTE * data, int dataSize, DWORD * callSize )
 #ifndef _WIN64
 
 BYTE sysWowSpecialJmp[7] = { 0 };//EA 1E27E574 3300              JMP FAR 0033:74E5271E ; Far jump
+DWORD sysWowSpecialJmpAddress = 0;
 
-void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
+void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp,unsigned long * backupSize)
 {
 	PBYTE trampoline = 0;
 	DWORD protect;
@@ -271,11 +272,11 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 
 	DWORD callSize = 0;
 	DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
-	DWORD callDestination = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
+	sysWowSpecialJmpAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
 
 	if (onceNativeCallContinue == false)
 	{
-		ReadProcessMemory(hProcess, (void*)callDestination, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0);
+		ReadProcessMemory(hProcess, (void*)sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0);
 		NativeCallContinue = VirtualAllocEx(hProcess, 0, sizeof(sysWowSpecialJmp), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 		WriteProcessMemory(hProcess, NativeCallContinue, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0);
 	}
@@ -297,14 +298,14 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 
 	if (onceNativeCallContinue == false)
 	{
-		if (VirtualProtectEx(hProcess, (void *)callDestination, minDetourLen, PAGE_EXECUTE_READWRITE, &protect))
+		if (VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, PAGE_EXECUTE_READWRITE, &protect))
 		{
 			ZeroMemory(tempSpace, sizeof(tempSpace));
-			WriteJumper((PBYTE)callDestination, (PBYTE)HookedNativeCallInternal, tempSpace);
-			WriteProcessMemory(hProcess, (void *)callDestination, tempSpace, minDetourLen, 0);
+			WriteJumper((PBYTE)sysWowSpecialJmpAddress, (PBYTE)HookedNativeCallInternal, tempSpace);
+			WriteProcessMemory(hProcess, (void *)sysWowSpecialJmpAddress, tempSpace, minDetourLen, 0);
 
-			VirtualProtectEx(hProcess, (void *)callDestination, minDetourLen, protect, &protect);
-			FlushInstructionCache(hProcess, (void *)callDestination, minDetourLen);
+			VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, protect, &protect);
+			FlushInstructionCache(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen);
 		}
 		onceNativeCallContinue = true;
 	}
@@ -317,9 +318,10 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 
 BYTE KiSystemCallJmpPatch[] = {0xE9, 0x00, 0x00, 0x00, 0x00, 0xEB, 0xF9};
 BYTE KiSystemCallBackup[20] = {0};
+DWORD KiSystemCallAddress = 0;
 DWORD KiSystemCallBackupSize = 0;
 #ifndef _WIN64
-void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
+void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp,unsigned long * backupSize)
 {
 	PBYTE trampoline = 0;
 	DWORD protect;
@@ -328,11 +330,11 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void
 
 	DWORD callSize = 0;
 	DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
-	DWORD callDestination = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
+	KiSystemCallAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
 
 	if (onceNativeCallContinue == false)
 	{
-		ReadProcessMemory(hProcess, (void*)callDestination, KiSystemCallBackup, sizeof(KiSystemCallBackup), 0);
+		ReadProcessMemory(hProcess, (void*)KiSystemCallAddress, KiSystemCallBackup, sizeof(KiSystemCallBackup), 0);
 		KiSystemCallBackupSize = GetFunctionSizeRETN(KiSystemCallBackup, sizeof(KiSystemCallBackup));
 		NativeCallContinue = VirtualAllocEx(hProcess, 0, KiSystemCallBackupSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 		WriteProcessMemory(hProcess, NativeCallContinue, KiSystemCallBackup, KiSystemCallBackupSize, 0);
@@ -355,7 +357,7 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void
 
 	if (onceNativeCallContinue == false)
 	{
-		DWORD_PTR patchAddr = (DWORD_PTR)callDestination - 5;
+		DWORD_PTR patchAddr = (DWORD_PTR)KiSystemCallAddress - 5;
 
 		if (VirtualProtectEx(hProcess, (void *)patchAddr, 5+2, PAGE_EXECUTE_READWRITE, &protect))
 		{
@@ -373,7 +375,7 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void
 }
 #endif
 #ifndef _WIN64
-void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
+void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp,unsigned long * backupSize)
 {
 	memset(changedBytes, 0x90, sizeof(changedBytes));
 	memset(originalBytes, 0x90, sizeof(originalBytes));
@@ -395,12 +397,12 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
 
 		if (IsSysWow64() == false)
 		{
-			result = DetourCreateRemoteNative32Normal(hProcess, lpFuncOrig, lpFuncDetour, createTramp);
+			result = DetourCreateRemoteNative32Normal(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
 		}
 		else
 		{
 			HookNative[countNativeHooks].ecxValue = GetEcxSysCallIndex32(originalBytes, sizeof(originalBytes));
-			result = DetourCreateRemoteNativeSysWow64(hProcess, lpFuncOrig, lpFuncDetour, createTramp);
+			result = DetourCreateRemoteNativeSysWow64(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
 		}
 	}
 
@@ -410,7 +412,7 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
 }
 #endif
 
-void * DetourCreateRemote(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
+void * DetourCreateRemote(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, DWORD * backupSize)
 {
     BYTE originalBytes[50] = { 0 };
     BYTE tempSpace[1000] = { 0 };
@@ -425,6 +427,8 @@ void * DetourCreateRemote(void * hProcess, void * lpFuncOrig, void * lpFuncDetou
 
     if (createTramp)
     {
+		*backupSize = detourLen;
+
         trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, detourLen + minDetourLen, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
         if (!trampoline)
             return 0;

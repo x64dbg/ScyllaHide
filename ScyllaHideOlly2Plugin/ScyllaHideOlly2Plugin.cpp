@@ -22,9 +22,10 @@ extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 //globals
 HINSTANCE hinst;
 
-HMODULE hNtdll = 0;
+HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
-
+static DWORD ProcessId = 0;
+static bool bHooked = false;
 
 //Menu->Options
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
@@ -141,7 +142,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
-        hNtdll = GetModuleHandleW(L"ntdll.dll");
+        hNtdllModule = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
         WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
         if (temp)
@@ -194,6 +195,10 @@ extc int __cdecl ODBG2_Plugininit(void)
     Getfromini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",&opt_NtSetDebugFilterState);
     Getfromini(NULL,PLUGINNAME,L"NtClose",L"%i",&opt_NtClose);
     Getfromini(NULL, PLUGINNAME, L"ollyTitle", L"%s", &opt_ollyTitle);
+
+
+	Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
+	ReadNtApiInformation();
 
     if(opt_NtGetContextThread && opt_NtSetContextThread && opt_NtContinue && opt_KiUserExceptionDispatcher) opt_ProtectDRx = 1;
 
@@ -297,7 +302,16 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
 
         UpdateHideOptions();
 
-        MessageBoxW(hwollymain, L"Please restart the target to apply changes !", L"[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+		if (ProcessId)
+		{
+			startInjection(ProcessId, ScyllaHideDllPath, true);
+			bHooked = true;
+			MessageBoxA(hwollymain, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+		}
+		else
+		{
+			MessageBoxA(hwollymain, "Please start the target to apply changes!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+		}
     };
     // It makes no harm to return page descriptor on all messages.
     return scyllahideoptions;
@@ -306,8 +320,6 @@ extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
 //called for every debugloop pass
 extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 {
-    static DWORD ProcessId;
-    static bool bHooked;
 
     if(!debugevent)
         return;
@@ -321,7 +333,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
             specialPebFix = false;
         }
 
-        if (debugevent->u.LoadDll.lpBaseOfDll == hNtdll)
+        if (debugevent->u.LoadDll.lpBaseOfDll == hNtdllModule)
         {
             StartFixBeingDebugged(ProcessId, true);
             specialPebFix = true;
@@ -357,8 +369,6 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
             if (!bHooked)
             {
                 bHooked = true;
-                Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
-                ReadNtApiInformation();
                 startInjection(ProcessId, ScyllaHideDllPath, true);
             }
         }
@@ -367,4 +377,11 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
     }
     break;
     }
+}
+
+//reset variables. new target started or restarted
+extc void ODBG2_Pluginreset(void)
+{
+	bHooked = false;
+	ProcessId = 0;
 }

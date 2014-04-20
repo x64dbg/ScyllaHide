@@ -10,7 +10,7 @@
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
 
-#define SCYLLAHIDE_VERSION "0.3"
+#define SCYLLAHIDE_VERSION "0.4"
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
@@ -29,7 +29,7 @@ WCHAR NtApiIniPath[MAX_PATH] = {0};
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 
-HMODULE hNtdll = 0;
+HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
 LPVOID ImageBase = 0;
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseOfImage);
@@ -38,7 +38,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
-        hNtdll = GetModuleHandleW(L"ntdll.dll");
+        hNtdllModule = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
         WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
         if (temp)
@@ -298,7 +298,18 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         {
             //save options to ini
             SaveOptions(hWnd);
-            MessageBoxA(hWnd, "Please restart the target to apply changes !", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+
+			if (ProcessId)
+			{
+				startInjection(ProcessId, ScyllaHideDllPath, true);
+				bHooked = true;
+				MessageBoxA(hWnd, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+			}
+			else
+			{
+				MessageBoxA(hWnd, "Please start the target to apply changes!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+			}
+            
             EndDialog(hWnd, NULL);
             break;
         }
@@ -363,6 +374,9 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
     _Addtolist(0,0,"ScyllaHide Plugin v"SCYLLAHIDE_VERSION);
     _Addtolist(0,-1,"  Copyright (C) 2014 Aguila / cypher");
+
+	_Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
+	ReadNtApiInformation();
 
     //do some Olly fixes
     if(pHideOptions.fixOllyBugs) {
@@ -477,7 +491,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
             specialPebFix = false;
         }
 
-        if (debugevent->u.LoadDll.lpBaseOfDll == hNtdll)
+        if (debugevent->u.LoadDll.lpBaseOfDll == hNtdllModule)
         {
             StartFixBeingDebugged(ProcessId, true);
             specialPebFix = true;
@@ -520,11 +534,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         {
             if (!bHooked)
             {
-
-
                 bHooked = true;
-                _Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
-                ReadNtApiInformation();
                 startInjection(ProcessId, ScyllaHideDllPath, true);
             }
 
@@ -568,6 +578,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
     bHooked = false;
     bEPBreakRemoved = false;
 	bOnceTls = false;
+	ProcessId = 0;
 }
 
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseOfImage)
