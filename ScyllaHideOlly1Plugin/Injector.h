@@ -25,6 +25,7 @@ struct HideOptions
     int NtUserQueryWindow;
     int NtSetDebugFilterState;
     int NtClose;
+    int NtCreateThreadEx;
     int removeEPBreak;
     int fixOllyBugs;
 	int breakTLS;
