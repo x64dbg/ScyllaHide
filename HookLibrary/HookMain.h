@@ -21,9 +21,9 @@ typedef DWORD(WINAPI * t_OutputDebugStringW)(LPCWSTR lpOutputString); //Kernel32
 
 
 typedef struct _HOOK_NATIVE_CALL32 {
-	DWORD eaxValue;
-	DWORD ecxValue;
-	PVOID hookedFunction;
+    DWORD eaxValue;
+    DWORD ecxValue;
+    PVOID hookedFunction;
 } HOOK_NATIVE_CALL32;
 
 typedef struct _HOOK_DLL_EXCHANGE {
@@ -33,7 +33,10 @@ typedef struct _HOOK_DLL_EXCHANGE {
     HMODULE hkernelBase;
     HMODULE hUser32;
 
-    BOOLEAN EnablePebHiding;
+    BOOLEAN EnablePebBeingDebugged;
+    BOOLEAN EnablePebHeapFlags;
+    BOOLEAN EnablePebNtGlobalFlag;
+    BOOLEAN EnablePebStartupInfo;
 
     BOOLEAN EnableBlockInputHook;
     BOOLEAN EnableGetTickCountHook;
@@ -46,7 +49,7 @@ typedef struct _HOOK_DLL_EXCHANGE {
     BOOLEAN EnableNtYieldExecutionHook;
     BOOLEAN EnableNtCloseHook;
 
-	BOOLEAN EnableCreateThreadHook;
+    BOOLEAN EnableCreateThreadHook;
 
     //Protect and Hide Hardware Breakpoints
     BOOLEAN EnableNtGetContextThreadHook;
@@ -67,62 +70,62 @@ typedef struct _HOOK_DLL_EXCHANGE {
 
 
     t_NtSetInformationThread dNtSetInformationThread;
-	DWORD NtSetInformationThreadBackupSize;
+    DWORD NtSetInformationThreadBackupSize;
     t_NtQuerySystemInformation dNtQuerySystemInformation;
-	DWORD NtQuerySystemInformationBackupSize;
+    DWORD NtQuerySystemInformationBackupSize;
     t_NtSetInformationProcess dNtSetInformationProcess;
-	DWORD NtSetInformationProcessBackupSize;
+    DWORD NtSetInformationProcessBackupSize;
     t_NtQueryInformationProcess dNtQueryInformationProcess;
-	DWORD NtQueryInformationProcessBackupSize;
+    DWORD NtQueryInformationProcessBackupSize;
     t_NtQueryObject dNtQueryObject;
-	DWORD NtQueryObjectBackupSize;
+    DWORD NtQueryObjectBackupSize;
     t_NtYieldExecution dNtYieldExecution;
-	DWORD NtYieldExecutionBackupSize;
+    DWORD NtYieldExecutionBackupSize;
     t_NtGetContextThread dNtGetContextThread;
-	DWORD NtGetContextThreadBackupSize;
+    DWORD NtGetContextThreadBackupSize;
     t_NtSetContextThread dNtSetContextThread;
-	DWORD NtSetContextThreadBackupSize;
+    DWORD NtSetContextThreadBackupSize;
     t_KiUserExceptionDispatcher dKiUserExceptionDispatcher;
-	DWORD KiUserExceptionDispatcherBackupSize;
+    DWORD KiUserExceptionDispatcherBackupSize;
     t_NtContinue dNtContinue;
-	DWORD NtContinueBackupSize;
+    DWORD NtContinueBackupSize;
     t_NtClose dNtClose;
-	DWORD NtCloseBackupSize;
+    DWORD NtCloseBackupSize;
 
-	t_NtCreateThreadEx dNtCreateThreadEx; //only since vista
-	DWORD NtCreateThreadExBackupSize;
-	t_NtCreateThread dNtCreateThread;
-	DWORD NtCreateThreadBackupSize;
+    t_NtCreateThreadEx dNtCreateThreadEx; //only since vista
+    DWORD NtCreateThreadExBackupSize;
+    t_NtCreateThread dNtCreateThread;
+    DWORD NtCreateThreadBackupSize;
 
-	t_OutputDebugStringA dOutputDebugStringA;
-	DWORD OutputDebugStringABackupSize;
+    t_OutputDebugStringA dOutputDebugStringA;
+    DWORD OutputDebugStringABackupSize;
     t_GetTickCount dGetTickCount;
-	DWORD GetTickCountBackupSize;
+    DWORD GetTickCountBackupSize;
     t_BlockInput dBlockInput;
-	DWORD BlockInputBackupSize;
+    DWORD BlockInputBackupSize;
 
     t_NtUserFindWindowEx dNtUserFindWindowEx;
-	DWORD NtUserFindWindowExBackupSize;
-	t_NtUserBuildHwndList dNtUserBuildHwndList;
-	DWORD NtUserBuildHwndListBackupSize;
-	t_NtUserQueryWindow dNtUserQueryWindow;
-	DWORD NtUserQueryWindowBackupSize;
+    DWORD NtUserFindWindowExBackupSize;
+    t_NtUserBuildHwndList dNtUserBuildHwndList;
+    DWORD NtUserBuildHwndListBackupSize;
+    t_NtUserQueryWindow dNtUserQueryWindow;
+    DWORD NtUserQueryWindowBackupSize;
 
 
-	t_NtUserQueryWindow NtUserQueryWindow;
-	//t_NtUserGetClassName dNtUserGetClassName;
+    t_NtUserQueryWindow NtUserQueryWindow;
+    //t_NtUserGetClassName dNtUserGetClassName;
 
-	DWORD dwProtectedProcessId;
-	BOOLEAN EnableProtectProcessId;
+    DWORD dwProtectedProcessId;
+    BOOLEAN EnableProtectProcessId;
 
 
-	BOOLEAN isNtdllHooked;
-	BOOLEAN isKernel32Hooked;
-	BOOLEAN isUser32Hooked;
+    BOOLEAN isNtdllHooked;
+    BOOLEAN isKernel32Hooked;
+    BOOLEAN isUser32Hooked;
 
 #ifndef _WIN64
-	HOOK_NATIVE_CALL32 HookNative[MAX_NATIVE_HOOKS];
-	PVOID NativeCallContinue;
+    HOOK_NATIVE_CALL32 HookNative[MAX_NATIVE_HOOKS];
+    PVOID NativeCallContinue;
 #endif
 } HOOK_DLL_EXCHANGE;
 

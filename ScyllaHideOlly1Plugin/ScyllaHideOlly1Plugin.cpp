@@ -58,12 +58,30 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 void SaveOptions(HWND hWnd)
 {
     //read all checkboxes
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_GETCHECK, 0, 0))
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.PEB = 1;
+        pHideOptions.PEBBeingDebugged = 1;
     }
     else
-        pHideOptions.PEB = 0;
+        pHideOptions.PEBBeingDebugged = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.PEBHeapFlags = 1;
+    }
+    else
+        pHideOptions.PEBHeapFlags = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.PEBNtGlobalFlag = 1;
+    }
+    else
+        pHideOptions.PEBNtGlobalFlag = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.PEBStartupInfo = 1;
+    }
+    else
+        pHideOptions.PEBStartupInfo = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_GETCHECK, 0, 0))
     {
         pHideOptions.NtSetInformationThread = 1;
@@ -195,7 +213,10 @@ void SaveOptions(HWND hWnd)
     SetWindowTextA(hwmain, pHideOptions.ollyTitle);
 
     //save all options
-    _Pluginwriteinttoini(hinst, "PEB", pHideOptions.PEB);
+    _Pluginwriteinttoini(hinst, "PEBBeingDebugged", pHideOptions.PEBBeingDebugged);
+    _Pluginwriteinttoini(hinst, "PEBHeapFlags", pHideOptions.PEBHeapFlags);
+    _Pluginwriteinttoini(hinst, "PEBNtGlobalFlag", pHideOptions.PEBNtGlobalFlag);
+    _Pluginwriteinttoini(hinst, "PEBStartupInfo", pHideOptions.PEBStartupInfo);
     _Pluginwriteinttoini(hinst, "NtSetInformationThread", pHideOptions.NtSetInformationThread);
     _Pluginwriteinttoini(hinst, "NtQuerySystemInformation", pHideOptions.NtQuerySystemInformation);
     _Pluginwriteinttoini(hinst, "NtQueryInformationProcess", pHideOptions.NtQueryInformationProcess);
@@ -223,7 +244,10 @@ void SaveOptions(HWND hWnd)
 void LoadOptions()
 {
     //load all options
-    pHideOptions.PEB = _Pluginreadintfromini(hinst, "PEB", pHideOptions.PEB);
+    pHideOptions.PEBBeingDebugged = _Pluginreadintfromini(hinst, "PEBBeingDebugged", pHideOptions.PEBBeingDebugged);
+    pHideOptions.PEBHeapFlags = _Pluginreadintfromini(hinst, "PEBHeapFlags", pHideOptions.PEBHeapFlags);
+    pHideOptions.PEBNtGlobalFlag = _Pluginreadintfromini(hinst, "PEBNtGlobalFlag", pHideOptions.PEBNtGlobalFlag);
+    pHideOptions.PEBStartupInfo = _Pluginreadintfromini(hinst, "PEBStartupInfo", pHideOptions.PEBStartupInfo);
     pHideOptions.NtSetInformationThread = _Pluginreadintfromini(hinst, "NtSetInformationThread", pHideOptions.NtSetInformationThread);
     pHideOptions.NtQuerySystemInformation = _Pluginreadintfromini(hinst, "NtQuerySystemInformation", pHideOptions.NtQuerySystemInformation);
     pHideOptions.NtQueryInformationProcess = _Pluginreadintfromini(hinst, "NtQueryInformationProcess", pHideOptions.NtQueryInformationProcess);
@@ -257,7 +281,12 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     {
         LoadOptions();
 
-        SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, pHideOptions.PEB, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, pHideOptions.PEBBeingDebugged, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, pHideOptions.PEBHeapFlags, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, pHideOptions.PEBNtGlobalFlag, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_SETCHECK, pHideOptions.PEBStartupInfo, 0);
+        if(pHideOptions.PEBBeingDebugged && pHideOptions.PEBHeapFlags && pHideOptions.PEBNtGlobalFlag && pHideOptions.PEBStartupInfo)
+            SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_SETCHECK, pHideOptions.NtSetInformationThread, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_SETCHECK, pHideOptions.NtQuerySystemInformation, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_SETCHECK, pHideOptions.NtQueryInformationProcess, 0);
@@ -299,17 +328,17 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             //save options to ini
             SaveOptions(hWnd);
 
-			if (ProcessId)
-			{
-				startInjection(ProcessId, ScyllaHideDllPath, true);
-				bHooked = true;
-				MessageBoxA(hWnd, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
-			}
-			else
-			{
-				MessageBoxA(hWnd, "Please start the target to apply changes!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
-			}
-            
+            if (ProcessId)
+            {
+                startInjection(ProcessId, ScyllaHideDllPath, true);
+                bHooked = true;
+                MessageBoxA(hWnd, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+            }
+            else
+            {
+                MessageBoxA(hWnd, "Please start the target to apply changes!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+            }
+
             EndDialog(hWnd, NULL);
             break;
         }
@@ -340,6 +369,34 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             if(allChecked<1) SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 0, 0);
             else SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 1, 0);
 
+            break;
+        }
+        case IDC_PEB:
+        {
+            WPARAM state;
+            (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_GETCHECK, 0, 0))?state=1:state=0;
+
+            //trigger child checkboxes
+            SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_SETCHECK, state, 0);
+
+            break;
+        }
+        case IDC_PEBBEINGDEBUGGED:
+        case IDC_PEBHEAPFLAGS:
+        case IDC_PEBNTGLOBALFLAG:
+        case IDC_PEBSTARTUPINFO:
+        {
+            int allChecked = 1;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_GETCHECK, 0, 0)) allChecked--;
+
+            if(allChecked<1) SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 0, 0);
+            else SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
             break;
         }
         }
@@ -375,8 +432,8 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
     _Addtolist(0,0,"ScyllaHide Plugin v"SCYLLAHIDE_VERSION);
     _Addtolist(0,-1,"  Copyright (C) 2014 Aguila / cypher");
 
-	_Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
-	ReadNtApiInformation();
+    _Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
+    ReadNtApiInformation();
 
     //do some Olly fixes
     if(pHideOptions.fixOllyBugs) {
@@ -483,7 +540,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
     if(!debugevent)
         return;
 
-    if (pHideOptions.PEB)
+    if (pHideOptions.PEBBeingDebugged)
     {
         if (specialPebFix)
         {
@@ -505,7 +562,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         ImageBase = debugevent->u.CreateProcessInfo.lpBaseOfImage;
         ProcessId=debugevent->dwProcessId;
         bHooked = false;
-		bOnceTls = false;
+        bOnceTls = false;
         epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
         ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
@@ -562,11 +619,11 @@ extern "C" int __declspec(dllexport) _ODBG_Pausedex(int reason, int extdata, voi
         _Deletebreakpoints(epaddr,epaddr+1, 0);
         bEPBreakRemoved = true;
     }
-	if (!bOnceTls && pHideOptions.breakTLS)
-	{
-		ReadTlsAndSetBreakpoints(ProcessId, ImageBase);
-		bOnceTls = true;
-	}
+    if (!bOnceTls && pHideOptions.breakTLS)
+    {
+        ReadTlsAndSetBreakpoints(ProcessId, ImageBase);
+        bOnceTls = true;
+    }
 
     return 0;
 }
@@ -577,8 +634,8 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
     ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
     bHooked = false;
     bEPBreakRemoved = false;
-	bOnceTls = false;
-	ProcessId = 0;
+    bOnceTls = false;
+    ProcessId = 0;
 }
 
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseOfImage)
@@ -600,13 +657,13 @@ void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseOfImage)
     {
         if (pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress)
         {
-			//_Message(0, "[ScyllaHide] TLS directory %X found", pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
+            //_Message(0, "[ScyllaHide] TLS directory %X found", pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
 
             ReadProcessMemory(hProcess, (PVOID)((DWORD_PTR)baseOfImage + pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress), &tlsDir, sizeof(IMAGE_TLS_DIRECTORY), 0);
 
             if (tlsDir.AddressOfCallBacks)
             {
-				//_Message(0, "[ScyllaHide] TLS AddressOfCallBacks %X found", tlsDir.AddressOfCallBacks);
+                //_Message(0, "[ScyllaHide] TLS AddressOfCallBacks %X found", tlsDir.AddressOfCallBacks);
 
                 ReadProcessMemory(hProcess, (PVOID)tlsDir.AddressOfCallBacks, callbacks, sizeof(callbacks), 0);
 
@@ -614,7 +671,7 @@ void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseOfImage)
                 {
                     if (callbacks[i])
                     {
-						_Message(0, "[ScyllaHide] TLS callback found: Index %d Address %X", i, callbacks[i]);
+                        _Message(0, "[ScyllaHide] TLS callback found: Index %d Address %X", i, callbacks[i]);
                         _Tempbreakpoint((DWORD)callbacks[i], TY_ONESHOT);
                     }
                     else

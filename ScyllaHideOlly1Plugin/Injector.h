@@ -4,7 +4,10 @@
 
 struct HideOptions
 {
-    int PEB;
+    int PEBBeingDebugged;
+    int PEBHeapFlags;
+    int PEBNtGlobalFlag;
+    int PEBStartupInfo;
     int NtSetInformationThread;
     int NtQuerySystemInformation;
     int NtQueryInformationProcess;
