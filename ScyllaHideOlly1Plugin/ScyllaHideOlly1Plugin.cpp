@@ -540,7 +540,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
     if(!debugevent)
         return;
 
-    if (pHideOptions.PEBBeingDebugged)
+    if (pHideOptions.PEBHeapFlags)
     {
         if (specialPebFix)
         {
