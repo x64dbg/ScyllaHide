@@ -67,26 +67,48 @@ typedef struct _HOOK_DLL_EXCHANGE {
 
 
     t_NtSetInformationThread dNtSetInformationThread;
+	DWORD NtSetInformationThreadBackupSize;
     t_NtQuerySystemInformation dNtQuerySystemInformation;
+	DWORD NtQuerySystemInformationBackupSize;
     t_NtSetInformationProcess dNtSetInformationProcess;
+	DWORD NtSetInformationProcessBackupSize;
     t_NtQueryInformationProcess dNtQueryInformationProcess;
+	DWORD NtQueryInformationProcessBackupSize;
     t_NtQueryObject dNtQueryObject;
+	DWORD NtQueryObjectBackupSize;
     t_NtYieldExecution dNtYieldExecution;
+	DWORD NtYieldExecutionBackupSize;
     t_NtGetContextThread dNtGetContextThread;
+	DWORD NtGetContextThreadBackupSize;
     t_NtSetContextThread dNtSetContextThread;
+	DWORD NtSetContextThreadBackupSize;
     t_KiUserExceptionDispatcher dKiUserExceptionDispatcher;
+	DWORD KiUserExceptionDispatcherBackupSize;
     t_NtContinue dNtContinue;
+	DWORD NtContinueBackupSize;
     t_NtClose dNtClose;
+	DWORD NtCloseBackupSize;
 
 	t_NtCreateThreadEx dNtCreateThreadEx; //only since vista
+	DWORD NtCreateThreadExBackupSize;
 	t_NtCreateThread dNtCreateThread;
+	DWORD NtCreateThreadBackupSize;
 
+	t_OutputDebugStringA dOutputDebugStringA;
+	DWORD OutputDebugStringABackupSize;
     t_GetTickCount dGetTickCount;
+	DWORD GetTickCountBackupSize;
     t_BlockInput dBlockInput;
+	DWORD BlockInputBackupSize;
 
     t_NtUserFindWindowEx dNtUserFindWindowEx;
+	DWORD NtUserFindWindowExBackupSize;
 	t_NtUserBuildHwndList dNtUserBuildHwndList;
+	DWORD NtUserBuildHwndListBackupSize;
 	t_NtUserQueryWindow dNtUserQueryWindow;
+	DWORD NtUserQueryWindowBackupSize;
+
+
 	t_NtUserQueryWindow NtUserQueryWindow;
 	//t_NtUserGetClassName dNtUserGetClassName;
 
