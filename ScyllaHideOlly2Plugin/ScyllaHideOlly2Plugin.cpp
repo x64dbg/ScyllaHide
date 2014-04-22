@@ -162,6 +162,12 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.NtCreateThreadEx = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.preventThreadCreation = 1;
+    }
+    else
+        pHideOptions.preventThreadCreation = 0;
 
 
     GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
@@ -189,6 +195,8 @@ void SaveOptions(HWND hWnd)
     Writetoini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",pHideOptions.NtUserQueryWindow);
     Writetoini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",pHideOptions.NtSetDebugFilterState);
     Writetoini(NULL,PLUGINNAME,L"NtClose",L"%i",pHideOptions.NtClose);
+    Writetoini(NULL,PLUGINNAME,L"NtCreateThreadEx",L"%i",pHideOptions.NtCreateThreadEx);
+    Writetoini(NULL,PLUGINNAME,L"preventThreadCreation",L"%i",pHideOptions.preventThreadCreation);
     Writetoini(NULL,PLUGINNAME,L"ollyTitle", L"%s",pHideOptions.ollyTitle);
 }
 
@@ -216,6 +224,8 @@ void LoadOptions()
     Getfromini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",&pHideOptions.NtUserQueryWindow);
     Getfromini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",&pHideOptions.NtSetDebugFilterState);
     Getfromini(NULL,PLUGINNAME,L"NtClose",L"%i",&pHideOptions.NtClose);
+    Getfromini(NULL,PLUGINNAME,L"NtCreateThreadEx",L"%i",&pHideOptions.NtCreateThreadEx);
+    Getfromini(NULL,PLUGINNAME,L"preventThreadCreation",L"%i",&pHideOptions.preventThreadCreation);
     Getfromini(NULL, PLUGINNAME, L"ollyTitle", L"%s", &pHideOptions.ollyTitle);
 }
 
@@ -254,6 +264,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, pHideOptions.NtSetDebugFilterState, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, pHideOptions.NtClose, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, pHideOptions.NtCreateThreadEx, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, pHideOptions.preventThreadCreation, 0);
         SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
 
         break;
