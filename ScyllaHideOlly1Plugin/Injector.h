@@ -28,9 +28,10 @@ struct HideOptions
     int NtCreateThreadEx;
     int removeEPBreak;
     int fixOllyBugs;
-	int breakTLS;
+    int breakTLS;
     char ollyTitle[32];
     int x64Fix;
+    int preventThreadCreation;
 };
 
 void StartFixBeingDebugged(DWORD targetPid, bool setToNull);
