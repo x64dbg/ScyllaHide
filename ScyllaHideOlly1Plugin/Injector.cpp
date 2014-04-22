@@ -112,6 +112,33 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
     }
 }
 
+void injectDll(DWORD targetPid, const WCHAR * dllPath)
+{
+    HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+    if (hProcess)
+    {
+        BYTE * dllMemory = ReadFileToMemory(dllPath);
+        if (dllMemory)
+        {
+            LPVOID remoteImageBaseOfInjectedDll = 0;
+            remoteImageBaseOfInjectedDll = MapModuleToProcess(hProcess, dllMemory);
+            if(remoteImageBaseOfInjectedDll) {
+                _Message(0, "[ScyllaHide] Injection of %S successful, Imagebase %p", dllPath, remoteImageBase);
+            }
+            else
+            {
+                _Message(0, "[ScyllaHide] Failed to map image of %S!", dllPath);
+            }
+            free(dllMemory);
+        }
+        CloseHandle(hProcess);
+    }
+    else
+    {
+        _Error("[ScyllaHide] Cannot open process handle %d", targetPid);
+    }
+}
+
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath)
 {
     HANDLE hFile;

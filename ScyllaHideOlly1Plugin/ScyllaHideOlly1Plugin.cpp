@@ -10,7 +10,7 @@
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
 
-#define SCYLLAHIDE_VERSION "0.4"
+#define SCYLLAHIDE_VERSION "0.5"
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
@@ -54,6 +54,24 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
     }
     return TRUE;
 };
+
+bool GetFileDialog(TCHAR Buffer[MAX_PATH])
+{
+    OPENFILENAME sOpenFileName = {0};
+    const TCHAR szFilterString[] = L"DLL \0*.dll\0\0";
+    const TCHAR szDialogTitle[] = L"ScyllaHide";
+
+    Buffer[0] = 0;
+
+    sOpenFileName.lStructSize = sizeof(sOpenFileName);
+    sOpenFileName.lpstrFilter = szFilterString;
+    sOpenFileName.lpstrFile = Buffer;
+    sOpenFileName.nMaxFile = MAX_PATH;
+    sOpenFileName.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_HIDEREADONLY;
+    sOpenFileName.lpstrTitle = szDialogTitle;
+
+    return (TRUE == GetOpenFileName(&sOpenFileName));
+}
 
 void SaveOptions(HWND hWnd)
 {
@@ -473,7 +491,7 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
     {
     case PM_MAIN:
     {
-        strcpy(data, "0 &Options|1 &About");
+        strcpy(data, "0 &Options|2 &Inject DLL| 1 &About");
 
         //also patch olly title
         SetWindowTextA(hwmain, pHideOptions.ollyTitle);
@@ -511,6 +529,15 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
                         "(Anti-Anti-Debug in usermode)\n\n"
                         "Copyright (C) 2014 Aguila / cypher",
                         "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+            break;
+        }
+        case 2:
+        {
+            if(ProcessId) {
+                wchar_t dllPath[MAX_PATH] = {};
+                if(GetFileDialog(dllPath))
+                    injectDll(ProcessId, dllPath);
+            }
             break;
         }
         default:

@@ -4,6 +4,7 @@ Version 0.5
 - prevent Thread creation 
   (special hook for some protectors like Execryptor. Only use this if you know what you do)
 - split Hide PEB into 4 options (ini option PEB now deprecated)
+- Inject DLL option added
 
 Version 0.4
 
