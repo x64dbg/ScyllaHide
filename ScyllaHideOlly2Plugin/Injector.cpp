@@ -16,8 +16,6 @@ void StartFixBeingDebugged(DWORD targetPid, bool setToNull)
     HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
     if (hProcess)
     {
-        DllExchangeLoader.EnablePebHiding = pHideOptions.PEB;
-
         FixPebBeingDebugged(hProcess, setToNull);
         CloseHandle(hProcess);
     }
@@ -28,8 +26,13 @@ bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
     DllExchangeLoader.EnableProtectProcessId = TRUE;
 
-    DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_StartUpInfo;
-    ApplyPEBPatch(&DllExchangeLoader, hProcess, enableEverything);
+    DWORD enableFlags = 0x0;
+    if(pHideOptions.PEBBeingDebugged) enableFlags |= PEB_PATCH_BeingDebugged;
+    if(pHideOptions.PEBHeapFlags) enableFlags |= PEB_PATCH_HeapFlags;
+    if(pHideOptions.PEBNtGlobalFlag) enableFlags |= PEB_PATCH_NtGlobalFlag;
+    if(pHideOptions.PEBStartupInfo) enableFlags |= PEB_PATCH_StartUpInfo;
+
+    ApplyPEBPatch(&DllExchangeLoader, hProcess, enableFlags);
 
     return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
@@ -47,7 +50,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
     }
     else
     {
-		RestoreHooks(&DllExchangeLoader, hProcess);
+        RestoreHooks(&DllExchangeLoader, hProcess);
 
         remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
         if (remoteImageBase)
@@ -146,7 +149,10 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
     data->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
 
-    data->EnablePebHiding = pHideOptions.PEB;
+    data->EnablePebBeingDebugged = pHideOptions.PEBBeingDebugged;
+    data->EnablePebHeapFlags = pHideOptions.PEBHeapFlags;
+    data->EnablePebNtGlobalFlag = pHideOptions.PEBNtGlobalFlag;
+    data->EnablePebStartupInfo = pHideOptions.PEBStartupInfo;
     data->EnableBlockInputHook = pHideOptions.BlockInput;
     data->EnableGetTickCountHook = pHideOptions.GetTickCount;
     data->EnableOutputDebugStringHook = pHideOptions.OutputDebugStringA;
@@ -156,6 +162,7 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtQueryObjectHook = pHideOptions.NtQueryObject;
     data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
     data->EnableNtCloseHook = pHideOptions.NtClose;
+    data->EnableCreateThreadHook = pHideOptions.NtCreateThreadEx;
 
     data->EnableNtGetContextThreadHook = pHideOptions.NtGetContextThread;
     data->EnableNtSetContextThreadHook = pHideOptions.NtSetContextThread;

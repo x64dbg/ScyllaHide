@@ -4,7 +4,10 @@
 
 struct HideOptions
 {
-    int PEB;
+    int PEBBeingDebugged;
+    int PEBHeapFlags;
+    int PEBNtGlobalFlag;
+    int PEBStartupInfo;
     int NtSetInformationThread;
     int NtQuerySystemInformation;
     int NtQueryInformationProcess;
@@ -22,7 +25,9 @@ struct HideOptions
     int NtUserQueryWindow;
     int NtSetDebugFilterState;
     int NtClose;
+    int NtCreateThreadEx;
     WCHAR ollyTitle[256];
+    int preventThreadCreation;
 };
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess);

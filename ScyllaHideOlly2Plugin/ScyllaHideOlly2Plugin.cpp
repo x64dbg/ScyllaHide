@@ -1,11 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#include "resource.h"
 #include <stdio.h>
 #include <string.h>
 #include <winnt.h>
-#include "ScyllaHideOlly2Plugin.h"
 #include "Injector.h"
-
+#include "ScyllaHideOlly2Plugin.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 
 //scyllaHide definitions
@@ -27,6 +27,336 @@ bool specialPebFix = false;
 static DWORD ProcessId = 0;
 static bool bHooked = false;
 
+void SaveOptions(HWND hWnd)
+{
+    //read all checkboxes
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.PEBBeingDebugged = 1;
+    }
+    else
+        pHideOptions.PEBBeingDebugged = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.PEBHeapFlags = 1;
+    }
+    else
+        pHideOptions.PEBHeapFlags = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.PEBNtGlobalFlag = 1;
+    }
+    else
+        pHideOptions.PEBNtGlobalFlag = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.PEBStartupInfo = 1;
+    }
+    else
+        pHideOptions.PEBStartupInfo = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtSetInformationThread = 1;
+    }
+    else
+        pHideOptions.NtSetInformationThread = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtQuerySystemInformation = 1;
+    }
+    else
+        pHideOptions.NtQuerySystemInformation = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtQueryInformationProcess = 1;
+    }
+    else
+        pHideOptions.NtQueryInformationProcess = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtQueryObject = 1;
+    }
+    else
+        pHideOptions.NtQueryObject = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtYieldExecution = 1;
+    }
+    else
+        pHideOptions.NtYieldExecution = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.GetTickCount = 1;
+    }
+    else
+        pHideOptions.GetTickCount = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.OutputDebugStringA = 1;
+    }
+    else
+        pHideOptions.OutputDebugStringA = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.BlockInput = 1;
+    }
+    else
+        pHideOptions.BlockInput = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtGetContextThread = 1;
+    }
+    else
+        pHideOptions.NtGetContextThread = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtSetContextThread = 1;
+    }
+    else
+        pHideOptions.NtSetContextThread = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtContinue = 1;
+    }
+    else
+        pHideOptions.NtContinue = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.KiUserExceptionDispatcher = 1;
+    }
+    else
+        pHideOptions.KiUserExceptionDispatcher = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtUserFindWindowEx = 1;
+    }
+    else
+        pHideOptions.NtUserFindWindowEx = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtUserBuildHwndList = 1;
+    }
+    else
+        pHideOptions.NtUserBuildHwndList = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtUserQueryWindow = 1;
+    }
+    else
+        pHideOptions.NtUserQueryWindow = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtSetDebugFilterState = 1;
+    }
+    else
+        pHideOptions.NtSetDebugFilterState = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtClose = 1;
+    }
+    else
+        pHideOptions.NtClose = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtCreateThreadEx = 1;
+    }
+    else
+        pHideOptions.NtCreateThreadEx = 0;
+
+
+    GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
+    SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
+
+    //save all options
+    Writetoini(NULL,PLUGINNAME,L"PEBBeingDebugged",L"%i",pHideOptions.PEBBeingDebugged);
+    Writetoini(NULL,PLUGINNAME,L"PEBHeapFlags",L"%i",pHideOptions.PEBHeapFlags);
+    Writetoini(NULL,PLUGINNAME,L"PEBNtGlobalFlag",L"%i",pHideOptions.PEBNtGlobalFlag);
+    Writetoini(NULL,PLUGINNAME,L"PEBStartupInfo",L"%i",pHideOptions.PEBStartupInfo);
+    Writetoini(NULL,PLUGINNAME,L"NtSetInformationThread",L"%i",pHideOptions.NtSetInformationThread);
+    Writetoini(NULL,PLUGINNAME,L"NtQuerySystemInformation",L"%i",pHideOptions.NtQuerySystemInformation);
+    Writetoini(NULL,PLUGINNAME,L"NtQueryInformationProcess",L"%i",pHideOptions.NtQueryInformationProcess);
+    Writetoini(NULL,PLUGINNAME,L"NtQueryObject",L"%i",pHideOptions.NtQueryObject);
+    Writetoini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",pHideOptions.NtYieldExecution);
+    Writetoini(NULL,PLUGINNAME,L"GetTickCount",L"%i",pHideOptions.GetTickCount);
+    Writetoini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",pHideOptions.OutputDebugStringA);
+    Writetoini(NULL,PLUGINNAME,L"BlockInput",L"%i",pHideOptions.BlockInput);
+    Writetoini(NULL,PLUGINNAME,L"NtGetContextThread",L"%i",pHideOptions.NtGetContextThread);
+    Writetoini(NULL,PLUGINNAME,L"NtSetContextThread",L"%i",pHideOptions.NtSetContextThread);
+    Writetoini(NULL,PLUGINNAME,L"NtContinue",L"%i",pHideOptions.NtContinue);
+    Writetoini(NULL,PLUGINNAME,L"KiUserExceptionDispatcher",L"%i",pHideOptions.KiUserExceptionDispatcher);
+    Writetoini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",pHideOptions.NtUserFindWindowEx);
+    Writetoini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",pHideOptions.NtUserBuildHwndList);
+    Writetoini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",pHideOptions.NtUserQueryWindow);
+    Writetoini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",pHideOptions.NtSetDebugFilterState);
+    Writetoini(NULL,PLUGINNAME,L"NtClose",L"%i",pHideOptions.NtClose);
+    Writetoini(NULL,PLUGINNAME,L"ollyTitle", L"%s",pHideOptions.ollyTitle);
+}
+
+void LoadOptions()
+{
+    //load all options
+    Getfromini(NULL,PLUGINNAME,L"PEBBeingDebugged",L"%i",&pHideOptions.PEBBeingDebugged);
+    Getfromini(NULL,PLUGINNAME,L"PEBHeapFlags",L"%i",&pHideOptions.PEBHeapFlags);
+    Getfromini(NULL,PLUGINNAME,L"PEBNtGlobalFlag",L"%i",&pHideOptions.PEBNtGlobalFlag);
+    Getfromini(NULL,PLUGINNAME,L"PEBStartupInfo",L"%i",&pHideOptions.PEBStartupInfo);
+    Getfromini(NULL,PLUGINNAME,L"NtSetInformationThread",L"%i",&pHideOptions.NtSetInformationThread);
+    Getfromini(NULL,PLUGINNAME,L"NtQuerySystemInformation",L"%i",&pHideOptions.NtQuerySystemInformation);
+    Getfromini(NULL,PLUGINNAME,L"NtQueryInformationProcess",L"%i",&pHideOptions.NtQueryInformationProcess);
+    Getfromini(NULL,PLUGINNAME,L"NtQueryObject",L"%i",&pHideOptions.NtQueryObject);
+    Getfromini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",&pHideOptions.NtYieldExecution);
+    Getfromini(NULL,PLUGINNAME,L"GetTickCount",L"%i",&pHideOptions.GetTickCount);
+    Getfromini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",&pHideOptions.OutputDebugStringA);
+    Getfromini(NULL,PLUGINNAME,L"BlockInput",L"%i",&pHideOptions.BlockInput);
+    Getfromini(NULL,PLUGINNAME,L"NtGetContextThread",L"%i",&pHideOptions.NtGetContextThread);
+    Getfromini(NULL,PLUGINNAME,L"NtSetContextThread",L"%i",&pHideOptions.NtSetContextThread);
+    Getfromini(NULL,PLUGINNAME,L"NtContinue",L"%i",&pHideOptions.NtContinue);
+    Getfromini(NULL,PLUGINNAME,L"KiUserExceptionDispatcher",L"%i",&pHideOptions.KiUserExceptionDispatcher);
+    Getfromini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",&pHideOptions.NtUserFindWindowEx);
+    Getfromini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",&pHideOptions.NtUserBuildHwndList);
+    Getfromini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",&pHideOptions.NtUserQueryWindow);
+    Getfromini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",&pHideOptions.NtSetDebugFilterState);
+    Getfromini(NULL,PLUGINNAME,L"NtClose",L"%i",&pHideOptions.NtClose);
+    Getfromini(NULL, PLUGINNAME, L"ollyTitle", L"%s", &pHideOptions.ollyTitle);
+}
+
+//options dialog proc
+INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_INITDIALOG:
+    {
+        LoadOptions();
+
+        SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, pHideOptions.PEBBeingDebugged, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, pHideOptions.PEBHeapFlags, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, pHideOptions.PEBNtGlobalFlag, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_SETCHECK, pHideOptions.PEBStartupInfo, 0);
+        if(pHideOptions.PEBBeingDebugged && pHideOptions.PEBHeapFlags && pHideOptions.PEBNtGlobalFlag && pHideOptions.PEBStartupInfo)
+            SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_SETCHECK, pHideOptions.NtSetInformationThread, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_SETCHECK, pHideOptions.NtQuerySystemInformation, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_SETCHECK, pHideOptions.NtQueryInformationProcess, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_SETCHECK, pHideOptions.NtQueryObject, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_SETCHECK, pHideOptions.NtYieldExecution, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_SETCHECK, pHideOptions.GetTickCount, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_SETCHECK, pHideOptions.OutputDebugStringA, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_SETCHECK, pHideOptions.BlockInput, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, pHideOptions.NtGetContextThread, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_SETCHECK, pHideOptions.NtSetContextThread, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_SETCHECK, pHideOptions.NtContinue, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_SETCHECK, pHideOptions.KiUserExceptionDispatcher, 0);
+        if(pHideOptions.NtGetContextThread && pHideOptions.NtSetContextThread && pHideOptions.NtContinue && pHideOptions.KiUserExceptionDispatcher)
+            SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 1, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_SETCHECK, pHideOptions.NtUserFindWindowEx, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_SETCHECK, pHideOptions.NtUserBuildHwndList, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_SETCHECK, pHideOptions.NtUserQueryWindow, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, pHideOptions.NtSetDebugFilterState, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, pHideOptions.NtClose, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, pHideOptions.NtCreateThreadEx, 0);
+        SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
+
+        break;
+    }
+    case WM_CLOSE:
+    {
+        EndDialog(hWnd, NULL);
+    }
+    break;
+
+    case WM_COMMAND:
+    {
+        switch(LOWORD(wParam))
+        {
+        case IDOK:
+        {
+            //save options to ini
+            SaveOptions(hWnd);
+
+            if (ProcessId)
+            {
+                startInjection(ProcessId, ScyllaHideDllPath, true);
+                bHooked = true;
+                MessageBoxA(hWnd, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+            }
+            else
+            {
+                MessageBoxA(hWnd, "Please start the target to apply changes!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+            }
+
+            EndDialog(hWnd, NULL);
+            break;
+        }
+        case IDC_PROTECTDRX:
+        {
+            WPARAM state;
+            (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_GETCHECK, 0, 0))?state=1:state=0;
+
+            //trigger child checkboxes
+            SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_SETCHECK, state, 0);
+
+            break;
+        }
+        case IDC_NTGETCONTEXTTHREAD:
+        case IDC_NTSETCONTEXTTHREAD:
+        case IDC_NTCONTINUE:
+        case IDC_KIUED:
+        {   //this is just for GUI continuity
+            int allChecked = 1;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_GETCHECK, 0, 0)) allChecked--;
+
+            if(allChecked<1) SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 0, 0);
+            else SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 1, 0);
+
+            break;
+        }
+        case IDC_PEB:
+        {
+            WPARAM state;
+            (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_GETCHECK, 0, 0))?state=1:state=0;
+
+            //trigger child checkboxes
+            SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, state, 0);
+            SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_SETCHECK, state, 0);
+
+            break;
+        }
+        case IDC_PEBBEINGDEBUGGED:
+        case IDC_PEBHEAPFLAGS:
+        case IDC_PEBNTGLOBALFLAG:
+        case IDC_PEBSTARTUPINFO:
+        {
+            int allChecked = 1;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_GETCHECK, 0, 0)) allChecked--;
+            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_GETCHECK, 0, 0)) allChecked--;
+
+            if(allChecked<1) SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 0, 0);
+            else SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
+            break;
+        }
+        }
+    }
+    break;
+
+    default:
+    {
+        return FALSE;
+    }
+    }
+
+    return 0;
+}
+
 //Menu->Options
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
 {
@@ -34,7 +364,7 @@ static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
         return MENU_NORMAL;
     else if (mode==MENU_EXECUTE)
     {
-        Pluginshowoptions(scyllahideoptions);
+        DialogBox(hinst, MAKEINTRESOURCE(IDD_OPTIONS), hwollymain, &OptionsProc);
         return MENU_REDRAW;
     };
     return MENU_ABSENT;
@@ -112,32 +442,6 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode)
 }
 //menus
 
-void UpdateHideOptions()
-{
-    pHideOptions.PEB = opt_peb;
-    pHideOptions.NtSetInformationThread = opt_NtSetInformationThread;
-    pHideOptions.NtQueryInformationProcess = opt_NtQueryInformationProcess;
-    pHideOptions.NtQuerySystemInformation = opt_NtQuerySystemInformation;
-    pHideOptions.NtQueryObject = opt_NtQueryObject;
-    pHideOptions.NtYieldExecution = opt_NtYieldExecution;
-    pHideOptions.GetTickCount = opt_GetTickCount;
-    pHideOptions.OutputDebugStringA = opt_OutputDebugStringA;
-    pHideOptions.BlockInput = opt_BlockInput;
-    pHideOptions.NtGetContextThread = opt_NtGetContextThread;
-    pHideOptions.NtSetContextThread = opt_NtSetContextThread;
-    pHideOptions.NtContinue = opt_NtContinue;
-    pHideOptions.KiUserExceptionDispatcher = opt_KiUserExceptionDispatcher;
-    pHideOptions.NtUserFindWindowEx = opt_NtUserFindWindowEx;
-    pHideOptions.NtUserBuildHwndList = opt_NtUserBuildHwndList;
-    pHideOptions.NtUserQueryWindow = opt_NtUserQueryWindow;
-    pHideOptions.NtSetDebugFilterState = opt_NtSetDebugFilterState;
-    pHideOptions.NtClose = opt_NtClose;
-    wcscpy(pHideOptions.ollyTitle, opt_ollyTitle);
-
-    //change olly caption
-    SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
-}
-
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
@@ -174,35 +478,13 @@ extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginnam
 //initialization happens in here
 extc int __cdecl ODBG2_Plugininit(void)
 {
-    //we cant read them directly to pHideOptions
-    //because control vars need to be static and pHideOptions to be extern
-    Getfromini(NULL,PLUGINNAME,L"PEB",L"%i",&opt_peb);
-    Getfromini(NULL,PLUGINNAME,L"NtSetInformationThread",L"%i",&opt_NtSetInformationThread);
-    Getfromini(NULL,PLUGINNAME,L"NtQuerySystemInformation",L"%i",&opt_NtQuerySystemInformation);
-    Getfromini(NULL,PLUGINNAME,L"NtQueryInformationProcess",L"%i",&opt_NtQueryInformationProcess);
-    Getfromini(NULL,PLUGINNAME,L"NtQueryObject",L"%i",&opt_NtQueryObject);
-    Getfromini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",&opt_NtYieldExecution);
-    Getfromini(NULL,PLUGINNAME,L"GetTickCount",L"%i",&opt_GetTickCount);
-    Getfromini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",&opt_OutputDebugStringA);
-    Getfromini(NULL,PLUGINNAME,L"BlockInput",L"%i",&opt_BlockInput);
-    Getfromini(NULL,PLUGINNAME,L"NtGetContextThread",L"%i",&opt_NtGetContextThread);
-    Getfromini(NULL,PLUGINNAME,L"NtSetContextThread",L"%i",&opt_NtSetContextThread);
-    Getfromini(NULL,PLUGINNAME,L"NtContinue",L"%i",&opt_NtContinue);
-    Getfromini(NULL,PLUGINNAME,L"KiUserExceptionDispatcher",L"%i",&opt_KiUserExceptionDispatcher);
-    Getfromini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",&opt_NtUserFindWindowEx);
-    Getfromini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",&opt_NtUserBuildHwndList);
-    Getfromini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",&opt_NtUserQueryWindow);
-    Getfromini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",&opt_NtSetDebugFilterState);
-    Getfromini(NULL,PLUGINNAME,L"NtClose",L"%i",&opt_NtClose);
-    Getfromini(NULL, PLUGINNAME, L"ollyTitle", L"%s", &opt_ollyTitle);
+    LoadOptions();
 
+    Addtolist(0,0,L"ScyllaHide Plugin v"VERSION);
+    Addtolist(0,-1,L"  Copyright (C) 2014 Aguila / cypher");
 
-	Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
-	ReadNtApiInformation();
-
-    if(opt_NtGetContextThread && opt_NtSetContextThread && opt_NtContinue && opt_KiUserExceptionDispatcher) opt_ProtectDRx = 1;
-
-    UpdateHideOptions();
+    Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
+    ReadNtApiInformation();
 
     //change olly caption
     SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
@@ -221,102 +503,6 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
     return NULL;
 };
 
-//options dialogproc
-extc t_control* ODBG2_Pluginoptions(UINT msg,WPARAM wp,LPARAM lp)
-{
-    if(msg==WM_COMMAND) {
-        switch(LOWORD(wp)) {
-        case OPT_20: //olly title edit
-        {
-            //yes this is hacky but for some reason CA_EDIT wont update its buffer
-            //so we need to get changes somehow else
-            HWND options = FindWindow(L"OD_EMPTY", L"Plugin options");
-            if(options) {
-                GetDlgItemTextW(options, OPT_16, opt_ollyTitle, 256);
-            }
-            break;
-        }
-        case OPT_19: //protect drx groupbox checkbox
-        {
-            WPARAM state;
-            HWND options = FindWindow(L"OD_EMPTY", L"Plugin options");
-            if(!options) break;
-
-            (BST_CHECKED == SendMessage(GetDlgItem(options, OPT_19), BM_GETCHECK, 0, 0))?state=1:state=0;
-
-            //trigger child checkboxes
-            SendMessage(GetDlgItem(options, OPT_15), BM_SETCHECK, state, 0);
-            SendMessage(GetDlgItem(options, OPT_16), BM_SETCHECK, state, 0);
-            SendMessage(GetDlgItem(options, OPT_17), BM_SETCHECK, state, 0);
-            SendMessage(GetDlgItem(options, OPT_18), BM_SETCHECK, state, 0);
-            opt_NtGetContextThread = state;
-            opt_NtSetContextThread = state;
-            opt_NtContinue = state;
-            opt_KiUserExceptionDispatcher = state;
-
-            break;
-        }
-        case OPT_15:
-        case OPT_16:
-        case OPT_17:
-        case OPT_18:
-        {   //this is just for GUI continuity
-            HWND options = FindWindow(L"OD_EMPTY", L"Plugin options");
-            if(!options) break;
-
-            int allChecked = 1;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(options, OPT_15), BM_GETCHECK, 0, 0)) allChecked--;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(options, OPT_16), BM_GETCHECK, 0, 0)) allChecked--;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(options, OPT_17), BM_GETCHECK, 0, 0)) allChecked--;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(options, OPT_18), BM_GETCHECK, 0, 0)) allChecked--;
-
-            if(allChecked<1) SendMessage(GetDlgItem(options, OPT_19), BM_SETCHECK, 0, 0);
-            else SendMessage(GetDlgItem(options, OPT_19), BM_SETCHECK, 1, 0);
-
-            break;
-        }
-        }
-    }
-    if (msg==WM_CLOSE && wp!=0)
-    {
-        // User pressed OK in the Plugin options dialog. Options are updated, save them to the .ini file.
-        Writetoini(NULL,PLUGINNAME,L"PEB",L"%i",opt_peb);
-        Writetoini(NULL,PLUGINNAME,L"NtSetInformationThread",L"%i",opt_NtSetInformationThread);
-        Writetoini(NULL,PLUGINNAME,L"NtQuerySystemInformation",L"%i",opt_NtQuerySystemInformation);
-        Writetoini(NULL,PLUGINNAME,L"NtQueryInformationProcess",L"%i",opt_NtQueryInformationProcess);
-        Writetoini(NULL,PLUGINNAME,L"NtQueryObject",L"%i",opt_NtQueryObject);
-        Writetoini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",opt_NtYieldExecution);
-        Writetoini(NULL,PLUGINNAME,L"GetTickCount",L"%i",opt_GetTickCount);
-        Writetoini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",opt_OutputDebugStringA);
-        Writetoini(NULL,PLUGINNAME,L"BlockInput",L"%i",opt_BlockInput);
-        Writetoini(NULL,PLUGINNAME,L"NtGetContextThread",L"%i",opt_NtGetContextThread);
-        Writetoini(NULL,PLUGINNAME,L"NtSetContextThread",L"%i",opt_NtSetContextThread);
-        Writetoini(NULL,PLUGINNAME,L"NtContinue",L"%i",opt_NtContinue);
-        Writetoini(NULL,PLUGINNAME,L"KiUserExceptionDispatcher",L"%i",opt_KiUserExceptionDispatcher);
-        Writetoini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",opt_NtUserFindWindowEx);
-        Writetoini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",opt_NtUserBuildHwndList);
-        Writetoini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",opt_NtUserQueryWindow);
-        Writetoini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",opt_NtSetDebugFilterState);
-        Writetoini(NULL,PLUGINNAME,L"NtClose",L"%i",opt_NtClose);
-        Writetoini(NULL,PLUGINNAME,L"ollyTitle", L"%s",opt_ollyTitle);
-
-        UpdateHideOptions();
-
-		if (ProcessId)
-		{
-			startInjection(ProcessId, ScyllaHideDllPath, true);
-			bHooked = true;
-			MessageBoxA(hwollymain, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
-		}
-		else
-		{
-			MessageBoxA(hwollymain, "Please start the target to apply changes!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
-		}
-    };
-    // It makes no harm to return page descriptor on all messages.
-    return scyllahideoptions;
-};
-
 //called for every debugloop pass
 extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 {
@@ -325,7 +511,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         return;
 
 
-    if (pHideOptions.PEB)
+    if (pHideOptions.PEBHeapFlags)
     {
         if (specialPebFix)
         {
@@ -382,6 +568,6 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 //reset variables. new target started or restarted
 extc void ODBG2_Pluginreset(void)
 {
-	bHooked = false;
-	ProcessId = 0;
+    bHooked = false;
+    ProcessId = 0;
 }
