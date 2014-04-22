@@ -28,6 +28,9 @@ struct HideOptions
     int NtCreateThreadEx;
     WCHAR ollyTitle[256];
     int preventThreadCreation;
+    int DLLStealth;
+    int DLLNormal;
+    int DLLUnload;
 };
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess);

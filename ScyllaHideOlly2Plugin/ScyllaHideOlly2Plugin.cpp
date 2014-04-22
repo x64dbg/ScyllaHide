@@ -186,7 +186,24 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.preventThreadCreation = 0;
-
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.DLLStealth = 1;
+    }
+    else
+        pHideOptions.DLLStealth = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.DLLNormal = 1;
+    }
+    else
+        pHideOptions.DLLNormal = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.DLLUnload = 1;
+    }
+    else
+        pHideOptions.DLLUnload = 0;
 
     GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
     SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
@@ -216,6 +233,9 @@ void SaveOptions(HWND hWnd)
     Writetoini(NULL,PLUGINNAME,L"NtCreateThreadEx",L"%i",pHideOptions.NtCreateThreadEx);
     Writetoini(NULL,PLUGINNAME,L"preventThreadCreation",L"%i",pHideOptions.preventThreadCreation);
     Writetoini(NULL,PLUGINNAME,L"ollyTitle", L"%s",pHideOptions.ollyTitle);
+    Writetoini(NULL,PLUGINNAME,L"DLLStealth", L"%i",pHideOptions.DLLStealth);
+    Writetoini(NULL,PLUGINNAME,L"DLLNormal", L"%i",pHideOptions.DLLNormal);
+    Writetoini(NULL,PLUGINNAME,L"DLLUnload", L"%i",pHideOptions.DLLUnload);
 }
 
 void LoadOptions()
@@ -245,6 +265,9 @@ void LoadOptions()
     Getfromini(NULL,PLUGINNAME,L"NtCreateThreadEx",L"%i",&pHideOptions.NtCreateThreadEx);
     Getfromini(NULL,PLUGINNAME,L"preventThreadCreation",L"%i",&pHideOptions.preventThreadCreation);
     Getfromini(NULL, PLUGINNAME, L"ollyTitle", L"%s", &pHideOptions.ollyTitle);
+    Getfromini(NULL,PLUGINNAME,L"DLLStealth", L"%i",&pHideOptions.DLLStealth);
+    Getfromini(NULL,PLUGINNAME,L"DLLNormal", L"%i",&pHideOptions.DLLNormal);
+    Getfromini(NULL,PLUGINNAME,L"DLLUnload", L"%i",&pHideOptions.DLLUnload);
 }
 
 //options dialog proc
@@ -284,6 +307,9 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, pHideOptions.NtCreateThreadEx, 0);
         SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, pHideOptions.preventThreadCreation, 0);
         SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
+        SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
 
         break;
     }
