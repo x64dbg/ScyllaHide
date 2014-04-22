@@ -402,14 +402,14 @@ static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
 static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode)
 {
     if (mode==MENU_VERIFY)
-        return MENU_NORMAL;
+        if(!ProcessId) return MENU_GRAYED;
+        else return MENU_NORMAL;
     else if (mode==MENU_EXECUTE)
     {
-        if(ProcessId) {
-            wchar_t dllPath[MAX_PATH] = {};
-            GetFileDialog(dllPath);
+        wchar_t dllPath[MAX_PATH] = {};
+        if(GetFileDialog(dllPath))
             injectDll(ProcessId, dllPath);
-        }
+
         return MENU_REDRAW;
     };
     return MENU_ABSENT;
