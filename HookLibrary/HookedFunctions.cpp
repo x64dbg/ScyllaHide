@@ -435,7 +435,7 @@ NTSTATUS NTAPI HookedNtCreateThread(PHANDLE ThreadHandle,ACCESS_MASK DesiredAcce
 //WIN 7: CreateThread -> CreateRemoteThreadEx -> NtCreateThreadEx
 NTSTATUS NTAPI HookedNtCreateThreadEx(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PVOID StartRoutine,PVOID Argument,ULONG CreateFlags,ULONG_PTR ZeroBits,SIZE_T StackSize,SIZE_T MaximumStackSize,PPS_ATTRIBUTE_LIST AttributeList)
 {
-    if (DllExchange.dNtSetInformationThread) //prevent hide from debugger
+    if (DllExchange.EnableNtCreateThreadExHook == TRUE) //prevent hide from debugger
     {
         if (CreateFlags & THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER)
         {
