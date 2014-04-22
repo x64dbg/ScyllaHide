@@ -32,6 +32,9 @@ struct HideOptions
     char ollyTitle[32];
     int x64Fix;
     int preventThreadCreation;
+    int DLLStealth;
+    int DLLNormal;
+    int DLLUnload;
 };
 
 void StartFixBeingDebugged(DWORD targetPid, bool setToNull);

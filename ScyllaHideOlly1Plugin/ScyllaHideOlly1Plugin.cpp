@@ -238,6 +238,24 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.breakTLS = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.DLLStealth = 1;
+    }
+    else
+        pHideOptions.DLLStealth = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.DLLNormal = 1;
+    }
+    else
+        pHideOptions.DLLNormal = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.DLLUnload = 1;
+    }
+    else
+        pHideOptions.DLLUnload = 0;
 
     GetDlgItemTextA(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
     SetWindowTextA(hwmain, pHideOptions.ollyTitle);
@@ -271,6 +289,9 @@ void SaveOptions(HWND hWnd)
     _Pluginwriteinttoini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
     _Pluginwriteinttoini(hinst, "x64Fix", pHideOptions.x64Fix);
     _Pluginwriteinttoini(hinst, "breakTLS", pHideOptions.breakTLS);
+    _Pluginwriteinttoini(hinst, "DLLStealth", pHideOptions.DLLStealth);
+    _Pluginwriteinttoini(hinst, "DLLNormal", pHideOptions.DLLNormal);
+    _Pluginwriteinttoini(hinst, "DLLUnload", pHideOptions.DLLUnload);
 }
 
 void LoadOptions()
@@ -304,6 +325,9 @@ void LoadOptions()
     pHideOptions.fixOllyBugs = _Pluginreadintfromini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
     pHideOptions.x64Fix = _Pluginreadintfromini(hinst, "x64Fix", pHideOptions.x64Fix);
     pHideOptions.breakTLS = _Pluginreadintfromini(hinst, "breakTLS", pHideOptions.breakTLS);
+    pHideOptions.DLLStealth = _Pluginreadintfromini(hinst, "DLLStealth", pHideOptions.DLLStealth);
+    pHideOptions.DLLNormal = _Pluginreadintfromini(hinst, "DLLNormal", pHideOptions.DLLNormal);
+    pHideOptions.DLLUnload = _Pluginreadintfromini(hinst, "DLLUnload", pHideOptions.DLLUnload);
 }
 
 //options dialog proc
@@ -347,6 +371,9 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
         SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
         SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, pHideOptions.breakTLS, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
         break;
     }
     case WM_CLOSE:
