@@ -2,11 +2,12 @@
 #include "plugin.h"
 
 #define PLUGINNAME     L"ScyllaHide"
-#define VERSION        L"0.4"
+#define VERSION        L"0.5"
 
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
+static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode);
 
 //menus
 static t_menu mainmenu[] =
@@ -15,6 +16,11 @@ static t_menu mainmenu[] =
         L"Options",
         L"Select Hiding Options",
         K_NONE, Moptions, NULL, 0
+    },
+    {
+        L"|Inject DLL",
+        L"Inject a DLL into the debugged process",
+        K_NONE, MinjectDll, NULL, 0
     },
     {
         L"|About",

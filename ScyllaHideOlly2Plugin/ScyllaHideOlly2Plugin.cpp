@@ -27,6 +27,24 @@ bool specialPebFix = false;
 static DWORD ProcessId = 0;
 static bool bHooked = false;
 
+bool GetFileDialog(TCHAR Buffer[MAX_PATH])
+{
+    OPENFILENAME sOpenFileName = {0};
+    const TCHAR szFilterString[] = L"DLL \0*.dll\0\0";
+    const TCHAR szDialogTitle[] = L"ScyllaHide";
+
+    Buffer[0] = 0;
+
+    sOpenFileName.lStructSize = sizeof(sOpenFileName);
+    sOpenFileName.lpstrFilter = szFilterString;
+    sOpenFileName.lpstrFile = Buffer;
+    sOpenFileName.nMaxFile = MAX_PATH;
+    sOpenFileName.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_HIDEREADONLY;
+    sOpenFileName.lpstrTitle = szDialogTitle;
+
+    return (TRUE == GetOpenFileName(&sOpenFileName));
+}
+
 void SaveOptions(HWND hWnd)
 {
     //read all checkboxes
@@ -376,6 +394,22 @@ static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
     else if (mode==MENU_EXECUTE)
     {
         DialogBox(hinst, MAKEINTRESOURCE(IDD_OPTIONS), hwollymain, &OptionsProc);
+        return MENU_REDRAW;
+    };
+    return MENU_ABSENT;
+}
+
+static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode)
+{
+    if (mode==MENU_VERIFY)
+        return MENU_NORMAL;
+    else if (mode==MENU_EXECUTE)
+    {
+        if(ProcessId) {
+            wchar_t dllPath[MAX_PATH] = {};
+            GetFileDialog(dllPath);
+            injectDll(ProcessId, dllPath);
+        }
         return MENU_REDRAW;
     };
     return MENU_ABSENT;

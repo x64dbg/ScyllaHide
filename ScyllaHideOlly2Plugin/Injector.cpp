@@ -62,16 +62,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 
             if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
             {
-                //DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
-
-                //if (exitCode == HOOK_ERROR_SUCCESS)
-                //{
                 Message(0, L"[ScyllaHide] Injection successful, Imagebase %p", remoteImageBase);
-                //}
-                //else
-                //{
-                //    Message(0, L"[ScyllaHide] Injection failed, exit code %d Imagebase %p\n", exitCode, remoteImageBase);
-                //}
             }
             else
             {
@@ -99,6 +90,33 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
         else
         {
             Error(L"[ScyllaHide] Cannot find %s", dllPath);
+        }
+        CloseHandle(hProcess);
+    }
+    else
+    {
+        Error(L"[ScyllaHide] Cannot open process handle %d", targetPid);
+    }
+}
+
+void injectDll(DWORD targetPid, const WCHAR * dllPath)
+{
+    HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+    if (hProcess)
+    {
+        BYTE * dllMemory = ReadFileToMemory(dllPath);
+        if (dllMemory)
+        {
+            LPVOID remoteImageBaseOfInjectedDll = 0;
+            remoteImageBaseOfInjectedDll = MapModuleToProcess(hProcess, dllMemory);
+            if(remoteImageBaseOfInjectedDll) {
+                Message(0, L"[ScyllaHide] Injection of %s successful, Imagebase %p", dllPath, remoteImageBase);
+            }
+            else
+            {
+                Message(0, L"[ScyllaHide] Failed to map image of %s!", dllPath);
+            }
+            free(dllMemory);
         }
         CloseHandle(hProcess);
     }
