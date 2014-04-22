@@ -492,7 +492,7 @@ extc int __cdecl ODBG2_Plugininit(void)
     LoadOptions();
 
     Addtolist(0,0,L"ScyllaHide Plugin v"VERSION);
-    Addtolist(0,-1,L"  Copyright (C) 2014 Aguila / cypher");
+    Addtolist(0,2,L"  Copyright (C) 2014 Aguila / cypher");
 
     Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
     ReadNtApiInformation();
