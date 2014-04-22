@@ -137,6 +137,8 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtYieldExecutionHook = TRUE;
     data->EnableOutputDebugStringHook = TRUE;
     data->EnableProtectProcessId = TRUE;
+    data->EnableNtCreateThreadExHook = TRUE;
+    data->EnablePreventThreadCreation = FALSE; //special hooks disabled by default
 
     data->isKernel32Hooked = FALSE;
     data->isNtdllHooked = FALSE;
