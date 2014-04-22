@@ -9,6 +9,8 @@ extern struct HideOptions pHideOptions;
 
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
+typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+t_LogWrapper LogWrap = 0;
 
 static LPVOID remoteImageBase = 0;
 

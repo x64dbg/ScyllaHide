@@ -7,6 +7,9 @@
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 
+typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+void LogWrapper(const WCHAR * format, ...);
+
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
 
@@ -28,6 +31,7 @@ WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+extern t_LogWrapper LogWrap;
 
 HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
@@ -38,6 +42,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
+		LogWrap = LogWrapper;
+
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
         WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
@@ -750,4 +756,18 @@ void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseOfImage)
     }
 
     CloseHandle(hProcess);
+}
+
+void LogWrapper(const WCHAR * format, ...)
+{
+	WCHAR text[2000];
+	CHAR textA[2000];
+	va_list va_alist;
+	va_start(va_alist, format);
+
+	wvsprintfW(text, format, va_alist);
+
+	WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
+
+	_Message(0, textA);
 }

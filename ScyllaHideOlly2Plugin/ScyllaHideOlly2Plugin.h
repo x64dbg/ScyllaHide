@@ -4,6 +4,9 @@
 #define PLUGINNAME     L"ScyllaHide"
 #define VERSION        L"0.5"
 
+typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+void LogWrapper(const WCHAR * format, ...);
+
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);

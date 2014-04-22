@@ -8,6 +8,7 @@
 #include "ScyllaHideOlly2Plugin.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 
+
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
 
@@ -18,6 +19,7 @@ WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+extern t_LogWrapper LogWrap;
 
 //globals
 HINSTANCE hinst;
@@ -517,6 +519,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
+		LogWrap = LogWrapper;
+
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
         WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
@@ -641,4 +645,15 @@ extc void ODBG2_Pluginreset(void)
 {
     bHooked = false;
     ProcessId = 0;
+}
+
+void LogWrapper(const WCHAR * format, ...)
+{
+	WCHAR text[2000];
+	va_list va_alist;
+	va_start(va_alist, format);
+
+	wvsprintfW(text, format, va_alist);
+
+	Message(0, text);
 }
