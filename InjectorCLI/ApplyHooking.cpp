@@ -109,8 +109,8 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
     if (dllexchange->EnableNtSetContextThreadHook == TRUE) HOOK_NATIVE(NtSetContextThread);
 
     if (dllexchange->EnableNtCloseHook == TRUE) HOOK_NATIVE(NtClose);
-    if (dllexchange->EnableCreateThreadHook == TRUE) HOOK_NATIVE(NtCreateThread);
-    if (dllexchange->EnableCreateThreadHook == TRUE && _NtCreateThreadEx != 0) HOOK_NATIVE(NtCreateThreadEx);
+    if (dllexchange->EnablePreventThreadCreation == TRUE) HOOK_NATIVE(NtCreateThread);
+    if (dllexchange->EnableNtCreateThreadExHook == TRUE && _NtCreateThreadEx != 0) HOOK_NATIVE(NtCreateThreadEx);
 
     if (dllexchange->EnableNtSetDebugFilterStateHook == TRUE) HOOK_NATIVE_NOTRAMP(NtSetDebugFilterState);
 

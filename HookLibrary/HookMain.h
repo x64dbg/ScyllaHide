@@ -49,7 +49,8 @@ typedef struct _HOOK_DLL_EXCHANGE {
     BOOLEAN EnableNtYieldExecutionHook;
     BOOLEAN EnableNtCloseHook;
 
-    BOOLEAN EnableCreateThreadHook;
+    BOOLEAN EnablePreventThreadCreation;
+    BOOLEAN EnableNtCreateThreadExHook;
 
     //Protect and Hide Hardware Breakpoints
     BOOLEAN EnableNtGetContextThreadHook;
