@@ -357,7 +357,8 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"PebHeapFlags", L"1", iniFile);
     WriteIniSettings(L"PebNtGlobalFlag", L"1", iniFile);
     WriteIniSettings(L"PebStartupInfo", L"1", iniFile);
-    WriteIniSettings(L"CreateThreadHook", L"1", iniFile);
+    WriteIniSettings(L"NtCreateThreadExHook", L"1", iniFile);
+    WriteIniSettings(L"PreventThreadCreation", L"0", iniFile); //special hook disabled by default
 
     WriteIniSettings(L"EnableProtectProcessId", L"1", iniFile);
 }
@@ -390,7 +391,8 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     DllExchangeLoader.EnablePebHeapFlags = ReadIniSettingsInt(L"PebHeapFlags", iniFile);
     DllExchangeLoader.EnablePebNtGlobalFlag = ReadIniSettingsInt(L"PebNtGlobalFlag", iniFile);
     DllExchangeLoader.EnablePebStartupInfo = ReadIniSettingsInt(L"PebStartupInfo", iniFile);
-    DllExchangeLoader.EnableCreateThreadHook = ReadIniSettingsInt(L"CreateThreadHook", iniFile);
+    DllExchangeLoader.EnableNtCreateThreadExHook = ReadIniSettingsInt(L"NtCreateThreadExHook", iniFile);
+    DllExchangeLoader.EnablePreventThreadCreation = ReadIniSettingsInt(L"PreventThreadCreation", iniFile);
 
     DllExchangeLoader.EnableProtectProcessId = ReadIniSettingsInt(L"EnableProtectProcessId", iniFile);
 }
