@@ -110,7 +110,7 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
             LPVOID remoteImageBaseOfInjectedDll = 0;
             remoteImageBaseOfInjectedDll = MapModuleToProcess(hProcess, dllMemory);
             if(remoteImageBaseOfInjectedDll) {
-                Message(0, L"[ScyllaHide] Injection of %s successful, Imagebase %p", dllPath, remoteImageBase);
+                Message(0, L"[ScyllaHide] Injection of %s successful, Imagebase %p", dllPath, remoteImageBaseOfInjectedDll);
             }
             else
             {
