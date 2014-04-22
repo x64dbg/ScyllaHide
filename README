@@ -19,9 +19,13 @@ Debugger Hiding:
 - NtUserFindWindowEx - FindWindowA/W, FindWindowExA/W
 - NtUserQueryWindow
 - NtClose
+- NtCreateThreadEx
 - GetTickCount
 - BlockInput
 - OutputDebugStringA - OutputDebugStringW
+
+Special functions:
+- prevent Thread creation - for protectors like Execryptor. Only use if you know what you are doing !
 
 Protecting and Stealthing DRx (Hardware Breakpoints):
 - NtGetContextThread
