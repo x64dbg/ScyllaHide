@@ -9,14 +9,14 @@ HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-	DllExchangeLoader.dwProtectedProcessId = 0; //for olly plugins
-	DllExchangeLoader.EnableProtectProcessId = FALSE;
+    DllExchangeLoader.dwProtectedProcessId = 0; //for olly plugins
+    DllExchangeLoader.EnableProtectProcessId = FALSE;
 
-	DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_StartUpInfo;
+    DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_StartUpInfo;
 
-	ApplyPEBPatch(&DllExchangeLoader, hProcess,enableEverything);
+    ApplyPEBPatch(&DllExchangeLoader, hProcess,enableEverything);
 
-	return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
+    return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
@@ -115,6 +115,10 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
     data->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
 
+    data->EnablePebBeingDebugged = TRUE;
+    data->EnablePebHeapFlags = TRUE;
+    data->EnablePebNtGlobalFlag = TRUE;
+    data->EnablePebStartupInfo = TRUE;
     data->EnableBlockInputHook = TRUE;
     data->EnableGetTickCountHook = TRUE;
     data->EnableKiUserExceptionDispatcherHook = TRUE;
@@ -132,10 +136,9 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtUserQueryWindowHook = TRUE;
     data->EnableNtYieldExecutionHook = TRUE;
     data->EnableOutputDebugStringHook = TRUE;
-    data->EnablePebHiding = TRUE;
     data->EnableProtectProcessId = TRUE;
 
-	data->isKernel32Hooked = FALSE;
-	data->isNtdllHooked = FALSE;
-	data->isUser32Hooked = FALSE;
+    data->isKernel32Hooked = FALSE;
+    data->isNtdllHooked = FALSE;
+    data->isUser32Hooked = FALSE;
 }
