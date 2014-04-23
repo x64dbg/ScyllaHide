@@ -25,7 +25,7 @@ Debugger Hiding:
 - OutputDebugStringA - OutputDebugStringW
 
 Special functions:
-- prevent Thread creation - for protectors like Execryptor. Only use if you know what you are doing !
+- Prevent Thread creation - for protectors like Execryptor. Only use if you know what you are doing !
 
 Protecting and Stealthing DRx (Hardware Breakpoints):
 - NtGetContextThread

@@ -1,10 +1,12 @@
 Version 0.5
 
 - NtCreateThreadEx hook
-- prevent Thread creation 
+- Prevent Thread creation 
   (special hook for some protectors like Execryptor. Only use this if you know what you do)
-- split Hide PEB into 4 options (ini option PEB now deprecated)
-- Inject DLL option added
+- Split Hide PEB into 4 options (ini option PEB now deprecated)
+- Inject DLL option added (2 methods)
+- Replaced Olly2 dialog
+- Improved "Break on TLS"
 
 Version 0.4
 
