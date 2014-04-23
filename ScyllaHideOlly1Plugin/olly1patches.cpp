@@ -98,3 +98,33 @@ void fixFPUBug()
         fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0xAA2F2), &fpuBugFix, sizeof(fpuBugFix), NULL);
     if(fixed) _Addtolist(0,-1,"Fixed FPU-Bug at 0xAA2F2");
 }
+
+//taken from POISON source https://tuts4you.com/download.php?view.2281
+void hookOllyBreakpoints()
+{
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+
+    HMODULE hScyllaHide = LoadLibrary(L"ScyllaHideOlly1");
+    if(hScyllaHide) {
+        DWORD breakpoints = (DWORD)GetProcAddress(hScyllaHide, "setTLSBreakpoints");
+        DWORD patchAddr = 0x2F91D;
+        breakpoints -= lpBaseAddr;
+        breakpoints -= patchAddr;
+        patchAddr -= 4;
+        WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &breakpoints, 4, NULL);
+        patchAddr -= 1;
+        BYTE call[] = {0xE8};
+        WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &call, sizeof(call), NULL);
+    }
+}
+
+void setTLSBreakpoints()
+{
+    _Addtolist(0,0,"in the breakpoint hook");
+    //replay stolen bytes
+    _asm {
+        CMP DWORD PTR DS:[004D734Ch],0
+        mov dword ptr [esp], 0042F91Fh
+    };
+}
