@@ -9,6 +9,7 @@
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
+void LogErrorWrapper(const WCHAR * format, ...);
 
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
@@ -31,6 +32,7 @@ WCHAR NtApiIniPath[MAX_PATH] = {0};
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
+extern t_LogWrapper LogErrorWrap;
 
 HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
@@ -42,6 +44,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
     if (reason==DLL_PROCESS_ATTACH)
     {
         LogWrap = LogWrapper;
+		LogErrorWrap = LogErrorWrapper;
 
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
@@ -262,8 +265,8 @@ void SaveOptions(HWND hWnd)
     else
         pHideOptions.DLLUnload = 0;
 
-    GetDlgItemTextA(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
-    SetWindowTextA(hwmain, pHideOptions.ollyTitle);
+    GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
+    SetWindowTextW(hwmain, pHideOptions.ollyTitle);
 
     //save all options
     _Pluginwriteinttoini(hinst, "PEBBeingDebugged", pHideOptions.PEBBeingDebugged);
@@ -294,7 +297,7 @@ void SaveOptions(HWND hWnd)
 	char text[300];
 	WideCharToMultiByte(CP_ACP, 0, pHideOptions.ollyTitle, -1, text,_countof(text), 0, 0);
     _Pluginwritestringtoini(hinst, "ollyTitle", text);
-	
+
     _Pluginwriteinttoini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
     _Pluginwriteinttoini(hinst, "x64Fix", pHideOptions.x64Fix);
     _Pluginwriteinttoini(hinst, "breakTLS", pHideOptions.breakTLS);
@@ -334,7 +337,7 @@ void LoadOptions()
 	char text[300] = {0};
     _Pluginreadstringfromini(hinst, "ollyTitle", text, "I can haz crack?");
 	MultiByteToWideChar(CP_ACP, 0, text, -1, pHideOptions.ollyTitle, 300);
-	
+
     pHideOptions.fixOllyBugs = _Pluginreadintfromini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
     pHideOptions.x64Fix = _Pluginreadintfromini(hinst, "x64Fix", pHideOptions.x64Fix);
     pHideOptions.breakTLS = _Pluginreadintfromini(hinst, "breakTLS", pHideOptions.breakTLS);
@@ -380,7 +383,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, pHideOptions.NtCreateThreadEx, 0);
         SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, pHideOptions.preventThreadCreation, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
-        SetDlgItemTextA(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
+        SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
         SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
         SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
         SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, pHideOptions.breakTLS, 0);
@@ -534,7 +537,7 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
         strcpy(data, "0 &Options|2 &Inject DLL| 1 &About");
 
         //also patch olly title
-        SetWindowTextA(hwmain, pHideOptions.ollyTitle);
+        SetWindowTextW(hwmain, pHideOptions.ollyTitle);
         return 1;
     }
     case PM_THREADS:
@@ -651,7 +654,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
         //change olly caption again !
-        SetWindowTextA(hwmain, pHideOptions.ollyTitle);
+        SetWindowTextW(hwmain, pHideOptions.ollyTitle);
 
         hookOllyBreakpoints();
     }
@@ -710,6 +713,20 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
     bHooked = false;
     bEPBreakRemoved = false;
     ProcessId = 0;
+}
+
+void LogErrorWrapper(const WCHAR * format, ...)
+{
+	WCHAR text[2000];
+	CHAR textA[2000];
+	va_list va_alist;
+	va_start(va_alist, format);
+
+	wvsprintfW(text, format, va_alist);
+
+	WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
+
+	_Error(textA);
 }
 
 void LogWrapper(const WCHAR * format, ...)

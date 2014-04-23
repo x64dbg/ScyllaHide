@@ -1,6 +1,6 @@
 #include "olly1patches.h"
 #include <Windows.h>
-#include "Injector.h"
+#include "..\ScyllaHideOlly2Plugin\Injector.h"
 
 extern struct HideOptions pHideOptions;
 extern LPVOID ImageBase;
@@ -108,24 +108,22 @@ void fixFPUBug()
 //taken from POISON source https://tuts4you.com/download.php?view.2281
 void hookOllyBreakpoints()
 {
-    HANDLE hOlly = GetCurrentProcess();
-    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+	HANDLE hOlly = GetCurrentProcess();
+	DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
 
-    HMODULE hScyllaHide = LoadLibrary(L"ScyllaHideOlly1");
-    if(hScyllaHide) {
-        DWORD breakpoints = (DWORD)GetProcAddress(hScyllaHide, "handleBreakpoints");
-        DWORD patchAddr = 0x2F91D;
-        breakpoints -= lpBaseAddr;
-        breakpoints -= patchAddr;
-        patchAddr -= 4;
-        WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &breakpoints, 4, NULL);
-        patchAddr -= 1;
-        BYTE call[] = {0xE8};
-        WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &call, sizeof(call), NULL);
-    }
+	DWORD breakpoints = (DWORD)handleBreakpoints;
+	DWORD patchAddr = 0x2F91D;
+	breakpoints -= lpBaseAddr;
+	breakpoints -= patchAddr;
+	patchAddr -= 4;
+	WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &breakpoints, 4, NULL);
+	patchAddr -= 1;
+	BYTE call[] = {0xE8};
+	WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &call, sizeof(call), NULL);
+
 }
 
-extern "C" void __declspec(naked) __declspec(dllexport) handleBreakpoints()
+void __declspec(naked) handleBreakpoints()
 {
     _asm { pushad };
 
