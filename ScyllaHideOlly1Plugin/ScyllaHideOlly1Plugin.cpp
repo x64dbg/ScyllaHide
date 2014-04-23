@@ -20,7 +20,7 @@ const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 //globals
 static HINSTANCE hinst;
 DWORD ProcessId;
-static DWORD_PTR epaddr;
+DWORD_PTR epaddr;
 static bool bHooked = false;
 static bool bEPBreakRemoved = false;
 HWND hwmain; // Handle of main OllyDbg window
@@ -686,11 +686,11 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 
 extern "C" int __declspec(dllexport) _ODBG_Pausedex(int reason, int extdata, void* reg, DEBUG_EVENT *debugevent)
 {
-
+    /*
     if(!bEPBreakRemoved && pHideOptions.removeEPBreak) {
         _Deletebreakpoints(epaddr,epaddr+1, 0);
         bEPBreakRemoved = true;
-    }
+    }*/
 
     return 0;
 }

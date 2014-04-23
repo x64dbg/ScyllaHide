@@ -5,6 +5,7 @@
 extern struct HideOptions pHideOptions;
 extern LPVOID ImageBase;
 extern DWORD ProcessId;
+extern DWORD_PTR epaddr;
 
 //taken from strongOD
 void fixBadPEBugs()
@@ -112,7 +113,7 @@ void hookOllyBreakpoints()
 
     HMODULE hScyllaHide = LoadLibrary(L"ScyllaHideOlly1");
     if(hScyllaHide) {
-        DWORD breakpoints = (DWORD)GetProcAddress(hScyllaHide, "setTLSBreakpoints");
+        DWORD breakpoints = (DWORD)GetProcAddress(hScyllaHide, "handleBreakpoints");
         DWORD patchAddr = 0x2F91D;
         breakpoints -= lpBaseAddr;
         breakpoints -= patchAddr;
@@ -124,9 +125,13 @@ void hookOllyBreakpoints()
     }
 }
 
-extern "C" void __declspec(naked) __declspec(dllexport) setTLSBreakpoints()
+extern "C" void __declspec(naked) __declspec(dllexport) handleBreakpoints()
 {
     _asm { pushad };
+
+    if(pHideOptions.removeEPBreak) {
+        CreateThread(NULL, NULL, removeEPBreak, NULL, NULL, NULL);
+    }
 
     if(pHideOptions.breakTLS)
         ReadTlsAndSetBreakpoints(ProcessId, (LPVOID)ImageBase);
@@ -138,6 +143,13 @@ extern "C" void __declspec(naked) __declspec(dllexport) setTLSBreakpoints()
         mov dword ptr [esp], 0042F91Fh
         ret
     };
+}
+
+DWORD _stdcall removeEPBreak(LPVOID lpParam)
+{
+    Sleep(0x200);
+    _Deletebreakpoints(epaddr,epaddr+2, 0);
+    ExitThread(1);
 }
 
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage)
