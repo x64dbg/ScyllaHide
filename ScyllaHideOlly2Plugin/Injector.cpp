@@ -1,5 +1,4 @@
 #include "Injector.h"
-#include "plugin.h"
 #include "..\InjectorCLI\RemoteHook.h"
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\\ApplyHooking.h"
@@ -12,6 +11,7 @@ static LPVOID remoteImageBase = 0;
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 t_LogWrapper LogWrap = 0;
+t_LogWrapper LogErrorWrap = 0;
 
 
 void StartFixBeingDebugged(DWORD targetPid, bool setToNull)
@@ -47,9 +47,11 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 
     if (newProcess == false)
     {
-        Message(0, L"[ScyllaHide] Apply hooks again");
-        StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
-        WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
+        LogWrap(L"[ScyllaHide] Apply hooks again");
+		if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
+		{
+			WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
+		}
     }
     else
     {
@@ -65,16 +67,16 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 
             if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
             {
-                Message(0, L"[ScyllaHide] Injection successful, Imagebase %p", remoteImageBase);
+                LogWrap(L"[ScyllaHide] Injection successful, Imagebase %p", remoteImageBase);
             }
             else
             {
-                Message(0, L"[ScyllaHide] Failed to write exchange struct");
+                LogWrap(L"[ScyllaHide] Failed to write exchange struct");
             }
         }
         else
         {
-            Message(0, L"[ScyllaHide] Failed to map image!");
+            LogWrap(L"[ScyllaHide] Failed to map image!");
         }
     }
 }
@@ -92,13 +94,13 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
         }
         else
         {
-            Error(L"[ScyllaHide] Cannot find %s", dllPath);
+            LogErrorWrap(L"[ScyllaHide] Cannot find %s", dllPath);
         }
         CloseHandle(hProcess);
     }
     else
     {
-        Error(L"[ScyllaHide] Cannot open process handle %d", targetPid);
+        LogErrorWrap(L"[ScyllaHide] Cannot open process handle %d", targetPid);
     }
 }
 

@@ -20,6 +20,7 @@ WCHAR NtApiIniPath[MAX_PATH] = {0};
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
+extern t_LogWrapper LogErrorWrap;
 
 //globals
 HINSTANCE hinst;
@@ -520,6 +521,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
     if (reason==DLL_PROCESS_ATTACH)
     {
 		LogWrap = LogWrapper;
+		LogErrorWrap = LogErrorWrapper;
 
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
@@ -645,6 +647,17 @@ extc void ODBG2_Pluginreset(void)
 {
     bHooked = false;
     ProcessId = 0;
+}
+
+void LogErrorWrapper(const WCHAR * format, ...)
+{
+	WCHAR text[2000];
+	va_list va_alist;
+	va_start(va_alist, format);
+
+	wvsprintfW(text, format, va_alist);
+
+	Error(text);
 }
 
 void LogWrapper(const WCHAR * format, ...)
