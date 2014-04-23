@@ -19,11 +19,10 @@ const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
 //globals
 static HINSTANCE hinst;
-static DWORD ProcessId;
+DWORD ProcessId;
 static DWORD_PTR epaddr;
 static bool bHooked = false;
 static bool bEPBreakRemoved = false;
-static bool bOnceTls = false;
 HWND hwmain; // Handle of main OllyDbg window
 
 
@@ -640,7 +639,6 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         ImageBase = debugevent->u.CreateProcessInfo.lpBaseOfImage;
         ProcessId=debugevent->dwProcessId;
         bHooked = false;
-        bOnceTls = false;
         epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
         ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
@@ -693,12 +691,6 @@ extern "C" int __declspec(dllexport) _ODBG_Pausedex(int reason, int extdata, voi
         _Deletebreakpoints(epaddr,epaddr+1, 0);
         bEPBreakRemoved = true;
     }
-    /*
-    if (!bOnceTls && pHideOptions.breakTLS)
-    {
-        ReadTlsAndSetBreakpoints(ProcessId, ImageBase);
-        bOnceTls = true;
-    }*/
 
     return 0;
 }
@@ -709,10 +701,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
     ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
     bHooked = false;
     bEPBreakRemoved = false;
-    bOnceTls = false;
     ProcessId = 0;
-
-
 }
 
 void LogWrapper(const WCHAR * format, ...)

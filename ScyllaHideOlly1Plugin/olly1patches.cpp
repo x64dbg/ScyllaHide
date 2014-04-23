@@ -3,6 +3,8 @@
 #include "Injector.h"
 
 extern struct HideOptions pHideOptions;
+extern LPVOID ImageBase;
+extern DWORD ProcessId;
 
 //taken from strongOD
 void fixBadPEBugs()
@@ -122,16 +124,16 @@ void hookOllyBreakpoints()
     }
 }
 
-void setTLSBreakpoints()
+extern "C" void __declspec(naked) __declspec(dllexport) setTLSBreakpoints()
 {
-    DWORD ImageBase = _Plugingetvalue(VAL_MAINBASE);
-    DWORD ProcessId = _Plugingetvalue(VAL_PROCESSID);
+    _asm { pushad };
 
     if(pHideOptions.breakTLS)
         ReadTlsAndSetBreakpoints(ProcessId, (LPVOID)ImageBase);
 
     //replay stolen bytes and adjust return address
     _asm {
+        popad
         CMP DWORD PTR DS:[004D734Ch],0
         mov dword ptr [esp], 0042F91Fh
         ret
