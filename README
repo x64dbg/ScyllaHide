@@ -40,6 +40,7 @@ Plugin specific:
 Olly1&2:
 - Change Olly title
 - Resume/Suspend all Threads in Thread window
+- DLL injection (stealth / normal)
 Olly1:
 - Fix PE-Bugs
 - Fix FPU Bug
