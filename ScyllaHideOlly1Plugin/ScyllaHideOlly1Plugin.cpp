@@ -290,7 +290,11 @@ void SaveOptions(HWND hWnd)
     _Pluginwriteinttoini(hinst, "NtCreateThreadEx", pHideOptions.NtCreateThreadEx);
     _Pluginwriteinttoini(hinst, "preventThreadCreation", pHideOptions.preventThreadCreation);
     _Pluginwriteinttoini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
-    _Pluginwritestringtoini(hinst, "ollyTitle", pHideOptions.ollyTitle);
+
+	char text[300];
+	WideCharToMultiByte(CP_ACP, 0, pHideOptions.ollyTitle, -1, text,_countof(text), 0, 0);
+    _Pluginwritestringtoini(hinst, "ollyTitle", text);
+	
     _Pluginwriteinttoini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
     _Pluginwriteinttoini(hinst, "x64Fix", pHideOptions.x64Fix);
     _Pluginwriteinttoini(hinst, "breakTLS", pHideOptions.breakTLS);
@@ -326,7 +330,11 @@ void LoadOptions()
     pHideOptions.NtCreateThreadEx = _Pluginreadintfromini(hinst, "NtCreateThreadEx", pHideOptions.NtCreateThreadEx);
     pHideOptions.preventThreadCreation = _Pluginreadintfromini(hinst, "preventThreadCreation", pHideOptions.preventThreadCreation);
     pHideOptions.removeEPBreak = _Pluginreadintfromini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
-    _Pluginreadstringfromini(hinst, "ollyTitle", pHideOptions.ollyTitle, "I can haz crack?");
+
+	char text[300] = {0};
+    _Pluginreadstringfromini(hinst, "ollyTitle", text, "I can haz crack?");
+	MultiByteToWideChar(CP_ACP, 0, text, -1, pHideOptions.ollyTitle, 300);
+	
     pHideOptions.fixOllyBugs = _Pluginreadintfromini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
     pHideOptions.x64Fix = _Pluginreadintfromini(hinst, "x64Fix", pHideOptions.x64Fix);
     pHideOptions.breakTLS = _Pluginreadintfromini(hinst, "breakTLS", pHideOptions.breakTLS);
