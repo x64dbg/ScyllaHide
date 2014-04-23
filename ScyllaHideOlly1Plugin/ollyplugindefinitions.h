@@ -32,7 +32,11 @@ extern "C" void _Tempbreakpoint(unsigned long addr,int mode);
 #define PLUGIN_VERSION 110
 #define PM_MAIN 0 // Main window        (NULL)
 #define PM_THREADS 13 // Threads window     (t_thread*)
+#define VAL_HPROCESS 20 // Handle of Debuggee
+#define VAL_PROCESSID 21 // Process ID of Debuggee
+#define VAL_MAINBASE 24 // Base of main module in the process
 #define VAL_THREADS 43 // Table of active threads
+
 
 typedef unsigned long  ulong;
 typedef unsigned char  uchar;

@@ -42,7 +42,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
-		LogWrap = LogWrapper;
+        LogWrap = LogWrapper;
 
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
@@ -646,6 +646,8 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 
         //change olly caption again !
         SetWindowTextA(hwmain, pHideOptions.ollyTitle);
+
+        hookOllyBreakpoints();
     }
     break;
 
@@ -691,11 +693,12 @@ extern "C" int __declspec(dllexport) _ODBG_Pausedex(int reason, int extdata, voi
         _Deletebreakpoints(epaddr,epaddr+1, 0);
         bEPBreakRemoved = true;
     }
+    /*
     if (!bOnceTls && pHideOptions.breakTLS)
     {
         ReadTlsAndSetBreakpoints(ProcessId, ImageBase);
         bOnceTls = true;
-    }
+    }*/
 
     return 0;
 }
@@ -708,66 +711,20 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
     bEPBreakRemoved = false;
     bOnceTls = false;
     ProcessId = 0;
-}
 
-void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseOfImage)
-{
-    BYTE memory[0x1000] = {0};
-    IMAGE_TLS_DIRECTORY tlsDir = {0};
-    PVOID callbacks[64] = {0};
 
-    HANDLE hProcess = OpenProcess(PROCESS_VM_READ, 0, dwProcessId);
-
-    if (!hProcess)
-        return;
-
-    ReadProcessMemory(hProcess, baseOfImage, memory, sizeof(memory), 0);
-
-    PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)memory;
-    PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
-    if (pNt->Signature == IMAGE_NT_SIGNATURE)
-    {
-        if (pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress)
-        {
-            //_Message(0, "[ScyllaHide] TLS directory %X found", pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
-
-            ReadProcessMemory(hProcess, (PVOID)((DWORD_PTR)baseOfImage + pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress), &tlsDir, sizeof(IMAGE_TLS_DIRECTORY), 0);
-
-            if (tlsDir.AddressOfCallBacks)
-            {
-                //_Message(0, "[ScyllaHide] TLS AddressOfCallBacks %X found", tlsDir.AddressOfCallBacks);
-
-                ReadProcessMemory(hProcess, (PVOID)tlsDir.AddressOfCallBacks, callbacks, sizeof(callbacks), 0);
-
-                for (int i = 0; i < _countof(callbacks); i++)
-                {
-                    if (callbacks[i])
-                    {
-                        _Message(0, "[ScyllaHide] TLS callback found: Index %d Address %X", i, callbacks[i]);
-                        _Tempbreakpoint((DWORD)callbacks[i], TY_ONESHOT);
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    CloseHandle(hProcess);
 }
 
 void LogWrapper(const WCHAR * format, ...)
 {
-	WCHAR text[2000];
-	CHAR textA[2000];
-	va_list va_alist;
-	va_start(va_alist, format);
+    WCHAR text[2000];
+    CHAR textA[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
 
-	wvsprintfW(text, format, va_alist);
+    wvsprintfW(text, format, va_alist);
 
-	WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
+    WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
 
-	_Message(0, textA);
+    _Message(0, textA);
 }

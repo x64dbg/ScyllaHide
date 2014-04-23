@@ -1,5 +1,8 @@
 #include "olly1patches.h"
 #include <Windows.h>
+#include "Injector.h"
+
+extern struct HideOptions pHideOptions;
 
 //taken from strongOD
 void fixBadPEBugs()
@@ -121,10 +124,64 @@ void hookOllyBreakpoints()
 
 void setTLSBreakpoints()
 {
-    _Addtolist(0,0,"in the breakpoint hook");
-    //replay stolen bytes
+    DWORD ImageBase = _Plugingetvalue(VAL_MAINBASE);
+    DWORD ProcessId = _Plugingetvalue(VAL_PROCESSID);
+
+    if(pHideOptions.breakTLS)
+        ReadTlsAndSetBreakpoints(ProcessId, (LPVOID)ImageBase);
+
+    //replay stolen bytes and adjust return address
     _asm {
         CMP DWORD PTR DS:[004D734Ch],0
         mov dword ptr [esp], 0042F91Fh
+        ret
     };
+}
+
+void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage)
+{
+    BYTE memory[0x1000] = {0};
+    IMAGE_TLS_DIRECTORY tlsDir = {0};
+    PVOID callbacks[64] = {0};
+
+    HANDLE hProcess = OpenProcess(PROCESS_VM_READ, 0, dwProcessId);
+
+    if (!hProcess)
+        return;
+
+    ReadProcessMemory(hProcess, baseofImage, memory, sizeof(memory), 0);
+
+    PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)memory;
+    PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
+    if (pNt->Signature == IMAGE_NT_SIGNATURE)
+    {
+        if (pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress)
+        {
+            //_Message(0, "[ScyllaHide] TLS directory %X found", pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
+
+            ReadProcessMemory(hProcess, (PVOID)((DWORD_PTR)baseofImage + pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress), &tlsDir, sizeof(IMAGE_TLS_DIRECTORY), 0);
+
+            if (tlsDir.AddressOfCallBacks)
+            {
+                //_Message(0, "[ScyllaHide] TLS AddressOfCallBacks %X found", tlsDir.AddressOfCallBacks);
+
+                ReadProcessMemory(hProcess, (PVOID)tlsDir.AddressOfCallBacks, callbacks, sizeof(callbacks), 0);
+
+                for (int i = 0; i < _countof(callbacks); i++)
+                {
+                    if (callbacks[i])
+                    {
+                        _Message(0, "[ScyllaHide] TLS callback found: Index %d Address %X", i, callbacks[i]);
+                        _Tempbreakpoint((DWORD)callbacks[i], TY_ONESHOT);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    CloseHandle(hProcess);
 }
