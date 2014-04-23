@@ -103,7 +103,7 @@
     <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp" />
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
-    <ClCompile Include="Injector.cpp" />
+    <ClCompile Include="..\ScyllaHideOlly2Plugin\Injector.cpp" />
     <ClCompile Include="olly1patches.cpp" />
     <ClCompile Include="ScyllaHideOlly1Plugin.cpp" />
   </ItemGroup>
@@ -124,7 +124,7 @@
     <ClInclude Include="..\InjectorCLI\ReadNtConfig.h" />
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
-    <ClInclude Include="Injector.h" />
+    <ClInclude Include="..\ScyllaHideOlly2Plugin\Injector.h" />
     <ClInclude Include="ollyplugindefinitions.h" />
     <ClInclude Include="olly1patches.h" />
     <ClInclude Include="resource.h" />

@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include "resource.h"
-#include "Injector.h"
+#include "..\ScyllaHideOlly2Plugin\Injector.h"
 #include "ollyplugindefinitions.h"
 #include "olly1patches.h"
 #include "..\InjectorCLI\RemotePebHider.h"
