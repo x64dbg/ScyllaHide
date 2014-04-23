@@ -67,7 +67,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 
             if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
             {
-                LogWrap(L"[ScyllaHide] Injection successful, Imagebase %p", remoteImageBase);
+                LogWrap(L"[ScyllaHide] Hook Injection successful, Imagebase %p", remoteImageBase);
             }
             else
             {
@@ -104,6 +104,15 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
     }
 }
 
+void DoThreadMagic( HANDLE hThread )
+{
+	SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
+	NtSetInformationThread(hThread, ThreadHideFromDebugger, 0, 0);
+	ResumeThread(hThread);
+
+	WaitForSingleObject(hThread, INFINITE);
+}
+
 LPVOID NormalDllInjection( HANDLE hProcess, const WCHAR * dllPath )
 {
 	SIZE_T memorySize = (wcslen(dllPath) + 1) * sizeof(WCHAR);
@@ -122,13 +131,14 @@ LPVOID NormalDllInjection( HANDLE hProcess, const WCHAR * dllPath )
 		HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)LoadLibraryW,remoteMemory,CREATE_SUSPENDED, 0);
 		if (hThread)
 		{
-			SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
-			NtSetInformationThread(hThread, ThreadHideFromDebugger, 0, 0);
-			ResumeThread(hThread);
-
-			WaitForSingleObject(hThread, INFINITE);
+			DoThreadMagic(hThread);
 
 			GetExitCodeThread(hThread, &hModule);
+
+			if (!hModule)
+			{
+				LogWrap(L"[ScyllaHide] DLL INJECTION: Failed load library!");
+			}
 
 			CloseHandle(hThread);
 		}
@@ -143,6 +153,8 @@ LPVOID NormalDllInjection( HANDLE hProcess, const WCHAR * dllPath )
 	}
 
 	VirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
+
+
 
 	return (LPVOID)hModule;
 }
@@ -160,22 +172,21 @@ LPVOID StealthDllInjection( HANDLE hProcess, const WCHAR * dllPath )
 			PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)dllMemory;
 			PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
 
-			DWORD_PTR dllMain = pNt->OptionalHeader.AddressOfEntryPoint + (DWORD_PTR)remoteImageBaseOfInjectedDll;
-
-			HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)dllMain,remoteImageBaseOfInjectedDll,CREATE_SUSPENDED, 0);
-			if (hThread)
+			if (pNt->OptionalHeader.AddressOfEntryPoint)
 			{
-				SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
-				NtSetInformationThread(hThread, ThreadHideFromDebugger, 0, 0);
-				ResumeThread(hThread);
+				DWORD_PTR dllMain = pNt->OptionalHeader.AddressOfEntryPoint + (DWORD_PTR)remoteImageBaseOfInjectedDll;
 
-				WaitForSingleObject(hThread, INFINITE);
+				HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)dllMain,remoteImageBaseOfInjectedDll,CREATE_SUSPENDED, 0);
+				if (hThread)
+				{
+					DoThreadMagic(hThread);
 
-				CloseHandle(hThread);
-			}
-			else
-			{
-				LogWrap(L"[ScyllaHide] DLL INJECTION: Failed to start thread!");
+					CloseHandle(hThread);
+				}
+				else
+				{
+					LogWrap(L"[ScyllaHide] DLL INJECTION: Failed to start thread!");
+				}
 			}
 		}
 		else
@@ -204,19 +215,40 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
 		{
 			LogWrap(L"[ScyllaHide] Starting Normal DLL Injection!");
 			remoteImage = NormalDllInjection(hProcess, dllPath);
-			if (remoteImage)
-			{
-				LogWrap(L"[ScyllaHide] Injection of %s successful, Imagebase %p", dllPath, remoteImage);
-				if (pHideOptions.DLLUnload)
-				{
-					LogWrap(L"[ScyllaHide] Unloading Imagebase %p", remoteImage);
-					CloseHandle(CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)FreeLibrary,remoteImage, 0, 0));
-				}
-			}
 		}
 		else
 		{
 			LogWrap(L"[ScyllaHide] DLL INJECTION: No injection type selected!");
+		}
+
+		if (remoteImage)
+		{
+			LogWrap(L"[ScyllaHide] DLL INJECTION: Injection of %s successful, Imagebase %p", dllPath, remoteImage);
+
+			if (pHideOptions.DLLUnload)
+			{
+				LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p", remoteImage);
+
+				if (pHideOptions.DLLNormal)
+				{
+					HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)FreeLibrary,remoteImage, CREATE_SUSPENDED, 0);
+					if (hThread)
+					{
+						DoThreadMagic(hThread);
+						CloseHandle(hThread);
+						LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
+					}
+					else
+					{
+						LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p FAILED", remoteImage);
+					}
+				}
+				else if (pHideOptions.DLLStealth)
+				{
+					VirtualFreeEx(hProcess, remoteImage, 0, MEM_RELEASE);
+					LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
+				}
+			}
 		}
 
 		CloseHandle(hProcess);
