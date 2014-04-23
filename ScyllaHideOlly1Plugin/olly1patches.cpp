@@ -127,12 +127,15 @@ void __declspec(naked) handleBreakpoints()
 {
     _asm { pushad };
 
-    if(pHideOptions.removeEPBreak) {
+    if(pHideOptions.removeEPBreak)
+	{
         CreateThread(NULL, NULL, removeEPBreak, NULL, NULL, NULL);
     }
 
     if(pHideOptions.breakTLS)
+	{
         ReadTlsAndSetBreakpoints(ProcessId, (LPVOID)ImageBase);
+	}
 
     //replay stolen bytes and adjust return address
     _asm {
@@ -147,7 +150,7 @@ DWORD _stdcall removeEPBreak(LPVOID lpParam)
 {
     Sleep(0x200);
     _Deletebreakpoints(epaddr,epaddr+2, 0);
-    ExitThread(1);
+	return 0;
 }
 
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage)
