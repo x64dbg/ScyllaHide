@@ -13,10 +13,61 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Headerdateien\distorm">
+      <UniqueIdentifier>{a9949ea0-29ea-4e2d-aa53-283b1b460d59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\distorm">
+      <UniqueIdentifier>{97da1a4b-c98d-42d7-9305-66d57f3c73c5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScyllaHideIDAProPlugin.cpp">
       <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ScyllaHideOlly2Plugin\Injector.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\InjectorCLI\RemoteHook.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\distorm\decoder.c">
+      <Filter>Quelldateien\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\distorm\distorm.c">
+      <Filter>Quelldateien\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\distorm\instructions.c">
+      <Filter>Quelldateien\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\distorm\insts.c">
+      <Filter>Quelldateien\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\distorm\mnemonics.c">
+      <Filter>Quelldateien\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\distorm\operands.c">
+      <Filter>Quelldateien\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\distorm\prefix.c">
+      <Filter>Quelldateien\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\distorm\textdefs.c">
+      <Filter>Quelldateien\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\distorm\wstring.c">
+      <Filter>Quelldateien\distorm</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -27,6 +78,57 @@
   <ItemGroup>
     <ClInclude Include="resource.h">
       <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ScyllaHideOlly2Plugin\Injector.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InjectorCLI\ApplyHooking.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InjectorCLI\DynamicMapping.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InjectorCLI\ReadNtConfig.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InjectorCLI\RemoteHook.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InjectorCLI\RemotePebHider.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\distorm\config.h">
+      <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\distorm\decoder.h">
+      <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\distorm\distorm.h">
+      <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\distorm\instructions.h">
+      <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\distorm\insts.h">
+      <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\distorm\mnemonics.h">
+      <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\distorm\operands.h">
+      <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\distorm\prefix.h">
+      <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\distorm\textdefs.h">
+      <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\distorm\wstring.h">
+      <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\distorm\x86defs.h">
+      <Filter>Headerdateien\distorm</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

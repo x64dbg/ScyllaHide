@@ -8,20 +8,56 @@
 #include <loader.hpp>
 #include <kernwin.hpp>
 #include "resource.h"
+#include "..\ScyllaHideOlly2Plugin\Injector.h"
 
 #define VERSION "0.5"
 
+typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+void LogWrapper(const WCHAR * format, ...);
+void LogErrorWrapper(const WCHAR * format, ...);
+int idaapi debug_mainloop(void *user_data, int notif_code, va_list va);
+
+//scyllaHide definitions
+struct HideOptions pHideOptions = {0};
+
+const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
+const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
+
+WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
+WCHAR NtApiIniPath[MAX_PATH] = {0};
+
+extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+extern t_LogWrapper LogWrap;
+extern t_LogWrapper LogErrorWrap;
+
 //globals
 HINSTANCE hinst;
-
-int idaapi debug_mainloop(void *user_data, int notif_code, va_list va);
+static DWORD ProcessId = 0;
+static bool bHooked = false;
+HMODULE hNtdllModule = 0;
 
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
+        LogWrap = LogWrapper;
+        LogErrorWrap = LogErrorWrapper;
+
+        hNtdllModule = GetModuleHandleW(L"ntdll.dll");
+        GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
+        WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
+        if (temp)
+        {
+            temp++;
+            *temp = 0;
+            wcscpy(ScyllaHideDllPath, NtApiIniPath);
+            wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
+            wcscat(NtApiIniPath, NtApiIniFilename);
+        }
+
         hinst=hi;
     }
+
     return TRUE;
 };
 
@@ -185,6 +221,9 @@ int IDAP_init(void)
     msg("# ScyllaHide "VERSION" Copyright 2014 Aguila / cypher #\n");
     msg("#################################################\n");
 
+    bHooked = false;
+    ProcessId = 0;
+
     return PLUGIN_KEEP;
 }
 
@@ -204,6 +243,7 @@ void IDAP_run(int arg)
     return;
 }
 
+//callback for various debug events
 int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 {
     switch (notif_code)
@@ -219,6 +259,15 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
     {
         const debug_event_t* dbgEvent = va_arg(va, const debug_event_t*);
 
+        ProcessId = dbgEvent->pid;
+        bHooked = false;
+        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+
+        if (!bHooked)
+        {
+            bHooked = true;
+            startInjection(ProcessId, ScyllaHideDllPath, true);
+        }
     }
     break;
 
@@ -230,7 +279,10 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
     case dbg_library_load:
     {
-
+        if (bHooked)
+        {
+            startInjection(ProcessId, ScyllaHideDllPath, false);
+        }
     }
     break;
 
@@ -251,6 +303,36 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
     }
 
     return 0;
+}
+
+void LogErrorWrapper(const WCHAR * format, ...)
+{
+    WCHAR text[2000];
+    CHAR textA[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
+
+    wvsprintfW(text, format, va_alist);
+
+    WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
+
+    msg(textA);
+    msg("\n");
+}
+
+void LogWrapper(const WCHAR * format, ...)
+{
+    WCHAR text[2000];
+    CHAR textA[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
+
+    wvsprintfW(text, format, va_alist);
+
+    WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
+
+    msg(textA);
+    msg("\n");
 }
 
 // There isn't much use for these yet, but I set them anyway.

@@ -62,7 +62,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Z:\__dev\idasdk63\lib\x86_win_vc_32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ntdll;Z:\__dev\idasdk63\lib\x86_win_vc_32</AdditionalLibraryDirectories>
       <AdditionalDependencies>ida.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/EXPORT:PLUGIN %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -86,18 +86,50 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>Z:\__dev\idasdk63\lib\x86_win_vc_32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ntdll;Z:\__dev\idasdk63\lib\x86_win_vc_32</AdditionalLibraryDirectories>
       <AdditionalDependencies>ida.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/EXPORT:PLUGIN %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\distorm\decoder.c" />
+    <ClCompile Include="..\distorm\distorm.c" />
+    <ClCompile Include="..\distorm\instructions.c" />
+    <ClCompile Include="..\distorm\insts.c" />
+    <ClCompile Include="..\distorm\mnemonics.c" />
+    <ClCompile Include="..\distorm\operands.c" />
+    <ClCompile Include="..\distorm\prefix.c" />
+    <ClCompile Include="..\distorm\textdefs.c" />
+    <ClCompile Include="..\distorm\wstring.c" />
+    <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp" />
+    <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
+    <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp" />
+    <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
+    <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
+    <ClCompile Include="..\ScyllaHideOlly2Plugin\Injector.cpp" />
     <ClCompile Include="ScyllaHideIDAProPlugin.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScyllaHideIDAProPlugin.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\distorm\config.h" />
+    <ClInclude Include="..\distorm\decoder.h" />
+    <ClInclude Include="..\distorm\distorm.h" />
+    <ClInclude Include="..\distorm\instructions.h" />
+    <ClInclude Include="..\distorm\insts.h" />
+    <ClInclude Include="..\distorm\mnemonics.h" />
+    <ClInclude Include="..\distorm\operands.h" />
+    <ClInclude Include="..\distorm\prefix.h" />
+    <ClInclude Include="..\distorm\textdefs.h" />
+    <ClInclude Include="..\distorm\wstring.h" />
+    <ClInclude Include="..\distorm\x86defs.h" />
+    <ClInclude Include="..\InjectorCLI\ApplyHooking.h" />
+    <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
+    <ClInclude Include="..\InjectorCLI\ReadNtConfig.h" />
+    <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
+    <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
+    <ClInclude Include="..\ScyllaHideOlly2Plugin\Injector.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
