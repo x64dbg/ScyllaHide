@@ -372,6 +372,24 @@ HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICO
         {
             return 0;
         }
+
+		if (DllExchange.EnableProtectProcessId == TRUE)
+		{
+			DWORD dwProcessId;
+			if (DllExchange.dNtUserQueryWindow)
+			{
+				dwProcessId = (DWORD)DllExchange.dNtUserQueryWindow(resultHwnd, WindowProcess);
+			}
+			else
+			{
+				dwProcessId = (DWORD)DllExchange.NtUserQueryWindow(resultHwnd, WindowProcess);
+			}
+
+			if (dwProcessId == DllExchange.dwProtectedProcessId)
+			{
+				return 0;
+			}
+		}
     }
     return resultHwnd;
 }
@@ -392,7 +410,14 @@ void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
             if (phwndFirst[i] != 0)
             {
                 //GetWindowThreadProcessId(phwndFirst[i], &dwProcessId);
-                dwProcessId = (DWORD)DllExchange.NtUserQueryWindow(phwndFirst[i], WindowProcess);
+				if (DllExchange.dNtUserQueryWindow)
+				{
+					dwProcessId = (DWORD)DllExchange.dNtUserQueryWindow(phwndFirst[i], WindowProcess);
+				}
+				else
+				{
+					dwProcessId = (DWORD)DllExchange.NtUserQueryWindow(phwndFirst[i], WindowProcess);
+				}
                 if (dwProcessId == DllExchange.dwProtectedProcessId)
                 {
                     if (i == 0)
@@ -420,6 +445,24 @@ NTSTATUS NTAPI HookedNtUserBuildHwndList(HDESK hdesk, HWND hwndNext, BOOL fEnumC
     }
 
     return ntStat;
+}
+
+HANDLE NTAPI HookedNtUserQueryWindow(HWND hwnd, WINDOWINFOCLASS WindowInfo)
+{
+	HANDLE hHandle = DllExchange.dNtUserQueryWindow(hwnd, WindowInfo);
+
+	if (hHandle)
+	{
+		if(DllExchange.EnableProtectProcessId == TRUE)
+		{
+			if (hHandle == (HANDLE)DllExchange.dwProtectedProcessId)
+			{
+				return (HANDLE)((DWORD_PTR)hHandle + 1);
+			}
+		}
+	}
+
+	return hHandle;
 }
 
 //WIN XP: CreateThread -> CreateRemoteThread -> NtCreateThread

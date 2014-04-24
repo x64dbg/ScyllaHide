@@ -21,3 +21,4 @@ HookedNtSetDebugFilterState
 HookedNativeCallInternal
 HookedNtCreateThread
 HookedNtCreateThreadEx
+HookedNtUserQueryWindow
