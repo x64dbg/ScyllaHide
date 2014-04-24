@@ -511,9 +511,6 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
     _Addtolist(0,0,"ScyllaHide Plugin v"SCYLLAHIDE_VERSION);
     _Addtolist(0,-1,"  Copyright (C) 2014 Aguila / cypher");
 
-    _Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
-    ReadNtApiInformation();
-
     //do some Olly fixes
     if(pHideOptions.fixOllyBugs) {
         fixBadPEBugs();
@@ -676,6 +673,9 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         {
             if (!bHooked)
             {
+				_Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
+				ReadNtApiInformation();
+
                 bHooked = true;
                 startInjection(ProcessId, ScyllaHideDllPath, true);
             }
