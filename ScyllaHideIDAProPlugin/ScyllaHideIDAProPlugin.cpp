@@ -1,13 +1,14 @@
-#include <ida.hpp>
 #define USE_STANDARD_FILE_FUNCTIONS
 #pragma warning(disable : 4996 4512 4127 4201)
 
 #include <Windows.h>
-#include <idp.hpp>
-#include <dbg.hpp>
-#include <loader.hpp>
-#include <kernwin.hpp>
+#include "idasdk/ida.hpp"
+#include "idasdk/idp.hpp"
+#include "idasdk/dbg.hpp"
+#include "idasdk/loader.hpp"
+#include "idasdk/kernwin.hpp"
 #include "resource.h"
+#include "IniSettings.h"
 #include "..\ScyllaHideOlly2Plugin\Injector.h"
 
 #define VERSION "0.5"
@@ -16,13 +17,16 @@ typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
 void LogErrorWrapper(const WCHAR * format, ...);
 int idaapi debug_mainloop(void *user_data, int notif_code, va_list va);
+DWORD SetDebugPrivileges();
 
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
 
+const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
+WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 
@@ -52,14 +56,187 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
             *temp = 0;
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
+            wcscpy(ScyllaHideIniPath, NtApiIniPath);
+            wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
             wcscat(NtApiIniPath, NtApiIniFilename);
         }
+
+        SetDebugPrivileges();
+        CreateSettings();
+        ReadSettings();
 
         hinst=hi;
     }
 
     return TRUE;
 };
+
+void SaveOptions(HWND hWnd)
+{
+    //read all checkboxes
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.PEBBeingDebugged = 1;
+    }
+    else
+        pHideOptions.PEBBeingDebugged = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.PEBHeapFlags = 1;
+    }
+    else
+        pHideOptions.PEBHeapFlags = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.PEBNtGlobalFlag = 1;
+    }
+    else
+        pHideOptions.PEBNtGlobalFlag = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.PEBStartupInfo = 1;
+    }
+    else
+        pHideOptions.PEBStartupInfo = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtSetInformationThread = 1;
+    }
+    else
+        pHideOptions.NtSetInformationThread = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtQuerySystemInformation = 1;
+    }
+    else
+        pHideOptions.NtQuerySystemInformation = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtQueryInformationProcess = 1;
+    }
+    else
+        pHideOptions.NtQueryInformationProcess = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtQueryObject = 1;
+    }
+    else
+        pHideOptions.NtQueryObject = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtYieldExecution = 1;
+    }
+    else
+        pHideOptions.NtYieldExecution = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.GetTickCount = 1;
+    }
+    else
+        pHideOptions.GetTickCount = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.OutputDebugStringA = 1;
+    }
+    else
+        pHideOptions.OutputDebugStringA = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.BlockInput = 1;
+    }
+    else
+        pHideOptions.BlockInput = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtGetContextThread = 1;
+    }
+    else
+        pHideOptions.NtGetContextThread = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtSetContextThread = 1;
+    }
+    else
+        pHideOptions.NtSetContextThread = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtContinue = 1;
+    }
+    else
+        pHideOptions.NtContinue = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.KiUserExceptionDispatcher = 1;
+    }
+    else
+        pHideOptions.KiUserExceptionDispatcher = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtUserFindWindowEx = 1;
+    }
+    else
+        pHideOptions.NtUserFindWindowEx = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtUserBuildHwndList = 1;
+    }
+    else
+        pHideOptions.NtUserBuildHwndList = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtUserQueryWindow = 1;
+    }
+    else
+        pHideOptions.NtUserQueryWindow = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtSetDebugFilterState = 1;
+    }
+    else
+        pHideOptions.NtSetDebugFilterState = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtClose = 1;
+    }
+    else
+        pHideOptions.NtClose = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtCreateThreadEx = 1;
+    }
+    else
+        pHideOptions.NtCreateThreadEx = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.preventThreadCreation = 1;
+    }
+    else
+        pHideOptions.preventThreadCreation = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.DLLStealth = 1;
+    }
+    else
+        pHideOptions.DLLStealth = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.DLLNormal = 1;
+    }
+    else
+        pHideOptions.DLLNormal = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.DLLUnload = 1;
+    }
+    else
+        pHideOptions.DLLUnload = 0;
+
+    GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
+    //SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
+
+    //save all options
+    SaveSettings();
+}
 
 //options dialog proc
 INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -68,9 +245,6 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     {
     case WM_INITDIALOG:
     {
-        //LoadOptions();
-
-        /*
         SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, pHideOptions.PEBBeingDebugged, 0);
         SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, pHideOptions.PEBHeapFlags, 0);
         SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, pHideOptions.PEBNtGlobalFlag, 0);
@@ -101,7 +275,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
         SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);*/
+        SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
 
         break;
     }
@@ -118,18 +292,18 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         case IDOK:
         {
             //save options to ini
-            //SaveOptions(hWnd);
-            /*
+            SaveOptions(hWnd);
+
             if (ProcessId)
             {
                 startInjection(ProcessId, ScyllaHideDllPath, true);
                 bHooked = true;
-                MessageBoxA(hWnd, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+                info("Applied changes! Restarting target is NOT necessary!");
             }
             else
             {
-                MessageBoxA(hWnd, "Please start the target to apply changes!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
-            }*/
+                info("Please start the target to apply changes!");
+            }
 
             EndDialog(hWnd, NULL);
             break;
@@ -273,16 +447,17 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
     case dbg_process_exit:
     {
-
+        ProcessId = 0;
+        bHooked = false;
     }
     break;
 
     case dbg_library_load:
     {
-        if (bHooked)
-        {
-            startInjection(ProcessId, ScyllaHideDllPath, false);
-        }
+        /*    if (bHooked)
+            {
+                startInjection(ProcessId, ScyllaHideDllPath, false);
+            }*/
     }
     break;
 
@@ -303,6 +478,32 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
     }
 
     return 0;
+}
+
+DWORD SetDebugPrivileges()
+{
+    DWORD err = 0;
+    TOKEN_PRIVILEGES Debug_Privileges;
+    if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid)) return GetLastError();
+
+    HANDLE hToken = 0;
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+    {
+        err = GetLastError();
+        if (hToken) CloseHandle(hToken);
+        return err;
+    }
+
+    Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+    Debug_Privileges.PrivilegeCount = 1;
+
+    if (!AdjustTokenPrivileges(hToken, false, &Debug_Privileges, 0, NULL, NULL))
+    {
+        err = GetLastError();
+        if (hToken) CloseHandle(hToken);
+    }
+
+    return err;
 }
 
 void LogErrorWrapper(const WCHAR * format, ...)

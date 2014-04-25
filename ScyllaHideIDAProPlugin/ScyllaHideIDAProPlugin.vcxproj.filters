@@ -19,6 +19,9 @@
     <Filter Include="Quelldateien\distorm">
       <UniqueIdentifier>{97da1a4b-c98d-42d7-9305-66d57f3c73c5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Headerdateien\idasdk">
+      <UniqueIdentifier>{ebe5d27a-a27d-4af4-88b3-769088500b8f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScyllaHideIDAProPlugin.cpp">
@@ -68,6 +71,9 @@
     </ClCompile>
     <ClCompile Include="..\distorm\wstring.c">
       <Filter>Quelldateien\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="IniSettings.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -129,6 +135,27 @@
     </ClInclude>
     <ClInclude Include="..\distorm\x86defs.h">
       <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="IniSettings.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="idasdk\dbg.hpp">
+      <Filter>Headerdateien\idasdk</Filter>
+    </ClInclude>
+    <ClInclude Include="idasdk\idp.hpp">
+      <Filter>Headerdateien\idasdk</Filter>
+    </ClInclude>
+    <ClInclude Include="idasdk\kernwin.hpp">
+      <Filter>Headerdateien\idasdk</Filter>
+    </ClInclude>
+    <ClInclude Include="idasdk\loader.hpp">
+      <Filter>Headerdateien\idasdk</Filter>
+    </ClInclude>
+    <ClInclude Include="idasdk\ida.hpp">
+      <Filter>Headerdateien\idasdk</Filter>
+    </ClInclude>
+    <ClInclude Include="idasdk\pro.h">
+      <Filter>Headerdateien\idasdk</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

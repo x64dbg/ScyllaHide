@@ -57,12 +57,12 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <CallingConvention>StdCall</CallingConvention>
-      <AdditionalIncludeDirectories>Z:\__dev\idasdk63\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./idasdk</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)ntdll;Z:\__dev\idasdk63\lib\x86_win_vc_32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ntdll;./idasdk/x86_win_vc_32</AdditionalLibraryDirectories>
       <AdditionalDependencies>ida.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/EXPORT:PLUGIN %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -79,14 +79,14 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CallingConvention>StdCall</CallingConvention>
-      <AdditionalIncludeDirectories>Z:\__dev\idasdk63\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./idasdk/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)ntdll;Z:\__dev\idasdk63\lib\x86_win_vc_32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ntdll;./idasdk/x86_win_vc_32</AdditionalLibraryDirectories>
       <AdditionalDependencies>ida.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/EXPORT:PLUGIN %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -107,6 +107,7 @@
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
     <ClCompile Include="..\ScyllaHideOlly2Plugin\Injector.cpp" />
+    <ClCompile Include="IniSettings.cpp" />
     <ClCompile Include="ScyllaHideIDAProPlugin.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -130,6 +131,13 @@
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
     <ClInclude Include="..\ScyllaHideOlly2Plugin\Injector.h" />
+    <ClInclude Include="idasdk\dbg.hpp" />
+    <ClInclude Include="idasdk\ida.hpp" />
+    <ClInclude Include="idasdk\idp.hpp" />
+    <ClInclude Include="idasdk\kernwin.hpp" />
+    <ClInclude Include="idasdk\loader.hpp" />
+    <ClInclude Include="idasdk\pro.h" />
+    <ClInclude Include="IniSettings.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
