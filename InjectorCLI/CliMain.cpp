@@ -351,6 +351,7 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"NtSetInformationThreadHook", L"1", iniFile);
     WriteIniSettings(L"NtUserBuildHwndListHook", L"1", iniFile);
     WriteIniSettings(L"NtUserFindWindowExHook", L"1", iniFile);
+    WriteIniSettings(L"NtUserQueryWindowHook", L"1", iniFile);
     WriteIniSettings(L"NtYieldExecutionHook", L"1", iniFile);
     WriteIniSettings(L"OutputDebugStringHook", L"1", iniFile);
     WriteIniSettings(L"PebBeingDebugged", L"1", iniFile);
@@ -385,6 +386,7 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     DllExchangeLoader.EnableNtSetInformationThreadHook = ReadIniSettingsInt(L"NtSetInformationThreadHook", iniFile);
     DllExchangeLoader.EnableNtUserBuildHwndListHook = ReadIniSettingsInt(L"NtUserBuildHwndListHook", iniFile);
     DllExchangeLoader.EnableNtUserFindWindowExHook = ReadIniSettingsInt(L"NtUserFindWindowExHook", iniFile);
+    DllExchangeLoader.EnableNtUserQueryWindowHook = ReadIniSettingsInt(L"NtUserQueryWindowHook", iniFile);
     DllExchangeLoader.EnableNtYieldExecutionHook = ReadIniSettingsInt(L"NtYieldExecutionHook", iniFile);
     DllExchangeLoader.EnableOutputDebugStringHook = ReadIniSettingsInt(L"OutputDebugStringHook", iniFile);
     DllExchangeLoader.EnablePebBeingDebugged = ReadIniSettingsInt(L"PebBeingDebugged", iniFile);
