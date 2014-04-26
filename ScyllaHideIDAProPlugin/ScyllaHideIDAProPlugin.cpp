@@ -459,15 +459,31 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
     {
         const debug_event_t* dbgEvent = va_arg(va, const debug_event_t*);
 
-        ProcessId = dbgEvent->pid;
-        bHooked = false;
-        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+		if (dbg != 0)
+		{
+			//char text[1000];
+			//wsprintfA(text, "dbg->id %d processor %s", dbg->id , dbg->processor);
+			//MessageBoxA(0, text, text,0);
+			// dbg->id DEBUGGER_ID_WINDBG -> 64bit and 32bit
+			// dbg->id DEBUGGER_ID_X86_IA32_WIN32_USER -> 32bit
 
-        if (!bHooked)
-        {
-            bHooked = true;
-            startInjection(ProcessId, ScyllaHideDllPath, true);
-        }
+			if (dbg->is_remote())
+			{
+				MessageBoxA(0, "Remote Debugging not yet supported", "Error", MB_ICONERROR);
+			}
+			else
+			{
+				ProcessId = dbgEvent->pid;
+				bHooked = false;
+				ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+
+				if (!bHooked)
+				{
+					bHooked = true;
+					startInjection(ProcessId, ScyllaHideDllPath, true);
+				}
+			}
+		}
     }
     break;
 

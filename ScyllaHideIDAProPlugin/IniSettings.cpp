@@ -161,7 +161,7 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"PebStartupInfo", pHideOptions.PEBStartupInfo, iniFile);
     WriteIniSettingsInt(L"NtCreateThreadExHook", pHideOptions.NtCreateThreadEx, iniFile);
     WriteIniSettingsInt(L"PreventThreadCreation", pHideOptions.preventThreadCreation, iniFile);
-    WriteIniSettingsInt(L"DLLStealth", pHideOptions.DLLNormal, iniFile);
-    WriteIniSettingsInt(L"DLLNormal", pHideOptions.DLLStealth, iniFile);
+    WriteIniSettingsInt(L"DLLStealth", pHideOptions.DLLStealth, iniFile);
+    WriteIniSettingsInt(L"DLLNormal", pHideOptions.DLLNormal, iniFile);
     WriteIniSettingsInt(L"DLLUnload", pHideOptions.DLLUnload, iniFile);
 }
