@@ -41,6 +41,7 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.plw</TargetExt>
     <TargetName>ScyllaHideIDAx86</TargetName>
+    <OutDir>$(SolutionDir)$(Configuration)\plugins\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
