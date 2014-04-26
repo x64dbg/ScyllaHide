@@ -1,3 +1,7 @@
+Version 0.6
+
+- IDA 32bit plugin
+
 Version 0.5
 
 - NtCreateThreadEx hook

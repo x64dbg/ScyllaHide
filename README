@@ -63,6 +63,10 @@ Plugins:
   (can be combined with TitanHide which does kernelmode hiding)
 - for OllyDbg v1.10: Copy HookLibraryx86.dll and ScyllaHideOlly1.dll to your plugins directoy
 - for OllyDbg v2.01: Copy HookLibraryx86.dll and ScyllaHideOlly2.dll to your plugins directoy
+- for IDA v6: Copy HookLibraryx86.dll and ScyllaHideIDAPro.plw to your plugins directoy
+
+IDA Note:
+- Tested only with "Local Win32 debugger"
 
 ------------------------------------------------------
 
@@ -73,6 +77,7 @@ Special thanks to:
 - Peter Ferrie for his PDFs http://pferrie.host22.com
 
 ------------------------------------------------------
+
 ToDo:
 - x64 Exception Support
 
