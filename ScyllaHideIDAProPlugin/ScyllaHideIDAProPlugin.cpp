@@ -480,10 +480,10 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
     case dbg_library_load:
     {
-        /*    if (bHooked)
-            {
-                startInjection(ProcessId, ScyllaHideDllPath, false);
-            }*/
+        if (bHooked)
+        {
+            startInjection(ProcessId, ScyllaHideDllPath, false);
+        }
     }
     break;
 
