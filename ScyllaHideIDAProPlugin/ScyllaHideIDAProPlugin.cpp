@@ -1,6 +1,13 @@
 #define USE_STANDARD_FILE_FUNCTIONS
 #pragma warning(disable : 4996 4512 4127 4201)
 
+//for 64bit - p64
+#define __EA64__ 
+#pragma comment(lib, "./idasdk/x86_win_vc_64/ida.lib")
+
+//for 32bit - plw
+//#pragma comment(lib, "./idasdk/x86_win_vc_32/ida.lib")
+
 #include <Windows.h>
 #include "idasdk/ida.hpp"
 #include "idasdk/idp.hpp"
@@ -11,6 +18,9 @@
 #include "IniSettings.h"
 #include "..\ScyllaHideOlly2Plugin\Injector.h"
 #include "..\ScyllaHideOlly2Plugin\ScyllaHideVersion.h"
+
+
+
 
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
