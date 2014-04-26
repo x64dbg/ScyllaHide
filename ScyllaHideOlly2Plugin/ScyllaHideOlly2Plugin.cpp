@@ -500,7 +500,7 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode)
         Resumeallthreads();
 
         n=StrcopyW(s,TEXTLEN,L"ScyllaHide plugin v");
-        n+=StrcopyW(s+n,TEXTLEN-n,VERSION);
+        n+=StrcopyW(s+n,TEXTLEN-n, SCYLLA_HIDE_VERSION_STRING_W);
         n+=StrcopyW(s+n,TEXTLEN-n,L"\n(Anti-Anti-Debug in usermode)\n\n");
         n+=StrcopyW(s+n,TEXTLEN-n,L"\nCopyright (C) 2014 Aguila / cypher");
 
@@ -547,7 +547,7 @@ extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginnam
         return 0;
 
     wcscpy(pluginname,PLUGINNAME);
-    wcscpy(pluginversion,VERSION);
+    wcscpy(pluginversion,SCYLLA_HIDE_VERSION_STRING_W);
 
     return PLUGIN_VERSION;
 };
@@ -557,7 +557,7 @@ extc int __cdecl ODBG2_Plugininit(void)
 {
     LoadOptions();
 
-    Addtolist(0,0,L"ScyllaHide Plugin v"VERSION);
+    Addtolist(0,0,L"ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_W);
     Addtolist(0,2,L"  Copyright (C) 2014 Aguila / cypher");
 
     Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);

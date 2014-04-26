@@ -3,6 +3,7 @@
 #include "TitanEngine.h"
 #include "Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
+#include "..\ScyllaHideOlly2Plugin\ScyllaHideVersion.h"
 
 #ifdef _WIN64
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -10,8 +11,6 @@ const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
-const DWORD PLUGIN_MAJOR_VERSION = 0;
-const DWORD PLUGIN_MINOR_VERSION = 5;
 
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
@@ -116,8 +115,8 @@ extern "C" __declspec(dllexport) bool TitanRegisterPlugin(char* szPluginName, DW
 {
     if(titanPluginMajorVersion && titanPluginMinorVersion)
     {
-        *titanPluginMajorVersion = PLUGIN_MAJOR_VERSION;
-        *titanPluginMinorVersion = PLUGIN_MINOR_VERSION;
+        *titanPluginMajorVersion = SCYLLA_HIDE_MAJOR_VERSION;
+        *titanPluginMinorVersion = SCYLLA_HIDE_MINOR_VERSION;
         strcpy(szPluginName, "ScyllaHide");
         return true;
     }

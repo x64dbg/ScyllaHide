@@ -10,8 +10,8 @@
 #include "resource.h"
 #include "IniSettings.h"
 #include "..\ScyllaHideOlly2Plugin\Injector.h"
+#include "..\ScyllaHideOlly2Plugin\ScyllaHideVersion.h"
 
-#define VERSION "0.5"
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
@@ -392,7 +392,7 @@ int IDAP_init(void)
     }
 
     msg("#################################################\n");
-    msg("# ScyllaHide "VERSION" Copyright 2014 Aguila / cypher #\n");
+    msg("# ScyllaHide v"SCYLLA_HIDE_VERSION_STRING_A" Copyright 2014 Aguila / cypher #\n");
     msg("#################################################\n");
 
     bHooked = false;

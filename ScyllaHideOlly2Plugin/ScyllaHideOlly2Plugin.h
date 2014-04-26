@@ -1,8 +1,8 @@
 #pragma once
 #include "plugin.h"
+#include "ScyllaHideVersion.h"
 
 #define PLUGINNAME     L"ScyllaHide"
-#define VERSION        L"0.5"
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);

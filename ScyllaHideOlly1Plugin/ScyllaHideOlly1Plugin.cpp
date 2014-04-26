@@ -2,10 +2,12 @@
 #include <windows.h>
 #include "resource.h"
 #include "..\ScyllaHideOlly2Plugin\Injector.h"
+#include "..\ScyllaHideOlly2Plugin\ScyllaHideVersion.h"
 #include "ollyplugindefinitions.h"
 #include "olly1patches.h"
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
+
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
@@ -14,7 +16,6 @@ void LogErrorWrapper(const WCHAR * format, ...);
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
 
-#define SCYLLAHIDE_VERSION "0.5"
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
@@ -508,7 +509,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
     LoadOptions();
 
-    _Addtolist(0,0,"ScyllaHide Plugin v"SCYLLAHIDE_VERSION);
+    _Addtolist(0,0,"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A);
     _Addtolist(0,-1,"  Copyright (C) 2014 Aguila / cypher");
 
     //do some Olly fixes
@@ -565,7 +566,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
         case 1:
         {
             MessageBoxA(hwmain,
-                        "ScyllaHide Plugin v"SCYLLAHIDE_VERSION"\n"
+                        "ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_A"\n"
                         "(Anti-Anti-Debug in usermode)\n\n"
                         "Copyright (C) 2014 Aguila / cypher",
                         "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
