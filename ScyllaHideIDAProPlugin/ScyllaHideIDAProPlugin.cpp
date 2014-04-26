@@ -387,9 +387,9 @@ int IDAP_init(void)
         return PLUGIN_SKIP;
     }
 
-    msg("#################################################\n");
+    msg("##################################################\n");
     msg("# ScyllaHide v"SCYLLA_HIDE_VERSION_STRING_A" Copyright 2014 Aguila / cypher #\n");
-    msg("#################################################\n");
+    msg("##################################################\n");
 
     bHooked = false;
     ProcessId = 0;
