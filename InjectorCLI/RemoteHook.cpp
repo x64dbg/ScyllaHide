@@ -336,8 +336,22 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void
 	{
 		ReadProcessMemory(hProcess, (void*)KiSystemCallAddress, KiSystemCallBackup, sizeof(KiSystemCallBackup), 0);
 		KiSystemCallBackupSize = GetFunctionSizeRETN(KiSystemCallBackup, sizeof(KiSystemCallBackup));
-		NativeCallContinue = VirtualAllocEx(hProcess, 0, KiSystemCallBackupSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-		WriteProcessMemory(hProcess, NativeCallContinue, KiSystemCallBackup, KiSystemCallBackupSize, 0);
+		if (KiSystemCallBackupSize)
+		{
+			NativeCallContinue = VirtualAllocEx(hProcess, 0, KiSystemCallBackupSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+			if (NativeCallContinue)
+			{
+				WriteProcessMemory(hProcess, NativeCallContinue, KiSystemCallBackup, KiSystemCallBackupSize, 0);
+			}
+			else
+			{
+				MessageBoxA(0, "DetourCreateRemoteNative32Normal -> NativeCallContinue", "ERROR", MB_ICONERROR);
+			}
+		}
+		else
+		{
+			MessageBoxA(0, "DetourCreateRemoteNative32Normal -> KiSystemCallBackupSize", "ERROR", MB_ICONERROR);
+		}
 	}
 
 	if (funcSize && createTramp)
