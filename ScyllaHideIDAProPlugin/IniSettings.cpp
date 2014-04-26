@@ -90,6 +90,9 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"PebNtGlobalFlag", L"1", iniFile);
     WriteIniSettings(L"PebStartupInfo", L"1", iniFile);
     WriteIniSettings(L"NtCreateThreadExHook", L"1", iniFile);
+    WriteIniSettings(L"DLLStealth", L"1", iniFile);
+    WriteIniSettings(L"DLLNormal", L"1", iniFile);
+    WriteIniSettings(L"DLLUnload", L"1", iniFile);
     WriteIniSettings(L"PreventThreadCreation", L"0", iniFile); //special hook disabled by default
 }
 
@@ -123,6 +126,9 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.PEBStartupInfo = ReadIniSettingsInt(L"PebStartupInfo", iniFile);
     pHideOptions.NtCreateThreadEx = ReadIniSettingsInt(L"NtCreateThreadExHook", iniFile);
     pHideOptions.preventThreadCreation = ReadIniSettingsInt(L"PreventThreadCreation", iniFile);
+    pHideOptions.DLLNormal = ReadIniSettingsInt(L"DLLNormal", iniFile);
+    pHideOptions.DLLStealth = ReadIniSettingsInt(L"DLLStealth", iniFile);
+    pHideOptions.DLLUnload = ReadIniSettingsInt(L"DLLUnload", iniFile);
 }
 
 void SaveSettings()
@@ -155,4 +161,7 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"PebStartupInfo", pHideOptions.PEBStartupInfo, iniFile);
     WriteIniSettingsInt(L"NtCreateThreadExHook", pHideOptions.NtCreateThreadEx, iniFile);
     WriteIniSettingsInt(L"PreventThreadCreation", pHideOptions.preventThreadCreation, iniFile);
+    WriteIniSettingsInt(L"DLLStealth", pHideOptions.DLLNormal, iniFile);
+    WriteIniSettingsInt(L"DLLNormal", pHideOptions.DLLStealth, iniFile);
+    WriteIniSettingsInt(L"DLLUnload", pHideOptions.DLLUnload, iniFile);
 }

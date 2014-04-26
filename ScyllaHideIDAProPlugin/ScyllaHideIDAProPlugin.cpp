@@ -71,6 +71,24 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
     return TRUE;
 };
 
+bool GetFileDialog(TCHAR Buffer[MAX_PATH])
+{
+    OPENFILENAME sOpenFileName = {0};
+    const TCHAR szFilterString[] = L"DLL \0*.dll\0\0";
+    const TCHAR szDialogTitle[] = L"ScyllaHide";
+
+    Buffer[0] = 0;
+
+    sOpenFileName.lStructSize = sizeof(sOpenFileName);
+    sOpenFileName.lpstrFilter = szFilterString;
+    sOpenFileName.lpstrFile = Buffer;
+    sOpenFileName.nMaxFile = MAX_PATH;
+    sOpenFileName.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_HIDEREADONLY;
+    sOpenFileName.lpstrTitle = szDialogTitle;
+
+    return (TRUE == GetOpenFileName(&sOpenFileName));
+}
+
 void SaveOptions(HWND hWnd)
 {
     //read all checkboxes
@@ -273,6 +291,9 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
 
+        if(ProcessId) EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), TRUE);
+        else EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), FALSE);
+
         break;
     }
     case WM_CLOSE:
@@ -359,6 +380,15 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
             if(allChecked<1) SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 0, 0);
             else SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
+            break;
+        }
+        case IDC_INJECTDLL:
+        {
+            if(ProcessId) {
+                wchar_t dllPath[MAX_PATH] = {};
+                if(GetFileDialog(dllPath))
+                    injectDll(ProcessId, dllPath);
+            }
             break;
         }
         }
