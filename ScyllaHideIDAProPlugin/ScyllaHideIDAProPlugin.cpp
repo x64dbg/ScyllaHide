@@ -1,12 +1,16 @@
 #define USE_STANDARD_FILE_FUNCTIONS
 #pragma warning(disable : 4996 4512 4127 4201)
 
+#define BUILD_IDA_64BIT 1
+
 //for 64bit - p64
+#ifdef BUILD_IDA_64BIT
 #define __EA64__ 
 #pragma comment(lib, "./idasdk/x86_win_vc_64/ida.lib")
-
+#else
 //for 32bit - plw
-//#pragma comment(lib, "./idasdk/x86_win_vc_32/ida.lib")
+#pragma comment(lib, "./idasdk/x86_win_vc_32/ida.lib")
+#endif
 
 #include <Windows.h>
 #include "idasdk/ida.hpp"
@@ -18,9 +22,6 @@
 #include "IniSettings.h"
 #include "..\ScyllaHideOlly2Plugin\Injector.h"
 #include "..\ScyllaHideOlly2Plugin\ScyllaHideVersion.h"
-
-
-
 
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
@@ -323,7 +324,9 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
             if (ProcessId)
             {
+#ifndef BUILD_IDA_64BIT
                 startInjection(ProcessId, ScyllaHideDllPath, true);
+#endif
                 bHooked = true;
                 info("Applied changes! Restarting target is NOT necessary!");
             }
@@ -397,7 +400,11 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             if(ProcessId) {
                 wchar_t dllPath[MAX_PATH] = {};
                 if(GetFileDialog(dllPath))
+				{
+#ifndef BUILD_IDA_64BIT
                     injectDll(ProcessId, dllPath);
+#endif
+				}
             }
             break;
         }
@@ -487,11 +494,13 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 				bHooked = false;
 				ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
+#ifndef BUILD_IDA_64BIT
 				if (!bHooked)
 				{
 					bHooked = true;
 					startInjection(ProcessId, ScyllaHideDllPath, true);
 				}
+#endif
 			}
 		}
     }
@@ -506,10 +515,12 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
     case dbg_library_load:
     {
+#ifndef BUILD_IDA_64BIT
         if (bHooked)
         {
             startInjection(ProcessId, ScyllaHideDllPath, false);
         }
+#endif
     }
     break;
 
