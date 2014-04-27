@@ -1,5 +1,8 @@
 #pragma once
 
+#define IDA_SERVER_DEFAULT_PORT_TEXT "1337"
+#define IDA_SERVER_DEFAULT_PORT 1337
+
 enum server_dbg_notification_t
 {
 	dbg_null = 0,

@@ -69,7 +69,8 @@ typedef struct _HOOK_DLL_EXCHANGE {
     BOOLEAN EnableNtSetDebugFilterStateHook;
 
 
-
+	t_NtSetDebugFilterState dNtSetDebugFilterState;
+	DWORD NtSetDebugFilterStateBackupSize;
     t_NtSetInformationThread dNtSetInformationThread;
     DWORD NtSetInformationThreadBackupSize;
     t_NtQuerySystemInformation dNtQuerySystemInformation;

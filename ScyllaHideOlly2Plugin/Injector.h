@@ -43,3 +43,6 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath);
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
 void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data);
 void StartFixBeingDebugged(DWORD targetPid, bool setToNull);
+
+bool IsProcessWOW64(HANDLE hProcess);
+bool isWindows64();

@@ -22,7 +22,7 @@
 #include "IniSettings.h"
 #include "..\ScyllaHideOlly2Plugin\Injector.h"
 #include "..\ScyllaHideOlly2Plugin\ScyllaHideVersion.h"
-
+#include "IdaServerClient.h"
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
@@ -44,6 +44,8 @@ WCHAR NtApiIniPath[MAX_PATH] = {0};
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
+
+wchar_t DllPathForInjection[MAX_PATH] = {0};
 
 //globals
 HINSTANCE hinst;
@@ -75,6 +77,11 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
         SetDebugPrivileges();
         CreateSettings();
         ReadSettings();
+
+		if (!StartWinsock())
+		{
+			MessageBoxA(0,"Failed to start Winsock!", "Error", MB_ICONERROR);
+		}
 
         hinst=hi;
     }
@@ -397,13 +404,21 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         }
         case IDC_INJECTDLL:
         {
-            if(ProcessId) {
-                wchar_t dllPath[MAX_PATH] = {};
-                if(GetFileDialog(dllPath))
+            if(ProcessId)
+			{
+				if(GetFileDialog(DllPathForInjection))
 				{
+					if (dbg->is_remote())
+					{
+						SendInjectToServer(ProcessId);
+					}
+					else
+					{
 #ifndef BUILD_IDA_64BIT
-                    injectDll(ProcessId, dllPath);
+						injectDll(ProcessId, DllPathForInjection);
 #endif
+					}
+
 				}
             }
             break;
@@ -476,6 +491,10 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
     {
         const debug_event_t* dbgEvent = va_arg(va, const debug_event_t*);
 
+		ProcessId = dbgEvent->pid;
+		bHooked = false;
+		ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+
 		if (dbg != 0)
 		{
 			//char text[1000];
@@ -486,13 +505,31 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
 			if (dbg->is_remote())
 			{
-				MessageBoxA(0, "Remote Debugging not yet supported", "Error", MB_ICONERROR);
+				qstring hoststring;
+				char host[200] = {0};
+
+				get_process_options(NULL, NULL, NULL, &hoststring, NULL, NULL);
+
+				GetHost((char*)hoststring.c_str(), host);
+
+				//msg("Host-String: %s\n", hoststring.c_str());
+				//msg("Host: %s\n", host);
+
+				if (ConnectToServer(host, "1337"))
+				{
+					if (!SendEventToServer(notif_code, ProcessId))
+					{
+						msg("[ScyllaHide] SendEventToServer failed\n");
+					}
+				}
+				else
+				{
+					msg("[ScyllaHide] Cannot connect to host %s\n", host);
+				}
 			}
 			else
 			{
-				ProcessId = dbgEvent->pid;
-				bHooked = false;
-				ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+
 
 #ifndef BUILD_IDA_64BIT
 				if (!bHooked)
@@ -508,6 +545,15 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
     case dbg_process_exit:
     {
+		if (dbg->is_remote())
+		{
+			if (!SendEventToServer(notif_code, ProcessId))
+			{
+				msg("[ScyllaHide] SendEventToServer failed\n");
+			}
+
+			CloseServerSocket();
+		}
         ProcessId = 0;
         bHooked = false;
     }
@@ -515,12 +561,24 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
     case dbg_library_load:
     {
+
+		if (dbg->is_remote())
+		{
+			if (!SendEventToServer(notif_code, ProcessId))
+			{
+				msg("[ScyllaHide] SendEventToServer failed\n");
+			}
+		}
+		else
+		{
 #ifndef BUILD_IDA_64BIT
-        if (bHooked)
-        {
-            startInjection(ProcessId, ScyllaHideDllPath, false);
-        }
+			if (bHooked)
+			{
+				startInjection(ProcessId, ScyllaHideDllPath, false);
+			}
 #endif
+		}
+
     }
     break;
 

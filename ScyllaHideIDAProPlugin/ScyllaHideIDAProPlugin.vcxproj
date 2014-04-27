@@ -112,6 +112,7 @@
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
     <ClCompile Include="..\ScyllaHideOlly2Plugin\Injector.cpp" />
+    <ClCompile Include="IdaServerClient.cpp" />
     <ClCompile Include="IniSettings.cpp" />
     <ClCompile Include="ScyllaHideIDAProPlugin.cpp" />
   </ItemGroup>
@@ -142,6 +143,7 @@
     <ClInclude Include="idasdk\kernwin.hpp" />
     <ClInclude Include="idasdk\loader.hpp" />
     <ClInclude Include="idasdk\pro.h" />
+    <ClInclude Include="IdaServerClient.h" />
     <ClInclude Include="IniSettings.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

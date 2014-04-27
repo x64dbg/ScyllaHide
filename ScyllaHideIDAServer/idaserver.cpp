@@ -59,21 +59,20 @@ int main(int argc, char *argv[])
 
 	checkPaths();
 
-
 	if (argc > 1)
 	{
 		ListenPortString = argv[1];
 		ListenPort = (unsigned short)strtoul(ListenPortString, 0, 10);
 	}
-	printf("Listen Port: %d (0x%X)\n", ListenPort, ListenPort);
 
+	printf("Listen Port: %d (0x%X)\n", ListenPort, ListenPort);
 
 	if (startWinsock())
 	{
 		//printf("Starting Winsock: DONE\n");
 		startListen();
 	}
-	
+
 
 	getchar();
 	return 0;
@@ -229,9 +228,40 @@ void MapSettings()
 	pHideOptions.PEBStartupInfo = idaExchange.EnablePebStartupInfo;
 }
 
+void DoSomeBitCheck()
+{
+	if (isWindows64())
+	{
+		HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, 0, ProcessId);
+		if (hProcess)
+		{
+			bool wow64 = IsProcessWOW64(hProcess);
+
+#ifdef _WIN64
+			if (wow64)
+			{
+				printf("WARNING: This is a 32bit process and I am 64bit!");
+				getchar();
+				ExitProcess(0);
+			}
+#else
+			if (!wow64)
+			{
+				printf("WARNING: This is a 64bit process and I am 32bit!");
+				getchar();
+				ExitProcess(0);
+			}
+#endif
+			CloseHandle(hProcess);
+		}
+	}
+}
+
 void handleClient( SOCKET ClientSocket )
 {
 	int iResult;
+	bool once = false;
+
 	do
 	{
 		iResult = recv(ClientSocket, (char*)&idaExchange, sizeof(IDA_SERVER_EXCHANGE), 0);
@@ -254,6 +284,12 @@ void handleClient( SOCKET ClientSocket )
 					bHooked = false;
 					ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
+					if (!once)
+					{
+						DoSomeBitCheck();
+						once = true;
+					}
+
 					if (!bHooked)
 					{
 						bHooked = true;
@@ -265,6 +301,7 @@ void handleClient( SOCKET ClientSocket )
 			case dbg_process_exit:
 				{
 
+					iResult = -1; //terminate loop
 					break;
 				}
 			case dbg_library_load:
@@ -277,12 +314,21 @@ void handleClient( SOCKET ClientSocket )
 					break;
 				}
 
-				case inject_dll:
+			case inject_dll:
+				{
+					if (!once)
 					{
-						injectDll(ProcessId, idaExchange.DllPathForInjection);
-						break;
+						DoSomeBitCheck();
+						once = true;
 					}
+
+					injectDll(ProcessId, idaExchange.DllPathForInjection);
+					break;
+				}
 			}
+
+			idaExchange.result = RESULT_SUCCESS;
+			send(ClientSocket, (char*)&idaExchange, sizeof(IDA_SERVER_EXCHANGE), 0);
 		}
 		else if (iResult == 0)
 		{
@@ -349,4 +395,5 @@ void LogWrapper(const WCHAR * format, ...)
 	wvsprintfW(text, format, va_alist);
 
 	wprintf(text);
+	wprintf(L"\n");
 }
