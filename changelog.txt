@@ -1,3 +1,8 @@
+Version 0.7
+
+- IDA 64bit plugin
+- IDA 32/64bit remote server
+
 Version 0.6
 
 - IDA 32bit plugin

@@ -63,10 +63,14 @@ Plugins:
   (can be combined with TitanHide which does kernelmode hiding)
 - for OllyDbg v1.10: Copy HookLibraryx86.dll and ScyllaHideOlly1.dll to your plugins directory
 - for OllyDbg v2.01: Copy HookLibraryx86.dll and ScyllaHideOlly2.dll to your plugins directory
-- for IDA v6: Copy HookLibraryx86.dll and ScyllaHideIDAPro.plw to your plugins directory
+- for IDA v6 32bit: Copy HookLibraryx86.dll and ScyllaHideIDA.plw to your plugins directory
+- for IDA v6 64bit: Copy ScyllaHideIDA.p64 to your plugins directory
 
 IDA Note:
-- Tested only with "Local Win32 debugger"
+- Start IDAServerx64.exe to debug 64bit applications
+- Start IDAServerx86.exe to debug remotely 32bit applications
+
+Commandline: IDAServerxXX.exe <port>
 
 ------------------------------------------------------
 
