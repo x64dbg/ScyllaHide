@@ -99,15 +99,23 @@ void checkPaths()
 		wcscat(NtApiIniPath, NtApiIniFilename);
 	}
 
+	bool missing = false;
+
 	if (!FileExists(ScyllaHideDllPath))
 	{
 		wprintf(L"File missing %s\n", ScyllaHideDllPath);
+		missing = true;
 	}
 	if (!FileExists(NtApiIniPath))
 	{
 		wprintf(L"File missing %s\n", NtApiIniPath);
+		missing = true;
 	}
-
+	if (missing)
+	{
+		getchar();
+		ExitProcess(0);
+	}
 }
 
 void startListen()
