@@ -36,10 +36,12 @@ struct HideOptions pHideOptions = {0};
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
+const WCHAR ScyllaHidex64ServerFilename[] = L"IDAServerx64.exe";
 
 WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
+WCHAR ScyllaHidex64ServerPath[MAX_PATH] = {0};
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
@@ -52,6 +54,8 @@ HINSTANCE hinst;
 static DWORD ProcessId = 0;
 static bool bHooked = false;
 HMODULE hNtdllModule = 0;
+PROCESS_INFORMATION ServerProcessInfo;
+STARTUPINFO ServerStartupInfo;
 
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
@@ -71,6 +75,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
             wcscpy(ScyllaHideIniPath, NtApiIniPath);
             wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
+            wcscpy(ScyllaHidex64ServerPath, NtApiIniPath);
+            wcscat(ScyllaHidex64ServerPath, ScyllaHidex64ServerFilename);
             wcscat(NtApiIniPath, NtApiIniFilename);
         }
 
@@ -320,6 +326,8 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_SETCHECK, pHideOptions.autostartServer, 0);
         SetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort);
 
+        if(isWindows64()) EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
+
         if(ProcessId) EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), TRUE);
         else EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), FALSE);
 
@@ -492,6 +500,8 @@ int IDAP_init(void)
 
     bHooked = false;
     ProcessId = 0;
+    ZeroMemory(&ServerStartupInfo, sizeof(ServerStartupInfo));
+    ZeroMemory(&ServerProcessInfo, sizeof(ServerProcessInfo));
 
     return PLUGIN_KEEP;
 }
@@ -548,12 +558,24 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                 wctomb(port, *pHideOptions.serverPort);
 
                 get_process_options(NULL, NULL, NULL, &hoststring, NULL, NULL);
-
                 GetHost((char*)hoststring.c_str(), host);
 
                 //msg("Host-String: %s\n", hoststring.c_str());
                 //msg("Host: %s\n", host);
 
+#ifdef BUILD_IDA_64BIT
+                //autostart server if necessary
+                if(pHideOptions.autostartServer) {
+                    DWORD dwRunningStatus;
+                    GetExitCodeProcess(ServerProcessInfo.hProcess, &dwRunningStatus);
+
+                    if(dwRunningStatus != STILL_ACTIVE) {
+                        ZeroMemory(&ServerStartupInfo, sizeof(ServerStartupInfo));
+                        ZeroMemory(&ServerProcessInfo, sizeof(ServerProcessInfo));
+                        CreateProcessW(ScyllaHidex64ServerPath, pHideOptions.serverPort, NULL, NULL, FALSE, 0, NULL, NULL, &ServerStartupInfo, &ServerProcessInfo);
+                    }
+                }
+#endif
                 if (ConnectToServer(host, port))
                 {
                     if (!SendEventToServer(notif_code, ProcessId))
@@ -568,7 +590,6 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
             }
             else
             {
-
 
 #ifndef BUILD_IDA_64BIT
                 if (!bHooked)
