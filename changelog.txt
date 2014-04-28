@@ -2,6 +2,8 @@ Version 0.7
 
 - IDA 64bit plugin
 - IDA 32/64bit remote server
+- IDA DLL Injection
+- IDA option to start x64 server automatically
 
 Version 0.6
 

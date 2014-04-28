@@ -2,9 +2,6 @@ ScyllaHide is an open-source x64/x86 usermode Anti-Anti-Debug library. It hooks
 various functions in usermode to hide debugging. This will stay usermode! 
 For kernelmode hooks use TitanHide.
 
-ScyllaHide is tested to work with VMProtect, Themida, Armadillo, Execryptor
-If you find any protector that still detects debugger, please tell us.
-
 Source code license:
 GNU General Public License v3 https://www.gnu.org/licenses/gpl-3.0.en.html
 
@@ -40,8 +37,6 @@ Hooks:
 - Stealth hooks for 32-bit targets (Tested against Themida/VMProtect)
 
 Plugin specific:
-IDA:
-- DLL injection (stealth / normal)
 Olly1&2:
 - Change Olly title
 - Resume/Suspend all Threads in Thread window
@@ -68,14 +63,17 @@ Plugins:
   (can be combined with TitanHide which does kernelmode hiding)
 - for OllyDbg v1.10: Copy HookLibraryx86.dll and ScyllaHideOlly1.dll to your plugins directory
 - for OllyDbg v2.01: Copy HookLibraryx86.dll and ScyllaHideOlly2.dll to your plugins directory
-- for IDA v6 32bit: Copy HookLibraryx86.dll and ScyllaHideIDA.plw to your plugins directory
-- for IDA v6 64bit: Copy ScyllaHideIDA.p64 to your plugins directory
+- for IDA v6 32bit: Copy HookLibraryx86.dll, NtApiCollection.ini and ScyllaHideIDA.plw to your plugins directory
+- for IDA v6 64bit: Copy ScyllaHideIDA.p64, NtApiCollection.ini, ScyllaHideIDASrvx64.exe and HookLibraryx64.dll to your plugins directory
 
 IDA Note:
-- Start IDAServerx64.exe to debug 64bit applications or set autostart option
-- Start IDAServerx86.exe to debug remotely 32bit applications
+- Start ScyllaHideIDASrvx64.exe to debug 64bit applications
+- Start ScyllaHideIDASrvx86.exe to debug remotely 32bit applications
 
-Commandline: IDAServerxXX.exe <port>
+Commandline: ScyllaHideIDASrvxXX.exe <port>
+
+ScyllaHideIDASrv Note:
+- Server needs HookLibraryxXX.dll and NtApiCollection.ini
 
 ------------------------------------------------------
 

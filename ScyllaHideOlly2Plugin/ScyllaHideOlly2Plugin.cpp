@@ -560,9 +560,6 @@ extc int __cdecl ODBG2_Plugininit(void)
     Addtolist(0,0,L"ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_W);
     Addtolist(0,2,L"  Copyright (C) 2014 Aguila / cypher");
 
-    Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
-    ReadNtApiInformation();
-
     //change olly caption
     SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
 
@@ -631,6 +628,9 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         {
             if (!bHooked)
             {
+				Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
+				ReadNtApiInformation();
+
                 bHooked = true;
                 startInjection(ProcessId, ScyllaHideDllPath, true);
             }
