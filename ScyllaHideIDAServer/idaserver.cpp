@@ -49,9 +49,9 @@ int main(int argc, char *argv[])
 	if (sizeof(IDA_SERVER_EXCHANGE) != 638)
 	{
 		printf("WRONG!!! Size of IDA_SERVER_EXCHANGE %d == 638?\n\n", sizeof(IDA_SERVER_EXCHANGE));
+		getchar();
 		return 0;
 	}
-
 
 	SetDebugPrivileges();
 
