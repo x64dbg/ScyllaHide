@@ -266,6 +266,15 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.DLLUnload = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.autostartServer = 1;
+    }
+    else
+        pHideOptions.autostartServer = 0;
+
+    GetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort, 5);
+
 
     //save all options
     SaveSettings();
@@ -308,6 +317,8 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_SETCHECK, pHideOptions.autostartServer, 0);
+        SetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort);
 
         if(ProcessId) EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), TRUE);
         else EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), FALSE);
@@ -533,6 +544,8 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
             {
                 qstring hoststring;
                 char host[200] = {0};
+                char port[5] = {0};
+                wctomb(port, *pHideOptions.serverPort);
 
                 get_process_options(NULL, NULL, NULL, &hoststring, NULL, NULL);
 
@@ -541,7 +554,7 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                 //msg("Host-String: %s\n", hoststring.c_str());
                 //msg("Host: %s\n", host);
 
-                if (ConnectToServer(host, "1337"))
+                if (ConnectToServer(host, port))
                 {
                     if (!SendEventToServer(notif_code, ProcessId))
                     {

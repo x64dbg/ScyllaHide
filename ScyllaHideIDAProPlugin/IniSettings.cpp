@@ -58,6 +58,11 @@ int ReadIniSettingsInt(const WCHAR * settingName, const WCHAR* inifile)
     return GetPrivateProfileIntW(INI_APPNAME, settingName, 0, inifile);
 }
 
+void ReadIniSettings(const WCHAR * settingName, const WCHAR* inifile, WCHAR* buf)
+{
+    GetPrivateProfileStringW(INI_APPNAME, settingName, L"", buf, sizeof(&buf)+1, inifile);
+}
+
 void CreateSettings()
 {
     if (!FileExists(ScyllaHideIniPath))
@@ -94,6 +99,8 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"DLLNormal", L"1", iniFile);
     WriteIniSettings(L"DLLUnload", L"1", iniFile);
     WriteIniSettings(L"PreventThreadCreation", L"0", iniFile); //special hook disabled by default
+    WriteIniSettings(L"autostartServer", L"1", iniFile);
+    WriteIniSettings(L"serverPort", L"1337", iniFile);
 }
 
 void ReadSettings()
@@ -129,6 +136,8 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.DLLNormal = ReadIniSettingsInt(L"DLLNormal", iniFile);
     pHideOptions.DLLStealth = ReadIniSettingsInt(L"DLLStealth", iniFile);
     pHideOptions.DLLUnload = ReadIniSettingsInt(L"DLLUnload", iniFile);
+    ReadIniSettings(L"serverPort", iniFile, pHideOptions.serverPort);
+    pHideOptions.autostartServer = ReadIniSettingsInt(L"autostartServer", iniFile);
 }
 
 void SaveSettings()
@@ -164,4 +173,6 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"DLLStealth", pHideOptions.DLLStealth, iniFile);
     WriteIniSettingsInt(L"DLLNormal", pHideOptions.DLLNormal, iniFile);
     WriteIniSettingsInt(L"DLLUnload", pHideOptions.DLLUnload, iniFile);
+    WriteIniSettingsInt(L"autostartServer", pHideOptions.autostartServer, iniFile);
+    WriteIniSettings(L"serverPort", pHideOptions.serverPort, iniFile);
 }

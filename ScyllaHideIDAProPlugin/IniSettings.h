@@ -5,6 +5,7 @@ BOOL FileExists(LPCWSTR szPath);
 void CreateSettings();
 void ReadSettings();
 int ReadIniSettingsInt(const WCHAR * settingName, const WCHAR* inifile);
+void ReadIniSettings(const WCHAR * settingName, const WCHAR* inifile, WCHAR* buf);
 void ReadSettingsFromIni(const WCHAR * iniFile);
 void CreateDummyUnicodeFile(const WCHAR * file);
 bool WriteIniSettings(const WCHAR * settingName, const WCHAR * settingValue, const WCHAR* inifile);
