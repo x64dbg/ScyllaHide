@@ -81,8 +81,29 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
     }
 }
 
+void checkStructAlignment()
+{
+	char text[600] = {0};
+
+#ifdef _WIN64
+	if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_64)
+	{
+		wsprintfA(text,"Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE), HOOK_DLL_EXCHANGE_SIZE_64);
+		MessageBoxA(0, text, "Error", 0);
+	}
+#else
+	if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_32)
+	{
+		wsprintfA(text, "Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE), HOOK_DLL_EXCHANGE_SIZE_32);
+		MessageBoxA(0, text, "Error", 0);
+	}
+#endif
+}
+
 void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
 {
+	checkStructAlignment();
+
     HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
     if (hProcess)
     {
