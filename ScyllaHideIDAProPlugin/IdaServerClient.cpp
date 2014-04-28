@@ -170,12 +170,11 @@ bool GetHost(char * input, char * output)
 	{
 		t += 7;
 		strcpy(output, t);
-		return true;
 	}
 	else
 	{
 		strcpy(output, input);
 	}
 
-	return false;
+	return true;
 }

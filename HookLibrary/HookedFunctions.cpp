@@ -512,6 +512,11 @@ void FilterObject(POBJECT_TYPE_INFORMATION pObject)
 {
     const WCHAR strDebugObject[] = L"DebugObject";
 
+	if (pObject->TypeName.Length == 0 || pObject->TypeName.Buffer == 0)
+	{
+		return;
+	}
+
     if (pObject->TypeName.Length == (sizeof(strDebugObject)-sizeof(WCHAR)))
     {
         if (!memcmp(strDebugObject, pObject->TypeName.Buffer, pObject->TypeName.Length))
