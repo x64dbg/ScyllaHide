@@ -279,7 +279,7 @@ void SaveOptions(HWND hWnd)
     else
         pHideOptions.autostartServer = 0;
 
-    GetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort, 5);
+    GetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort, 6);
 
 
     //save all options
@@ -554,8 +554,8 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
             {
                 qstring hoststring;
                 char host[200] = {0};
-                char port[5] = {0};
-                wctomb(port, *pHideOptions.serverPort);
+                char port[6] = {0};
+                wcstombs(port, pHideOptions.serverPort, _countof(port));
 
                 get_process_options(NULL, NULL, NULL, &hoststring, NULL, NULL);
                 GetHost((char*)hoststring.c_str(), host);

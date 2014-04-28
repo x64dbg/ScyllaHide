@@ -160,6 +160,9 @@ bool ConnectToServer(const char * host, const char * port)
 }
 
 //input: tcp:port=5000,server=localhost
+//OR
+//input: IP
+//IDA v6 BUG!!!!!!!
 bool GetHost(char * input, char * output)
 {
 	char * t = strstr(input, "server=");
@@ -168,6 +171,10 @@ bool GetHost(char * input, char * output)
 		t += 7;
 		strcpy(output, t);
 		return true;
+	}
+	else
+	{
+		strcpy(output, input);
 	}
 
 	return false;
