@@ -326,7 +326,8 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_SETCHECK, pHideOptions.autostartServer, 0);
         SetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort);
 
-        if(isWindows64()) EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
+        if(isWindows64()) EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), TRUE);
+        else EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
 
         if(ProcessId) EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), TRUE);
         else EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), FALSE);
