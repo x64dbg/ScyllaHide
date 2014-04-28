@@ -35,7 +35,7 @@ struct HideOptions
     int DLLStealth;
     int DLLNormal;
     int DLLUnload;
-    WCHAR serverPort[5];
+    WCHAR serverPort[6];
     int autostartServer;
 };
 
