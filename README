@@ -67,10 +67,13 @@ Plugins:
 - for IDA v6 64bit: Copy ScyllaHideIDA.p64 to your plugins directory
 
 IDA Note:
-- Start IDAServerx64.exe to debug 64bit applications
-- Start IDAServerx86.exe to debug remotely 32bit applications
+- Start ScyllaHideIDASrvx64.exe to debug 64bit applications
+- Start ScyllaHideIDASrvx86.exe to debug remotely 32bit applications
 
-Commandline: IDAServerxXX.exe <port>
+Commandline: ScyllaHideIDASrvxXX.exe <port>
+
+ScyllaHideIDASrv Note:
+- Server needs HookLibraryxXX.dll and NtApiCollection.ini
 
 ------------------------------------------------------
 
