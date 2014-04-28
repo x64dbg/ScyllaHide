@@ -2,6 +2,9 @@ ScyllaHide is an open-source x64/x86 usermode Anti-Anti-Debug library. It hooks
 various functions in usermode to hide debugging. This will stay usermode! 
 For kernelmode hooks use TitanHide.
 
+ScyllaHide is tested to work with VMProtect, Themida, Armadillo, Execryptor
+If you find any protector that still detects debugger, please tell us.
+
 Source code license:
 GNU General Public License v3 https://www.gnu.org/licenses/gpl-3.0.en.html
 
@@ -37,6 +40,8 @@ Hooks:
 - Stealth hooks for 32-bit targets (Tested against Themida/VMProtect)
 
 Plugin specific:
+IDA:
+- DLL injection (stealth / normal)
 Olly1&2:
 - Change Olly title
 - Resume/Suspend all Threads in Thread window
@@ -67,7 +72,7 @@ Plugins:
 - for IDA v6 64bit: Copy ScyllaHideIDA.p64 to your plugins directory
 
 IDA Note:
-- Start IDAServerx64.exe to debug 64bit applications
+- Start IDAServerx64.exe to debug 64bit applications or set autostart option
 - Start IDAServerx86.exe to debug remotely 32bit applications
 
 Commandline: IDAServerxXX.exe <port>
