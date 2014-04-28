@@ -54,8 +54,8 @@ HINSTANCE hinst;
 static DWORD ProcessId = 0;
 static bool bHooked = false;
 HMODULE hNtdllModule = 0;
-PROCESS_INFORMATION ServerProcessInfo;
-STARTUPINFO ServerStartupInfo;
+PROCESS_INFORMATION ServerProcessInfo = {0};
+STARTUPINFO ServerStartupInfo = {0};
 
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
@@ -326,8 +326,12 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_SETCHECK, pHideOptions.autostartServer, 0);
         SetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort);
 
-        if(isWindows64()) EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), TRUE);
-        else EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
+#ifdef BUILD_IDA_64BIT
+		if(isWindows64()) EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), TRUE);
+		else EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
+#else
+		EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
+#endif
 
         if(ProcessId) EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), TRUE);
         else EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), FALSE);
@@ -566,14 +570,38 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
 #ifdef BUILD_IDA_64BIT
                 //autostart server if necessary
-                if(pHideOptions.autostartServer) {
-                    DWORD dwRunningStatus;
-                    GetExitCodeProcess(ServerProcessInfo.hProcess, &dwRunningStatus);
+                if(pHideOptions.autostartServer)
+				{
+					DWORD dwRunningStatus = 0;
+					if (ServerProcessInfo.hProcess)
+					{
+						GetExitCodeProcess(ServerProcessInfo.hProcess, &dwRunningStatus);
+					}
 
-                    if(dwRunningStatus != STILL_ACTIVE) {
+                    if(dwRunningStatus != STILL_ACTIVE)
+					{
+						if (ServerProcessInfo.hProcess)
+						{
+							CloseHandle(ServerProcessInfo.hProcess);
+							CloseHandle(ServerProcessInfo.hThread);
+						}
+
                         ZeroMemory(&ServerStartupInfo, sizeof(ServerStartupInfo));
                         ZeroMemory(&ServerProcessInfo, sizeof(ServerProcessInfo));
-                        CreateProcessW(ScyllaHidex64ServerPath, pHideOptions.serverPort, NULL, NULL, FALSE, 0, NULL, NULL, &ServerStartupInfo, &ServerProcessInfo);
+
+						WCHAR commandline[MAX_PATH*2] = {0};
+						wcscpy(commandline, ScyllaHidex64ServerPath);
+						wcscat(commandline, L" ");
+						wcscat(commandline, pHideOptions.serverPort);
+						ServerStartupInfo.cb = sizeof(ServerStartupInfo);
+                        if (!CreateProcessW(0, commandline, NULL, NULL, FALSE, 0, NULL, NULL, &ServerStartupInfo, &ServerProcessInfo))
+						{
+							msg("[ScyllaHide] Cannot start server\n");
+						}
+						else
+						{
+							msg("[ScyllaHide] Started IDA Server successfully\n");
+						}
                     }
                 }
 #endif
