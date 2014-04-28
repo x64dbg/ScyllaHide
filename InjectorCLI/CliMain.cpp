@@ -42,6 +42,24 @@ int wmain(int argc, wchar_t* argv[])
     DWORD targetPid = 0;
     WCHAR * dllPath = 0;
 
+
+#ifdef _WIN64
+	if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_64)
+	{
+		printf("Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE),HOOK_DLL_EXCHANGE_SIZE_64);
+		getchar();
+		return 0;
+	}
+#else
+	if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_32)
+	{
+		printf("Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE),HOOK_DLL_EXCHANGE_SIZE_32);
+		getchar();
+		return 0;
+	}
+#endif
+
+
     GetModuleFileNameW(0, NtApiIniPath, _countof(NtApiIniPath));
 
     WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
@@ -351,7 +369,7 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"NtSetInformationThreadHook", L"1", iniFile);
     WriteIniSettings(L"NtUserBuildHwndListHook", L"1", iniFile);
     WriteIniSettings(L"NtUserFindWindowExHook", L"1", iniFile);
-    WriteIniSettings(L"NtUserQueryWindowHook", L"1", iniFile);
+	WriteIniSettings(L"NtUserQueryWindowHook", L"1", iniFile);
     WriteIniSettings(L"NtYieldExecutionHook", L"1", iniFile);
     WriteIniSettings(L"OutputDebugStringHook", L"1", iniFile);
     WriteIniSettings(L"PebBeingDebugged", L"1", iniFile);
@@ -386,7 +404,7 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     DllExchangeLoader.EnableNtSetInformationThreadHook = ReadIniSettingsInt(L"NtSetInformationThreadHook", iniFile);
     DllExchangeLoader.EnableNtUserBuildHwndListHook = ReadIniSettingsInt(L"NtUserBuildHwndListHook", iniFile);
     DllExchangeLoader.EnableNtUserFindWindowExHook = ReadIniSettingsInt(L"NtUserFindWindowExHook", iniFile);
-    DllExchangeLoader.EnableNtUserQueryWindowHook = ReadIniSettingsInt(L"NtUserQueryWindowHook", iniFile);
+	DllExchangeLoader.EnableNtUserQueryWindowHook = ReadIniSettingsInt(L"NtUserQueryWindowHook", iniFile);
     DllExchangeLoader.EnableNtYieldExecutionHook = ReadIniSettingsInt(L"NtYieldExecutionHook", iniFile);
     DllExchangeLoader.EnableOutputDebugStringHook = ReadIniSettingsInt(L"OutputDebugStringHook", iniFile);
     DllExchangeLoader.EnablePebBeingDebugged = ReadIniSettingsInt(L"PebBeingDebugged", iniFile);
