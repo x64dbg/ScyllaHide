@@ -48,3 +48,4 @@ void StartFixBeingDebugged(DWORD targetPid, bool setToNull);
 
 bool IsProcessWOW64(HANDLE hProcess);
 bool isWindows64();
+bool RemoveDebugPrivileges(HANDLE hProcess);

@@ -385,7 +385,7 @@ DWORD SetDebugPrivileges()
 	Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 	Debug_Privileges.PrivilegeCount = 1;
 
-	if (!AdjustTokenPrivileges(hToken, false, &Debug_Privileges, 0, NULL, NULL))
+	if (!AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL))
 	{
 		err = GetLastError();
 		if (hToken) CloseHandle(hToken);
