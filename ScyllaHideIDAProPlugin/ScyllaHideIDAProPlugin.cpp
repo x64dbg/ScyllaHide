@@ -5,7 +5,7 @@
 
 //for 64bit - p64
 #ifdef BUILD_IDA_64BIT
-#define __EA64__ 
+#define __EA64__
 #pragma comment(lib, "./idasdk/x86_win_vc_64/ida.lib")
 #else
 //for 32bit - plw
@@ -78,10 +78,10 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
         CreateSettings();
         ReadSettings();
 
-		if (!StartWinsock())
-		{
-			MessageBoxA(0,"Failed to start Winsock!", "Error", MB_ICONERROR);
-		}
+        if (!StartWinsock())
+        {
+            MessageBoxA(0,"Failed to start Winsock!", "Error", MB_ICONERROR);
+        }
 
         hinst=hi;
     }
@@ -402,24 +402,50 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             else SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
             break;
         }
+        case IDC_DLLNORMAL:
+        case IDC_DLLSTEALTH:
+        case IDC_DLLUNLOAD:
+        {   //DLL injection options need to be updated on-the-fly coz the injection button is ON the options window
+            if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_GETCHECK, 0, 0))
+            {
+                pHideOptions.DLLStealth = 1;
+            }
+            else
+                pHideOptions.DLLStealth = 0;
+            if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_GETCHECK, 0, 0))
+            {
+                pHideOptions.DLLNormal = 1;
+            }
+            else
+                pHideOptions.DLLNormal = 0;
+            if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_GETCHECK, 0, 0))
+            {
+                pHideOptions.DLLUnload = 1;
+            }
+            else
+                pHideOptions.DLLUnload = 0;
+
+
+            break;
+        }
         case IDC_INJECTDLL:
         {
             if(ProcessId)
-			{
-				if(GetFileDialog(DllPathForInjection))
-				{
-					if (dbg->is_remote())
-					{
-						SendInjectToServer(ProcessId);
-					}
-					else
-					{
+            {
+                if(GetFileDialog(DllPathForInjection))
+                {
+                    if (dbg->is_remote())
+                    {
+                        SendInjectToServer(ProcessId);
+                    }
+                    else
+                    {
 #ifndef BUILD_IDA_64BIT
-						injectDll(ProcessId, DllPathForInjection);
+                        injectDll(ProcessId, DllPathForInjection);
 #endif
-					}
+                    }
 
-				}
+                }
             }
             break;
         }
@@ -491,69 +517,69 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
     {
         const debug_event_t* dbgEvent = va_arg(va, const debug_event_t*);
 
-		ProcessId = dbgEvent->pid;
-		bHooked = false;
-		ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+        ProcessId = dbgEvent->pid;
+        bHooked = false;
+        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
-		if (dbg != 0)
-		{
-			//char text[1000];
-			//wsprintfA(text, "dbg->id %d processor %s", dbg->id , dbg->processor);
-			//MessageBoxA(0, text, text,0);
-			// dbg->id DEBUGGER_ID_WINDBG -> 64bit and 32bit
-			// dbg->id DEBUGGER_ID_X86_IA32_WIN32_USER -> 32bit
+        if (dbg != 0)
+        {
+            //char text[1000];
+            //wsprintfA(text, "dbg->id %d processor %s", dbg->id , dbg->processor);
+            //MessageBoxA(0, text, text,0);
+            // dbg->id DEBUGGER_ID_WINDBG -> 64bit and 32bit
+            // dbg->id DEBUGGER_ID_X86_IA32_WIN32_USER -> 32bit
 
-			if (dbg->is_remote())
-			{
-				qstring hoststring;
-				char host[200] = {0};
+            if (dbg->is_remote())
+            {
+                qstring hoststring;
+                char host[200] = {0};
 
-				get_process_options(NULL, NULL, NULL, &hoststring, NULL, NULL);
+                get_process_options(NULL, NULL, NULL, &hoststring, NULL, NULL);
 
-				GetHost((char*)hoststring.c_str(), host);
+                GetHost((char*)hoststring.c_str(), host);
 
-				//msg("Host-String: %s\n", hoststring.c_str());
-				//msg("Host: %s\n", host);
+                //msg("Host-String: %s\n", hoststring.c_str());
+                //msg("Host: %s\n", host);
 
-				if (ConnectToServer(host, "1337"))
-				{
-					if (!SendEventToServer(notif_code, ProcessId))
-					{
-						msg("[ScyllaHide] SendEventToServer failed\n");
-					}
-				}
-				else
-				{
-					msg("[ScyllaHide] Cannot connect to host %s\n", host);
-				}
-			}
-			else
-			{
+                if (ConnectToServer(host, "1337"))
+                {
+                    if (!SendEventToServer(notif_code, ProcessId))
+                    {
+                        msg("[ScyllaHide] SendEventToServer failed\n");
+                    }
+                }
+                else
+                {
+                    msg("[ScyllaHide] Cannot connect to host %s\n", host);
+                }
+            }
+            else
+            {
 
 
 #ifndef BUILD_IDA_64BIT
-				if (!bHooked)
-				{
-					bHooked = true;
-					startInjection(ProcessId, ScyllaHideDllPath, true);
-				}
+                if (!bHooked)
+                {
+                    bHooked = true;
+                    startInjection(ProcessId, ScyllaHideDllPath, true);
+                }
 #endif
-			}
-		}
+            }
+        }
     }
     break;
 
     case dbg_process_exit:
     {
-		if (dbg->is_remote())
-		{
-			if (!SendEventToServer(notif_code, ProcessId))
-			{
-				msg("[ScyllaHide] SendEventToServer failed\n");
-			}
+        if (dbg->is_remote())
+        {
+            if (!SendEventToServer(notif_code, ProcessId))
+            {
+                msg("[ScyllaHide] SendEventToServer failed\n");
+            }
 
-			CloseServerSocket();
-		}
+            CloseServerSocket();
+        }
         ProcessId = 0;
         bHooked = false;
     }
@@ -562,22 +588,22 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
     case dbg_library_load:
     {
 
-		if (dbg->is_remote())
-		{
-			if (!SendEventToServer(notif_code, ProcessId))
-			{
-				msg("[ScyllaHide] SendEventToServer failed\n");
-			}
-		}
-		else
-		{
+        if (dbg->is_remote())
+        {
+            if (!SendEventToServer(notif_code, ProcessId))
+            {
+                msg("[ScyllaHide] SendEventToServer failed\n");
+            }
+        }
+        else
+        {
 #ifndef BUILD_IDA_64BIT
-			if (bHooked)
-			{
-				startInjection(ProcessId, ScyllaHideDllPath, false);
-			}
+            if (bHooked)
+            {
+                startInjection(ProcessId, ScyllaHideDllPath, false);
+            }
 #endif
-		}
+        }
 
     }
     break;
