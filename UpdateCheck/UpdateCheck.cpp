@@ -1,33 +1,22 @@
 #include "UpdateCheck.h"
-#include <UrlMon.h>
 #include <WinInet.h>
 #include <string>
 
 bool isNewVersionAvailable(char* curVersion)
 {
-    WCHAR lpTempFileName[MAX_PATH];
-    WCHAR lpTempPath[MAX_PATH];
     char buf[1024] = {""};
     DWORD dwBytesRead;
     DWORD ret;
 
-    ret = GetTempPathW(MAX_PATH, lpTempPath);
-    if(ret > MAX_PATH || (ret == 0)) return false;
+    HINTERNET hi = InternetOpen(L"ScyllaHide Update Checker", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    if(!hi) return false;
 
-    ret = GetTempFileNameW(lpTempPath, L"SCYLLAHIDE_", 0, lpTempFileName);
-    if(ret == 0) return false;
+    WCHAR szHead[] = L"Accept: */*\r\n\r\n";
+    HINTERNET hCon = InternetOpenUrlW(hi, UPDATE_CHECK_URL, szHead, wcslen(szHead), INTERNET_FLAG_DONT_CACHE, 0);
+    if(!hCon) return false;
 
-    DeleteUrlCacheEntryW(UPDATE_CHECK_URL);
+    if(!InternetReadFile(hCon, buf, 1024, &dwBytesRead)) return false;
 
-    HRESULT res = URLDownloadToFileW(NULL, UPDATE_CHECK_URL, lpTempFileName, 0, NULL);
-    if(res != S_OK) return false;
-
-    HANDLE hUpdateFile = CreateFileW(lpTempFileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    ret = ReadFile(hUpdateFile, buf, 1024, &dwBytesRead, NULL);
-    if(ret == 0) {
-        CloseHandle(hUpdateFile);
-        return false;
-    }
 
     //compare the versions e.g. 0.7 1.0 0.5.b (lexicographical cmp might not work)
     //first compare major version
