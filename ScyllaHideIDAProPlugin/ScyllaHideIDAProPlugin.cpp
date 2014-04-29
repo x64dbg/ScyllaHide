@@ -1,7 +1,7 @@
 #define USE_STANDARD_FILE_FUNCTIONS
 #pragma warning(disable : 4996 4512 4127 4201)
 
-#define BUILD_IDA_64BIT 1
+//#define BUILD_IDA_64BIT 1
 
 //for 64bit - p64
 #ifdef BUILD_IDA_64BIT
@@ -28,7 +28,7 @@ typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
 void LogErrorWrapper(const WCHAR * format, ...);
 int idaapi debug_mainloop(void *user_data, int notif_code, va_list va);
-DWORD SetDebugPrivileges();
+bool SetDebugPrivileges();
 
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
@@ -690,30 +690,26 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
     return 0;
 }
 
-DWORD SetDebugPrivileges()
+bool SetDebugPrivileges()
 {
-    DWORD err = 0;
-    TOKEN_PRIVILEGES Debug_Privileges;
-    if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid)) return GetLastError();
+	TOKEN_PRIVILEGES Debug_Privileges;
+	bool retVal = false;
 
-    HANDLE hToken = 0;
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
-    {
-        err = GetLastError();
-        if (hToken) CloseHandle(hToken);
-        return err;
-    }
+	if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
+	{
+		HANDLE hToken = 0;
+		if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+		{
+			Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+			Debug_Privileges.PrivilegeCount = 1;
 
-    Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-    Debug_Privileges.PrivilegeCount = 1;
+			retVal = AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL) != FALSE;
 
-    if (!AdjustTokenPrivileges(hToken, false, &Debug_Privileges, 0, NULL, NULL))
-    {
-        err = GetLastError();
-        if (hToken) CloseHandle(hToken);
-    }
+			CloseHandle(hToken);
+		}
+	}
 
-    return err;
+	return retVal;
 }
 
 void LogErrorWrapper(const WCHAR * format, ...)

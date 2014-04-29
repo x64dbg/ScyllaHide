@@ -24,7 +24,7 @@ bool WriteIniSettings(const WCHAR * settingName, const WCHAR * settingValue, con
 void CreateDefaultSettings(const WCHAR * iniFile);
 DWORD GetProcessIdByName(const WCHAR * processName);
 void startInjection(DWORD targetPid, const WCHAR * dllPath);
-DWORD SetDebugPrivileges();
+bool SetDebugPrivileges();
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase);
@@ -242,30 +242,26 @@ BYTE * ReadFileToMemory(const WCHAR * targetFilePath)
     return FilePtr;
 }
 
-DWORD SetDebugPrivileges()
+bool SetDebugPrivileges()
 {
-    DWORD err = 0;
     TOKEN_PRIVILEGES Debug_Privileges;
-    if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid)) return GetLastError();
+	bool retVal = false;
 
-    HANDLE hToken = 0;
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
-    {
-        err = GetLastError();
-        if (hToken) CloseHandle(hToken);
-        return err;
-    }
+    if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
+	{
+		HANDLE hToken = 0;
+		if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+		{
+			Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+			Debug_Privileges.PrivilegeCount = 1;
 
-    Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-    Debug_Privileges.PrivilegeCount = 1;
+			retVal = AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL) != FALSE;
 
-    if (!AdjustTokenPrivileges(hToken, false, &Debug_Privileges, 0, NULL, NULL))
-    {
-        err = GetLastError();
-        if (hToken) CloseHandle(hToken);
-    }
+			CloseHandle(hToken);
+		}
+	}
 
-    return err;
+    return retVal;
 }
 
 DWORD GetProcessIdByName(const WCHAR * processName)

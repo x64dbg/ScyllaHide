@@ -28,7 +28,7 @@ const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 
-DWORD SetDebugPrivileges();
+bool SetDebugPrivileges();
 BOOL FileExists(LPCWSTR szPath);
 void checkPaths();
 
@@ -368,30 +368,26 @@ BOOL startWinsock()
 	return isWinsockUp;
 }
 
-DWORD SetDebugPrivileges()
+bool SetDebugPrivileges()
 {
-	DWORD err = 0;
 	TOKEN_PRIVILEGES Debug_Privileges;
-	if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid)) return GetLastError();
+	bool retVal = false;
 
-	HANDLE hToken = 0;
-	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+	if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
 	{
-		err = GetLastError();
-		if (hToken) CloseHandle(hToken);
-		return err;
+		HANDLE hToken = 0;
+		if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+		{
+			Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+			Debug_Privileges.PrivilegeCount = 1;
+
+			retVal = AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL) != FALSE;
+
+			CloseHandle(hToken);
+		}
 	}
 
-	Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-	Debug_Privileges.PrivilegeCount = 1;
-
-	if (!AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL))
-	{
-		err = GetLastError();
-		if (hToken) CloseHandle(hToken);
-	}
-
-	return err;
+	return retVal;
 }
 
 void LogWrapper(const WCHAR * format, ...)

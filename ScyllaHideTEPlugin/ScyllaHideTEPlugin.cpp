@@ -37,30 +37,26 @@ BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
     return TRUE;
 };
 
-static DWORD SetDebugPrivileges()
+static bool SetDebugPrivileges()
 {
-    DWORD err = 0;
-    TOKEN_PRIVILEGES Debug_Privileges;
-    if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid)) return GetLastError();
+	TOKEN_PRIVILEGES Debug_Privileges;
+	bool retVal = false;
 
-    HANDLE hToken = 0;
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
-    {
-        err = GetLastError();
-        if (hToken) CloseHandle(hToken);
-        return err;
-    }
+	if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
+	{
+		HANDLE hToken = 0;
+		if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+		{
+			Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+			Debug_Privileges.PrivilegeCount = 1;
 
-    Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-    Debug_Privileges.PrivilegeCount = 1;
+			retVal = AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL) != FALSE;
 
-    if (!AdjustTokenPrivileges(hToken, false, &Debug_Privileges, 0, NULL, NULL))
-    {
-        err = GetLastError();
-        if (hToken) CloseHandle(hToken);
-    }
+			CloseHandle(hToken);
+		}
+	}
 
-    return err;
+	return retVal;
 }
 
 static void ScyllaHide(DWORD ProcessId)
