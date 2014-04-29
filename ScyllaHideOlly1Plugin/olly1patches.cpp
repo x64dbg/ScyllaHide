@@ -7,7 +7,7 @@ extern LPVOID ImageBase;
 extern DWORD ProcessId;
 extern DWORD_PTR epaddr;
 
-//taken from strongOD
+//taken from strongOD aka "fix NumOfRvaAndSizes"
 void fixBadPEBugs()
 {
     HANDLE hOlly = GetCurrentProcess();
@@ -105,21 +105,33 @@ void fixFPUBug()
     if(fixed) _Addtolist(0,-1,"Fixed FPU-Bug at 0xAA2F2");
 }
 
+//taken from OllyAdvanced patch function at RVA 8225+3A0
+void patchEPOutsideCode()
+{
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+    BOOL fixed = false;
+
+    BYTE EPOutsideFix[] = {0x83,0xC4,0x10,0x90,0x90}; //call MessageBoxA to "add esp,0x10;nop;nop"
+    fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x5DB81), &EPOutsideFix, sizeof(EPOutsideFix), NULL);
+    if(fixed) _Addtolist(0,-1,"Patched EP outside of code message at 0x3A1FB");
+}
+
 //taken from POISON source https://tuts4you.com/download.php?view.2281
 void hookOllyBreakpoints()
 {
-	HANDLE hOlly = GetCurrentProcess();
-	DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
 
-	DWORD breakpoints = (DWORD)handleBreakpoints;
-	DWORD patchAddr = 0x2F91D;
-	breakpoints -= lpBaseAddr;
-	breakpoints -= patchAddr;
-	patchAddr -= 4;
-	WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &breakpoints, 4, NULL);
-	patchAddr -= 1;
-	BYTE call[] = {0xE8};
-	WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &call, sizeof(call), NULL);
+    DWORD breakpoints = (DWORD)handleBreakpoints;
+    DWORD patchAddr = 0x2F91D;
+    breakpoints -= lpBaseAddr;
+    breakpoints -= patchAddr;
+    patchAddr -= 4;
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &breakpoints, 4, NULL);
+    patchAddr -= 1;
+    BYTE call[] = {0xE8};
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &call, sizeof(call), NULL);
 
 }
 
@@ -128,14 +140,14 @@ void __declspec(naked) handleBreakpoints()
     _asm { pushad };
 
     if(pHideOptions.removeEPBreak)
-	{
+    {
         CreateThread(NULL, NULL, removeEPBreak, NULL, NULL, NULL);
     }
 
     if(pHideOptions.breakTLS)
-	{
+    {
         ReadTlsAndSetBreakpoints(ProcessId, (LPVOID)ImageBase);
-	}
+    }
 
     //replay stolen bytes and adjust return address
     _asm {
@@ -150,7 +162,7 @@ DWORD _stdcall removeEPBreak(LPVOID lpParam)
 {
     Sleep(0x200);
     _Deletebreakpoints(epaddr,epaddr+2, 0);
-	return 0;
+    return 0;
 }
 
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage)

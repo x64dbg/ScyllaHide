@@ -44,7 +44,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
     if (reason==DLL_PROCESS_ATTACH)
     {
         LogWrap = LogWrapper;
-		LogErrorWrap = LogErrorWrapper;
+        LogErrorWrap = LogErrorWrapper;
 
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
@@ -246,6 +246,12 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.breakTLS = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.skipEPOutsideCode = 1;
+    }
+    else
+        pHideOptions.skipEPOutsideCode = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_GETCHECK, 0, 0))
     {
         pHideOptions.DLLStealth = 1;
@@ -294,13 +300,14 @@ void SaveOptions(HWND hWnd)
     _Pluginwriteinttoini(hinst, "preventThreadCreation", pHideOptions.preventThreadCreation);
     _Pluginwriteinttoini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
 
-	char text[300];
-	WideCharToMultiByte(CP_ACP, 0, pHideOptions.ollyTitle, -1, text,_countof(text), 0, 0);
+    char text[300];
+    WideCharToMultiByte(CP_ACP, 0, pHideOptions.ollyTitle, -1, text,_countof(text), 0, 0);
     _Pluginwritestringtoini(hinst, "ollyTitle", text);
 
     _Pluginwriteinttoini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
     _Pluginwriteinttoini(hinst, "x64Fix", pHideOptions.x64Fix);
     _Pluginwriteinttoini(hinst, "breakTLS", pHideOptions.breakTLS);
+    _Pluginwriteinttoini(hinst, "skipEPOutsideCode", pHideOptions.skipEPOutsideCode);
     _Pluginwriteinttoini(hinst, "DLLStealth", pHideOptions.DLLStealth);
     _Pluginwriteinttoini(hinst, "DLLNormal", pHideOptions.DLLNormal);
     _Pluginwriteinttoini(hinst, "DLLUnload", pHideOptions.DLLUnload);
@@ -334,13 +341,14 @@ void LoadOptions()
     pHideOptions.preventThreadCreation = _Pluginreadintfromini(hinst, "preventThreadCreation", pHideOptions.preventThreadCreation);
     pHideOptions.removeEPBreak = _Pluginreadintfromini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
 
-	char text[300] = {0};
+    char text[300] = {0};
     _Pluginreadstringfromini(hinst, "ollyTitle", text, "I can haz crack?");
-	MultiByteToWideChar(CP_ACP, 0, text, -1, pHideOptions.ollyTitle, 300);
+    MultiByteToWideChar(CP_ACP, 0, text, -1, pHideOptions.ollyTitle, 300);
 
     pHideOptions.fixOllyBugs = _Pluginreadintfromini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
     pHideOptions.x64Fix = _Pluginreadintfromini(hinst, "x64Fix", pHideOptions.x64Fix);
     pHideOptions.breakTLS = _Pluginreadintfromini(hinst, "breakTLS", pHideOptions.breakTLS);
+    pHideOptions.skipEPOutsideCode = _Pluginreadintfromini(hinst, "skipEPOutsideCode", pHideOptions.skipEPOutsideCode);
     pHideOptions.DLLStealth = _Pluginreadintfromini(hinst, "DLLStealth", pHideOptions.DLLStealth);
     pHideOptions.DLLNormal = _Pluginreadintfromini(hinst, "DLLNormal", pHideOptions.DLLNormal);
     pHideOptions.DLLUnload = _Pluginreadintfromini(hinst, "DLLUnload", pHideOptions.DLLUnload);
@@ -387,6 +395,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
         SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
         SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, pHideOptions.breakTLS, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_SETCHECK, pHideOptions.skipEPOutsideCode, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
@@ -519,6 +528,9 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
     }
     if(pHideOptions.x64Fix) {
         fixX64Bug();
+    }
+    if(pHideOptions.skipEPOutsideCode) {
+        patchEPOutsideCode();
     }
 
     return 0;
@@ -673,8 +685,8 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         {
             if (!bHooked)
             {
-				_Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
-				ReadNtApiInformation();
+                _Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
+                ReadNtApiInformation();
 
                 bHooked = true;
                 startInjection(ProcessId, ScyllaHideDllPath, true);
@@ -717,16 +729,16 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginreset(void)
 
 void LogErrorWrapper(const WCHAR * format, ...)
 {
-	WCHAR text[2000];
-	CHAR textA[2000];
-	va_list va_alist;
-	va_start(va_alist, format);
+    WCHAR text[2000];
+    CHAR textA[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
 
-	wvsprintfW(text, format, va_alist);
+    wvsprintfW(text, format, va_alist);
 
-	WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
+    WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
 
-	_Error(textA);
+    _Error(textA);
 }
 
 void LogWrapper(const WCHAR * format, ...)

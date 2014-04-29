@@ -29,6 +29,7 @@ struct HideOptions
     int removeEPBreak;
     int fixOllyBugs;
     int breakTLS;
+    int skipEPOutsideCode;
     WCHAR ollyTitle[300];
     int x64Fix;
     int preventThreadCreation;

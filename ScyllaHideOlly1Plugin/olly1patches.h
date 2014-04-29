@@ -6,6 +6,7 @@ void fixBadPEBugs();
 void fixForegroundWindow();
 void fixX64Bug();
 void fixFPUBug();
+void patchEPOutsideCode();
 void hookOllyBreakpoints();
 DWORD _stdcall removeEPBreak(LPVOID lpParam);
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage);

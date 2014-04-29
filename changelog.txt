@@ -1,3 +1,7 @@
+Version 0.8
+
+- Olly v1 Plugin: option "Skip EP outside of code message"
+
 Version 0.7
 
 - IDA 64bit plugin
