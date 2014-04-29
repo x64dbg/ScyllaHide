@@ -595,7 +595,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
         }
         case 3:
         {
-            if(isNewVersionAvailable(SCYLLA_HIDE_VERSION_STRING_A)) {
+            if(isNewVersionAvailable()) {
                 MessageBoxA(hwmain,
                             "Theres a new version of ScyllaHide available !\n\n"
                             "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
