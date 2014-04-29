@@ -38,7 +38,6 @@ extern t_LogWrapper LogErrorWrap;
 HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
 LPVOID ImageBase = 0;
-void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseOfImage);
 
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
