@@ -7,6 +7,7 @@
 #include "olly1patches.h"
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
+#include "..\UpdateCheck\UpdateCheck.h"
 
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
@@ -543,7 +544,7 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
     {
     case PM_MAIN:
     {
-        strcpy(data, "0 &Options|2 &Inject DLL| 1 &About");
+        strcpy(data, "0 &Options|2 &Inject DLL| 3 &Update-Check, 1 &About");
 
         //also patch olly title
         SetWindowTextW(hwmain, pHideOptions.ollyTitle);
@@ -590,6 +591,18 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
                 if(GetFileDialog(dllPath))
                     injectDll(ProcessId, dllPath);
             }
+            break;
+        }
+        case 3:
+        {
+            if(isNewVersionAvailable(SCYLLA_HIDE_VERSION_STRING_A)) {
+                MessageBoxA(hwmain,
+                            "Theres a new version of ScyllaHide available !\n\n"
+                            "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
+                            "or some RCE forums !",
+                            "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+            }
+
             break;
         }
         default:

@@ -104,6 +104,7 @@
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
     <ClCompile Include="..\ScyllaHideOlly2Plugin\Injector.cpp" />
+    <ClCompile Include="..\UpdateCheck\UpdateCheck.cpp" />
     <ClCompile Include="olly1patches.cpp" />
     <ClCompile Include="ScyllaHideOlly1Plugin.cpp" />
   </ItemGroup>
@@ -125,6 +126,7 @@
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
     <ClInclude Include="..\ScyllaHideOlly2Plugin\Injector.h" />
+    <ClInclude Include="..\UpdateCheck\UpdateCheck.h" />
     <ClInclude Include="ollyplugindefinitions.h" />
     <ClInclude Include="olly1patches.h" />
     <ClInclude Include="resource.h" />

@@ -72,6 +72,9 @@
     <ClCompile Include="olly1patches.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\UpdateCheck\UpdateCheck.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Injector.h">
@@ -132,6 +135,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ollyplugindefinitions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UpdateCheck\UpdateCheck.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
