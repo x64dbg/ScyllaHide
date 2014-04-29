@@ -1,6 +1,7 @@
 Version 0.8
 
 - Olly v1 Plugin: option "Skip EP outside of code message"
+- Fix for NtSetInformationProcess -> ProcessHandleTracing
 
 Version 0.7
 
