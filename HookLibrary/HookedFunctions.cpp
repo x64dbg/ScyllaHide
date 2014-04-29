@@ -55,6 +55,9 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
 }
 
 static ULONG ValueProcessBreakOnTermination = FALSE;
+static bool IsProcessHandleTracingEnabled = false;
+#define STATUS_INVALID_PARAMETER ((NTSTATUS)0xC000000DL)
+
 
 NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength)
 {
@@ -85,6 +88,17 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
             {
                 *((ULONG *)ProcessInformation) = ValueProcessBreakOnTermination;
             }
+			else if (ProcessInformationClass == ProcessHandleTracing)
+			{
+				if (IsProcessHandleTracingEnabled)
+				{
+					return STATUS_SUCCESS;
+				}
+				else
+				{
+					return STATUS_INVALID_PARAMETER;
+				}
+			}
         }
 
         return ntStat;
@@ -101,6 +115,18 @@ NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCL
             ValueProcessBreakOnTermination = *((ULONG *)ProcessInformation);
             return STATUS_SUCCESS;
         }
+
+		//PROCESS_HANDLE_TRACING_ENABLE -> ULONG, PROCESS_HANDLE_TRACING_ENABLE_EX -> ULONG,ULONG
+		if (ProcessInformationClass == ProcessHandleTracing && ProcessInformation != 0)
+		{
+			if (ProcessInformationLength != sizeof(ULONG) && ProcessInformationLength != (sizeof(ULONG)*2))
+			{
+				return STATUS_INFO_LENGTH_MISMATCH;
+			}
+
+			IsProcessHandleTracingEnabled = true;
+			return STATUS_SUCCESS;
+		}
     }
     return DllExchange.dNtSetInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength);
 }
