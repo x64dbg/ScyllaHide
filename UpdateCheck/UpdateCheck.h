@@ -3,6 +3,6 @@
 
 #pragma comment(lib, "WinInet.lib")
 
-#define UPDATE_CHECK_URL L"http://bitbucket.org/cypherpunk/scylla_wrapper_dll/downloads/version.txt"
+#define UPDATE_CHECK_URL L"http://bitbucket.org/NtQuery/scyllahide/downloads/version.txt"
 
 bool isNewVersionAvailable();
