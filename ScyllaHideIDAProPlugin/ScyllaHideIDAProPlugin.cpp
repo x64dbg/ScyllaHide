@@ -23,6 +23,7 @@
 #include "..\ScyllaHideOlly2Plugin\Injector.h"
 #include "..\ScyllaHideOlly2Plugin\ScyllaHideVersion.h"
 #include "IdaServerClient.h"
+#include "..\UpdateCheck\UpdateCheck.h"
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
@@ -327,10 +328,10 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort);
 
 #ifdef BUILD_IDA_64BIT
-		if(isWindows64()) EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), TRUE);
-		else EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
+        if(isWindows64()) EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), TRUE);
+        else EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
 #else
-		EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
+        EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
 #endif
 
         if(ProcessId) EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), TRUE);
@@ -473,6 +474,21 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             }
             break;
         }
+        case IDC_UPDATE:
+        {
+            if(isNewVersionAvailable()) {
+                MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
+                            "Theres a new version of ScyllaHide available !\n\n"
+                            "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
+                            "or some RCE forums !",
+                            "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+            } else {
+                MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
+                            "You already have the latest version of ScyllaHide !",
+                            "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+            }
+            break;
+        }
         }
     }
     break;
@@ -571,37 +587,37 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 #ifdef BUILD_IDA_64BIT
                 //autostart server if necessary
                 if(pHideOptions.autostartServer)
-				{
-					DWORD dwRunningStatus = 0;
-					if (ServerProcessInfo.hProcess)
-					{
-						GetExitCodeProcess(ServerProcessInfo.hProcess, &dwRunningStatus);
-					}
+                {
+                    DWORD dwRunningStatus = 0;
+                    if (ServerProcessInfo.hProcess)
+                    {
+                        GetExitCodeProcess(ServerProcessInfo.hProcess, &dwRunningStatus);
+                    }
 
                     if(dwRunningStatus != STILL_ACTIVE)
-					{
-						if (ServerProcessInfo.hProcess)
-						{
-							CloseHandle(ServerProcessInfo.hProcess);
-							CloseHandle(ServerProcessInfo.hThread);
-						}
+                    {
+                        if (ServerProcessInfo.hProcess)
+                        {
+                            CloseHandle(ServerProcessInfo.hProcess);
+                            CloseHandle(ServerProcessInfo.hThread);
+                        }
 
                         ZeroMemory(&ServerStartupInfo, sizeof(ServerStartupInfo));
                         ZeroMemory(&ServerProcessInfo, sizeof(ServerProcessInfo));
 
-						WCHAR commandline[MAX_PATH*2] = {0};
-						wcscpy(commandline, ScyllaHidex64ServerPath);
-						wcscat(commandline, L" ");
-						wcscat(commandline, pHideOptions.serverPort);
-						ServerStartupInfo.cb = sizeof(ServerStartupInfo);
+                        WCHAR commandline[MAX_PATH*2] = {0};
+                        wcscpy(commandline, ScyllaHidex64ServerPath);
+                        wcscat(commandline, L" ");
+                        wcscat(commandline, pHideOptions.serverPort);
+                        ServerStartupInfo.cb = sizeof(ServerStartupInfo);
                         if (!CreateProcessW(0, commandline, NULL, NULL, FALSE, 0, NULL, NULL, &ServerStartupInfo, &ServerProcessInfo))
-						{
-							msg("[ScyllaHide] Cannot start server\n");
-						}
-						else
-						{
-							msg("[ScyllaHide] Started IDA Server successfully\n");
-						}
+                        {
+                            msg("[ScyllaHide] Cannot start server\n");
+                        }
+                        else
+                        {
+                            msg("[ScyllaHide] Started IDA Server successfully\n");
+                        }
                     }
                 }
 #endif
@@ -692,24 +708,24 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
 bool SetDebugPrivileges()
 {
-	TOKEN_PRIVILEGES Debug_Privileges;
-	bool retVal = false;
+    TOKEN_PRIVILEGES Debug_Privileges;
+    bool retVal = false;
 
-	if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
-	{
-		HANDLE hToken = 0;
-		if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
-		{
-			Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-			Debug_Privileges.PrivilegeCount = 1;
+    if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
+    {
+        HANDLE hToken = 0;
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+        {
+            Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+            Debug_Privileges.PrivilegeCount = 1;
 
-			retVal = AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL) != FALSE;
+            retVal = AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL) != FALSE;
 
-			CloseHandle(hToken);
-		}
-	}
+            CloseHandle(hToken);
+        }
+    }
 
-	return retVal;
+    return retVal;
 }
 
 void LogErrorWrapper(const WCHAR * format, ...)

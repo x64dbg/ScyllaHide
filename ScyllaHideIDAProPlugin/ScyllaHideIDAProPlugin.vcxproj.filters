@@ -75,6 +75,9 @@
     <ClCompile Include="IniSettings.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="..\UpdateCheck\UpdateCheck.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScyllaHideIDAProPlugin.rc">
@@ -156,6 +159,9 @@
     </ClInclude>
     <ClInclude Include="idasdk\pro.h">
       <Filter>Headerdateien\idasdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UpdateCheck\UpdateCheck.h">
+      <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
