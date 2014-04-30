@@ -13,6 +13,7 @@ HookedKiUserExceptionDispatcher
 HookedNtContinue
 HookedNtClose
 HookedGetTickCount
+HookedGetTickCount64
 HookedBlockInput
 HookedOutputDebugStringA
 HookedNtUserFindWindowEx
@@ -22,3 +23,4 @@ HookedNativeCallInternal
 HookedNtCreateThread
 HookedNtCreateThreadEx
 HookedNtUserQueryWindow
+HookedNtQueryPerformanceCounter

@@ -56,8 +56,6 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
 
 static ULONG ValueProcessBreakOnTermination = FALSE;
 static bool IsProcessHandleTracingEnabled = false;
-#define STATUS_INVALID_PARAMETER ((NTSTATUS)0xC000000DL)
-
 
 NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength)
 {
@@ -342,6 +340,10 @@ NTSTATUS NTAPI HookedNtClose(HANDLE Handle)
     }
 }
 
+//////////////////////////////////////////////////////////////
+////////////////////// TIME FUNCTIONS ////////////////////////
+//////////////////////////////////////////////////////////////
+
 static DWORD OneTickCount = 0;
 
 DWORD WINAPI HookedGetTickCount(void)
@@ -356,6 +358,57 @@ DWORD WINAPI HookedGetTickCount(void)
     }
     return OneTickCount;
 }
+
+ULONGLONG WINAPI HookedGetTickCount64(void) //yes we can use DWORD
+{
+	if (!OneTickCount)
+	{
+		if (DllExchange.dGetTickCount)
+		{
+			OneTickCount = DllExchange.dGetTickCount();
+		}
+		else
+		{
+			OneTickCount = GetTickCount();
+		}
+	}
+	else
+	{
+		OneTickCount++;
+	}
+	return OneTickCount;
+}
+
+static LARGE_INTEGER OnePerformanceCounter = {0};
+static LARGE_INTEGER OnePerformanceFrequency = {0};
+
+NTSTATUS NTAPI HookedNtQueryPerformanceCounter(PLARGE_INTEGER PerformanceCounter, PLARGE_INTEGER PerformanceFrequency)
+{
+	if (!OnePerformanceCounter.QuadPart)
+	{
+		DllExchange.dNtQueryPerformanceCounter(&OnePerformanceCounter, &OnePerformanceFrequency);
+	}
+	else
+	{
+		OnePerformanceCounter.QuadPart++;
+	}
+
+	if (PerformanceCounter)
+	{
+		PerformanceCounter->QuadPart = OnePerformanceCounter.QuadPart;
+	}
+	if (PerformanceFrequency)
+	{
+		PerformanceFrequency->QuadPart = OnePerformanceFrequency.QuadPart;
+	}
+
+	return STATUS_SUCCESS;
+}
+
+//////////////////////////////////////////////////////////////
+////////////////////// TIME FUNCTIONS ////////////////////////
+//////////////////////////////////////////////////////////////
+
 
 static BOOL isBlocked = FALSE;
 

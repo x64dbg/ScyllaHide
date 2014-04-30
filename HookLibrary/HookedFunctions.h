@@ -44,7 +44,12 @@ NTSTATUS NTAPI HookedNtCreateThreadEx(PHANDLE ThreadHandle,ACCESS_MASK DesiredAc
 HANDLE NTAPI HookedNtUserQueryWindow(HWND hwnd, WINDOWINFOCLASS WindowInfo);
 
 BOOL WINAPI HookedBlockInput(BOOL fBlockIt);
+
+
 DWORD WINAPI HookedGetTickCount(void);
+ULONGLONG WINAPI HookedGetTickCount64(void);
+NTSTATUS NTAPI HookedNtQueryPerformanceCounter(PLARGE_INTEGER PerformanceCounter, PLARGE_INTEGER PerformanceFrequency);
+
 DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString);
 VOID NTAPI HookedKiUserExceptionDispatcher();//(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame);
 

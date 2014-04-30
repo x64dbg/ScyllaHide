@@ -9,6 +9,7 @@ typedef void  (WINAPI * t_GetSystemTime)(LPSYSTEMTIME lpSystemTime); //Kernel32.
 typedef void  (WINAPI * t_GetLocalTime)(LPSYSTEMTIME lpSystemTime); //Kernel32.dll / kernelbase
 typedef DWORD(WINAPI * t_timeGetTime)(void); //Winmm.dll -> sometimes GetTickCount
 typedef DWORD(WINAPI * t_GetTickCount)(void); //Kernel32.dll / kernelbase
+typedef ULONGLONG(WINAPI * t_GetTickCount64)(void);
 typedef BOOL(WINAPI * t_QueryPerformanceCounter)(LARGE_INTEGER *lpPerformanceCount); //Kernel32.dll -> ntdll.RtlQueryPerformanceCounter -> NO NATIVE CALL
 typedef BOOL(WINAPI * t_QueryPerformanceFrequency)(LARGE_INTEGER *lpFrequency); //kernel32.dll -> ntdll.RtlQueryPerformanceFrequency -> ntdll.ZwQueryPerformanceCounter
 
@@ -101,10 +102,19 @@ typedef struct _HOOK_DLL_EXCHANGE {
     t_NtCreateThread dNtCreateThread;
     DWORD NtCreateThreadBackupSize;
 
+	/////////////////////////////////////////////////////////
+	t_GetTickCount dGetTickCount;
+	DWORD GetTickCountBackupSize;
+	t_GetTickCount64 dGetTickCount64;
+	DWORD GetTickCount64BackupSize;
+
+	t_NtQueryPerformanceCounter dNtQueryPerformanceCounter;
+	DWORD NtQueryPerformanceCounterBackupSize;
+	/////////////////////////////////////////////////////////
+
+
     t_OutputDebugStringA dOutputDebugStringA;
     DWORD OutputDebugStringABackupSize;
-    t_GetTickCount dGetTickCount;
-    DWORD GetTickCountBackupSize;
     t_BlockInput dBlockInput;
     DWORD BlockInputBackupSize;
 
