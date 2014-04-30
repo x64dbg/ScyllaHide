@@ -40,6 +40,7 @@ Hooks:
 - Stealth hooks for 32-bit targets (Tested against Themida/VMProtect)
 
 Plugin specific:
+- Update-Check
 IDA:
 - DLL injection (stealth / normal)
 - IDA 64bit plugin
@@ -54,6 +55,7 @@ Olly1:
 - x64 compatibility mode
 - Remove EP-Break
 - Break on TLS
+- Skip "EP outside code" message
 
 ------------------------------------------------------
 
