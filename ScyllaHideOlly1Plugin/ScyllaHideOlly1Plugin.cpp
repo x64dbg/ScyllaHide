@@ -601,6 +601,10 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
                             "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
                             "or some RCE forums !",
                             "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+            } else {
+                MessageBoxA(hwmain,
+                            "You already have the latest version of ScyllaHide !",
+                            "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
             }
 
             break;

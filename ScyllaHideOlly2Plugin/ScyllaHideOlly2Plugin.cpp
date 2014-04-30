@@ -501,6 +501,10 @@ static int Mupdate(t_table *pt,wchar_t *name,ulong index,int mode)
                         "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
                         "or some RCE forums !",
                         "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+        } else {
+            MessageBoxA(hwollymain,
+                        "You already have the latest version of ScyllaHide !",
+                        "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
         }
         return MENU_REDRAW;
     };
