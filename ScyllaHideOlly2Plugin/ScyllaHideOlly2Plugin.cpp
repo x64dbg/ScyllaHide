@@ -7,6 +7,7 @@
 #include "Injector.h"
 #include "ScyllaHideOlly2Plugin.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
+#include "..\UpdateCheck\UpdateCheck.h"
 
 
 //scyllaHide definitions
@@ -487,6 +488,25 @@ static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode)
     return MENU_ABSENT;
 }
 
+//Menu->Update-Check
+static int Mupdate(t_table *pt,wchar_t *name,ulong index,int mode)
+{
+    if (mode==MENU_VERIFY)
+        return MENU_NORMAL;
+    else if (mode==MENU_EXECUTE)
+    {
+        if(isNewVersionAvailable()) {
+            MessageBoxA(hwollymain,
+                        "Theres a new version of ScyllaHide available !\n\n"
+                        "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
+                        "or some RCE forums !",
+                        "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+        }
+        return MENU_REDRAW;
+    };
+    return MENU_ABSENT;
+}
+
 //Menu->About
 static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode)
 {
@@ -520,8 +540,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
-		LogWrap = LogWrapper;
-		LogErrorWrap = LogErrorWrapper;
+        LogWrap = LogWrapper;
+        LogErrorWrap = LogErrorWrapper;
 
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
@@ -628,8 +648,8 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         {
             if (!bHooked)
             {
-				Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
-				ReadNtApiInformation();
+                Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
+                ReadNtApiInformation();
 
                 bHooked = true;
                 startInjection(ProcessId, ScyllaHideDllPath, true);
@@ -651,22 +671,22 @@ extc void ODBG2_Pluginreset(void)
 
 void LogErrorWrapper(const WCHAR * format, ...)
 {
-	WCHAR text[2000];
-	va_list va_alist;
-	va_start(va_alist, format);
+    WCHAR text[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
 
-	wvsprintfW(text, format, va_alist);
+    wvsprintfW(text, format, va_alist);
 
-	Error(text);
+    Error(text);
 }
 
 void LogWrapper(const WCHAR * format, ...)
 {
-	WCHAR text[2000];
-	va_list va_alist;
-	va_start(va_alist, format);
+    WCHAR text[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
 
-	wvsprintfW(text, format, va_alist);
+    wvsprintfW(text, format, va_alist);
 
-	Message(0, text);
+    Message(0, text);
 }

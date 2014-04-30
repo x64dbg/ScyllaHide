@@ -10,6 +10,7 @@ void LogErrorWrapper(const WCHAR * format, ...);
 
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode);
+static int Mupdate(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
 static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode);
 
@@ -27,7 +28,12 @@ static t_menu mainmenu[] =
         K_NONE, MinjectDll, NULL, 0
     },
     {
-        L"|About",
+        L"|Update-Check",
+        L"Check for Updates",
+        K_NONE, Mupdate, NULL, 0
+    },
+    {
+        L"About",
         L"About ScyllaHide plugin",
         K_NONE, Mabout, NULL, 0
     },
