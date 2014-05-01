@@ -46,9 +46,9 @@ int main(int argc, char *argv[])
 	LogWrap = LogWrapper;
 	LogErrorWrap = LogWrapper;
 
-	if (sizeof(IDA_SERVER_EXCHANGE) != 638)
+	if (sizeof(IDA_SERVER_EXCHANGE) != IDA_SERVER_EXCHANGE_STRUCT_SIZE)
 	{
-		printf("WRONG!!! Size of IDA_SERVER_EXCHANGE %d == 638?\n\n", sizeof(IDA_SERVER_EXCHANGE));
+		printf("WRONG!!! Size of IDA_SERVER_EXCHANGE %d == %d?\n\n", sizeof(IDA_SERVER_EXCHANGE), IDA_SERVER_EXCHANGE_STRUCT_SIZE);
 		getchar();
 		return 0;
 	}
@@ -227,8 +227,14 @@ void MapSettings()
 	pHideOptions.NtYieldExecution = idaExchange.EnableNtYieldExecutionHook;
 	pHideOptions.preventThreadCreation = idaExchange.EnablePreventThreadCreation;
 	pHideOptions.OutputDebugStringA = idaExchange.EnableOutputDebugStringHook;
-	pHideOptions.GetTickCount = idaExchange.EnableGetTickCountHook;
 	pHideOptions.BlockInput = idaExchange.EnableBlockInputHook;
+
+	pHideOptions.GetTickCount = idaExchange.EnableGetTickCountHook;
+	pHideOptions.GetTickCount64 = idaExchange.EnableGetTickCount64Hook;
+	pHideOptions.GetLocalTime = idaExchange.EnableGetLocalTimeHook;
+	pHideOptions.GetSystemTime = idaExchange.EnableGetSystemTimeHook;
+	pHideOptions.NtQuerySystemTime = idaExchange.EnableNtQuerySystemTimeHook;
+	pHideOptions.NtQueryPerformanceCounter = idaExchange.EnableNtQueryPerformanceCounterHook;
 
 	pHideOptions.PEBBeingDebugged = idaExchange.EnablePebBeingDebugged;
 	pHideOptions.PEBHeapFlags = idaExchange.EnablePebHeapFlags;

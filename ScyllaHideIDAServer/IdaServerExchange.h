@@ -86,6 +86,8 @@ enum server_dbg_notification_t
 #define RESULT_SUCCESS 1
 #define RESULT_FAILED 0
 
+#define IDA_SERVER_EXCHANGE_STRUCT_SIZE 643
+
 typedef struct _IDA_SERVER_EXCHANGE
 {
 	unsigned long result;
@@ -98,7 +100,6 @@ typedef struct _IDA_SERVER_EXCHANGE
 	unsigned char EnablePebStartupInfo;
 
 	unsigned char EnableBlockInputHook;
-	unsigned char EnableGetTickCountHook;
 	unsigned char EnableOutputDebugStringHook;
 
 	unsigned char EnableNtSetInformationThreadHook;
@@ -121,6 +122,13 @@ typedef struct _IDA_SERVER_EXCHANGE
 	unsigned char EnableNtUserBuildHwndListHook;
 	unsigned char EnableNtUserFindWindowExHook;
 	unsigned char EnableNtSetDebugFilterStateHook;
+
+	unsigned char EnableGetTickCountHook;
+	unsigned char EnableGetTickCount64Hook;
+	unsigned char EnableGetLocalTimeHook;
+	unsigned char EnableGetSystemTimeHook;
+	unsigned char EnableNtQuerySystemTimeHook;
+	unsigned char EnableNtQueryPerformanceCounterHook;
 
 	unsigned char DllInjectStealth;
 	unsigned char DllInjectNormal;

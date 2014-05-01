@@ -4,8 +4,8 @@
 #include "RemoteHook.h"
 
 #define HOOK(name) dllexchange->d##name = (t_##name)DetourCreateRemote(hProcess,_##name, Hooked##name, true, &dllexchange->##name##BackupSize)
-#define HOOK_NATIVE(name) dllexchange->d##name = (t_##name)DetourCreateRemoteNative(hProcess,_##name, Hooked##name, true, 0)
-#define HOOK_NATIVE_NOTRAMP(name) DetourCreateRemoteNative(hProcess,_##name, Hooked##name, false, 0)
+#define HOOK_NATIVE(name) dllexchange->d##name = (t_##name)DetourCreateRemoteNative(hProcess,_##name, Hooked##name, true, &dllexchange->##name##BackupSize)
+#define HOOK_NATIVE_NOTRAMP(name) DetourCreateRemoteNative(hProcess,_##name, Hooked##name, false, &dllexchange->##name##BackupSize)
 #define FREE_HOOK(name) FreeMemory(hProcess, dllexchange->d##name); dllexchange->d##name = 0
 #define RESTORE_JMP(name) RestoreJumper(hProcess,_##name, dllexchange->d##name, dllexchange->##name##BackupSize)
 
@@ -33,6 +33,9 @@ HMODULE hUserRemote = 0;
 t_KiUserExceptionDispatcher _KiUserExceptionDispatcher = 0;
 t_OutputDebugStringA _OutputDebugStringA = 0;
 t_GetTickCount _GetTickCount = 0;
+t_GetTickCount64 _GetTickCount64 = 0;
+t_GetLocalTime _GetLocalTime = 0;
+t_GetSystemTime _GetSystemTime = 0;
 
 t_NtUserBuildHwndList _NtUserBuildHwndList = 0;
 t_NtUserFindWindowEx _NtUserFindWindowEx = 0;
@@ -52,7 +55,8 @@ t_NtClose _NtClose = 0;
 t_NtSetDebugFilterState _NtSetDebugFilterState = 0;
 t_NtCreateThread _NtCreateThread = 0;
 t_NtCreateThreadEx _NtCreateThreadEx = 0;
-
+t_NtQuerySystemTime _NtQuerySystemTime = 0;
+t_NtQueryPerformanceCounter _NtQueryPerformanceCounter = 0;
 
 void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
@@ -78,6 +82,8 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
     void * HookedNtSetDebugFilterState = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetDebugFilterState") + imageBase);
     void * HookedNtCreateThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtCreateThread") + imageBase);
     void * HookedNtCreateThreadEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtCreateThreadEx") + imageBase);
+	void * HookedNtQuerySystemTime = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQuerySystemTime") + imageBase);
+	void * HookedNtQueryPerformanceCounter = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQueryPerformanceCounter") + imageBase);
 
     HookedNativeCallInternal = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNativeCallInternal") + imageBase);
 
@@ -95,6 +101,8 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
     _NtSetDebugFilterState = (t_NtSetDebugFilterState)GetProcAddress(hNtdll, "NtSetDebugFilterState");
     _NtCreateThread = (t_NtCreateThread)GetProcAddress(hNtdll, "NtCreateThread");
     _NtCreateThreadEx = (t_NtCreateThreadEx)GetProcAddress(hNtdll, "NtCreateThreadEx");
+	_NtQuerySystemTime = (t_NtQuerySystemTime)GetProcAddress(hNtdll, "NtQuerySystemTime");
+	_NtQueryPerformanceCounter = (t_NtQueryPerformanceCounter)GetProcAddress(hNtdll, "NtQueryPerformanceCounter");
 
     if (dllexchange->EnableNtSetInformationThreadHook == TRUE) HOOK_NATIVE(NtSetInformationThread);
     if (dllexchange->EnableNtQuerySystemInformationHook == TRUE) HOOK_NATIVE(NtQuerySystemInformation);
@@ -119,6 +127,9 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
     if (dllexchange->EnableNtContinueHook == TRUE) HOOK_NATIVE(NtContinue);
 #endif
 
+	if (dllexchange->EnableNtQuerySystemTimeHook == TRUE && _NtQuerySystemTime != 0) HOOK_NATIVE(NtQuerySystemTime);
+	if (dllexchange->EnableNtQueryPerformanceCounterHook == TRUE) HOOK_NATIVE(NtQueryPerformanceCounter);
+
     dllexchange->isNtdllHooked = TRUE;
 
 #ifndef _WIN64
@@ -133,18 +144,29 @@ void ApplyKernel32Hook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * 
 
     void * HookedOutputDebugStringA = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedOutputDebugStringA") + imageBase);
     void * HookedGetTickCount = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetTickCount") + imageBase);
+	void * HookedGetTickCount64 = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetTickCount64") + imageBase);
+	void * HookedGetLocalTime = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetLocalTime") + imageBase);
+	void * HookedGetSystemTime = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetSystemTime") + imageBase);
 
-    if (hKernelbase)
-    {
-        _GetTickCount = (t_GetTickCount)GetProcAddress(hKernelbase, "GetTickCount");
-        _OutputDebugStringA = (t_OutputDebugStringA)GetProcAddress(hKernelbase, "OutputDebugStringA");
-    }
-    else
-    {
-        _GetTickCount = (t_GetTickCount)GetProcAddress(hKernel, "GetTickCount");
-        _OutputDebugStringA = (t_OutputDebugStringA)GetProcAddress(hKernel, "OutputDebugStringA");
-    }
+	HMODULE hCurrent = hKernel;
+	if (hKernelbase)
+	{
+		hCurrent = hKernelbase;
+	}
+
+	_GetTickCount = (t_GetTickCount)GetProcAddress(hCurrent, "GetTickCount");
+	_GetTickCount64 = (t_GetTickCount64)GetProcAddress(hCurrent, "GetTickCount64");
+	_GetLocalTime = (t_GetLocalTime)GetProcAddress(hCurrent, "GetLocalTime");
+	_GetSystemTime = (t_GetSystemTime)GetProcAddress(hCurrent, "GetSystemTime");
+
+	_OutputDebugStringA = (t_OutputDebugStringA)GetProcAddress(hCurrent, "OutputDebugStringA");
+
+
     if (dllexchange->EnableGetTickCountHook == TRUE) HOOK(GetTickCount);
+	if (dllexchange->EnableGetTickCount64Hook == TRUE && _GetTickCount64 != 0) HOOK(GetTickCount64);
+	if (dllexchange->EnableGetLocalTimeHook == TRUE) HOOK(GetLocalTime);
+	if (dllexchange->EnableGetSystemTimeHook == TRUE) HOOK(GetSystemTime);
+
     if (dllexchange->EnableOutputDebugStringHook == TRUE) HOOK(OutputDebugStringA);
 
     dllexchange->isKernel32Hooked = TRUE;
@@ -160,6 +182,7 @@ void ApplyUser32Hook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dl
         void * HookedBlockInput = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedBlockInput") + imageBase);
         void * HookedNtUserFindWindowEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserFindWindowEx") + imageBase);
         void * HookedNtUserBuildHwndList = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBuildHwndList") + imageBase);
+		void * HookedNtUserQueryWindow = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserQueryWindow") + imageBase);
 
         dllexchange->isUser32Hooked = TRUE;
 
@@ -181,6 +204,7 @@ void ApplyUser32Hook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dl
         if (dllexchange->EnableBlockInputHook == TRUE) HOOK_NATIVE(BlockInput);
         if (dllexchange->EnableNtUserFindWindowExHook == TRUE && _NtUserFindWindowEx != 0) HOOK_NATIVE(NtUserFindWindowEx);
         if (dllexchange->EnableNtUserBuildHwndListHook == TRUE && _NtUserBuildHwndList != 0) HOOK_NATIVE(NtUserBuildHwndList);
+		if (dllexchange->EnableNtUserQueryWindowHook == TRUE && _NtUserQueryWindow != 0) HOOK_NATIVE(NtUserQueryWindow);
     }
 }
 

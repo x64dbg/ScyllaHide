@@ -44,7 +44,6 @@ bool SendEventToServer(unsigned long notif_code, unsigned long ProcessId)
 	idaExchange.EnablePebNtGlobalFlag = pHideOptions.PEBNtGlobalFlag;
 	idaExchange.EnablePebStartupInfo = pHideOptions.PEBStartupInfo;
 	idaExchange.EnableBlockInputHook = pHideOptions.BlockInput;
-	idaExchange.EnableGetTickCountHook = pHideOptions.GetTickCount;
 	idaExchange.EnableOutputDebugStringHook = pHideOptions.OutputDebugStringA;
 	idaExchange.EnableNtSetInformationThreadHook = pHideOptions.NtSetInformationThread;
 	idaExchange.EnableNtQueryInformationProcessHook = pHideOptions.NtQueryInformationProcess;
@@ -59,6 +58,13 @@ bool SendEventToServer(unsigned long notif_code, unsigned long ProcessId)
 	idaExchange.EnableNtSetContextThreadHook = pHideOptions.NtSetContextThread;
 	idaExchange.EnableNtContinueHook = pHideOptions.NtContinue;
 	idaExchange.EnableKiUserExceptionDispatcherHook = pHideOptions.KiUserExceptionDispatcher;
+
+	idaExchange.EnableGetTickCountHook = pHideOptions.GetTickCount;
+	idaExchange.EnableGetTickCount64Hook = pHideOptions.GetTickCount64;
+	idaExchange.EnableGetLocalTimeHook = pHideOptions.GetLocalTime;
+	idaExchange.EnableGetSystemTimeHook = pHideOptions.GetSystemTime;
+	idaExchange.EnableNtQuerySystemTimeHook = pHideOptions.NtQuerySystemTime;
+	idaExchange.EnableNtQueryPerformanceCounterHook = pHideOptions.NtQueryPerformanceCounter;
 
 	idaExchange.EnableNtUserFindWindowExHook = pHideOptions.NtUserFindWindowEx;
 	idaExchange.EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;

@@ -42,7 +42,6 @@ typedef struct _HOOK_DLL_EXCHANGE {
     BOOLEAN EnablePebStartupInfo;
 
     BOOLEAN EnableBlockInputHook;
-    BOOLEAN EnableGetTickCountHook;
     BOOLEAN EnableOutputDebugStringHook;
 
     BOOLEAN EnableNtSetInformationThreadHook;
@@ -71,6 +70,12 @@ typedef struct _HOOK_DLL_EXCHANGE {
     BOOLEAN EnableNtUserFindWindowExHook;
     BOOLEAN EnableNtSetDebugFilterStateHook;
 
+	BOOLEAN EnableGetTickCountHook;
+	BOOLEAN EnableGetTickCount64Hook;
+	BOOLEAN EnableGetLocalTimeHook;
+	BOOLEAN EnableGetSystemTimeHook;
+	BOOLEAN EnableNtQuerySystemTimeHook;
+	BOOLEAN EnableNtQueryPerformanceCounterHook;
 
 	t_NtSetDebugFilterState dNtSetDebugFilterState;
 	DWORD NtSetDebugFilterStateBackupSize;
