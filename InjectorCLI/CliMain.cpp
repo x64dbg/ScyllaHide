@@ -9,6 +9,7 @@
 #include "RemoteHook.h"
 #include "RemotePebHider.h"
 #include "ApplyHooking.h"
+#include "..\UpdateCheck\UpdateCheck.h"
 
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
@@ -59,6 +60,7 @@ int wmain(int argc, wchar_t* argv[])
 	}
 #endif
 
+	//isNewVersionAvailable();
 
     GetModuleFileNameW(0, NtApiIniPath, _countof(NtApiIniPath));
 
@@ -351,31 +353,35 @@ void CreateSettings()
 
 void CreateDefaultSettings(const WCHAR * iniFile)
 {
-    WriteIniSettings(L"BlockInputHook", L"1", iniFile);
-    WriteIniSettings(L"GetTickCountHook", L"1", iniFile);
-    WriteIniSettings(L"KiUserExceptionDispatcherHook", L"1", iniFile);
-    WriteIniSettings(L"NtCloseHook", L"1", iniFile);
-    WriteIniSettings(L"NtContinueHook", L"1", iniFile);
-    WriteIniSettings(L"NtGetContextThreadHook", L"1", iniFile);
-    WriteIniSettings(L"NtQueryInformationProcessHook", L"1", iniFile);
-    WriteIniSettings(L"NtQueryObjectHook", L"1", iniFile);
-    WriteIniSettings(L"NtQuerySystemInformationHook", L"1", iniFile);
-    WriteIniSettings(L"NtSetContextThreadHook", L"1", iniFile);
-    WriteIniSettings(L"NtSetDebugFilterStateHook", L"1", iniFile);
-    WriteIniSettings(L"NtSetInformationThreadHook", L"1", iniFile);
-    WriteIniSettings(L"NtUserBuildHwndListHook", L"1", iniFile);
-    WriteIniSettings(L"NtUserFindWindowExHook", L"1", iniFile);
+	WriteIniSettings(L"BlockInputHook", L"1", iniFile);
+	WriteIniSettings(L"EnableProtectProcessId", L"1", iniFile);
+	WriteIniSettings(L"GetLocalTimeHook", L"1", iniFile);
+	WriteIniSettings(L"GetSystemTimeHook", L"1", iniFile);
+	WriteIniSettings(L"GetTickCount64Hook", L"1", iniFile);
+	WriteIniSettings(L"GetTickCountHook", L"1", iniFile);
+	WriteIniSettings(L"KiUserExceptionDispatcherHook", L"1", iniFile);
+	WriteIniSettings(L"NtCloseHook", L"1", iniFile);
+	WriteIniSettings(L"NtContinueHook", L"1", iniFile);
+	WriteIniSettings(L"NtCreateThreadExHook", L"1", iniFile);
+	WriteIniSettings(L"NtGetContextThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtQueryInformationProcessHook", L"1", iniFile);
+	WriteIniSettings(L"NtQueryObjectHook", L"1", iniFile);
+	WriteIniSettings(L"NtQueryPerformanceCounterHook", L"1", iniFile);
+	WriteIniSettings(L"NtQuerySystemInformationHook", L"1", iniFile);
+	WriteIniSettings(L"NtQuerySystemTimeHook", L"1", iniFile);
+	WriteIniSettings(L"NtSetContextThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtSetDebugFilterStateHook", L"1", iniFile);
+	WriteIniSettings(L"NtSetInformationThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtUserBuildHwndListHook", L"1", iniFile);
+	WriteIniSettings(L"NtUserFindWindowExHook", L"1", iniFile);
 	WriteIniSettings(L"NtUserQueryWindowHook", L"1", iniFile);
-    WriteIniSettings(L"NtYieldExecutionHook", L"1", iniFile);
-    WriteIniSettings(L"OutputDebugStringHook", L"1", iniFile);
-    WriteIniSettings(L"PebBeingDebugged", L"1", iniFile);
-    WriteIniSettings(L"PebHeapFlags", L"1", iniFile);
-    WriteIniSettings(L"PebNtGlobalFlag", L"1", iniFile);
-    WriteIniSettings(L"PebStartupInfo", L"1", iniFile);
-    WriteIniSettings(L"NtCreateThreadExHook", L"1", iniFile);
-    WriteIniSettings(L"PreventThreadCreation", L"0", iniFile); //special hook disabled by default
-
-    WriteIniSettings(L"EnableProtectProcessId", L"1", iniFile);
+	WriteIniSettings(L"NtYieldExecutionHook", L"1", iniFile);
+	WriteIniSettings(L"OutputDebugStringHook", L"1", iniFile);
+	WriteIniSettings(L"PebBeingDebugged", L"1", iniFile);
+	WriteIniSettings(L"PebHeapFlags", L"1", iniFile);
+	WriteIniSettings(L"PebNtGlobalFlag", L"1", iniFile);
+	WriteIniSettings(L"PebStartupInfo", L"1", iniFile);
+	WriteIniSettings(L"PreventThreadCreation", L"0", iniFile); //special hook disabled by default
 }
 
 void ReadSettings()
@@ -386,31 +392,35 @@ void ReadSettings()
 
 void ReadSettingsFromIni(const WCHAR * iniFile)
 {
-    DllExchangeLoader.EnableBlockInputHook = ReadIniSettingsInt(L"BlockInputHook", iniFile);
-    DllExchangeLoader.EnableGetTickCountHook = ReadIniSettingsInt(L"GetTickCountHook", iniFile);
-    DllExchangeLoader.EnableKiUserExceptionDispatcherHook = ReadIniSettingsInt(L"KiUserExceptionDispatcherHook", iniFile);
-    DllExchangeLoader.EnableNtCloseHook = ReadIniSettingsInt(L"NtCloseHook", iniFile);
-    DllExchangeLoader.EnableNtContinueHook = ReadIniSettingsInt(L"NtContinueHook", iniFile);
-    DllExchangeLoader.EnableNtGetContextThreadHook = ReadIniSettingsInt(L"NtGetContextThreadHook", iniFile);
-    DllExchangeLoader.EnableNtQueryInformationProcessHook = ReadIniSettingsInt(L"NtQueryInformationProcessHook", iniFile);
-    DllExchangeLoader.EnableNtQueryObjectHook = ReadIniSettingsInt(L"NtQueryObjectHook", iniFile);
-    DllExchangeLoader.EnableNtQuerySystemInformationHook = ReadIniSettingsInt(L"NtQuerySystemInformationHook", iniFile);
-    DllExchangeLoader.EnableNtSetContextThreadHook = ReadIniSettingsInt(L"NtSetContextThreadHook", iniFile);
-    DllExchangeLoader.EnableNtSetDebugFilterStateHook = ReadIniSettingsInt(L"NtSetDebugFilterStateHook", iniFile);
-    DllExchangeLoader.EnableNtSetInformationThreadHook = ReadIniSettingsInt(L"NtSetInformationThreadHook", iniFile);
-    DllExchangeLoader.EnableNtUserBuildHwndListHook = ReadIniSettingsInt(L"NtUserBuildHwndListHook", iniFile);
-    DllExchangeLoader.EnableNtUserFindWindowExHook = ReadIniSettingsInt(L"NtUserFindWindowExHook", iniFile);
+	DllExchangeLoader.EnableBlockInputHook = ReadIniSettingsInt(L"BlockInputHook", iniFile);
+	DllExchangeLoader.EnableGetLocalTimeHook = ReadIniSettingsInt(L"GetLocalTimeHook", iniFile);
+	DllExchangeLoader.EnableGetSystemTimeHook = ReadIniSettingsInt(L"GetSystemTimeHook", iniFile);
+	DllExchangeLoader.EnableGetTickCount64Hook = ReadIniSettingsInt(L"GetTickCount64Hook", iniFile);
+	DllExchangeLoader.EnableGetTickCountHook = ReadIniSettingsInt(L"GetTickCountHook", iniFile);
+	DllExchangeLoader.EnableKiUserExceptionDispatcherHook = ReadIniSettingsInt(L"KiUserExceptionDispatcherHook", iniFile);
+	DllExchangeLoader.EnableNtCloseHook = ReadIniSettingsInt(L"NtCloseHook", iniFile);
+	DllExchangeLoader.EnableNtContinueHook = ReadIniSettingsInt(L"NtContinueHook", iniFile);
+	DllExchangeLoader.EnableNtCreateThreadExHook = ReadIniSettingsInt(L"NtCreateThreadExHook", iniFile);
+	DllExchangeLoader.EnableNtGetContextThreadHook = ReadIniSettingsInt(L"NtGetContextThreadHook", iniFile);
+	DllExchangeLoader.EnableNtQueryInformationProcessHook = ReadIniSettingsInt(L"NtQueryInformationProcessHook", iniFile);
+	DllExchangeLoader.EnableNtQueryObjectHook = ReadIniSettingsInt(L"NtQueryObjectHook", iniFile);
+	DllExchangeLoader.EnableNtQueryPerformanceCounterHook = ReadIniSettingsInt(L"NtQueryPerformanceCounterHook", iniFile);
+	DllExchangeLoader.EnableNtQuerySystemInformationHook = ReadIniSettingsInt(L"NtQuerySystemInformationHook", iniFile);
+	DllExchangeLoader.EnableNtQuerySystemTimeHook = ReadIniSettingsInt(L"NtQuerySystemTimeHook", iniFile);
+	DllExchangeLoader.EnableNtSetContextThreadHook = ReadIniSettingsInt(L"NtSetContextThreadHook", iniFile);
+	DllExchangeLoader.EnableNtSetDebugFilterStateHook = ReadIniSettingsInt(L"NtSetDebugFilterStateHook", iniFile);
+	DllExchangeLoader.EnableNtSetInformationThreadHook = ReadIniSettingsInt(L"NtSetInformationThreadHook", iniFile);
+	DllExchangeLoader.EnableNtUserBuildHwndListHook = ReadIniSettingsInt(L"NtUserBuildHwndListHook", iniFile);
+	DllExchangeLoader.EnableNtUserFindWindowExHook = ReadIniSettingsInt(L"NtUserFindWindowExHook", iniFile);
 	DllExchangeLoader.EnableNtUserQueryWindowHook = ReadIniSettingsInt(L"NtUserQueryWindowHook", iniFile);
-    DllExchangeLoader.EnableNtYieldExecutionHook = ReadIniSettingsInt(L"NtYieldExecutionHook", iniFile);
-    DllExchangeLoader.EnableOutputDebugStringHook = ReadIniSettingsInt(L"OutputDebugStringHook", iniFile);
-    DllExchangeLoader.EnablePebBeingDebugged = ReadIniSettingsInt(L"PebBeingDebugged", iniFile);
-    DllExchangeLoader.EnablePebHeapFlags = ReadIniSettingsInt(L"PebHeapFlags", iniFile);
-    DllExchangeLoader.EnablePebNtGlobalFlag = ReadIniSettingsInt(L"PebNtGlobalFlag", iniFile);
-    DllExchangeLoader.EnablePebStartupInfo = ReadIniSettingsInt(L"PebStartupInfo", iniFile);
-    DllExchangeLoader.EnableNtCreateThreadExHook = ReadIniSettingsInt(L"NtCreateThreadExHook", iniFile);
-    DllExchangeLoader.EnablePreventThreadCreation = ReadIniSettingsInt(L"PreventThreadCreation", iniFile);
-
-    DllExchangeLoader.EnableProtectProcessId = ReadIniSettingsInt(L"EnableProtectProcessId", iniFile);
+	DllExchangeLoader.EnableNtYieldExecutionHook = ReadIniSettingsInt(L"NtYieldExecutionHook", iniFile);
+	DllExchangeLoader.EnableOutputDebugStringHook = ReadIniSettingsInt(L"OutputDebugStringHook", iniFile);
+	DllExchangeLoader.EnablePebBeingDebugged = ReadIniSettingsInt(L"PebBeingDebugged", iniFile);
+	DllExchangeLoader.EnablePebHeapFlags = ReadIniSettingsInt(L"PebHeapFlags", iniFile);
+	DllExchangeLoader.EnablePebNtGlobalFlag = ReadIniSettingsInt(L"PebNtGlobalFlag", iniFile);
+	DllExchangeLoader.EnablePebStartupInfo = ReadIniSettingsInt(L"PebStartupInfo", iniFile);
+	DllExchangeLoader.EnablePreventThreadCreation = ReadIniSettingsInt(L"PreventThreadCreation", iniFile);
+	DllExchangeLoader.EnableProtectProcessId = ReadIniSettingsInt(L"EnableProtectProcessId", iniFile);
 }
 
 
