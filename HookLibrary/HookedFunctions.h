@@ -48,6 +48,9 @@ BOOL WINAPI HookedBlockInput(BOOL fBlockIt);
 
 DWORD WINAPI HookedGetTickCount(void);
 ULONGLONG WINAPI HookedGetTickCount64(void);
+void WINAPI HookedGetLocalTime(LPSYSTEMTIME lpSystemTime);
+void WINAPI HookedGetSystemTime(LPSYSTEMTIME lpSystemTime);
+NTSTATUS WINAPI HookedNtQuerySystemTime(PLARGE_INTEGER SystemTime);
 NTSTATUS NTAPI HookedNtQueryPerformanceCounter(PLARGE_INTEGER PerformanceCounter, PLARGE_INTEGER PerformanceFrequency);
 
 DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString);

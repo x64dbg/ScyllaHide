@@ -387,3 +387,38 @@ int ThreadDebugContextFindFreeSlotIndex()
 
 	return -1;
 }
+
+void IncreaseSystemTime(LPSYSTEMTIME lpTime)
+{
+	lpTime->wMilliseconds++;
+
+	//The hour. The valid values for this member are 0 through 23.
+	//The minute. The valid values for this member are 0 through 59.
+	//The second. The valid values for this member are 0 through 59.
+	//The millisecond. The valid values for this member are 0 through 999.
+
+	if (lpTime->wMilliseconds > 999)
+	{
+		lpTime->wSecond++;
+		lpTime->wMilliseconds = 0;
+
+		if (lpTime->wSecond > 59)
+		{
+			lpTime->wMinute++;
+			lpTime->wSecond = 0;
+
+			if (lpTime->wMinute > 59)
+			{
+				lpTime->wHour++;
+				lpTime->wMinute = 0;
+
+				if (lpTime->wHour > 23)
+				{
+					lpTime->wDay++;
+					lpTime->wDayOfWeek++;
+					lpTime->wHour = 0;
+				}
+			}
+		}
+	}
+}

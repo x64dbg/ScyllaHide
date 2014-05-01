@@ -27,3 +27,5 @@ int ThreadDebugContextFindFreeSlotIndex();
 int ThreadDebugContextFindExistingSlotIndex();
 void ThreadDebugContextRemoveEntry(const int index);
 void ThreadDebugContextSaveContext(const int index, const PCONTEXT ThreadContext);
+
+void IncreaseSystemTime(LPSYSTEMTIME lpTime);

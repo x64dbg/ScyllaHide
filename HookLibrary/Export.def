@@ -24,3 +24,6 @@ HookedNtCreateThread
 HookedNtCreateThreadEx
 HookedNtUserQueryWindow
 HookedNtQueryPerformanceCounter
+HookedGetLocalTime
+HookedGetSystemTime
+HookedNtQuerySystemTime

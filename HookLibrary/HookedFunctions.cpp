@@ -57,6 +57,10 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
 static ULONG ValueProcessBreakOnTermination = FALSE;
 static bool IsProcessHandleTracingEnabled = false;
 
+#ifndef STATUS_INVALID_PARAMETER
+#define STATUS_INVALID_PARAMETER         ((DWORD   )0xC000000DL) 
+#endif
+
 NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength)
 {
     if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
@@ -379,6 +383,89 @@ ULONGLONG WINAPI HookedGetTickCount64(void) //yes we can use DWORD
 	return OneTickCount;
 }
 
+static SYSTEMTIME OneLocalTime = {0};
+static SYSTEMTIME OneSystemTime = {0};
+
+void WINAPI HookedGetLocalTime(LPSYSTEMTIME lpSystemTime)
+{
+	if (!OneLocalTime.wYear)
+	{
+		DllExchange.dGetLocalTime(&OneLocalTime);
+
+		if (DllExchange.dGetSystemTime)
+		{
+			DllExchange.dGetSystemTime(&OneSystemTime);
+		}
+	}
+	else
+	{
+		IncreaseSystemTime(&OneLocalTime);
+
+		if (DllExchange.dGetSystemTime)
+		{
+			IncreaseSystemTime(&OneSystemTime);
+		}
+	}
+
+	if (lpSystemTime)
+	{
+		memcpy(lpSystemTime, &OneLocalTime, sizeof(SYSTEMTIME));
+	}
+}
+
+void WINAPI HookedGetSystemTime(LPSYSTEMTIME lpSystemTime)
+{
+	if (!OneSystemTime.wYear)
+	{
+		DllExchange.dGetSystemTime(&OneSystemTime);
+
+		if (DllExchange.dGetLocalTime)
+		{
+			DllExchange.dGetLocalTime(&OneLocalTime);
+		}
+	}
+	else
+	{
+		IncreaseSystemTime(&OneSystemTime);
+
+		if (DllExchange.dGetLocalTime)
+		{
+			IncreaseSystemTime(&OneLocalTime);
+		}
+	}
+
+	if (lpSystemTime)
+	{
+		memcpy(lpSystemTime, &OneSystemTime, sizeof(SYSTEMTIME));
+	}
+}
+
+static LARGE_INTEGER OneNativeSysTime = {0};
+
+NTSTATUS WINAPI HookedNtQuerySystemTime(PLARGE_INTEGER SystemTime)
+{
+	if (!OneNativeSysTime.QuadPart)
+	{
+		DllExchange.dNtQuerySystemTime(&OneNativeSysTime);
+	}
+	else
+	{
+		OneNativeSysTime.QuadPart++;
+	}
+
+	NTSTATUS ntStat = DllExchange.dNtQuerySystemTime(SystemTime);
+
+	if (ntStat == STATUS_SUCCESS)
+	{
+		if (SystemTime)
+		{
+			SystemTime->QuadPart = OneNativeSysTime.QuadPart;
+		}
+	}
+
+	return ntStat;
+}
+
 static LARGE_INTEGER OnePerformanceCounter = {0};
 static LARGE_INTEGER OnePerformanceFrequency = {0};
 
@@ -393,16 +480,22 @@ NTSTATUS NTAPI HookedNtQueryPerformanceCounter(PLARGE_INTEGER PerformanceCounter
 		OnePerformanceCounter.QuadPart++;
 	}
 
-	if (PerformanceCounter)
+	NTSTATUS ntStat = DllExchange.dNtQueryPerformanceCounter(PerformanceCounter, PerformanceFrequency);
+
+	if (ntStat == STATUS_SUCCESS)
 	{
-		PerformanceCounter->QuadPart = OnePerformanceCounter.QuadPart;
-	}
-	if (PerformanceFrequency)
-	{
-		PerformanceFrequency->QuadPart = OnePerformanceFrequency.QuadPart;
+		if (PerformanceFrequency) //OPTIONAL
+		{
+			PerformanceFrequency->QuadPart = OnePerformanceFrequency.QuadPart;
+		}
+
+		if (PerformanceCounter)
+		{
+			PerformanceCounter->QuadPart = OnePerformanceCounter.QuadPart;
+		}
 	}
 
-	return STATUS_SUCCESS;
+	return ntStat;
 }
 
 //////////////////////////////////////////////////////////////
@@ -606,7 +699,6 @@ void FilterObject(POBJECT_TYPE_INFORMATION pObject)
     }
 
 }
-
 
 void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo)
 {
