@@ -497,7 +497,7 @@ static int Mupdate(t_table *pt,wchar_t *name,ulong index,int mode)
     {
         if(isNewVersionAvailable()) {
             MessageBoxA(hwollymain,
-                        "Theres a new version of ScyllaHide available !\n\n"
+                        "There is a new version of ScyllaHide available !\n\n"
                         "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
                         "or some RCE forums !",
                         "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);

@@ -478,7 +478,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         {
             if(isNewVersionAvailable()) {
                 MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
-                            "Theres a new version of ScyllaHide available !\n\n"
+                            "There is a new version of ScyllaHide available !\n\n"
                             "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
                             "or some RCE forums !",
                             "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
