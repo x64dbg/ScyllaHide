@@ -55,6 +55,11 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
     }
     else
     {
+		if (pHideOptions.removeDebugPrivileges)
+		{
+			RemoveDebugPrivileges(hProcess);
+		}
+
         RestoreHooks(&DllExchangeLoader, hProcess);
 
         remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
