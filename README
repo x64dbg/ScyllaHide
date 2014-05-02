@@ -23,9 +23,17 @@ Debugger Hiding:
 - NtUserQueryWindow
 - NtClose
 - NtCreateThreadEx
-- GetTickCount
 - BlockInput
+- Remove Debug Privileges
 - OutputDebugStringA - OutputDebugStringW
+
+Timing Hooks:
+- GetTickCount
+- GetTickCount64
+- GetLocalTime
+- GetSystemTime
+- NtQuerySystemTimeHook
+- NtQueryPerformanceCounter
 
 Special functions:
 - Prevent Thread creation - for protectors like Execryptor. Only use if you know what you are doing !

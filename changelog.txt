@@ -3,6 +3,8 @@ Version 0.8
 - Olly v1 Plugin: option "Skip EP outside of code message"
 - Fix for NtSetInformationProcess -> ProcessHandleTracing
 - All plugins: Update-Check
+- Timing Hooks: GetTickCount, GetTickCount64, GetLocalTime, GetSystemTime, NtQuerySystemTime, NtQueryPerformanceCounter
+- "Remove Debug Privileges" added 
 
 Version 0.7
 
