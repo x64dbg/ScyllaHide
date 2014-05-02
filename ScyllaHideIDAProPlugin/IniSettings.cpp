@@ -95,7 +95,7 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"PebStartupInfo", L"1", iniFile);
     WriteIniSettings(L"NtCreateThreadExHook", L"1", iniFile);
     WriteIniSettings(L"removeDebugPrivileges", L"1", iniFile);
-    WriteIniSettings(L"DLLStealth", L"1", iniFile);
+    WriteIniSettings(L"DLLStealth", L"0", iniFile);
     WriteIniSettings(L"DLLNormal", L"1", iniFile);
     WriteIniSettings(L"DLLUnload", L"1", iniFile);
     WriteIniSettings(L"GetTickCountHook", L"1", iniFile);
@@ -150,6 +150,11 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.NtQueryPerformanceCounter = ReadIniSettingsInt(L"NtQueryPerformanceCounterHook", iniFile);
     ReadIniSettings(L"serverPort", iniFile, pHideOptions.serverPort);
     pHideOptions.autostartServer = ReadIniSettingsInt(L"autostartServer", iniFile);
+
+	if (pHideOptions.DLLNormal)
+	{
+		pHideOptions.DLLStealth = 0;
+	}
 }
 
 void SaveSettings()
