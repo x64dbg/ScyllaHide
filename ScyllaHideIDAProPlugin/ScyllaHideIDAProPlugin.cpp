@@ -58,6 +58,8 @@ HMODULE hNtdllModule = 0;
 PROCESS_INFORMATION ServerProcessInfo = {0};
 STARTUPINFO ServerStartupInfo = {0};
 
+BOOL FileExists(LPCWSTR szPath);
+
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
@@ -630,6 +632,11 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                 //autostart server if necessary
                 if(pHideOptions.autostartServer)
                 {
+					if (!FileExists(ScyllaHidex64ServerPath))
+					{
+						msg("Cannot find server executable %S\n", ScyllaHidex64ServerPath);
+					}
+
                     DWORD dwRunningStatus = 0;
                     if (ServerProcessInfo.hProcess)
                     {
