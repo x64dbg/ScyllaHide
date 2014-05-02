@@ -139,12 +139,6 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.NtYieldExecution = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_GETCHECK, 0, 0))
-    {
-        pHideOptions.GetTickCount = 1;
-    }
-    else
-        pHideOptions.GetTickCount = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_GETCHECK, 0, 0))
     {
         pHideOptions.OutputDebugStringA = 1;
@@ -223,6 +217,12 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.preventThreadCreation = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.removeDebugPrivileges = 1;
+    }
+    else
+        pHideOptions.removeDebugPrivileges = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_GETCHECK, 0, 0))
     {
         pHideOptions.removeEPBreak = 1;
@@ -271,6 +271,43 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.DLLUnload = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.GetTickCount = 1;
+    }
+    else
+        pHideOptions.GetTickCount = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT64), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.GetTickCount64 = 1;
+    }
+    else
+        pHideOptions.GetTickCount64 = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETLOCALTIME), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.GetLocalTime = 1;
+    }
+    else
+        pHideOptions.GetLocalTime = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.GetSystemTime = 1;
+    }
+    else
+        pHideOptions.GetSystemTime = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtQuerySystemTime = 1;
+    }
+    else
+        pHideOptions.NtQuerySystemTime = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtQueryPerformanceCounter = 1;
+    }
+    else
+        pHideOptions.NtQueryPerformanceCounter = 0;
+
 
     GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
     SetWindowTextW(hwmain, pHideOptions.ollyTitle);
@@ -285,7 +322,6 @@ void SaveOptions(HWND hWnd)
     _Pluginwriteinttoini(hinst, "NtQueryInformationProcess", pHideOptions.NtQueryInformationProcess);
     _Pluginwriteinttoini(hinst, "NtQueryObject", pHideOptions.NtQueryObject);
     _Pluginwriteinttoini(hinst, "NtYieldExecution", pHideOptions.NtYieldExecution);
-    _Pluginwriteinttoini(hinst, "GetTickCount", pHideOptions.GetTickCount);
     _Pluginwriteinttoini(hinst, "OutputDebugStringA", pHideOptions.OutputDebugStringA);
     _Pluginwriteinttoini(hinst, "BlockInput", pHideOptions.BlockInput);
     _Pluginwriteinttoini(hinst, "NtGetContextThread", pHideOptions.NtGetContextThread);
@@ -298,6 +334,7 @@ void SaveOptions(HWND hWnd)
     _Pluginwriteinttoini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
     _Pluginwriteinttoini(hinst, "NtClose", pHideOptions.NtClose);
     _Pluginwriteinttoini(hinst, "NtCreateThreadEx", pHideOptions.NtCreateThreadEx);
+    _Pluginwriteinttoini(hinst, "removeDebugPrivileges", pHideOptions.removeDebugPrivileges);
     _Pluginwriteinttoini(hinst, "preventThreadCreation", pHideOptions.preventThreadCreation);
     _Pluginwriteinttoini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
 
@@ -312,6 +349,13 @@ void SaveOptions(HWND hWnd)
     _Pluginwriteinttoini(hinst, "DLLStealth", pHideOptions.DLLStealth);
     _Pluginwriteinttoini(hinst, "DLLNormal", pHideOptions.DLLNormal);
     _Pluginwriteinttoini(hinst, "DLLUnload", pHideOptions.DLLUnload);
+    _Pluginwriteinttoini(hinst, "GetTickCount", pHideOptions.GetTickCount);
+    _Pluginwriteinttoini(hinst, "GetTickCount64", pHideOptions.GetTickCount64);
+    _Pluginwriteinttoini(hinst, "GetLocalTime", pHideOptions.GetLocalTime);
+    _Pluginwriteinttoini(hinst, "GetSystemTime", pHideOptions.GetSystemTime);
+    _Pluginwriteinttoini(hinst, "NtQuerySystemTime", pHideOptions.NtQuerySystemTime);
+    _Pluginwriteinttoini(hinst, "NtQueryPerformanceCounter", pHideOptions.NtQueryPerformanceCounter);
+
 }
 
 void LoadOptions()
@@ -326,7 +370,6 @@ void LoadOptions()
     pHideOptions.NtQueryInformationProcess = _Pluginreadintfromini(hinst, "NtQueryInformationProcess", pHideOptions.NtQueryInformationProcess);
     pHideOptions.NtQueryObject = _Pluginreadintfromini(hinst, "NtQueryObject", pHideOptions.NtQueryObject);
     pHideOptions.NtYieldExecution = _Pluginreadintfromini(hinst, "NtYieldExecution", pHideOptions.NtYieldExecution);
-    pHideOptions.GetTickCount = _Pluginreadintfromini(hinst, "GetTickCount", pHideOptions.GetTickCount);
     pHideOptions.OutputDebugStringA = _Pluginreadintfromini(hinst, "OutputDebugStringA", pHideOptions.OutputDebugStringA);
     pHideOptions.BlockInput = _Pluginreadintfromini(hinst, "BlockInput", pHideOptions.BlockInput);
     pHideOptions.NtGetContextThread = _Pluginreadintfromini(hinst, "NtGetContextThread", pHideOptions.NtGetContextThread);
@@ -339,6 +382,7 @@ void LoadOptions()
     pHideOptions.NtSetDebugFilterState = _Pluginreadintfromini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
     pHideOptions.NtClose = _Pluginreadintfromini(hinst, "NtClose", pHideOptions.NtClose);
     pHideOptions.NtCreateThreadEx = _Pluginreadintfromini(hinst, "NtCreateThreadEx", pHideOptions.NtCreateThreadEx);
+    pHideOptions.removeDebugPrivileges = _Pluginreadintfromini(hinst, "removeDebugPrivileges", pHideOptions.removeDebugPrivileges);
     pHideOptions.preventThreadCreation = _Pluginreadintfromini(hinst, "preventThreadCreation", pHideOptions.preventThreadCreation);
     pHideOptions.removeEPBreak = _Pluginreadintfromini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
 
@@ -353,6 +397,12 @@ void LoadOptions()
     pHideOptions.DLLStealth = _Pluginreadintfromini(hinst, "DLLStealth", pHideOptions.DLLStealth);
     pHideOptions.DLLNormal = _Pluginreadintfromini(hinst, "DLLNormal", pHideOptions.DLLNormal);
     pHideOptions.DLLUnload = _Pluginreadintfromini(hinst, "DLLUnload", pHideOptions.DLLUnload);
+    pHideOptions.GetTickCount = _Pluginreadintfromini(hinst, "GetTickCount", pHideOptions.GetTickCount);
+    pHideOptions.GetTickCount64 = _Pluginreadintfromini(hinst, "GetTickCount64", pHideOptions.GetTickCount64);
+    pHideOptions.GetLocalTime = _Pluginreadintfromini(hinst, "GetLocalTime", pHideOptions.GetLocalTime);
+    pHideOptions.GetSystemTime = _Pluginreadintfromini(hinst, "GetSystemTime", pHideOptions.GetSystemTime);
+    pHideOptions.NtQuerySystemTime = _Pluginreadintfromini(hinst, "NtQuerySystemTime", pHideOptions.NtQuerySystemTime);
+    pHideOptions.NtQueryPerformanceCounter = _Pluginreadintfromini(hinst, "NtQueryPerformanceCounter", pHideOptions.NtQueryPerformanceCounter);
 }
 
 //options dialog proc
@@ -375,7 +425,6 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_SETCHECK, pHideOptions.NtQueryInformationProcess, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_SETCHECK, pHideOptions.NtQueryObject, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_SETCHECK, pHideOptions.NtYieldExecution, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_SETCHECK, pHideOptions.GetTickCount, 0);
         SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_SETCHECK, pHideOptions.OutputDebugStringA, 0);
         SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_SETCHECK, pHideOptions.BlockInput, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, pHideOptions.NtGetContextThread, 0);
@@ -390,6 +439,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, pHideOptions.NtSetDebugFilterState, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, pHideOptions.NtClose, 0);
         SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, pHideOptions.NtCreateThreadEx, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_SETCHECK, pHideOptions.removeDebugPrivileges, 0);
         SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, pHideOptions.preventThreadCreation, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
         SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
@@ -400,11 +450,17 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_SETCHECK, pHideOptions.GetTickCount, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT64), BM_SETCHECK, pHideOptions.GetTickCount64, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_GETLOCALTIME), BM_SETCHECK, pHideOptions.GetLocalTime, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_SETCHECK, pHideOptions.GetSystemTime, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_SETCHECK, pHideOptions.NtQuerySystemTime, 0);
+        SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, pHideOptions.NtQueryPerformanceCounter, 0);
 
-		if (!isWindows64())
-		{
-			EnableWindow(GetDlgItem(hWnd, IDC_X64FIX), FALSE);
-		}
+        if (!isWindows64())
+        {
+            EnableWindow(GetDlgItem(hWnd, IDC_X64FIX), FALSE);
+        }
 
         break;
     }
