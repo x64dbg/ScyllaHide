@@ -1,7 +1,7 @@
 #pragma once
 
 #define SCYLLA_HIDE_MAJOR_VERSION 0
-#define SCYLLA_HIDE_MINOR_VERSION 7
+#define SCYLLA_HIDE_MINOR_VERSION 8
 
 #define STRA(x) #x
 #define STRW(x) L#x

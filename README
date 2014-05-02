@@ -14,7 +14,8 @@ Debugger Hiding:
 - PEB - BeingDebugged, NtGlobalFlag, Heap Flags
 - NtSetInformationThread - ThreadHideFromDebugger
 - NtQuerySystemInformation - SystemKernelDebuggerInformation, SystemProcessInformation
-- NtQueryInformationProcess - ProcessDebugFlags, ProcessDebugObjectHandle, ProcessDebugPort, ProcessBasicInformation
+- NtQueryInformationProcess - ProcessDebugFlags, ProcessDebugObjectHandle, ProcessDebugPort, ProcessBasicInformation, ProcessBreakOnTermination, ProcessHandleTracing
+- NtSetInformationProcess - ProcessBreakOnTermination, ProcessHandleTracing
 - NtQueryObject - ObjectTypesInformation, ObjectTypeInformation
 - NtYieldExecution
 - NtSetDebugFilterState

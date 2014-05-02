@@ -1,7 +1,7 @@
 #define USE_STANDARD_FILE_FUNCTIONS
 #pragma warning(disable : 4996 4512 4127 4201)
 
-//#define BUILD_IDA_64BIT 1
+#define BUILD_IDA_64BIT 1
 
 //for 64bit - p64
 #ifdef BUILD_IDA_64BIT
@@ -37,7 +37,7 @@ struct HideOptions pHideOptions = {0};
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
-const WCHAR ScyllaHidex64ServerFilename[] = L"IDAServerx64.exe";
+const WCHAR ScyllaHidex64ServerFilename[] = L"ScyllaHideIDASrvx64.exe";
 
 WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
@@ -654,7 +654,7 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                         ServerStartupInfo.cb = sizeof(ServerStartupInfo);
                         if (!CreateProcessW(0, commandline, NULL, NULL, FALSE, 0, NULL, NULL, &ServerStartupInfo, &ServerProcessInfo))
                         {
-                            msg("[ScyllaHide] Cannot start server\n");
+                            msg("[ScyllaHide] Cannot start server, error %d\n", GetLastError());
                         }
                         else
                         {

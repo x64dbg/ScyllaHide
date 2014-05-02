@@ -16,7 +16,7 @@ bool isNewVersionAvailable()
 	}
 
     WCHAR szHead[] = L"Accept: */*\r\n\r\n";
-	HINTERNET hCon = InternetOpenUrlW(hi, UPDATE_CHECK_URL, szHead, wcslen(szHead), INTERNET_FLAG_PRAGMA_NOCACHE, 0);
+	HINTERNET hCon = InternetOpenUrlW(hi, UPDATE_CHECK_URL, szHead, (DWORD)wcslen(szHead), INTERNET_FLAG_PRAGMA_NOCACHE, 0);
 	if(!hCon)
 	{
 		MessageBoxA(0, "InternetOpenUrlW failed", "ERROR", MB_ICONERROR);
