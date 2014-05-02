@@ -48,17 +48,17 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
     if (newProcess == false)
     {
         LogWrap(L"[ScyllaHide] Apply hooks again");
-		if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
-		{
-			WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
-		}
+        if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
+        {
+            WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
+        }
     }
     else
     {
-		if (pHideOptions.removeDebugPrivileges)
-		{
-			RemoveDebugPrivileges(hProcess);
-		}
+        if (pHideOptions.removeDebugPrivileges)
+        {
+            RemoveDebugPrivileges(hProcess);
+        }
 
         RestoreHooks(&DllExchangeLoader, hProcess);
 
@@ -88,26 +88,26 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 
 void checkStructAlignment()
 {
-	char text[600] = {0};
+    char text[600] = {0};
 
 #ifdef _WIN64
-	if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_64)
-	{
-		wsprintfA(text,"Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE), HOOK_DLL_EXCHANGE_SIZE_64);
-		MessageBoxA(0, text, "Error", 0);
-	}
+    if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_64)
+    {
+        wsprintfA(text,"Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE), HOOK_DLL_EXCHANGE_SIZE_64);
+        MessageBoxA(0, text, "Error", 0);
+    }
 #else
-	if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_32)
-	{
-		wsprintfA(text, "Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE), HOOK_DLL_EXCHANGE_SIZE_32);
-		MessageBoxA(0, text, "Error", 0);
-	}
+    if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_32)
+    {
+        wsprintfA(text, "Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE), HOOK_DLL_EXCHANGE_SIZE_32);
+        MessageBoxA(0, text, "Error", 0);
+    }
 #endif
 }
 
 void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
 {
-	checkStructAlignment();
+    checkStructAlignment();
 
     HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
     if (hProcess)
@@ -132,157 +132,157 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
 
 void DoThreadMagic( HANDLE hThread )
 {
-	SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
-	NtSetInformationThread(hThread, ThreadHideFromDebugger, 0, 0);
-	ResumeThread(hThread);
+    SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
+    NtSetInformationThread(hThread, ThreadHideFromDebugger, 0, 0);
+    ResumeThread(hThread);
 
-	WaitForSingleObject(hThread, INFINITE);
+    WaitForSingleObject(hThread, INFINITE);
 }
 
 LPVOID NormalDllInjection( HANDLE hProcess, const WCHAR * dllPath )
 {
-	SIZE_T memorySize = (wcslen(dllPath) + 1) * sizeof(WCHAR);
+    SIZE_T memorySize = (wcslen(dllPath) + 1) * sizeof(WCHAR);
 
-	LPVOID remoteMemory = VirtualAllocEx(hProcess, NULL, memorySize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-	DWORD hModule = 0;
+    LPVOID remoteMemory = VirtualAllocEx(hProcess, NULL, memorySize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    DWORD hModule = 0;
 
-	if (!remoteMemory)
-	{
-		LogWrap(L"[ScyllaHide] DLL INJECTION: VirtualAllocEx failed!");
-		return 0;
-	}
+    if (!remoteMemory)
+    {
+        LogWrap(L"[ScyllaHide] DLL INJECTION: VirtualAllocEx failed!");
+        return 0;
+    }
 
-	if (WriteProcessMemory(hProcess, remoteMemory, dllPath, memorySize, 0))
-	{
-		HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)LoadLibraryW,remoteMemory,CREATE_SUSPENDED, 0);
-		if (hThread)
-		{
-			DoThreadMagic(hThread);
+    if (WriteProcessMemory(hProcess, remoteMemory, dllPath, memorySize, 0))
+    {
+        HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)LoadLibraryW,remoteMemory,CREATE_SUSPENDED, 0);
+        if (hThread)
+        {
+            DoThreadMagic(hThread);
 
-			GetExitCodeThread(hThread, &hModule);
+            GetExitCodeThread(hThread, &hModule);
 
-			if (!hModule)
-			{
-				LogWrap(L"[ScyllaHide] DLL INJECTION: Failed load library!");
-			}
+            if (!hModule)
+            {
+                LogWrap(L"[ScyllaHide] DLL INJECTION: Failed load library!");
+            }
 
-			CloseHandle(hThread);
-		}
-		else
-		{
-			LogWrap(L"[ScyllaHide] DLL INJECTION: Failed to start thread %d!", GetLastError());
-		}
-	}
-	else
-	{
-		LogWrap(L"[ScyllaHide] DLL INJECTION: Failed WriteProcessMemory!");
-	}
+            CloseHandle(hThread);
+        }
+        else
+        {
+            LogWrap(L"[ScyllaHide] DLL INJECTION: Failed to start thread %d!", GetLastError());
+        }
+    }
+    else
+    {
+        LogWrap(L"[ScyllaHide] DLL INJECTION: Failed WriteProcessMemory!");
+    }
 
-	VirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
+    VirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
 
 
 
-	return (LPVOID)hModule;
+    return (LPVOID)hModule;
 }
 
 LPVOID StealthDllInjection( HANDLE hProcess, const WCHAR * dllPath )
 {
-	LPVOID remoteImageBaseOfInjectedDll = 0;
+    LPVOID remoteImageBaseOfInjectedDll = 0;
 
-	BYTE * dllMemory = ReadFileToMemory(dllPath);
-	if (dllMemory)
-	{
-		remoteImageBaseOfInjectedDll = MapModuleToProcess(hProcess, dllMemory);
-		if(remoteImageBaseOfInjectedDll)
-		{
-			PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)dllMemory;
-			PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
+    BYTE * dllMemory = ReadFileToMemory(dllPath);
+    if (dllMemory)
+    {
+        remoteImageBaseOfInjectedDll = MapModuleToProcess(hProcess, dllMemory);
+        if(remoteImageBaseOfInjectedDll)
+        {
+            PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)dllMemory;
+            PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
 
-			if (pNt->OptionalHeader.AddressOfEntryPoint)
-			{
-				DWORD_PTR dllMain = pNt->OptionalHeader.AddressOfEntryPoint + (DWORD_PTR)remoteImageBaseOfInjectedDll;
+            if (pNt->OptionalHeader.AddressOfEntryPoint)
+            {
+                DWORD_PTR dllMain = pNt->OptionalHeader.AddressOfEntryPoint + (DWORD_PTR)remoteImageBaseOfInjectedDll;
 
-				HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)dllMain,remoteImageBaseOfInjectedDll,CREATE_SUSPENDED, 0);
-				if (hThread)
-				{
-					DoThreadMagic(hThread);
+                HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)dllMain,remoteImageBaseOfInjectedDll,CREATE_SUSPENDED, 0);
+                if (hThread)
+                {
+                    DoThreadMagic(hThread);
 
-					CloseHandle(hThread);
-				}
-				else
-				{
-					LogWrap(L"[ScyllaHide] DLL INJECTION: Failed to start thread %d!", GetLastError());
-				}
-			}
-		}
-		else
-		{
-			LogWrap(L"[ScyllaHide] DLL INJECTION: Failed to map image of %s!", dllPath);
-		}
-		free(dllMemory);
-	}
+                    CloseHandle(hThread);
+                }
+                else
+                {
+                    LogWrap(L"[ScyllaHide] DLL INJECTION: Failed to start thread %d!", GetLastError());
+                }
+            }
+        }
+        else
+        {
+            LogWrap(L"[ScyllaHide] DLL INJECTION: Failed to map image of %s!", dllPath);
+        }
+        free(dllMemory);
+    }
 
-	return remoteImageBaseOfInjectedDll;
+    return remoteImageBaseOfInjectedDll;
 }
 
 void injectDll(DWORD targetPid, const WCHAR * dllPath)
 {
-	HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
-	if (hProcess)
-	{
-		LPVOID remoteImage = 0;
+    HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+    if (hProcess)
+    {
+        LPVOID remoteImage = 0;
 
-		if (pHideOptions.DLLStealth)
-		{
-			LogWrap(L"[ScyllaHide] Starting Stealth DLL Injection!");
-			remoteImage = StealthDllInjection(hProcess, dllPath);
-		}
-		else if (pHideOptions.DLLNormal)
-		{
-			LogWrap(L"[ScyllaHide] Starting Normal DLL Injection!");
-			remoteImage = NormalDllInjection(hProcess, dllPath);
-		}
-		else
-		{
-			LogWrap(L"[ScyllaHide] DLL INJECTION: No injection type selected!");
-		}
+        if (pHideOptions.DLLStealth)
+        {
+            LogWrap(L"[ScyllaHide] Starting Stealth DLL Injection!");
+            remoteImage = StealthDllInjection(hProcess, dllPath);
+        }
+        else if (pHideOptions.DLLNormal)
+        {
+            LogWrap(L"[ScyllaHide] Starting Normal DLL Injection!");
+            remoteImage = NormalDllInjection(hProcess, dllPath);
+        }
+        else
+        {
+            LogWrap(L"[ScyllaHide] DLL INJECTION: No injection type selected!");
+        }
 
-		if (remoteImage)
-		{
-			LogWrap(L"[ScyllaHide] DLL INJECTION: Injection of %s successful, Imagebase %p", dllPath, remoteImage);
+        if (remoteImage)
+        {
+            LogWrap(L"[ScyllaHide] DLL INJECTION: Injection of %s successful, Imagebase %p", dllPath, remoteImage);
 
-			if (pHideOptions.DLLUnload)
-			{
-				LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p", remoteImage);
+            if (pHideOptions.DLLUnload)
+            {
+                LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p", remoteImage);
 
-				if (pHideOptions.DLLNormal)
-				{
-					HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)FreeLibrary,remoteImage, CREATE_SUSPENDED, 0);
-					if (hThread)
-					{
-						DoThreadMagic(hThread);
-						CloseHandle(hThread);
-						LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
-					}
-					else
-					{
-						LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p FAILED", remoteImage);
-					}
-				}
-				else if (pHideOptions.DLLStealth)
-				{
-					VirtualFreeEx(hProcess, remoteImage, 0, MEM_RELEASE);
-					LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
-				}
-			}
-		}
+                if (pHideOptions.DLLNormal)
+                {
+                    HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)FreeLibrary,remoteImage, CREATE_SUSPENDED, 0);
+                    if (hThread)
+                    {
+                        DoThreadMagic(hThread);
+                        CloseHandle(hThread);
+                        LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
+                    }
+                    else
+                    {
+                        LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p FAILED", remoteImage);
+                    }
+                }
+                else if (pHideOptions.DLLStealth)
+                {
+                    VirtualFreeEx(hProcess, remoteImage, 0, MEM_RELEASE);
+                    LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
+                }
+            }
+        }
 
-		CloseHandle(hProcess);
-	}
-	else
-	{
-		LogWrap(L"[ScyllaHide] DLL INJECTION: Cannot open process handle %d", targetPid);
-	}
+        CloseHandle(hProcess);
+    }
+    else
+    {
+        LogWrap(L"[ScyllaHide] DLL INJECTION: Cannot open process handle %d", targetPid);
+    }
 }
 
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath)
@@ -331,7 +331,6 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnablePebNtGlobalFlag = pHideOptions.PEBNtGlobalFlag;
     data->EnablePebStartupInfo = pHideOptions.PEBStartupInfo;
     data->EnableBlockInputHook = pHideOptions.BlockInput;
-    data->EnableGetTickCountHook = pHideOptions.GetTickCount;
     data->EnableOutputDebugStringHook = pHideOptions.OutputDebugStringA;
     data->EnableNtSetInformationThreadHook = pHideOptions.NtSetInformationThread;
     data->EnableNtQueryInformationProcessHook = pHideOptions.NtQueryInformationProcess;
@@ -341,16 +340,21 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableNtCloseHook = pHideOptions.NtClose;
     data->EnableNtCreateThreadExHook = pHideOptions.NtCreateThreadEx;
     data->EnablePreventThreadCreation = pHideOptions.preventThreadCreation;
+    data->EnableNtUserFindWindowExHook = pHideOptions.NtUserFindWindowEx;
+    data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
+    data->EnableNtUserQueryWindowHook = pHideOptions.NtUserQueryWindow;
+    data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
+    data->EnableGetTickCountHook = pHideOptions.GetTickCount;
+    data->EnableGetTickCount64Hook = pHideOptions.GetTickCount64;
+    data->EnableGetLocalTimeHook = pHideOptions.GetLocalTime;
+    data->EnableGetSystemTimeHook = pHideOptions.GetSystemTime;
+    data->EnableNtQuerySystemTimeHook = pHideOptions.NtQuerySystemTime;
+    data->EnableNtQueryPerformanceCounterHook = pHideOptions.NtQueryPerformanceCounter;
 
     data->EnableNtGetContextThreadHook = pHideOptions.NtGetContextThread;
     data->EnableNtSetContextThreadHook = pHideOptions.NtSetContextThread;
     data->EnableNtContinueHook = pHideOptions.NtContinue;
     data->EnableKiUserExceptionDispatcherHook = pHideOptions.KiUserExceptionDispatcher;
-
-    data->EnableNtUserFindWindowExHook = pHideOptions.NtUserFindWindowEx;
-    data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
-    data->EnableNtUserQueryWindowHook = pHideOptions.NtUserQueryWindow;
-    data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
 
     data->isKernel32Hooked = FALSE;
     data->isNtdllHooked = FALSE;
@@ -365,59 +369,59 @@ tIsWow64Process fnIsWow64Process = 0;
 
 bool isWindows64()
 {
-	SYSTEM_INFO si = {0};
+    SYSTEM_INFO si = {0};
 
-	if (!_GetNativeSystemInfo)
-	{
-		_GetNativeSystemInfo = (tGetNativeSystemInfo)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetNativeSystemInfo");
-	}
+    if (!_GetNativeSystemInfo)
+    {
+        _GetNativeSystemInfo = (tGetNativeSystemInfo)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetNativeSystemInfo");
+    }
 
-	if (_GetNativeSystemInfo)
-	{
-		_GetNativeSystemInfo(&si);
-	}
-	else
-	{
-		GetSystemInfo(&si);
-	}
+    if (_GetNativeSystemInfo)
+    {
+        _GetNativeSystemInfo(&si);
+    }
+    else
+    {
+        GetSystemInfo(&si);
+    }
 
-	return (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
+    return (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
 }
 
 bool IsProcessWOW64(HANDLE hProcess)
 {
-	BOOL bIsWow64 = FALSE;
-	if (!fnIsWow64Process)
-	{
-		fnIsWow64Process = (tIsWow64Process)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
-	}
-	
+    BOOL bIsWow64 = FALSE;
+    if (!fnIsWow64Process)
+    {
+        fnIsWow64Process = (tIsWow64Process)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
+    }
 
-	if (fnIsWow64Process)
-	{
-		fnIsWow64Process(hProcess, &bIsWow64);
-	}
 
-	return (bIsWow64 != FALSE);
+    if (fnIsWow64Process)
+    {
+        fnIsWow64Process(hProcess, &bIsWow64);
+    }
+
+    return (bIsWow64 != FALSE);
 }
 
 bool RemoveDebugPrivileges(HANDLE hProcess)
 {
-	TOKEN_PRIVILEGES Debug_Privileges;
+    TOKEN_PRIVILEGES Debug_Privileges;
 
-	if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
-	{
-		HANDLE hToken = 0;
-		if (OpenProcessToken(hProcess, TOKEN_ADJUST_PRIVILEGES, &hToken))
-		{
-			Debug_Privileges.Privileges[0].Attributes = 0;
-			Debug_Privileges.PrivilegeCount = 1;
+    if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
+    {
+        HANDLE hToken = 0;
+        if (OpenProcessToken(hProcess, TOKEN_ADJUST_PRIVILEGES, &hToken))
+        {
+            Debug_Privileges.Privileges[0].Attributes = 0;
+            Debug_Privileges.PrivilegeCount = 1;
 
-			AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL);
-			CloseHandle(hToken);
-			return true;
-		}
-	}
+            AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL);
+            CloseHandle(hToken);
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
