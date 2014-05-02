@@ -400,6 +400,12 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
         SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
+
+		if (!isWindows64())
+		{
+			EnableWindow(GetDlgItem(hWnd, IDC_X64FIX), FALSE);
+		}
+
         break;
     }
     case WM_CLOSE:
@@ -527,7 +533,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
         fixForegroundWindow();
         fixFPUBug();
     }
-    if(pHideOptions.x64Fix) {
+    if(pHideOptions.x64Fix && isWindows64()) {
         fixX64Bug();
     }
     if(pHideOptions.skipEPOutsideCode) {
