@@ -120,7 +120,6 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnablePebNtGlobalFlag = TRUE;
     data->EnablePebStartupInfo = TRUE;
     data->EnableBlockInputHook = TRUE;
-    data->EnableGetTickCountHook = TRUE;
     data->EnableKiUserExceptionDispatcherHook = TRUE;
     data->EnableNtCloseHook = TRUE;
     data->EnableNtContinueHook = TRUE;
@@ -139,6 +138,12 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableProtectProcessId = TRUE;
     data->EnableNtCreateThreadExHook = TRUE;
     data->EnablePreventThreadCreation = FALSE; //special hooks disabled by default
+    data->EnableGetTickCountHook = TRUE;
+    data->EnableGetTickCount64Hook = TRUE;
+    data->EnableGetLocalTimeHook = TRUE;
+    data->EnableGetSystemTimeHook = TRUE;
+    data->EnableNtQuerySystemTimeHook = TRUE;
+    data->EnableNtQueryPerformanceCounterHook = TRUE;
 
     data->isKernel32Hooked = FALSE;
     data->isNtdllHooked = FALSE;
