@@ -74,7 +74,6 @@ void CreateSettings()
 void CreateDefaultSettings(const WCHAR * iniFile)
 {
     WriteIniSettings(L"BlockInputHook", L"1", iniFile);
-    WriteIniSettings(L"GetTickCountHook", L"1", iniFile);
     WriteIniSettings(L"KiUserExceptionDispatcherHook", L"1", iniFile);
     WriteIniSettings(L"NtCloseHook", L"1", iniFile);
     WriteIniSettings(L"NtContinueHook", L"1", iniFile);
@@ -95,9 +94,16 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"PebNtGlobalFlag", L"1", iniFile);
     WriteIniSettings(L"PebStartupInfo", L"1", iniFile);
     WriteIniSettings(L"NtCreateThreadExHook", L"1", iniFile);
+    WriteIniSettings(L"removeDebugPrivileges", L"1", iniFile);
     WriteIniSettings(L"DLLStealth", L"1", iniFile);
     WriteIniSettings(L"DLLNormal", L"1", iniFile);
     WriteIniSettings(L"DLLUnload", L"1", iniFile);
+    WriteIniSettings(L"GetTickCountHook", L"1", iniFile);
+    WriteIniSettings(L"GetTickCount64Hook", L"1", iniFile);
+    WriteIniSettings(L"GetLocalTimeHook", L"1", iniFile);
+    WriteIniSettings(L"GetSystemTimeHook", L"1", iniFile);
+    WriteIniSettings(L"NtQuerySystemTimeHook", L"1", iniFile);
+    WriteIniSettings(L"NtQueryPerformanceCounterHook", L"1", iniFile);
     WriteIniSettings(L"PreventThreadCreation", L"0", iniFile); //special hook disabled by default
     WriteIniSettings(L"autostartServer", L"1", iniFile);
     WriteIniSettings(L"serverPort", L"1337", iniFile);
@@ -111,7 +117,6 @@ void ReadSettings()
 void ReadSettingsFromIni(const WCHAR * iniFile)
 {
     pHideOptions.BlockInput = ReadIniSettingsInt(L"BlockInputHook", iniFile);
-    pHideOptions.GetTickCount = ReadIniSettingsInt(L"GetTickCountHook", iniFile);
     pHideOptions.KiUserExceptionDispatcher = ReadIniSettingsInt(L"KiUserExceptionDispatcherHook", iniFile);
     pHideOptions.NtClose = ReadIniSettingsInt(L"NtCloseHook", iniFile);
     pHideOptions.NtContinue = ReadIniSettingsInt(L"NtContinueHook", iniFile);
@@ -132,10 +137,17 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.PEBNtGlobalFlag = ReadIniSettingsInt(L"PebNtGlobalFlag", iniFile);
     pHideOptions.PEBStartupInfo = ReadIniSettingsInt(L"PebStartupInfo", iniFile);
     pHideOptions.NtCreateThreadEx = ReadIniSettingsInt(L"NtCreateThreadExHook", iniFile);
+    pHideOptions.removeDebugPrivileges = ReadIniSettingsInt(L"removeDebugPrivileges", iniFile);
     pHideOptions.preventThreadCreation = ReadIniSettingsInt(L"PreventThreadCreation", iniFile);
     pHideOptions.DLLNormal = ReadIniSettingsInt(L"DLLNormal", iniFile);
     pHideOptions.DLLStealth = ReadIniSettingsInt(L"DLLStealth", iniFile);
     pHideOptions.DLLUnload = ReadIniSettingsInt(L"DLLUnload", iniFile);
+    pHideOptions.GetTickCount = ReadIniSettingsInt(L"GetTickCountHook", iniFile);
+    pHideOptions.GetTickCount64 = ReadIniSettingsInt(L"GetTickCount64Hook", iniFile);
+    pHideOptions.GetLocalTime = ReadIniSettingsInt(L"GetLocalTimeHook", iniFile);
+    pHideOptions.GetSystemTime = ReadIniSettingsInt(L"GetSystemTimeHook", iniFile);
+    pHideOptions.NtQuerySystemTime = ReadIniSettingsInt(L"NtQuerySystemTimeHook", iniFile);
+    pHideOptions.NtQueryPerformanceCounter = ReadIniSettingsInt(L"NtQueryPerformanceCounterHook", iniFile);
     ReadIniSettings(L"serverPort", iniFile, pHideOptions.serverPort);
     pHideOptions.autostartServer = ReadIniSettingsInt(L"autostartServer", iniFile);
 }
@@ -148,7 +160,6 @@ void SaveSettings()
 void SaveSettingsToIni(const WCHAR * iniFile)
 {
     WriteIniSettingsInt(L"BlockInputHook", pHideOptions.BlockInput, iniFile);
-    WriteIniSettingsInt(L"GetTickCountHook", pHideOptions.GetTickCount, iniFile);
     WriteIniSettingsInt(L"KiUserExceptionDispatcherHook", pHideOptions.KiUserExceptionDispatcher, iniFile);
     WriteIniSettingsInt(L"NtCloseHook", pHideOptions.NtClose, iniFile);
     WriteIniSettingsInt(L"NtContinueHook", pHideOptions.NtContinue, iniFile);
@@ -169,10 +180,17 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"PebNtGlobalFlag", pHideOptions.PEBNtGlobalFlag, iniFile);
     WriteIniSettingsInt(L"PebStartupInfo", pHideOptions.PEBStartupInfo, iniFile);
     WriteIniSettingsInt(L"NtCreateThreadExHook", pHideOptions.NtCreateThreadEx, iniFile);
+    WriteIniSettingsInt(L"removeDebugPrivileges", pHideOptions.removeDebugPrivileges, iniFile);
     WriteIniSettingsInt(L"PreventThreadCreation", pHideOptions.preventThreadCreation, iniFile);
     WriteIniSettingsInt(L"DLLStealth", pHideOptions.DLLStealth, iniFile);
     WriteIniSettingsInt(L"DLLNormal", pHideOptions.DLLNormal, iniFile);
     WriteIniSettingsInt(L"DLLUnload", pHideOptions.DLLUnload, iniFile);
+    WriteIniSettingsInt(L"GetTickCountHook", pHideOptions.GetTickCount, iniFile);
+    WriteIniSettingsInt(L"GetTickCount64Hook", pHideOptions.GetTickCount64, iniFile);
+    WriteIniSettingsInt(L"GetLocalTimeHook", pHideOptions.GetLocalTime, iniFile);
+    WriteIniSettingsInt(L"GetSystemTimeHook", pHideOptions.GetSystemTime, iniFile);
+    WriteIniSettingsInt(L"NtQuerySystemTimeHook", pHideOptions.NtQuerySystemTime, iniFile);
+    WriteIniSettingsInt(L"NtQueryPerformanceCounterHook", pHideOptions.NtQueryPerformanceCounter, iniFile);
     WriteIniSettingsInt(L"autostartServer", pHideOptions.autostartServer, iniFile);
     WriteIniSettings(L"serverPort", pHideOptions.serverPort, iniFile);
 }
