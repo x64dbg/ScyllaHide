@@ -106,12 +106,22 @@ void CloseServerSocket()
 }
 
 
+void checkStructSize()
+{
+	if (sizeof(IDA_SERVER_EXCHANGE) != IDA_SERVER_EXCHANGE_STRUCT_SIZE)
+	{
+		MessageBoxA(0, "WRONG!!! Size of IDA_SERVER_EXCHANGE?\n\n", "ERROR", MB_ICONERROR);
+	}
+}
+
 bool ConnectToServer(const char * host, const char * port)
 {
 	int iResult;
 	struct addrinfo *result = NULL,
 		*ptr = NULL,
 		hints;
+
+	checkStructSize();
 
 	ZeroMemory( &hints, sizeof(hints) );
 	hints.ai_family = AF_UNSPEC;
