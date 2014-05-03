@@ -113,7 +113,7 @@ bool GetFileDialog(TCHAR Buffer[MAX_PATH])
     sOpenFileName.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_HIDEREADONLY;
     sOpenFileName.lpstrTitle = szDialogTitle;
 
-    return (TRUE == GetOpenFileName(&sOpenFileName));
+    return (!!GetOpenFileName(&sOpenFileName));
 }
 
 void SaveOptions(HWND hWnd)
