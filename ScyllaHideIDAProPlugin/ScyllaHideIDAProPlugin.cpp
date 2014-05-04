@@ -803,7 +803,7 @@ void LogWrapper(const WCHAR * format, ...)
 
     WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
 
-    msg(textA);
+    msg("%s",textA);
     msg("\n");
 }
 

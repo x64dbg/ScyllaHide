@@ -404,6 +404,6 @@ void LogWrapper(const WCHAR * format, ...)
 
 	wvsprintfW(text, format, va_alist);
 
-	wprintf(text);
+	wprintf(L"%s",text);
 	wprintf(L"\n");
 }

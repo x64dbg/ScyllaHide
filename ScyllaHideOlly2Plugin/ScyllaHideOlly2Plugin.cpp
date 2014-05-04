@@ -672,7 +672,7 @@ void LogErrorWrapper(const WCHAR * format, ...)
 
     wvsprintfW(text, format, va_alist);
 
-    Error(text);
+    Error(L"%s",text);
 }
 
 void LogWrapper(const WCHAR * format, ...)
@@ -683,5 +683,5 @@ void LogWrapper(const WCHAR * format, ...)
 
     wvsprintfW(text, format, va_alist);
 
-    Message(0, text);
+    Message(0,L"%s", text);
 }

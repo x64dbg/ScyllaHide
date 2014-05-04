@@ -735,7 +735,7 @@ void LogErrorWrapper(const WCHAR * format, ...)
 
     WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
 
-    _Error(textA);
+    _Error("%s",textA);
 }
 
 void LogWrapper(const WCHAR * format, ...)
@@ -749,5 +749,5 @@ void LogWrapper(const WCHAR * format, ...)
 
     WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
 
-    _Message(0, textA);
+    _Message(0,"%s", textA);
 }
