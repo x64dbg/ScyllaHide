@@ -58,9 +58,9 @@ int ReadIniSettingsInt(const WCHAR * settingName, const WCHAR* inifile)
     return GetPrivateProfileIntW(INI_APPNAME, settingName, 0, inifile);
 }
 
-void ReadIniSettings(const WCHAR * settingName, const WCHAR* inifile, WCHAR* buf)
+void ReadIniSettings(const WCHAR * settingName, const WCHAR* inifile, WCHAR* buf, int bufsz)
 {
-    GetPrivateProfileStringW(INI_APPNAME, settingName, L"", buf, sizeof(&buf)+1, inifile);
+    GetPrivateProfileStringW(INI_APPNAME, settingName, L"", buf, bufsz, inifile);
 }
 
 void CreateSettings()
@@ -148,7 +148,7 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.GetSystemTime = ReadIniSettingsInt(L"GetSystemTimeHook", iniFile);
     pHideOptions.NtQuerySystemTime = ReadIniSettingsInt(L"NtQuerySystemTimeHook", iniFile);
     pHideOptions.NtQueryPerformanceCounter = ReadIniSettingsInt(L"NtQueryPerformanceCounterHook", iniFile);
-    ReadIniSettings(L"serverPort", iniFile, pHideOptions.serverPort);
+    ReadIniSettings(L"serverPort", iniFile, pHideOptions.serverPort, sizeof(pHideOptions.serverPort)/sizeof(WCHAR));
     pHideOptions.autostartServer = ReadIniSettingsInt(L"autostartServer", iniFile);
 
 	if (pHideOptions.DLLNormal)
