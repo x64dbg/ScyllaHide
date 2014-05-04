@@ -1,9 +1,16 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include "TitanEngine.h"
-#include "Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\ScyllaHideOlly2Plugin\ScyllaHideVersion.h"
+#include "..\PluginGeneric\Injector.h"
+#include "..\PluginGeneric\ScyllaHideVersion.h"
+#include "..\PluginGeneric\IniSettings.h"
+
+typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+void LogWrapper(const WCHAR * format, ...);
+
+
+struct HideOptions pHideOptions = {0};
 
 #ifdef _WIN64
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -11,18 +18,29 @@ const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
-
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
+const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+extern t_LogWrapper LogWrap;
+extern t_LogWrapper LogErrorWrap;
 
-static WCHAR ScyllaHideDllPath[MAX_PATH] = { 0 };
-WCHAR NtApiIniPath[MAX_PATH] = { 0 };
+WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
+WCHAR NtApiIniPath[MAX_PATH] = {0};
+WCHAR ScyllaHideIniPath[MAX_PATH] = {0};
+
+bool bHooked;
+DWORD ProcessId;
+
+bool SetDebugPrivileges();
 
 BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
+		LogWrap = LogWrapper;
+		LogErrorWrap = LogWrapper;
+
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
         WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
         if (temp)
@@ -31,13 +49,29 @@ BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
             *temp = 0;
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
+			wcscpy(ScyllaHideIniPath, NtApiIniPath);
+			wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
             wcscat(NtApiIniPath, NtApiIniFilename);
+
+			CreateSettings();
+			SetDebugPrivileges(); //set debug privilege
         }
     }
     return TRUE;
-};
+}
 
-static bool SetDebugPrivileges()
+void LogWrapper(const WCHAR * format, ...)
+{
+	//WCHAR text[2000];
+	//va_list va_alist;
+	//va_start(va_alist, format);
+
+	//wvsprintfW(text, format, va_alist);
+
+	//Message(0, text);
+}
+
+bool SetDebugPrivileges()
 {
 	TOKEN_PRIVILEGES Debug_Privileges;
 	bool retVal = false;
@@ -59,52 +93,56 @@ static bool SetDebugPrivileges()
 	return retVal;
 }
 
-static void ScyllaHide(DWORD ProcessId)
-{
-    SetDebugPrivileges(); //set debug privilege
-    ReadNtApiInformation(); //read rva stuff
-    startInjection(ProcessId, ScyllaHideDllPath); //inject
-}
-
 extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debugEvent, int CallReason)
 {
-    static bool bHooked;
-    static DWORD ProcessId;
+	switch(CallReason)
+	{
+	case UE_PLUGIN_CALL_REASON_EXCEPTION:
+		{
+			switch(debugEvent->dwDebugEventCode)
+			{
+			case CREATE_PROCESS_DEBUG_EVENT:
+				{
+					ProcessId=debugEvent->dwProcessId;
+					bHooked = false;
+					ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+					ReadSettings();
+					break;
+				}
 
-    switch(CallReason)
-    {
-    case UE_PLUGIN_CALL_REASON_EXCEPTION:
-    {
-        switch(debugEvent->dwDebugEventCode)
-        {
-        case CREATE_PROCESS_DEBUG_EVENT:
-        {
-            ProcessId=debugEvent->dwProcessId;
-            bHooked = false;
-			ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
-        }
-        break;
+			case LOAD_DLL_DEBUG_EVENT:
+				{
+					if (bHooked)
+					{
+						startInjection(ProcessId, ScyllaHideDllPath, false);
+					}
+					break;
+				}
+			case EXCEPTION_DEBUG_EVENT:
+				{
+					switch(debugEvent->u.Exception.ExceptionRecord.ExceptionCode)
+					{
+					case STATUS_BREAKPOINT:
+						{
+							if (!bHooked)
+							{
+								ReadNtApiInformation();
 
-        case EXCEPTION_DEBUG_EVENT:
-        {
-            switch(debugEvent->u.Exception.ExceptionRecord.ExceptionCode)
-            {
-            case STATUS_BREAKPOINT:
-            {
-                if (!bHooked)
-                {
-                    bHooked = true;
-                    ScyllaHide(ProcessId);
-                }
-            }
-            break;
-            }
-        }
-        break;
-        }
-    }
-    break;
-    }
+								bHooked = true;
+								startInjection(ProcessId, ScyllaHideDllPath, true);
+							}
+							break;
+						}
+
+					}
+
+					break;
+				}
+
+			}
+		}
+		break;
+	}
 }
 
 extern "C" __declspec(dllexport) bool TitanRegisterPlugin(char* szPluginName, DWORD* titanPluginMajorVersion, DWORD* titanPluginMinorVersion)

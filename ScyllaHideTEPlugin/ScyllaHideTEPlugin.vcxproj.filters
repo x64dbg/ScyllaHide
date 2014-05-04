@@ -24,9 +24,6 @@
     <ClCompile Include="ScyllaHideTEPlugin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Injector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -69,11 +66,14 @@
     <ClCompile Include="..\distorm\wstring.c">
       <Filter>Source Files\distorm</Filter>
     </ClCompile>
+    <ClCompile Include="..\PluginGeneric\IniSettings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\PluginGeneric\Injector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Injector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TitanEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -121,6 +121,15 @@
     </ClInclude>
     <ClInclude Include="..\distorm\x86defs.h">
       <Filter>Header Files\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\IniSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\Injector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
