@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "IniSettings.h"
-#include "..\ScyllaHideOlly2Plugin\Injector.h"
+#include "..\PluginGeneric\Injector.h"
 
 #define INI_APPNAME L"SCYLLA_HIDE"
 
@@ -38,7 +38,7 @@ bool WriteIniSettings(const WCHAR * settingName, const WCHAR * settingValue, con
 
     if (!WritePrivateProfileStringW(INI_APPNAME, settingName, settingValue, inifile))
     {
-        printf("WritePrivateProfileStringW error %d\n", GetLastError());
+        //printf("WritePrivateProfileStringW error %d\n", GetLastError());
         return false;
     }
 
@@ -73,40 +73,50 @@ void CreateSettings()
 
 void CreateDefaultSettings(const WCHAR * iniFile)
 {
-    WriteIniSettings(L"BlockInputHook", L"1", iniFile);
-    WriteIniSettings(L"KiUserExceptionDispatcherHook", L"1", iniFile);
-    WriteIniSettings(L"NtCloseHook", L"1", iniFile);
-    WriteIniSettings(L"NtContinueHook", L"1", iniFile);
-    WriteIniSettings(L"NtGetContextThreadHook", L"1", iniFile);
-    WriteIniSettings(L"NtQueryInformationProcessHook", L"1", iniFile);
-    WriteIniSettings(L"NtQueryObjectHook", L"1", iniFile);
-    WriteIniSettings(L"NtQuerySystemInformationHook", L"1", iniFile);
-    WriteIniSettings(L"NtSetContextThreadHook", L"1", iniFile);
-    WriteIniSettings(L"NtSetDebugFilterStateHook", L"1", iniFile);
-    WriteIniSettings(L"NtSetInformationThreadHook", L"1", iniFile);
-    WriteIniSettings(L"NtUserBuildHwndListHook", L"1", iniFile);
-    WriteIniSettings(L"NtUserFindWindowExHook", L"1", iniFile);
-    WriteIniSettings(L"NtUserQueryWindowHook", L"1", iniFile);
-    WriteIniSettings(L"NtYieldExecutionHook", L"1", iniFile);
-    WriteIniSettings(L"OutputDebugStringHook", L"1", iniFile);
-    WriteIniSettings(L"PebBeingDebugged", L"1", iniFile);
-    WriteIniSettings(L"PebHeapFlags", L"1", iniFile);
-    WriteIniSettings(L"PebNtGlobalFlag", L"1", iniFile);
-    WriteIniSettings(L"PebStartupInfo", L"1", iniFile);
-    WriteIniSettings(L"NtCreateThreadExHook", L"1", iniFile);
-    WriteIniSettings(L"removeDebugPrivileges", L"1", iniFile);
-    WriteIniSettings(L"DLLStealth", L"0", iniFile);
-    WriteIniSettings(L"DLLNormal", L"1", iniFile);
-    WriteIniSettings(L"DLLUnload", L"1", iniFile);
-    WriteIniSettings(L"GetTickCountHook", L"1", iniFile);
-    WriteIniSettings(L"GetTickCount64Hook", L"1", iniFile);
-    WriteIniSettings(L"GetLocalTimeHook", L"1", iniFile);
-    WriteIniSettings(L"GetSystemTimeHook", L"1", iniFile);
-    WriteIniSettings(L"NtQuerySystemTimeHook", L"1", iniFile);
-    WriteIniSettings(L"NtQueryPerformanceCounterHook", L"1", iniFile);
-    WriteIniSettings(L"PreventThreadCreation", L"0", iniFile); //special hook disabled by default
-    WriteIniSettings(L"autostartServer", L"1", iniFile);
-    WriteIniSettings(L"serverPort", L"1337", iniFile);
+	WriteIniSettings(L"BlockInputHook", L"1", iniFile);
+	WriteIniSettings(L"DLLNormal", L"1", iniFile);
+	WriteIniSettings(L"DLLStealth", L"0", iniFile);
+	WriteIniSettings(L"DLLUnload", L"1", iniFile);
+	WriteIniSettings(L"GetLocalTimeHook", L"1", iniFile);
+	WriteIniSettings(L"GetSystemTimeHook", L"1", iniFile);
+	WriteIniSettings(L"GetTickCount64Hook", L"1", iniFile);
+	WriteIniSettings(L"GetTickCountHook", L"1", iniFile);
+	WriteIniSettings(L"KiUserExceptionDispatcherHook", L"1", iniFile);
+	WriteIniSettings(L"NtCloseHook", L"1", iniFile);
+	WriteIniSettings(L"NtContinueHook", L"1", iniFile);
+	WriteIniSettings(L"NtCreateThreadExHook", L"1", iniFile);
+	WriteIniSettings(L"NtGetContextThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtQueryInformationProcessHook", L"1", iniFile);
+	WriteIniSettings(L"NtQueryObjectHook", L"1", iniFile);
+	WriteIniSettings(L"NtQueryPerformanceCounterHook", L"1", iniFile);
+	WriteIniSettings(L"NtQuerySystemInformationHook", L"1", iniFile);
+	WriteIniSettings(L"NtQuerySystemTimeHook", L"1", iniFile);
+	WriteIniSettings(L"NtSetContextThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtSetDebugFilterStateHook", L"1", iniFile);
+	WriteIniSettings(L"NtSetInformationThreadHook", L"1", iniFile);
+	WriteIniSettings(L"NtUserBuildHwndListHook", L"1", iniFile);
+	WriteIniSettings(L"NtUserFindWindowExHook", L"1", iniFile);
+	WriteIniSettings(L"NtUserQueryWindowHook", L"1", iniFile);
+	WriteIniSettings(L"NtYieldExecutionHook", L"1", iniFile);
+	WriteIniSettings(L"OutputDebugStringHook", L"1", iniFile);
+	WriteIniSettings(L"PebBeingDebugged", L"1", iniFile);
+	WriteIniSettings(L"PebHeapFlags", L"1", iniFile);
+	WriteIniSettings(L"PebNtGlobalFlag", L"1", iniFile);
+	WriteIniSettings(L"PebStartupInfo", L"1", iniFile);
+	WriteIniSettings(L"PreventThreadCreation", L"0", iniFile); //special hook disabled by default
+	WriteIniSettings(L"removeDebugPrivileges", L"1", iniFile);
+	
+	//ida specific
+	WriteIniSettings(L"autostartServer", L"1", iniFile);
+	WriteIniSettings(L"serverPort", L"1337", iniFile);
+
+	//olly1 specific
+	WriteIniSettings(L"breakTLS", L"1", iniFile);
+	WriteIniSettings(L"fixOllyBugs", L"1", iniFile);
+	WriteIniSettings(L"removeEPBreak", L"0", iniFile);
+	WriteIniSettings(L"skipEPOutsideCode", L"1", iniFile);
+	WriteIniSettings(L"x64Fix", L"1", iniFile);
+	WriteIniSettings(L"WindowTitle", L"ScyllaHide", iniFile);
 }
 
 void ReadSettings()
@@ -148,13 +158,23 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.GetSystemTime = ReadIniSettingsInt(L"GetSystemTimeHook", iniFile);
     pHideOptions.NtQuerySystemTime = ReadIniSettingsInt(L"NtQuerySystemTimeHook", iniFile);
     pHideOptions.NtQueryPerformanceCounter = ReadIniSettingsInt(L"NtQueryPerformanceCounterHook", iniFile);
-    ReadIniSettings(L"serverPort", iniFile, pHideOptions.serverPort, sizeof(pHideOptions.serverPort)/sizeof(WCHAR));
-    pHideOptions.autostartServer = ReadIniSettingsInt(L"autostartServer", iniFile);
 
 	if (pHideOptions.DLLNormal)
 	{
 		pHideOptions.DLLStealth = 0;
 	}
+
+	//ida specific
+    ReadIniSettings(L"serverPort", iniFile, pHideOptions.serverPort, _countof(pHideOptions.serverPort));
+    pHideOptions.autostartServer = ReadIniSettingsInt(L"autostartServer", iniFile);
+
+	//olly1 specific
+	pHideOptions.breakTLS = ReadIniSettingsInt(L"breakTLS", iniFile);
+	pHideOptions.fixOllyBugs = ReadIniSettingsInt(L"fixOllyBugs", iniFile);
+	pHideOptions.removeEPBreak = ReadIniSettingsInt(L"removeEPBreak", iniFile);
+	pHideOptions.skipEPOutsideCode = ReadIniSettingsInt(L"skipEPOutsideCode", iniFile);
+	pHideOptions.x64Fix = ReadIniSettingsInt(L"x64Fix", iniFile);
+	ReadIniSettings(L"WindowTitle", iniFile, pHideOptions.ollyTitle, _countof(pHideOptions.ollyTitle));
 }
 
 void SaveSettings()
@@ -196,6 +216,16 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"GetSystemTimeHook", pHideOptions.GetSystemTime, iniFile);
     WriteIniSettingsInt(L"NtQuerySystemTimeHook", pHideOptions.NtQuerySystemTime, iniFile);
     WriteIniSettingsInt(L"NtQueryPerformanceCounterHook", pHideOptions.NtQueryPerformanceCounter, iniFile);
+
+	//ida specific
     WriteIniSettingsInt(L"autostartServer", pHideOptions.autostartServer, iniFile);
     WriteIniSettings(L"serverPort", pHideOptions.serverPort, iniFile);
+
+	//olly1 specific
+	WriteIniSettingsInt(L"breakTLS", pHideOptions.breakTLS, iniFile);
+	WriteIniSettingsInt(L"fixOllyBugs", pHideOptions.fixOllyBugs, iniFile);
+	WriteIniSettingsInt(L"removeEPBreak", pHideOptions.removeEPBreak, iniFile);
+	WriteIniSettingsInt(L"skipEPOutsideCode", pHideOptions.skipEPOutsideCode, iniFile);
+	WriteIniSettingsInt(L"x64Fix", pHideOptions.x64Fix, iniFile);
+	WriteIniSettings(L"WindowTitle", pHideOptions.ollyTitle, iniFile);
 }
