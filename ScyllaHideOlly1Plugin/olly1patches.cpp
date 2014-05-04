@@ -1,6 +1,6 @@
 #include "olly1patches.h"
 #include <Windows.h>
-#include "..\ScyllaHideOlly2Plugin\Injector.h"
+#include "..\PluginGeneric\Injector.h"
 
 extern struct HideOptions pHideOptions;
 extern LPVOID ImageBase;

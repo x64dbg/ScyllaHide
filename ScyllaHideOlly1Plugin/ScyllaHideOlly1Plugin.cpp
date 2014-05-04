@@ -1,13 +1,13 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include "resource.h"
-#include "..\ScyllaHideOlly2Plugin\Injector.h"
-#include "..\ScyllaHideOlly2Plugin\ScyllaHideVersion.h"
+#include "..\PluginGeneric\Injector.h"
+#include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "ollyplugindefinitions.h"
 #include "olly1patches.h"
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\UpdateCheck\UpdateCheck.h"
+#include "..\PluginGeneric\UpdateCheck.h"
 
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
@@ -19,6 +19,7 @@ struct HideOptions pHideOptions = {0};
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
+const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 
 //globals
 static HINSTANCE hinst;
@@ -31,6 +32,7 @@ HWND hwmain; // Handle of main OllyDbg window
 
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
+WCHAR ScyllaHideIniPath[MAX_PATH] = {0};
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
@@ -56,6 +58,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
             *temp = 0;
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
+			wcscpy(ScyllaHideIniPath, NtApiIniPath);
+			wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
             wcscat(NtApiIniPath, NtApiIniFilename);
         }
 
@@ -79,7 +83,7 @@ bool GetFileDialog(TCHAR Buffer[MAX_PATH])
     sOpenFileName.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_HIDEREADONLY;
     sOpenFileName.lpstrTitle = szDialogTitle;
 
-    return (!!GetOpenFileName(&sOpenFileName));
+    return (TRUE == GetOpenFileName(&sOpenFileName));
 }
 
 void SaveOptions(HWND hWnd)
