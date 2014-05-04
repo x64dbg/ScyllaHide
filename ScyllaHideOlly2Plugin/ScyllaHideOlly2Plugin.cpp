@@ -4,10 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <winnt.h>
-#include "Injector.h"
+#include "..\PluginGeneric\Injector.h"
 #include "ScyllaHideOlly2Plugin.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\UpdateCheck\UpdateCheck.h"
+#include "..\PluginGeneric\UpdateCheck.h"
+#include "..\PluginGeneric\IniSettings.h"
 
 
 //scyllaHide definitions
@@ -15,9 +16,11 @@ struct HideOptions pHideOptions = {0};
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
+const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
+WCHAR ScyllaHideIniPath[MAX_PATH] = {0};
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
@@ -249,78 +252,9 @@ void SaveOptions(HWND hWnd)
     SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
 
     //save all options
-    Writetoini(NULL,PLUGINNAME,L"PEBBeingDebugged",L"%i",pHideOptions.PEBBeingDebugged);
-    Writetoini(NULL,PLUGINNAME,L"PEBHeapFlags",L"%i",pHideOptions.PEBHeapFlags);
-    Writetoini(NULL,PLUGINNAME,L"PEBNtGlobalFlag",L"%i",pHideOptions.PEBNtGlobalFlag);
-    Writetoini(NULL,PLUGINNAME,L"PEBStartupInfo",L"%i",pHideOptions.PEBStartupInfo);
-    Writetoini(NULL,PLUGINNAME,L"NtSetInformationThread",L"%i",pHideOptions.NtSetInformationThread);
-    Writetoini(NULL,PLUGINNAME,L"NtQuerySystemInformation",L"%i",pHideOptions.NtQuerySystemInformation);
-    Writetoini(NULL,PLUGINNAME,L"NtQueryInformationProcess",L"%i",pHideOptions.NtQueryInformationProcess);
-    Writetoini(NULL,PLUGINNAME,L"NtQueryObject",L"%i",pHideOptions.NtQueryObject);
-    Writetoini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",pHideOptions.NtYieldExecution);
-    Writetoini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",pHideOptions.OutputDebugStringA);
-    Writetoini(NULL,PLUGINNAME,L"BlockInput",L"%i",pHideOptions.BlockInput);
-    Writetoini(NULL,PLUGINNAME,L"NtGetContextThread",L"%i",pHideOptions.NtGetContextThread);
-    Writetoini(NULL,PLUGINNAME,L"NtSetContextThread",L"%i",pHideOptions.NtSetContextThread);
-    Writetoini(NULL,PLUGINNAME,L"NtContinue",L"%i",pHideOptions.NtContinue);
-    Writetoini(NULL,PLUGINNAME,L"KiUserExceptionDispatcher",L"%i",pHideOptions.KiUserExceptionDispatcher);
-    Writetoini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",pHideOptions.NtUserFindWindowEx);
-    Writetoini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",pHideOptions.NtUserBuildHwndList);
-    Writetoini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",pHideOptions.NtUserQueryWindow);
-    Writetoini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",pHideOptions.NtSetDebugFilterState);
-    Writetoini(NULL,PLUGINNAME,L"NtClose",L"%i",pHideOptions.NtClose);
-    Writetoini(NULL,PLUGINNAME,L"NtCreateThreadEx",L"%i",pHideOptions.NtCreateThreadEx);
-    Writetoini(NULL,PLUGINNAME,L"removeDebugPrivileges",L"%i",pHideOptions.removeDebugPrivileges);
-    Writetoini(NULL,PLUGINNAME,L"preventThreadCreation",L"%i",pHideOptions.preventThreadCreation);
-    Writetoini(NULL,PLUGINNAME,L"ollyTitle", L"%s",pHideOptions.ollyTitle);
-    Writetoini(NULL,PLUGINNAME,L"DLLStealth", L"%i",pHideOptions.DLLStealth);
-    Writetoini(NULL,PLUGINNAME,L"DLLNormal", L"%i",pHideOptions.DLLNormal);
-    Writetoini(NULL,PLUGINNAME,L"DLLUnload", L"%i",pHideOptions.DLLUnload);
-    Writetoini(NULL,PLUGINNAME,L"GetTickCount",L"%i",pHideOptions.GetTickCount);
-    Writetoini(NULL,PLUGINNAME,L"GetTickCount64",L"%i",pHideOptions.GetTickCount64);
-    Writetoini(NULL,PLUGINNAME,L"GetLocalTime",L"%i",pHideOptions.GetLocalTime);
-    Writetoini(NULL,PLUGINNAME,L"GetSystemTime",L"%i",pHideOptions.GetSystemTime);
-    Writetoini(NULL,PLUGINNAME,L"NtQuerySystemTime",L"%i",pHideOptions.NtQuerySystemTime);
-    Writetoini(NULL,PLUGINNAME,L"NtQueryPerformanceCounter",L"%i",pHideOptions.NtQueryPerformanceCounter);
+	SaveSettings();
 }
 
-void LoadOptions()
-{
-    //load all options
-    Getfromini(NULL,PLUGINNAME,L"PEBBeingDebugged",L"%i",&pHideOptions.PEBBeingDebugged);
-    Getfromini(NULL,PLUGINNAME,L"PEBHeapFlags",L"%i",&pHideOptions.PEBHeapFlags);
-    Getfromini(NULL,PLUGINNAME,L"PEBNtGlobalFlag",L"%i",&pHideOptions.PEBNtGlobalFlag);
-    Getfromini(NULL,PLUGINNAME,L"PEBStartupInfo",L"%i",&pHideOptions.PEBStartupInfo);
-    Getfromini(NULL,PLUGINNAME,L"NtSetInformationThread",L"%i",&pHideOptions.NtSetInformationThread);
-    Getfromini(NULL,PLUGINNAME,L"NtQuerySystemInformation",L"%i",&pHideOptions.NtQuerySystemInformation);
-    Getfromini(NULL,PLUGINNAME,L"NtQueryInformationProcess",L"%i",&pHideOptions.NtQueryInformationProcess);
-    Getfromini(NULL,PLUGINNAME,L"NtQueryObject",L"%i",&pHideOptions.NtQueryObject);
-    Getfromini(NULL,PLUGINNAME,L"NtYieldExecution",L"%i",&pHideOptions.NtYieldExecution);
-    Getfromini(NULL,PLUGINNAME,L"OutputDebugStringA",L"%i",&pHideOptions.OutputDebugStringA);
-    Getfromini(NULL,PLUGINNAME,L"BlockInput",L"%i",&pHideOptions.BlockInput);
-    Getfromini(NULL,PLUGINNAME,L"NtGetContextThread",L"%i",&pHideOptions.NtGetContextThread);
-    Getfromini(NULL,PLUGINNAME,L"NtSetContextThread",L"%i",&pHideOptions.NtSetContextThread);
-    Getfromini(NULL,PLUGINNAME,L"NtContinue",L"%i",&pHideOptions.NtContinue);
-    Getfromini(NULL,PLUGINNAME,L"KiUserExceptionDispatcher",L"%i",&pHideOptions.KiUserExceptionDispatcher);
-    Getfromini(NULL,PLUGINNAME,L"NtUserFindWindowEx",L"%i",&pHideOptions.NtUserFindWindowEx);
-    Getfromini(NULL,PLUGINNAME,L"NtUserBuildHwndList",L"%i",&pHideOptions.NtUserBuildHwndList);
-    Getfromini(NULL,PLUGINNAME,L"NtUserQueryWindow",L"%i",&pHideOptions.NtUserQueryWindow);
-    Getfromini(NULL,PLUGINNAME,L"NtSetDebugFilterState",L"%i",&pHideOptions.NtSetDebugFilterState);
-    Getfromini(NULL,PLUGINNAME,L"NtClose",L"%i",&pHideOptions.NtClose);
-    Getfromini(NULL,PLUGINNAME,L"NtCreateThreadEx",L"%i",&pHideOptions.NtCreateThreadEx);
-    Getfromini(NULL,PLUGINNAME,L"removeDebugPrivileges",L"%i",&pHideOptions.removeDebugPrivileges);
-    Getfromini(NULL,PLUGINNAME,L"preventThreadCreation",L"%i",&pHideOptions.preventThreadCreation);
-    Getfromini(NULL, PLUGINNAME, L"ollyTitle", L"%s", &pHideOptions.ollyTitle);
-    Getfromini(NULL,PLUGINNAME,L"DLLStealth", L"%i",&pHideOptions.DLLStealth);
-    Getfromini(NULL,PLUGINNAME,L"DLLNormal", L"%i",&pHideOptions.DLLNormal);
-    Getfromini(NULL,PLUGINNAME,L"DLLUnload", L"%i",&pHideOptions.DLLUnload);
-    Getfromini(NULL,PLUGINNAME,L"GetTickCount",L"%i",&pHideOptions.GetTickCount);
-    Getfromini(NULL,PLUGINNAME,L"GetTickCount64",L"%i",&pHideOptions.GetTickCount64);
-    Getfromini(NULL,PLUGINNAME,L"GetLocalTime",L"%i",&pHideOptions.GetLocalTime);
-    Getfromini(NULL,PLUGINNAME,L"GetSystemTime",L"%i",&pHideOptions.GetSystemTime);
-    Getfromini(NULL,PLUGINNAME,L"NtQuerySystemTime",L"%i",&pHideOptions.NtQuerySystemTime);
-    Getfromini(NULL,PLUGINNAME,L"NtQueryPerformanceCounter",L"%i",&pHideOptions.NtQueryPerformanceCounter);
-}
 
 //options dialog proc
 INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -329,7 +263,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     {
     case WM_INITDIALOG:
     {
-        LoadOptions();
+        ReadSettings();
 
         SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, pHideOptions.PEBBeingDebugged, 0);
         SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, pHideOptions.PEBHeapFlags, 0);
@@ -610,6 +544,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
             *temp = 0;
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
+			wcscpy(ScyllaHideIniPath, NtApiIniPath);
+			wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
             wcscat(NtApiIniPath, NtApiIniFilename);
         }
 
@@ -633,7 +569,8 @@ extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginnam
 //initialization happens in here
 extc int __cdecl ODBG2_Plugininit(void)
 {
-    LoadOptions();
+    CreateSettings();
+	ReadSettings();
 
     Addtolist(0,0,L"ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_W);
     Addtolist(0,2,L"  Copyright (C) 2014 Aguila / cypher");

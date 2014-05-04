@@ -1,6 +1,6 @@
 #pragma once
 #include "plugin.h"
-#include "ScyllaHideVersion.h"
+#include "..\PluginGeneric\ScyllaHideVersion.h"
 
 #define PLUGINNAME     L"ScyllaHide"
 
