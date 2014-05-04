@@ -111,10 +111,10 @@
     <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp" />
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
-    <ClCompile Include="..\ScyllaHideOlly2Plugin\Injector.cpp" />
-    <ClCompile Include="..\UpdateCheck\UpdateCheck.cpp" />
+    <ClCompile Include="..\PluginGeneric\IniSettings.cpp" />
+    <ClCompile Include="..\PluginGeneric\Injector.cpp" />
+    <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp" />
     <ClCompile Include="IdaServerClient.cpp" />
-    <ClCompile Include="IniSettings.cpp" />
     <ClCompile Include="ScyllaHideIDAProPlugin.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -137,8 +137,10 @@
     <ClInclude Include="..\InjectorCLI\ReadNtConfig.h" />
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
-    <ClInclude Include="..\ScyllaHideOlly2Plugin\Injector.h" />
-    <ClInclude Include="..\UpdateCheck\UpdateCheck.h" />
+    <ClInclude Include="..\PluginGeneric\IniSettings.h" />
+    <ClInclude Include="..\PluginGeneric\Injector.h" />
+    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
+    <ClInclude Include="..\PluginGeneric\UpdateCheck.h" />
     <ClInclude Include="idasdk\dbg.hpp" />
     <ClInclude Include="idasdk\ida.hpp" />
     <ClInclude Include="idasdk\idp.hpp" />
@@ -146,7 +148,6 @@
     <ClInclude Include="idasdk\loader.hpp" />
     <ClInclude Include="idasdk\pro.h" />
     <ClInclude Include="IdaServerClient.h" />
-    <ClInclude Include="IniSettings.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

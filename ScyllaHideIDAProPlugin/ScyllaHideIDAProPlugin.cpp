@@ -1,7 +1,7 @@
 #define USE_STANDARD_FILE_FUNCTIONS
 #pragma warning(disable : 4996 4512 4127 4201)
 
-#define BUILD_IDA_64BIT 1
+//#define BUILD_IDA_64BIT 1
 
 //for 64bit - p64
 #ifdef BUILD_IDA_64BIT
@@ -19,11 +19,11 @@
 #include "idasdk/loader.hpp"
 #include "idasdk/kernwin.hpp"
 #include "resource.h"
-#include "IniSettings.h"
-#include "..\ScyllaHideOlly2Plugin\Injector.h"
-#include "..\ScyllaHideOlly2Plugin\ScyllaHideVersion.h"
+#include "..\PluginGeneric\IniSettings.h"
+#include "..\PluginGeneric\Injector.h"
+#include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "IdaServerClient.h"
-#include "..\UpdateCheck\UpdateCheck.h"
+#include "..\PluginGeneric\UpdateCheck.h"
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
@@ -113,7 +113,7 @@ bool GetFileDialog(TCHAR Buffer[MAX_PATH])
     sOpenFileName.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_HIDEREADONLY;
     sOpenFileName.lpstrTitle = szDialogTitle;
 
-    return (!!GetOpenFileName(&sOpenFileName));
+    return (TRUE == GetOpenFileName(&sOpenFileName));
 }
 
 void SaveOptions(HWND hWnd)

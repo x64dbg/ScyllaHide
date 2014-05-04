@@ -2,9 +2,9 @@
 #include "idaserver.h"
 #include "IdaServerExchange.h"
 
-#include "..\ScyllaHideOlly2Plugin\ScyllaHideVersion.h"
+#include "..\PluginGeneric\ScyllaHideVersion.h"
 
-#include "..\ScyllaHideOlly2Plugin\Injector.h"
+#include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 
 WSADATA wsaData;

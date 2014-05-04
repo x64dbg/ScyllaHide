@@ -13,11 +13,11 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Quelldateien\distorm">
-      <UniqueIdentifier>{ced89ded-36fa-473f-bd05-67a83a0db2b3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Headerdateien\distorm">
-      <UniqueIdentifier>{9ba1e309-1c9c-42c7-9bbe-c99a41accbe5}</UniqueIdentifier>
+      <UniqueIdentifier>{64e2c85a-efd4-4f87-a3a6-d638e6dc6f6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\distorm">
+      <UniqueIdentifier>{b80a8396-184c-440e-98e5-c0becef07cfb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -37,9 +37,6 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ScyllaHideOlly2Plugin\Injector.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="..\distorm\decoder.c">
@@ -69,6 +66,9 @@
     <ClCompile Include="..\distorm\wstring.c">
       <Filter>Quelldateien\distorm</Filter>
     </ClCompile>
+    <ClCompile Include="..\PluginGeneric\Injector.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="idaserver.h">
@@ -87,12 +87,6 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ScyllaHideOlly2Plugin\Injector.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="IdaServerExchange.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\config.h">
@@ -127,6 +121,15 @@
     </ClInclude>
     <ClInclude Include="..\distorm\x86defs.h">
       <Filter>Headerdateien\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="IdaServerExchange.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\Injector.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h">
+      <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

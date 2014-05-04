@@ -3,7 +3,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "..\ScyllaHideIDAServer\IdaServerExchange.h"
-#include "..\ScyllaHideOlly2Plugin\Injector.h"
+#include "..\PluginGeneric\Injector.h"
 
 #pragma comment (lib, "Ws2_32.lib")
 

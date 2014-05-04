@@ -27,9 +27,6 @@
     <ClCompile Include="ScyllaHideIDAProPlugin.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\ScyllaHideOlly2Plugin\Injector.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
@@ -72,10 +69,16 @@
     <ClCompile Include="..\distorm\wstring.c">
       <Filter>Quelldateien\distorm</Filter>
     </ClCompile>
-    <ClCompile Include="IniSettings.cpp">
+    <ClCompile Include="IdaServerClient.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\UpdateCheck\UpdateCheck.cpp">
+    <ClCompile Include="..\PluginGeneric\IniSettings.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\PluginGeneric\Injector.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
@@ -86,9 +89,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ScyllaHideOlly2Plugin\Injector.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\ApplyHooking.h">
@@ -139,9 +139,6 @@
     <ClInclude Include="..\distorm\x86defs.h">
       <Filter>Headerdateien\distorm</Filter>
     </ClInclude>
-    <ClInclude Include="IniSettings.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="idasdk\dbg.hpp">
       <Filter>Headerdateien\idasdk</Filter>
     </ClInclude>
@@ -160,7 +157,19 @@
     <ClInclude Include="idasdk\pro.h">
       <Filter>Headerdateien\idasdk</Filter>
     </ClInclude>
-    <ClInclude Include="..\UpdateCheck\UpdateCheck.h">
+    <ClInclude Include="IdaServerClient.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\IniSettings.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\Injector.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\UpdateCheck.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

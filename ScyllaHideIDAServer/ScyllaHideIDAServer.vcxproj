@@ -166,7 +166,7 @@
     <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp" />
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
-    <ClCompile Include="..\ScyllaHideOlly2Plugin\Injector.cpp" />
+    <ClCompile Include="..\PluginGeneric\Injector.cpp" />
     <ClCompile Include="idaserver.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -186,7 +186,8 @@
     <ClInclude Include="..\InjectorCLI\ReadNtConfig.h" />
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
-    <ClInclude Include="..\ScyllaHideOlly2Plugin\Injector.h" />
+    <ClInclude Include="..\PluginGeneric\Injector.h" />
+    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
     <ClInclude Include="idaserver.h" />
     <ClInclude Include="IdaServerExchange.h" />
   </ItemGroup>
