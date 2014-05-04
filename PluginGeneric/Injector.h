@@ -11,6 +11,7 @@ struct HideOptions
     int NtSetInformationThread;
     int NtQuerySystemInformation;
     int NtQueryInformationProcess;
+    int NtSetInformationProcess;
     int NtQueryObject;
     int NtYieldExecution;
     int GetTickCount;
