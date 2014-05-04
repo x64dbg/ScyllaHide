@@ -8,6 +8,7 @@
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\UpdateCheck.h"
+#include "..\PluginGeneric\IniSettings.h"
 
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
@@ -83,7 +84,7 @@ bool GetFileDialog(TCHAR Buffer[MAX_PATH])
     sOpenFileName.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_HIDEREADONLY;
     sOpenFileName.lpstrTitle = szDialogTitle;
 
-    return (TRUE == GetOpenFileName(&sOpenFileName));
+    return (!!GetOpenFileName(&sOpenFileName));
 }
 
 void SaveOptions(HWND hWnd)
@@ -317,96 +318,7 @@ void SaveOptions(HWND hWnd)
     SetWindowTextW(hwmain, pHideOptions.ollyTitle);
 
     //save all options
-    _Pluginwriteinttoini(hinst, "PEBBeingDebugged", pHideOptions.PEBBeingDebugged);
-    _Pluginwriteinttoini(hinst, "PEBHeapFlags", pHideOptions.PEBHeapFlags);
-    _Pluginwriteinttoini(hinst, "PEBNtGlobalFlag", pHideOptions.PEBNtGlobalFlag);
-    _Pluginwriteinttoini(hinst, "PEBStartupInfo", pHideOptions.PEBStartupInfo);
-    _Pluginwriteinttoini(hinst, "NtSetInformationThread", pHideOptions.NtSetInformationThread);
-    _Pluginwriteinttoini(hinst, "NtQuerySystemInformation", pHideOptions.NtQuerySystemInformation);
-    _Pluginwriteinttoini(hinst, "NtQueryInformationProcess", pHideOptions.NtQueryInformationProcess);
-    _Pluginwriteinttoini(hinst, "NtQueryObject", pHideOptions.NtQueryObject);
-    _Pluginwriteinttoini(hinst, "NtYieldExecution", pHideOptions.NtYieldExecution);
-    _Pluginwriteinttoini(hinst, "OutputDebugStringA", pHideOptions.OutputDebugStringA);
-    _Pluginwriteinttoini(hinst, "BlockInput", pHideOptions.BlockInput);
-    _Pluginwriteinttoini(hinst, "NtGetContextThread", pHideOptions.NtGetContextThread);
-    _Pluginwriteinttoini(hinst, "NtSetContextThread", pHideOptions.NtSetContextThread);
-    _Pluginwriteinttoini(hinst, "NtContinue", pHideOptions.NtContinue);
-    _Pluginwriteinttoini(hinst, "KiUserExceptionDispatcher", pHideOptions.KiUserExceptionDispatcher);
-    _Pluginwriteinttoini(hinst, "NtUserFindWindowEx", pHideOptions.NtUserFindWindowEx);
-    _Pluginwriteinttoini(hinst, "NtUserBuildHwndList", pHideOptions.NtUserBuildHwndList);
-    _Pluginwriteinttoini(hinst, "NtUserQueryWindow", pHideOptions.NtUserQueryWindow);
-    _Pluginwriteinttoini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
-    _Pluginwriteinttoini(hinst, "NtClose", pHideOptions.NtClose);
-    _Pluginwriteinttoini(hinst, "NtCreateThreadEx", pHideOptions.NtCreateThreadEx);
-    _Pluginwriteinttoini(hinst, "removeDebugPrivileges", pHideOptions.removeDebugPrivileges);
-    _Pluginwriteinttoini(hinst, "preventThreadCreation", pHideOptions.preventThreadCreation);
-    _Pluginwriteinttoini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
-
-    char text[300];
-    WideCharToMultiByte(CP_ACP, 0, pHideOptions.ollyTitle, -1, text,_countof(text), 0, 0);
-    _Pluginwritestringtoini(hinst, "ollyTitle", text);
-
-    _Pluginwriteinttoini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
-    _Pluginwriteinttoini(hinst, "x64Fix", pHideOptions.x64Fix);
-    _Pluginwriteinttoini(hinst, "breakTLS", pHideOptions.breakTLS);
-    _Pluginwriteinttoini(hinst, "skipEPOutsideCode", pHideOptions.skipEPOutsideCode);
-    _Pluginwriteinttoini(hinst, "DLLStealth", pHideOptions.DLLStealth);
-    _Pluginwriteinttoini(hinst, "DLLNormal", pHideOptions.DLLNormal);
-    _Pluginwriteinttoini(hinst, "DLLUnload", pHideOptions.DLLUnload);
-    _Pluginwriteinttoini(hinst, "GetTickCount", pHideOptions.GetTickCount);
-    _Pluginwriteinttoini(hinst, "GetTickCount64", pHideOptions.GetTickCount64);
-    _Pluginwriteinttoini(hinst, "GetLocalTime", pHideOptions.GetLocalTime);
-    _Pluginwriteinttoini(hinst, "GetSystemTime", pHideOptions.GetSystemTime);
-    _Pluginwriteinttoini(hinst, "NtQuerySystemTime", pHideOptions.NtQuerySystemTime);
-    _Pluginwriteinttoini(hinst, "NtQueryPerformanceCounter", pHideOptions.NtQueryPerformanceCounter);
-
-}
-
-void LoadOptions()
-{
-    //load all options
-    pHideOptions.PEBBeingDebugged = _Pluginreadintfromini(hinst, "PEBBeingDebugged", pHideOptions.PEBBeingDebugged);
-    pHideOptions.PEBHeapFlags = _Pluginreadintfromini(hinst, "PEBHeapFlags", pHideOptions.PEBHeapFlags);
-    pHideOptions.PEBNtGlobalFlag = _Pluginreadintfromini(hinst, "PEBNtGlobalFlag", pHideOptions.PEBNtGlobalFlag);
-    pHideOptions.PEBStartupInfo = _Pluginreadintfromini(hinst, "PEBStartupInfo", pHideOptions.PEBStartupInfo);
-    pHideOptions.NtSetInformationThread = _Pluginreadintfromini(hinst, "NtSetInformationThread", pHideOptions.NtSetInformationThread);
-    pHideOptions.NtQuerySystemInformation = _Pluginreadintfromini(hinst, "NtQuerySystemInformation", pHideOptions.NtQuerySystemInformation);
-    pHideOptions.NtQueryInformationProcess = _Pluginreadintfromini(hinst, "NtQueryInformationProcess", pHideOptions.NtQueryInformationProcess);
-    pHideOptions.NtQueryObject = _Pluginreadintfromini(hinst, "NtQueryObject", pHideOptions.NtQueryObject);
-    pHideOptions.NtYieldExecution = _Pluginreadintfromini(hinst, "NtYieldExecution", pHideOptions.NtYieldExecution);
-    pHideOptions.OutputDebugStringA = _Pluginreadintfromini(hinst, "OutputDebugStringA", pHideOptions.OutputDebugStringA);
-    pHideOptions.BlockInput = _Pluginreadintfromini(hinst, "BlockInput", pHideOptions.BlockInput);
-    pHideOptions.NtGetContextThread = _Pluginreadintfromini(hinst, "NtGetContextThread", pHideOptions.NtGetContextThread);
-    pHideOptions.NtSetContextThread = _Pluginreadintfromini(hinst, "NtSetContextThread", pHideOptions.NtSetContextThread);
-    pHideOptions.NtContinue = _Pluginreadintfromini(hinst, "NtContinue", pHideOptions.NtContinue);
-    pHideOptions.KiUserExceptionDispatcher = _Pluginreadintfromini(hinst, "KiUserExceptionDispatcher", pHideOptions.KiUserExceptionDispatcher);
-    pHideOptions.NtUserFindWindowEx = _Pluginreadintfromini(hinst, "NtUserFindWindowEx", pHideOptions.NtUserFindWindowEx);
-    pHideOptions.NtUserBuildHwndList = _Pluginreadintfromini(hinst, "NtUserBuildHwndList", pHideOptions.NtUserBuildHwndList);
-    pHideOptions.NtUserQueryWindow = _Pluginreadintfromini(hinst, "NtUserQueryWindow", pHideOptions.NtUserQueryWindow);
-    pHideOptions.NtSetDebugFilterState = _Pluginreadintfromini(hinst, "NtSetDebugFilterState", pHideOptions.NtSetDebugFilterState);
-    pHideOptions.NtClose = _Pluginreadintfromini(hinst, "NtClose", pHideOptions.NtClose);
-    pHideOptions.NtCreateThreadEx = _Pluginreadintfromini(hinst, "NtCreateThreadEx", pHideOptions.NtCreateThreadEx);
-    pHideOptions.removeDebugPrivileges = _Pluginreadintfromini(hinst, "removeDebugPrivileges", pHideOptions.removeDebugPrivileges);
-    pHideOptions.preventThreadCreation = _Pluginreadintfromini(hinst, "preventThreadCreation", pHideOptions.preventThreadCreation);
-    pHideOptions.removeEPBreak = _Pluginreadintfromini(hinst, "removeEPBreak", pHideOptions.removeEPBreak);
-
-    char text[300] = {0};
-    _Pluginreadstringfromini(hinst, "ollyTitle", text, "I can haz crack?");
-    MultiByteToWideChar(CP_ACP, 0, text, -1, pHideOptions.ollyTitle, 300);
-
-    pHideOptions.fixOllyBugs = _Pluginreadintfromini(hinst, "fixOllyBugs", pHideOptions.fixOllyBugs);
-    pHideOptions.x64Fix = _Pluginreadintfromini(hinst, "x64Fix", pHideOptions.x64Fix);
-    pHideOptions.breakTLS = _Pluginreadintfromini(hinst, "breakTLS", pHideOptions.breakTLS);
-    pHideOptions.skipEPOutsideCode = _Pluginreadintfromini(hinst, "skipEPOutsideCode", pHideOptions.skipEPOutsideCode);
-    pHideOptions.DLLStealth = _Pluginreadintfromini(hinst, "DLLStealth", pHideOptions.DLLStealth);
-    pHideOptions.DLLNormal = _Pluginreadintfromini(hinst, "DLLNormal", pHideOptions.DLLNormal);
-    pHideOptions.DLLUnload = _Pluginreadintfromini(hinst, "DLLUnload", pHideOptions.DLLUnload);
-    pHideOptions.GetTickCount = _Pluginreadintfromini(hinst, "GetTickCount", pHideOptions.GetTickCount);
-    pHideOptions.GetTickCount64 = _Pluginreadintfromini(hinst, "GetTickCount64", pHideOptions.GetTickCount64);
-    pHideOptions.GetLocalTime = _Pluginreadintfromini(hinst, "GetLocalTime", pHideOptions.GetLocalTime);
-    pHideOptions.GetSystemTime = _Pluginreadintfromini(hinst, "GetSystemTime", pHideOptions.GetSystemTime);
-    pHideOptions.NtQuerySystemTime = _Pluginreadintfromini(hinst, "NtQuerySystemTime", pHideOptions.NtQuerySystemTime);
-    pHideOptions.NtQueryPerformanceCounter = _Pluginreadintfromini(hinst, "NtQueryPerformanceCounter", pHideOptions.NtQueryPerformanceCounter);
+	SaveSettings();
 }
 
 //options dialog proc
@@ -416,7 +328,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     {
     case WM_INITDIALOG:
     {
-        LoadOptions();
+        ReadSettings();
 
         SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, pHideOptions.PEBBeingDebugged, 0);
         SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, pHideOptions.PEBHeapFlags, 0);
@@ -582,7 +494,9 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
     hwmain=hw;
 
-    LoadOptions();
+	CreateSettings();
+
+    ReadSettings();
 
     _Addtolist(0,0,"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A);
     _Addtolist(0,-1,"  Copyright (C) 2014 Aguila / cypher");
