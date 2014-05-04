@@ -5,13 +5,13 @@
 
 bool isNewVersionAvailable()
 {
-    char buf[1024] = {0};
-    DWORD dwBytesRead=0;
+	char buf[1024] = {0};
+	DWORD dwBytesRead=0;
 	HINTERNET hi=0, hCon=0;
-	bool ret=0;
+	bool ret = false;
 
 	hi = InternetOpenW(L"ScyllaHide Update Checker", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
-    if(hi)
+	if(hi)
 	{
 		WCHAR szHead[] = L"Accept: */*\r\n\r\n";
 		hCon = InternetOpenUrlW(hi, UPDATE_CHECK_URL, szHead, (DWORD)wcslen(szHead), INTERNET_FLAG_PRAGMA_NOCACHE, 0);
@@ -19,8 +19,6 @@ bool isNewVersionAvailable()
 		{
 			if(InternetReadFile(hCon, buf, sizeof(buf)-5, &dwBytesRead))
 			{
-				//compare the versions e.g. 0.7 1.0 0.5.b (lexicographical cmp might not work)
-
 				char * temp = strchr(buf, '.');
 				if (temp)
 				{
@@ -41,6 +39,10 @@ bool isNewVersionAvailable()
 							ret = true;
 						}
 					}
+				}
+				else
+				{
+					MessageBoxA(0, "Update file: Unknown file format", "ERROR", MB_ICONERROR);
 				}
 			}
 			else
