@@ -1,3 +1,8 @@
+Version 0.9
+- All plugins use separate scylla_hide.ini now. ini is interchangeable between plugins !
+  (ini section in ollydbg.ini now deprecated !)
+- Load/Save ini profiles in Olly1&2
+
 Version 0.8
 
 - Olly v1 Plugin: option "Skip EP outside of code message"
