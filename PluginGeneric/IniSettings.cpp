@@ -126,7 +126,7 @@ void CreateDefaultSettings(const WCHAR * iniFile)
 	WriteIniSettings(L"FixOllyBugs", L"1", iniFile);
 	WriteIniSettings(L"RemoveEPBreak", L"0", iniFile);
 	WriteIniSettings(L"SkipEPOutsideCode", L"1", iniFile);
-	WriteIniSettings(L"X64Fix", L"1", iniFile);
+    WriteIniSettings(L"X64Fix", L"0", iniFile);
 	WriteIniSettings(L"WindowTitle", L"ScyllaHide", iniFile);
 }
 
