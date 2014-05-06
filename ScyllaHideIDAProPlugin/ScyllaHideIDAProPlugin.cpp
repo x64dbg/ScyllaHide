@@ -84,6 +84,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
         }
 
         SetDebugPrivileges();
+
+        SetCurrentProfile(DEFAULT_PROFILE);
         CreateSettings();
         ReadSettings();
 
@@ -632,10 +634,10 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                 //autostart server if necessary
                 if(pHideOptions.autostartServer)
                 {
-					if (!FileExists(ScyllaHidex64ServerPath))
-					{
-						msg("Cannot find server executable %S\n", ScyllaHidex64ServerPath);
-					}
+                    if (!FileExists(ScyllaHidex64ServerPath))
+                    {
+                        msg("Cannot find server executable %S\n", ScyllaHidex64ServerPath);
+                    }
 
                     DWORD dwRunningStatus = 0;
                     if (ServerProcessInfo.hProcess)

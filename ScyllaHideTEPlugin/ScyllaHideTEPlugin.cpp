@@ -38,8 +38,8 @@ BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
-		LogWrap = LogWrapper;
-		LogErrorWrap = LogWrapper;
+        LogWrap = LogWrapper;
+        LogErrorWrap = LogWrapper;
 
         GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
         WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
@@ -49,12 +49,13 @@ BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
             *temp = 0;
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-			wcscpy(ScyllaHideIniPath, NtApiIniPath);
-			wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
+            wcscpy(ScyllaHideIniPath, NtApiIniPath);
+            wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
             wcscat(NtApiIniPath, NtApiIniFilename);
 
-			CreateSettings();
-			SetDebugPrivileges(); //set debug privilege
+            SetCurrentProfile(DEFAULT_PROFILE);
+            CreateSettings();
+            SetDebugPrivileges(); //set debug privilege
         }
     }
     return TRUE;
@@ -62,87 +63,87 @@ BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
 
 void LogWrapper(const WCHAR * format, ...)
 {
-	//WCHAR text[2000];
-	//va_list va_alist;
-	//va_start(va_alist, format);
+    //WCHAR text[2000];
+    //va_list va_alist;
+    //va_start(va_alist, format);
 
-	//wvsprintfW(text, format, va_alist);
+    //wvsprintfW(text, format, va_alist);
 
-	//Message(0, text);
+    //Message(0, text);
 }
 
 bool SetDebugPrivileges()
 {
-	TOKEN_PRIVILEGES Debug_Privileges;
-	bool retVal = false;
+    TOKEN_PRIVILEGES Debug_Privileges;
+    bool retVal = false;
 
-	if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
-	{
-		HANDLE hToken = 0;
-		if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
-		{
-			Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-			Debug_Privileges.PrivilegeCount = 1;
+    if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
+    {
+        HANDLE hToken = 0;
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+        {
+            Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+            Debug_Privileges.PrivilegeCount = 1;
 
-			retVal = AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL) != FALSE;
+            retVal = AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL) != FALSE;
 
-			CloseHandle(hToken);
-		}
-	}
+            CloseHandle(hToken);
+        }
+    }
 
-	return retVal;
+    return retVal;
 }
 
 extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debugEvent, int CallReason)
 {
-	switch(CallReason)
-	{
-	case UE_PLUGIN_CALL_REASON_EXCEPTION:
-		{
-			switch(debugEvent->dwDebugEventCode)
-			{
-			case CREATE_PROCESS_DEBUG_EVENT:
-				{
-					ProcessId=debugEvent->dwProcessId;
-					bHooked = false;
-					ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
-					ReadSettings();
-					break;
-				}
+    switch(CallReason)
+    {
+    case UE_PLUGIN_CALL_REASON_EXCEPTION:
+    {
+        switch(debugEvent->dwDebugEventCode)
+        {
+        case CREATE_PROCESS_DEBUG_EVENT:
+        {
+            ProcessId=debugEvent->dwProcessId;
+            bHooked = false;
+            ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+            ReadSettings();
+            break;
+        }
 
-			case LOAD_DLL_DEBUG_EVENT:
-				{
-					if (bHooked)
-					{
-						startInjection(ProcessId, ScyllaHideDllPath, false);
-					}
-					break;
-				}
-			case EXCEPTION_DEBUG_EVENT:
-				{
-					switch(debugEvent->u.Exception.ExceptionRecord.ExceptionCode)
-					{
-					case STATUS_BREAKPOINT:
-						{
-							if (!bHooked)
-							{
-								ReadNtApiInformation();
+        case LOAD_DLL_DEBUG_EVENT:
+        {
+            if (bHooked)
+            {
+                startInjection(ProcessId, ScyllaHideDllPath, false);
+            }
+            break;
+        }
+        case EXCEPTION_DEBUG_EVENT:
+        {
+            switch(debugEvent->u.Exception.ExceptionRecord.ExceptionCode)
+            {
+            case STATUS_BREAKPOINT:
+            {
+                if (!bHooked)
+                {
+                    ReadNtApiInformation();
 
-								bHooked = true;
-								startInjection(ProcessId, ScyllaHideDllPath, true);
-							}
-							break;
-						}
+                    bHooked = true;
+                    startInjection(ProcessId, ScyllaHideDllPath, true);
+                }
+                break;
+            }
 
-					}
+            }
 
-					break;
-				}
+            break;
+        }
 
-			}
-		}
-		break;
-	}
+        }
+    }
+    break;
+    }
 }
 
 extern "C" __declspec(dllexport) bool TitanRegisterPlugin(char* szPluginName, DWORD* titanPluginMajorVersion, DWORD* titanPluginMinorVersion)
