@@ -27,3 +27,5 @@ HookedNtUserFindWindowEx
 HookedNtUserQueryWindow
 HookedNtYieldExecution
 HookedOutputDebugStringA
+HookedNtWriteVirtualMemory
+HookedNtResumeThread

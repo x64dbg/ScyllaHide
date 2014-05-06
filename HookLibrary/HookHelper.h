@@ -22,6 +22,7 @@ bool IsWindowClassBad(PUNICODE_STRING lpszClass);
 
 size_t _wcslen(const wchar_t* sc);
 size_t _strlen(const char* sc);
+wchar_t * _wcscat(wchar_t *dest, const wchar_t *src);
 
 int ThreadDebugContextFindFreeSlotIndex();
 int ThreadDebugContextFindExistingSlotIndex();
@@ -29,3 +30,7 @@ void ThreadDebugContextRemoveEntry(const int index);
 void ThreadDebugContextSaveContext(const int index, const PCONTEXT ThreadContext);
 
 void IncreaseSystemTime(LPSYSTEMTIME lpTime);
+
+void TerminateProcessByProcessId(DWORD dwProcess);
+bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize);
+bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize);

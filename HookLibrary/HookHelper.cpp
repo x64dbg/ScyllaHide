@@ -248,6 +248,19 @@ DWORD GetProcessIdByThreadHandle(HANDLE hThread)
 	return 0;
 }
 
+void TerminateProcessByProcessId(DWORD dwProcess)
+{
+	if (dwProcess)
+	{
+		HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, 0, dwProcess);
+		if (hProcess)
+		{
+			TerminateProcess(hProcess, 0);
+			CloseHandle(hProcess);
+		}
+	}
+}
+
 DWORD dwExplorerPid = 0;
 WCHAR ExplorerProcessName[] = L"explorer.exe";
 
@@ -343,6 +356,16 @@ size_t _wcslen(const wchar_t* sc)
 	return count;
 }
 
+wchar_t * _wcscat(wchar_t *dest, const wchar_t *src)
+{
+	wchar_t *ret = dest;
+	while (*dest)
+		dest++;
+	while (*dest++ = *src++)
+		;
+	return ret;
+}
+
 void ThreadDebugContextRemoveEntry(const int index)
 {
 	ArrayDebugRegister[index].dwThreadId = 0;
@@ -421,4 +444,47 @@ void IncreaseSystemTime(LPSYSTEMTIME lpTime)
 			}
 		}
 	}
+}
+
+
+WCHAR MalwareFile[MAX_PATH] = {0};
+const WCHAR MalwareFilename[] = L"Unpacked.exe";
+
+bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize)
+{
+	if (MalwareFile[0] == 0)
+	{
+		GetModuleFileNameW(0, MalwareFile, _countof(MalwareFile));
+
+		for (int i = (int)_wcslen(MalwareFile) - 1; i >= 0; i--)
+		{
+			if (MalwareFile[i] == L'\\')
+			{
+				MalwareFile[i+1] = 0;
+				break;
+			}
+		}
+
+		_wcscat(MalwareFile, MalwareFilename);
+	}
+
+	return WriteMemoryToFile(MalwareFile, buffer,bufferSize);
+}
+
+bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize)
+{
+	bool ret = false;
+	HANDLE hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+	if (hFile != INVALID_HANDLE_VALUE)
+	{
+		DWORD lpNumberOfBytesWritten = 0;
+		SetFilePointer(hFile, 0, 0, FILE_END);
+		if (WriteFile(hFile, buffer, bufferSize, &lpNumberOfBytesWritten, 0))
+		{
+			ret = true;
+		}
+		CloseHandle(hFile);
+	}
+
+	return ret;
 }

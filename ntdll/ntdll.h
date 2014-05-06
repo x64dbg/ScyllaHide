@@ -1033,6 +1033,9 @@ typedef NTSTATUS (NTAPI * t_NtYieldExecution)(VOID);
 typedef VOID     (NTAPI * t_KiUserExceptionDispatcher)(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT ContextFrame);
 typedef VOID     (NTAPI * t_RtlRestoreContext)(PCONTEXT ContextRecord, PEXCEPTION_RECORD ExceptionRecord);
 
+typedef NTSTATUS (NTAPI * t_NtReadVirtualMemory)(HANDLE ProcessHandle,PVOID BaseAddress,PVOID Buffer,SIZE_T BufferSize,PSIZE_T NumberOfBytesRead);
+typedef NTSTATUS (NTAPI * t_NtWriteVirtualMemory)(HANDLE ProcessHandle,PVOID BaseAddress,CONST VOID *Buffer,SIZE_T BufferSize,PSIZE_T NumberOfBytesWritten);
+
 //user32.dll native calls
 //FindWindow
 #define NtUserFindWindowEx_FW_BOTH 0
@@ -1922,6 +1925,20 @@ NTAPI
 NtQueryPerformanceCounter (
 	__out PLARGE_INTEGER PerformanceCounter,
 	__out_opt PLARGE_INTEGER PerformanceFrequency
+);
+
+NTSYSCALLAPI
+ULONG
+__cdecl
+DbgPrint (
+	__in PCH Format,
+	...
+);
+
+NTSYSCALLAPI
+VOID
+DbgBreakPoint (
+	void
 );
 
 #ifdef __cplusplus
