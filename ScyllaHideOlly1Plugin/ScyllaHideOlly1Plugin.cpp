@@ -35,6 +35,7 @@ WCHAR NtApiIniPath[MAX_PATH] = {0};
 WCHAR ScyllaHideIniPath[MAX_PATH] = {0};
 
 extern WCHAR CurrentProfile[MAX_SECTION_NAME];
+extern WCHAR ProfileNames[2048];
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
@@ -85,6 +86,56 @@ bool GetFileDialog(TCHAR Buffer[MAX_PATH])
     sOpenFileName.lpstrTitle = szDialogTitle;
 
     return (!!GetOpenFileName(&sOpenFileName));
+}
+
+void UpdateOptions(HWND hWnd)
+{
+    SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, pHideOptions.PEBBeingDebugged, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, pHideOptions.PEBHeapFlags, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, pHideOptions.PEBNtGlobalFlag, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_SETCHECK, pHideOptions.PEBStartupInfo, 0);
+    if(pHideOptions.PEBBeingDebugged && pHideOptions.PEBHeapFlags && pHideOptions.PEBNtGlobalFlag && pHideOptions.PEBStartupInfo)
+        SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
+    else
+        SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 0, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_SETCHECK, pHideOptions.NtSetInformationThread, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_SETCHECK, pHideOptions.NtQuerySystemInformation, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_SETCHECK, pHideOptions.NtQueryInformationProcess, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_SETCHECK, pHideOptions.NtQueryObject, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_SETCHECK, pHideOptions.NtYieldExecution, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_SETCHECK, pHideOptions.OutputDebugStringA, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_SETCHECK, pHideOptions.BlockInput, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, pHideOptions.NtGetContextThread, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_SETCHECK, pHideOptions.NtSetContextThread, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_SETCHECK, pHideOptions.NtContinue, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_SETCHECK, pHideOptions.KiUserExceptionDispatcher, 0);
+    if(pHideOptions.NtGetContextThread && pHideOptions.NtSetContextThread && pHideOptions.NtContinue && pHideOptions.KiUserExceptionDispatcher)
+        SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 1, 0);
+    else
+        SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 0, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_SETCHECK, pHideOptions.NtUserFindWindowEx, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_SETCHECK, pHideOptions.NtUserBuildHwndList, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_SETCHECK, pHideOptions.NtUserQueryWindow, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, pHideOptions.NtSetDebugFilterState, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, pHideOptions.NtClose, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, pHideOptions.NtCreateThreadEx, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_SETCHECK, pHideOptions.removeDebugPrivileges, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, pHideOptions.preventThreadCreation, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
+    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
+    SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, pHideOptions.breakTLS, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_SETCHECK, pHideOptions.skipEPOutsideCode, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_SETCHECK, pHideOptions.GetTickCount, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT64), BM_SETCHECK, pHideOptions.GetTickCount64, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETLOCALTIME), BM_SETCHECK, pHideOptions.GetLocalTime, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_SETCHECK, pHideOptions.GetSystemTime, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_SETCHECK, pHideOptions.NtQuerySystemTime, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, pHideOptions.NtQueryPerformanceCounter, 0);
 }
 
 void SaveOptions(HWND hWnd)
@@ -330,53 +381,26 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     {
         ReadSettings();
 
+        //add current profile to options title
         WCHAR title[MAX_SECTION_NAME+30] = {0};
         wcscpy(title, L"[ScyllaHide Options] Profile: ");
         wcscat(title, CurrentProfile);
         SetWindowTextW(hWnd, title);
 
-        SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, pHideOptions.PEBBeingDebugged, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, pHideOptions.PEBHeapFlags, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, pHideOptions.PEBNtGlobalFlag, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_SETCHECK, pHideOptions.PEBStartupInfo, 0);
-        if(pHideOptions.PEBBeingDebugged && pHideOptions.PEBHeapFlags && pHideOptions.PEBNtGlobalFlag && pHideOptions.PEBStartupInfo)
-            SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_SETCHECK, pHideOptions.NtSetInformationThread, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_SETCHECK, pHideOptions.NtQuerySystemInformation, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_SETCHECK, pHideOptions.NtQueryInformationProcess, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_SETCHECK, pHideOptions.NtQueryObject, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_SETCHECK, pHideOptions.NtYieldExecution, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_SETCHECK, pHideOptions.OutputDebugStringA, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_SETCHECK, pHideOptions.BlockInput, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, pHideOptions.NtGetContextThread, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_SETCHECK, pHideOptions.NtSetContextThread, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_SETCHECK, pHideOptions.NtContinue, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_SETCHECK, pHideOptions.KiUserExceptionDispatcher, 0);
-        if(pHideOptions.NtGetContextThread && pHideOptions.NtSetContextThread && pHideOptions.NtContinue && pHideOptions.KiUserExceptionDispatcher)
-            SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 1, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_SETCHECK, pHideOptions.NtUserFindWindowEx, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_SETCHECK, pHideOptions.NtUserBuildHwndList, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_SETCHECK, pHideOptions.NtUserQueryWindow, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, pHideOptions.NtSetDebugFilterState, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, pHideOptions.NtClose, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, pHideOptions.NtCreateThreadEx, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_SETCHECK, pHideOptions.removeDebugPrivileges, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, pHideOptions.preventThreadCreation, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
-        SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
-        SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, pHideOptions.breakTLS, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_SETCHECK, pHideOptions.skipEPOutsideCode, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_SETCHECK, pHideOptions.GetTickCount, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT64), BM_SETCHECK, pHideOptions.GetTickCount64, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_GETLOCALTIME), BM_SETCHECK, pHideOptions.GetLocalTime, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_SETCHECK, pHideOptions.GetSystemTime, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_SETCHECK, pHideOptions.NtQuerySystemTime, 0);
-        SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, pHideOptions.NtQueryPerformanceCounter, 0);
+        //fill combobox with profiles
+        WCHAR* profile = ProfileNames;
+        int index = 0;
+        while(*profile != 0x00) {
+            SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_ADDSTRING,0,(LPARAM) profile);
+
+            if(wcscmp(profile, CurrentProfile) == 0)
+                SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_SETCURSEL, index, 0);
+
+            profile = profile + wcslen(profile) + 1;
+            index++;
+        }
+
+        UpdateOptions(hWnd);
 
         if (!isWindows64())
         {
@@ -395,6 +419,48 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     {
         switch(LOWORD(wParam))
         {
+        case IDC_PROFILES:
+        {
+            int profileIndex = SendMessage(GetDlgItem(hWnd, IDC_PROFILES), (UINT) CB_GETCURSEL, 0, 0);
+            profileIndex+=10; //increase when top-level menu needs more than 9 elements, probably never
+
+            SetCurrentProfile(profileIndex);
+
+            //update options title
+            WCHAR title[MAX_SECTION_NAME+30] = {0};
+            wcscpy(title, L"[ScyllaHide Options] Profile: ");
+            wcscat(title, CurrentProfile);
+            SetWindowTextW(hWnd, title);
+
+            ReadSettings();
+            UpdateOptions(hWnd);
+
+            break;
+        }
+        case IDC_SAVEPROFILE:
+        {
+            char newProfile[MAX_SECTION_NAME] = {0};
+            WCHAR newProfileW[MAX_SECTION_NAME] = {0};
+            if(_Gettext("New profile name?", newProfile, 0, 0, 0)>0) {
+                mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
+
+                SetCurrentProfile(newProfileW);
+                SaveOptions(hWnd); //this creates the new section in the ini
+
+                WCHAR title[MAX_SECTION_NAME+30] = {0};
+                wcscpy(title, L"[ScyllaHide Options] Profile: ");
+                wcscat(title, CurrentProfile);
+                SetWindowTextW(hWnd, title);
+                SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_ADDSTRING,0,(LPARAM) newProfileW);
+                int profileCount = SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_GETCOUNT, 0, 0);
+                SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_SETCURSEL, profileCount-1, 0);
+
+                //need to update the ProfileNames buffer so re-selecting new profile while dialog hasnt been closed will work
+                GetPrivateProfileSectionNamesW(ProfileNames, sizeof(ProfileNames)/sizeof(WCHAR), ScyllaHideIniPath);
+            }
+
+            break;
+        }
         case IDOK:
         {
             //save options to ini
@@ -535,7 +601,7 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
         GetProfileNames(sectionNamesA);
         strcpy(data, "0 &Options, 4 &Load Profile");
         strcat(data, sectionNamesA);
-        strcat(data, ", 5 &Save new Profile|2 &Inject DLL| 3 &Update-Check, 1 &About");
+        strcat(data, ",|2 &Inject DLL| 3 &Update-Check, 1 &About");
 
         //also patch olly title
         SetWindowTextW(hwmain, pHideOptions.ollyTitle);
@@ -601,20 +667,21 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 
             break;
         }
-        case 5: {
-            char newProfile[MAX_SECTION_NAME] = {0};
-            WCHAR newProfileW[MAX_SECTION_NAME] = {0};
-            if(_Gettext("New profile name?", newProfile, 0, 0, 0)>0) {
-                mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
-                SetCurrentProfile(newProfileW);
-                SaveSettings();
-            }
-            break;
-        }
-        //profile names/count is dynamic so we catch loading them with default
+        //profile names/count is dynamic so we catch loading them with default case
         default: {
             SetCurrentProfile(action);
             ReadSettings();
+
+            if (ProcessId)
+            {
+                startInjection(ProcessId, ScyllaHideDllPath, true);
+                bHooked = true;
+                MessageBoxA(hwmain, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+            }
+            else
+            {
+                MessageBoxA(hwmain, "Please start the target to apply changes!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+            }
         }
         break;
         }
