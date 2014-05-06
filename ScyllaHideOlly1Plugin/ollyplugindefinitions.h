@@ -23,6 +23,7 @@ extern "C" void _Deletebreakpoints(unsigned long addr0,unsigned long addr1,int s
 extern "C" int _Setbreakpoint(unsigned long addr,unsigned long type,unsigned char cmd);
 extern "C" int _Plugingetvalue(int type);
 extern "C" void _Tempbreakpoint(unsigned long addr,int mode);
+extern "C" int _Gettext(char *title,char *text, char letter,int type,int fontindex);
 
 #define NBAR 17 // Max allowed number of segments in bar
 #define PLUGIN_VERSION 110

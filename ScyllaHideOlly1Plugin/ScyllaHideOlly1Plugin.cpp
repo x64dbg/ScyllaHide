@@ -30,11 +30,11 @@ static bool bHooked = false;
 static bool bEPBreakRemoved = false;
 HWND hwmain; // Handle of main OllyDbg window
 
-
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 WCHAR ScyllaHideIniPath[MAX_PATH] = {0};
 
+extern WCHAR CurrentProfile[MAX_SECTION_NAME];
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
@@ -59,8 +59,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
             *temp = 0;
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-			wcscpy(ScyllaHideIniPath, NtApiIniPath);
-			wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
+            wcscpy(ScyllaHideIniPath, NtApiIniPath);
+            wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
             wcscat(NtApiIniPath, NtApiIniFilename);
         }
 
@@ -318,7 +318,7 @@ void SaveOptions(HWND hWnd)
     SetWindowTextW(hwmain, pHideOptions.ollyTitle);
 
     //save all options
-	SaveSettings();
+    SaveSettings();
 }
 
 //options dialog proc
@@ -329,6 +329,11 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     case WM_INITDIALOG:
     {
         ReadSettings();
+
+        WCHAR title[MAX_SECTION_NAME+30] = {0};
+        wcscpy(title, L"[ScyllaHide Options] Profile: ");
+        wcscat(title, CurrentProfile);
+        SetWindowTextW(hWnd, title);
 
         SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, pHideOptions.PEBBeingDebugged, 0);
         SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, pHideOptions.PEBHeapFlags, 0);
@@ -494,7 +499,9 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
     hwmain=hw;
 
-	CreateSettings();
+    SetCurrentProfile(DEFAULT_PROFILE);
+
+    CreateSettings();
 
     ReadSettings();
 
@@ -524,7 +531,11 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
     {
     case PM_MAIN:
     {
-        strcpy(data, "0 &Options|2 &Inject DLL| 3 &Update-Check, 1 &About");
+        char sectionNamesA[2048] = {0};
+        GetProfileNames(sectionNamesA);
+        strcpy(data, "0 &Options, 4 &Load Profile");
+        strcat(data, sectionNamesA);
+        strcat(data, ", 5 &Save new Profile|2 &Inject DLL| 3 &Update-Check, 1 &About");
 
         //also patch olly title
         SetWindowTextW(hwmain, pHideOptions.ollyTitle);
@@ -581,7 +592,8 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
                             "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
                             "or some RCE forums !",
                             "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
-            } else {
+            }
+            else {
                 MessageBoxA(hwmain,
                             "You already have the latest version of ScyllaHide !",
                             "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
@@ -589,8 +601,22 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 
             break;
         }
-        default:
+        case 5: {
+            char newProfile[MAX_SECTION_NAME] = {0};
+            WCHAR newProfileW[MAX_SECTION_NAME] = {0};
+            if(_Gettext("New profile name?", newProfile, 0, 0, 0)>0) {
+                mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
+                SetCurrentProfile(newProfileW);
+                SaveSettings();
+            }
             break;
+        }
+        //profile names/count is dynamic so we catch loading them with default
+        default: {
+            SetCurrentProfile(action);
+            ReadSettings();
+        }
+        break;
         }
     } else if(origin==PM_THREADS) {
         t_table* threadWindow = (t_table*)_Plugingetvalue(VAL_THREADS);
