@@ -75,6 +75,9 @@
     <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="plugin.h">
@@ -144,6 +147,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\UpdateCheck.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\OptionsDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -5,6 +5,9 @@
 #ifdef OLLY1
 #include "..\ScyllaHideOlly1Plugin\resource.h"
 #include "..\ScyllaHideOlly1Plugin\ollyplugindefinitions.h"
+#elif OLLY2
+#include "..\ScyllaHideOlly2Plugin\resource.h"
+#include "..\ScyllaHideOlly2Plugin\plugin.h"
 #endif
 
 extern WCHAR CurrentProfile[MAX_SECTION_NAME];
@@ -52,12 +55,7 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, pHideOptions.NtCreateThreadEx, 0);
     SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_SETCHECK, pHideOptions.removeDebugPrivileges, 0);
     SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, pHideOptions.preventThreadCreation, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
     SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
-    SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, pHideOptions.breakTLS, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_SETCHECK, pHideOptions.skipEPOutsideCode, 0);
     SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
     SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
     SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
@@ -67,6 +65,14 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_SETCHECK, pHideOptions.GetSystemTime, 0);
     SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_SETCHECK, pHideOptions.NtQuerySystemTime, 0);
     SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, pHideOptions.NtQueryPerformanceCounter, 0);
+
+#ifdef OLLY1
+    SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_SETCHECK, pHideOptions.skipEPOutsideCode, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, pHideOptions.breakTLS, 0);
+#endif
 }
 
 void SaveOptions(HWND hWnd)
@@ -210,36 +216,6 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.removeDebugPrivileges = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_GETCHECK, 0, 0))
-    {
-        pHideOptions.removeEPBreak = 1;
-    }
-    else
-        pHideOptions.removeEPBreak = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_GETCHECK, 0, 0))
-    {
-        pHideOptions.fixOllyBugs = 1;
-    }
-    else
-        pHideOptions.fixOllyBugs = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_GETCHECK, 0, 0))
-    {
-        pHideOptions.x64Fix = 1;
-    }
-    else
-        pHideOptions.x64Fix = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_GETCHECK, 0, 0))
-    {
-        pHideOptions.breakTLS = 1;
-    }
-    else
-        pHideOptions.breakTLS = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_GETCHECK, 0, 0))
-    {
-        pHideOptions.skipEPOutsideCode = 1;
-    }
-    else
-        pHideOptions.skipEPOutsideCode = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_GETCHECK, 0, 0))
     {
         pHideOptions.DLLStealth = 1;
@@ -295,11 +271,45 @@ void SaveOptions(HWND hWnd)
     else
         pHideOptions.NtQueryPerformanceCounter = 0;
 
+#ifdef OLLY1
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.removeEPBreak = 1;
+    }
+    else
+        pHideOptions.removeEPBreak = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.fixOllyBugs = 1;
+    }
+    else
+        pHideOptions.fixOllyBugs = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.x64Fix = 1;
+    }
+    else
+        pHideOptions.x64Fix = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.breakTLS = 1;
+    }
+    else
+        pHideOptions.breakTLS = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.skipEPOutsideCode = 1;
+    }
+    else
+        pHideOptions.skipEPOutsideCode = 0;
+#endif
 
     GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
 
 #ifdef OLLY1
     SetWindowTextW(hwmain, pHideOptions.ollyTitle);
+#elif OLLY2
+    SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
 #endif
 
     //save all options
@@ -336,10 +346,12 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
         UpdateOptions(hWnd);
 
+#ifdef OLLY1
         if (!isWindows64())
         {
             EnableWindow(GetDlgItem(hWnd, IDC_X64FIX), FALSE);
         }
+#endif
 
         break;
     }
@@ -377,9 +389,10 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             WCHAR newProfileW[MAX_SECTION_NAME] = {0};
 #ifdef OLLY1
             if(_Gettext("New profile name?", newProfile, 0, 0, 0)>0) {
-#endif
                 mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
-
+#elif OLLY2
+            if(Getstring(hWnd, L"New profile name?", newProfileW, MAX_SECTION_NAME, 0, 0, 0, 0, 0, 0)>0) {
+#endif
                 SetCurrentProfile(newProfileW);
                 SaveOptions(hWnd); //this creates the new section in the ini
 
@@ -473,7 +486,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             else SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
             break;
         }
-        }
+    }
     }
     break;
 
@@ -481,7 +494,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     {
         return FALSE;
     }
-    }
+}
 
-    return 0;
+return 0;
 }

@@ -3,6 +3,7 @@
 #include "..\PluginGeneric\ScyllaHideVersion.h"
 
 #define PLUGINNAME     L"ScyllaHide"
+#define MAX_PROFILES 128
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
@@ -15,12 +16,19 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
 static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode);
 
 //menus
+static t_menu profilemenu[MAX_PROFILES];
+
 static t_menu mainmenu[] =
 {
     {
         L"Options",
         L"Select Hiding Options",
         K_NONE, Moptions, NULL, 0
+    },
+    {
+        L"Load Profile",
+        L"Load a saved profile",
+        K_NONE, NULL, profilemenu, 0
     },
     {
         L"|Inject DLL",
