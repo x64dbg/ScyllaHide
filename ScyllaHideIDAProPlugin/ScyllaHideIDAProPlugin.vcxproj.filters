@@ -81,6 +81,9 @@
     <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScyllaHideIDAProPlugin.rc">
@@ -170,6 +173,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\UpdateCheck.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\OptionsDialog.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

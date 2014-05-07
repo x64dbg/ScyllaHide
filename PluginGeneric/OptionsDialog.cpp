@@ -8,6 +8,14 @@
 #elif OLLY2
 #include "..\ScyllaHideOlly2Plugin\resource.h"
 #include "..\ScyllaHideOlly2Plugin\plugin.h"
+#elif __IDP__
+//#define BUILD_IDA_64BIT 1
+#include "..\ScyllaHideIDAProPlugin\resource.h"
+#include "..\ScyllaHideIDAProPlugin\idasdk\ida.hpp"
+#include "..\ScyllaHideIDAProPlugin\idasdk\idp.hpp"
+#include "..\ScyllaHideIDAProPlugin\idasdk\dbg.hpp"
+#include "..\PluginGeneric\UpdateCheck.h"
+#include "..\ScyllaHideIDAProPlugin\IdaServerClient.h"
 #endif
 
 extern WCHAR CurrentProfile[MAX_SECTION_NAME];
@@ -20,6 +28,8 @@ extern bool bHooked;
 
 #ifdef OLLY1
 extern HWND hwmain;
+#elif __IDP__
+wchar_t DllPathForInjection[MAX_PATH] = {0};
 #endif
 
 bool GetFileDialog(TCHAR Buffer[MAX_PATH])
@@ -73,7 +83,6 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, pHideOptions.NtCreateThreadEx, 0);
     SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_SETCHECK, pHideOptions.removeDebugPrivileges, 0);
     SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, pHideOptions.preventThreadCreation, 0);
-    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
     SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
     SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
     SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
@@ -85,11 +94,27 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, pHideOptions.NtQueryPerformanceCounter, 0);
 
 #ifdef OLLY1
+    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
     SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
     SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
     SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
     SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_SETCHECK, pHideOptions.skipEPOutsideCode, 0);
     SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, pHideOptions.breakTLS, 0);
+#elif OLLY2
+    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
+#elif __IDP__
+    SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_SETCHECK, pHideOptions.autostartServer, 0);
+    SetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort);
+
+#ifdef BUILD_IDA_64BIT
+    if(isWindows64()) EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), TRUE);
+    else EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
+#else
+    EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), FALSE);
+#endif
+
+    if(ProcessId) EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), TRUE);
+    else EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), FALSE);
 #endif
 }
 
@@ -320,13 +345,22 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.skipEPOutsideCode = 0;
+#elif __IDP__
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.autostartServer = 1;
+    }
+    else
+        pHideOptions.autostartServer = 0;
+
+    GetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort, 6);
 #endif
 
-    GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
-
 #ifdef OLLY1
+    GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
     SetWindowTextW(hwmain, pHideOptions.ollyTitle);
 #elif OLLY2
+    GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
     SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
 #endif
 
@@ -403,13 +437,18 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         }
         case IDC_SAVEPROFILE:
         {
-            char newProfile[MAX_SECTION_NAME] = {0};
             WCHAR newProfileW[MAX_SECTION_NAME] = {0};
 #ifdef OLLY1
+            char newProfile[MAX_SECTION_NAME] = {0};
             if(_Gettext("New profile name?", newProfile, 0, 0, 0)>0) {
                 mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
 #elif OLLY2
             if(Getstring(hWnd, L"New profile name?", newProfileW, MAX_SECTION_NAME, 0, 0, 0, 0, 0, 0)>0) {
+#elif __IDP__
+            char* newProfile;
+            newProfile = askstr(0, "", "New profile name?");
+            if(newProfile != NULL) {
+                mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
 #endif
                 SetCurrentProfile(newProfileW);
                 SaveOptions(hWnd); //this creates the new section in the ini
@@ -435,7 +474,11 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
             if (ProcessId)
             {
+#ifdef __IDP__
+#ifndef BUILD_IDA_64BIT
                 startInjection(ProcessId, ScyllaHideDllPath, true);
+#endif
+#endif
                 bHooked = true;
                 MessageBoxA(hWnd, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
             }
@@ -509,14 +552,79 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             else SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
             break;
         }
-    }
-    }
-    break;
+#ifdef __IDP__
+        case IDC_DLLNORMAL:
+        case IDC_DLLSTEALTH:
+        case IDC_DLLUNLOAD:
+        {   //DLL injection options need to be updated on-the-fly coz the injection button is ON the options window
+            if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_GETCHECK, 0, 0))
+            {
+                pHideOptions.DLLStealth = 1;
+            }
+            else
+                pHideOptions.DLLStealth = 0;
+            if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_GETCHECK, 0, 0))
+            {
+                pHideOptions.DLLNormal = 1;
+            }
+            else
+                pHideOptions.DLLNormal = 0;
+            if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_GETCHECK, 0, 0))
+            {
+                pHideOptions.DLLUnload = 1;
+            }
+            else
+                pHideOptions.DLLUnload = 0;
 
-    default:
-    {
-        return FALSE;
+
+            break;
+        }
+        case IDC_INJECTDLL:
+        {
+            if(ProcessId)
+            {
+                if(GetFileDialog(DllPathForInjection))
+                {
+                    if (dbg->is_remote())
+                    {
+                        SendInjectToServer(ProcessId);
+                    }
+                    else
+                    {
+#ifndef BUILD_IDA_64BIT
+                        injectDll(ProcessId, DllPathForInjection);
+#endif
+                    }
+
+                }
+            }
+            break;
+        }
+        case IDC_UPDATE:
+        {
+            if(isNewVersionAvailable()) {
+                MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
+                            "There is a new version of ScyllaHide available !\n\n"
+                            "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
+                            "or some RCE forums !",
+                            "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+            } else {
+                MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
+                            "You already have the latest version of ScyllaHide !",
+                            "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+            }
+            break;
+        }
+#endif
+
     }
+}
+break;
+
+default:
+{
+    return FALSE;
+}
 }
 
 return 0;
