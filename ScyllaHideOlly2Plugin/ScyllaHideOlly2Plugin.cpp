@@ -36,24 +36,6 @@ bool specialPebFix = false;
 DWORD ProcessId = 0;
 bool bHooked = false;
 
-bool GetFileDialog(TCHAR Buffer[MAX_PATH])
-{
-    OPENFILENAME sOpenFileName = {0};
-    const TCHAR szFilterString[] = L"DLL \0*.dll\0\0";
-    const TCHAR szDialogTitle[] = L"ScyllaHide";
-
-    Buffer[0] = 0;
-
-    sOpenFileName.lStructSize = sizeof(sOpenFileName);
-    sOpenFileName.lpstrFilter = szFilterString;
-    sOpenFileName.lpstrFile = Buffer;
-    sOpenFileName.nMaxFile = MAX_PATH;
-    sOpenFileName.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_HIDEREADONLY;
-    sOpenFileName.lpstrTitle = szDialogTitle;
-
-    return (!!GetOpenFileName(&sOpenFileName));
-}
-
 //Menu->Options
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
 {

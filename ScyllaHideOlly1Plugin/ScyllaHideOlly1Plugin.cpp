@@ -71,24 +71,6 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
     return TRUE;
 };
 
-bool GetFileDialog(TCHAR Buffer[MAX_PATH])
-{
-    OPENFILENAME sOpenFileName = {0};
-    const TCHAR szFilterString[] = L"DLL \0*.dll\0\0";
-    const TCHAR szDialogTitle[] = L"ScyllaHide";
-
-    Buffer[0] = 0;
-
-    sOpenFileName.lStructSize = sizeof(sOpenFileName);
-    sOpenFileName.lpstrFilter = szFilterString;
-    sOpenFileName.lpstrFile = Buffer;
-    sOpenFileName.nMaxFile = MAX_PATH;
-    sOpenFileName.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_HIDEREADONLY;
-    sOpenFileName.lpstrTitle = szDialogTitle;
-
-    return (!!GetOpenFileName(&sOpenFileName));
-}
-
 //register plugin with name
 extern "C" int __declspec(dllexport) _ODBG_Plugindata(char shortname[32])
 {

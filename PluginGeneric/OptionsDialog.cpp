@@ -22,6 +22,24 @@ extern bool bHooked;
 extern HWND hwmain;
 #endif
 
+bool GetFileDialog(TCHAR Buffer[MAX_PATH])
+{
+    OPENFILENAME sOpenFileName = {0};
+    const TCHAR szFilterString[] = L"DLL \0*.dll\0\0";
+    const TCHAR szDialogTitle[] = L"ScyllaHide";
+
+    Buffer[0] = 0;
+
+    sOpenFileName.lStructSize = sizeof(sOpenFileName);
+    sOpenFileName.lpstrFilter = szFilterString;
+    sOpenFileName.lpstrFile = Buffer;
+    sOpenFileName.nMaxFile = MAX_PATH;
+    sOpenFileName.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_HIDEREADONLY;
+    sOpenFileName.lpstrTitle = szDialogTitle;
+
+    return (TRUE == GetOpenFileName(&sOpenFileName));
+}
+
 void UpdateOptions(HWND hWnd)
 {
     SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, pHideOptions.PEBBeingDebugged, 0);
