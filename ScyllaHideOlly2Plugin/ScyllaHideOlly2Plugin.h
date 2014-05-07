@@ -10,6 +10,7 @@ void LogWrapper(const WCHAR * format, ...);
 void LogErrorWrapper(const WCHAR * format, ...);
 
 static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode);
+static int Mprofiles(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mupdate(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);

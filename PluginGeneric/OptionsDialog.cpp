@@ -429,6 +429,11 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             EndDialog(hWnd, NULL);
             break;
         }
+        case IDC_APPLY:
+        {
+            SaveOptions(hWnd);
+            break;
+        }
         case IDC_PROTECTDRX:
         {
             WPARAM state;
