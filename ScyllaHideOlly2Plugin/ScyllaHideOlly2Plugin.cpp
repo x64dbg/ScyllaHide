@@ -67,6 +67,32 @@ static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
     return MENU_ABSENT;
 }
 
+static int Mprofiles(t_table *pt,wchar_t *name,ulong index,int mode)
+{
+    if (mode==MENU_VERIFY)
+        return MENU_NORMAL;
+    else if (mode==MENU_EXECUTE)
+    {
+        int offset = 10;
+        SetCurrentProfile(index+offset);
+        ReadSettings();
+
+        if (ProcessId)
+        {
+            startInjection(ProcessId, ScyllaHideDllPath, true);
+            bHooked = true;
+            MessageBoxA(hwollymain, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+        }
+        else
+        {
+            MessageBoxA(hwollymain, "Please start the target to apply changes!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+        }
+
+        return MENU_REDRAW;
+    };
+    return MENU_ABSENT;
+}
+
 static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode)
 {
     if (mode==MENU_VERIFY)
@@ -242,7 +268,7 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
         WCHAR* profile = ProfileNames;
         int i=0;
         while(*profile != 0x00 && i<MAX_PROFILES-1) {
-            t_menu profile_entry = {profile, profile, K_NONE, Moptions, NULL, i};
+            t_menu profile_entry = {profile, profile, K_NONE, Mprofiles, NULL, i};
             profilemenu[i] = profile_entry;
 
             i++;
