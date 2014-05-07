@@ -789,35 +789,12 @@ void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo)
     }
 }
 
-static bool FoundPeHeaderInBuffer = false;
-
-NTSTATUS NTAPI HookedNtWriteVirtualMemory(HANDLE ProcessHandle, PVOID BaseAddress, CONST VOID *Buffer, SIZE_T BufferSize, PSIZE_T NumberOfBytesWritten)
-{
-	PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)Buffer;
-
-	if (pDos && BufferSize > 2)
-	{
-		if (pDos->e_magic == IMAGE_DOS_SIGNATURE)
-		{
-			FoundPeHeaderInBuffer = true;
-			//write to file
-			WriteMalwareToDisk(Buffer, (DWORD)BufferSize); //new file
-		}
-		else if (FoundPeHeaderInBuffer)
-		{
-			WriteMalwareToDisk(Buffer, (DWORD)BufferSize); //append file
-		}
-	}
-
-	return DllExchange.dNtWriteVirtualMemory(ProcessHandle, BaseAddress, Buffer, BufferSize, NumberOfBytesWritten);
-}
-
 NTSTATUS NTAPI HookedNtResumeThread(HANDLE ThreadHandle, PULONG PreviousSuspendCount)
 {
 	DWORD dwProcessId = GetProcessIdByThreadHandle(ThreadHandle);
 	if (dwProcessId != GetCurrentProcessId()) //malware starts the thread of another process
 	{
-		FoundPeHeaderInBuffer = false;
+		DumpMalware(dwProcessId);
 		TerminateProcessByProcessId(dwProcessId); //terminate it
 		DbgPrint("Malware called ResumeThread");
 		DbgBreakPoint();
