@@ -3,6 +3,7 @@
 #include "HookMain.h"
 #include <tlhelp32.h>
 #include "ntdllext.h"
+#include "PebHider.h"
 
 const WCHAR * BadProcessnameList[] =
 {
@@ -197,6 +198,30 @@ bool IsValidHandle(HANDLE hHandle)
 	flags.ProtectFromClose = 0;
 	flags.Inherit = 0;
 	return NtQueryObject(hHandle, ObjectHandleFlagInformation, &flags, sizeof(OBJECT_HANDLE_FLAG_INFORMATION), &retLen) >= 0;
+}
+
+void * GetPEBRemote(HANDLE hProcess)
+{
+	PROCESS_BASIC_INFORMATION pbi;
+
+	if (DllExchange.dNtQueryInformationProcess)
+	{
+		if (DllExchange.dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
+		{
+			return pbi.PebBaseAddress;
+		}
+	}
+	else
+	{
+		//maybe not hooked
+		if (NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
+		{
+			return pbi.PebBaseAddress;
+		}
+	}
+
+
+	return 0;
 }
 
 
@@ -447,6 +472,41 @@ void IncreaseSystemTime(LPSYSTEMTIME lpTime)
 }
 
 
+BYTE memory[0x1000] = {0};
+
+void DumpMalware(DWORD dwProcessId)
+{
+	HANDLE hProcess = OpenProcess(PROCESS_VM_READ|PROCESS_QUERY_INFORMATION, 0, dwProcessId);
+	if (hProcess)
+	{
+		PEB_CURRENT * peb = (PEB_CURRENT *)GetPEBRemote(hProcess);
+		if (peb)
+		{
+			DWORD_PTR imagebase = peb->ImageBaseAddress;
+			ReadProcessMemory(hProcess, (void *)imagebase, memory, sizeof(memory), 0);
+
+			PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)memory;
+			if (pDos->e_magic == IMAGE_DOS_SIGNATURE)
+			{
+				PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
+				if (pNt->Signature == IMAGE_NT_SIGNATURE)
+				{
+					void *tempMem = VirtualAlloc(0, pNt->OptionalHeader.SizeOfImage, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+					if (tempMem)
+					{
+						ReadProcessMemory(hProcess,(void *)imagebase, tempMem, pNt->OptionalHeader.SizeOfImage, 0);
+						
+						WriteMalwareToDisk(tempMem, pNt->OptionalHeader.SizeOfImage);
+
+						VirtualFree(tempMem, 0, MEM_RELEASE);
+					}
+				}
+			}
+		}
+		CloseHandle(hProcess);
+	}
+}
+
 WCHAR MalwareFile[MAX_PATH] = {0};
 const WCHAR MalwareFilename[] = L"Unpacked.exe";
 
@@ -466,6 +526,7 @@ bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize)
 		}
 
 		_wcscat(MalwareFile, MalwareFilename);
+		DeleteFileW(MalwareFile);
 	}
 
 	return WriteMemoryToFile(MalwareFile, buffer,bufferSize);

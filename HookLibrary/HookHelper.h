@@ -34,3 +34,5 @@ void IncreaseSystemTime(LPSYSTEMTIME lpTime);
 void TerminateProcessByProcessId(DWORD dwProcess);
 bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize);
 bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize);
+void * GetPEBRemote(HANDLE hProcess);
+void DumpMalware(DWORD dwProcessId);

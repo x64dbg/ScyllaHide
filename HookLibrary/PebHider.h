@@ -134,7 +134,7 @@ typedef PEB32 PEB_CURRENT;
 #pragma pack(pop)
 
 
-PEB_CURRENT * GetPEBCurrent();
-PEB64 * GetPEB64();
-void FixPebAntidebug();
+//PEB_CURRENT * GetPEBCurrent();
+//PEB64 * GetPEB64();
+//void FixPebAntidebug();
 
