@@ -55,7 +55,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEOLLY1PLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEOLLY1PLUGIN_EXPORTS;OLLY1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StructMemberAlignment>1Byte</StructMemberAlignment>
       <AdditionalOptions>/J %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -74,7 +74,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEOLLY1PLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEOLLY1PLUGIN_EXPORTS;OLLY1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StructMemberAlignment>1Byte</StructMemberAlignment>
       <AdditionalOptions>/J %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -105,6 +105,7 @@
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
     <ClCompile Include="..\PluginGeneric\IniSettings.cpp" />
     <ClCompile Include="..\PluginGeneric\Injector.cpp" />
+    <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp" />
     <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp" />
     <ClCompile Include="olly1patches.cpp" />
     <ClCompile Include="ScyllaHideOlly1Plugin.cpp" />
@@ -128,6 +129,7 @@
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
     <ClInclude Include="..\PluginGeneric\IniSettings.h" />
     <ClInclude Include="..\PluginGeneric\Injector.h" />
+    <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
     <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
     <ClInclude Include="..\PluginGeneric\UpdateCheck.h" />
     <ClInclude Include="ollyplugindefinitions.h" />
