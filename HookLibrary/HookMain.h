@@ -20,8 +20,8 @@ typedef DWORD(WINAPI * t_OutputDebugStringW)(LPCWSTR lpOutputString); //Kernel32
 
 #define MAX_NATIVE_HOOKS 20
 
-#define HOOK_DLL_EXCHANGE_SIZE_64 409
-#define HOOK_DLL_EXCHANGE_SIZE_32 525
+#define HOOK_DLL_EXCHANGE_SIZE_64 410
+#define HOOK_DLL_EXCHANGE_SIZE_32 526
 
 typedef struct _HOOK_NATIVE_CALL32 {
     DWORD eaxValue;
@@ -47,6 +47,7 @@ typedef struct _HOOK_DLL_EXCHANGE {
     BOOLEAN EnableNtSetInformationThreadHook;
     BOOLEAN EnableNtQuerySystemInformationHook;
     BOOLEAN EnableNtQueryInformationProcessHook;
+	BOOLEAN EnableNtSetInformationProcessHook;
     BOOLEAN EnableNtQueryObjectHook;
     BOOLEAN EnableNtYieldExecutionHook;
     BOOLEAN EnableNtCloseHook;

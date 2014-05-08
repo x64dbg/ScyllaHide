@@ -109,11 +109,9 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
 
     if (dllexchange->EnableNtSetInformationThreadHook == TRUE) HOOK_NATIVE(NtSetInformationThread);
     if (dllexchange->EnableNtQuerySystemInformationHook == TRUE) HOOK_NATIVE(NtQuerySystemInformation);
-    if (dllexchange->EnableNtQueryInformationProcessHook == TRUE)
-    {
-        HOOK_NATIVE(NtQueryInformationProcess);
-        HOOK_NATIVE(NtSetInformationProcess);
-    }
+    if (dllexchange->EnableNtQueryInformationProcessHook == TRUE) HOOK_NATIVE(NtQueryInformationProcess);
+	if (dllexchange->EnableNtSetInformationProcessHook == TRUE) HOOK_NATIVE(NtSetInformationProcess);
+
     if (dllexchange->EnableNtQueryObjectHook == TRUE) HOOK_NATIVE(NtQueryObject);
     if (dllexchange->EnableNtYieldExecutionHook == TRUE) HOOK_NATIVE(NtYieldExecution);
     if (dllexchange->EnableNtGetContextThreadHook == TRUE) HOOK_NATIVE(NtGetContextThread);

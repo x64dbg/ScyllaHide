@@ -228,6 +228,7 @@ void MapSettings()
 	pHideOptions.preventThreadCreation = idaExchange.EnablePreventThreadCreation;
 	pHideOptions.OutputDebugStringA = idaExchange.EnableOutputDebugStringHook;
 	pHideOptions.BlockInput = idaExchange.EnableBlockInputHook;
+	pHideOptions.NtSetInformationProcess = idaExchange.EnableNtSetInformationProcessHook;
 
 	pHideOptions.GetTickCount = idaExchange.EnableGetTickCountHook;
 	pHideOptions.GetTickCount64 = idaExchange.EnableGetTickCount64Hook;
@@ -240,6 +241,8 @@ void MapSettings()
 	pHideOptions.PEBHeapFlags = idaExchange.EnablePebHeapFlags;
 	pHideOptions.PEBNtGlobalFlag = idaExchange.EnablePebNtGlobalFlag;
 	pHideOptions.PEBStartupInfo = idaExchange.EnablePebStartupInfo;
+
+	pHideOptions.malwareRunpeUnpacker = idaExchange.EnableMalwareRunPeUnpacker;
 }
 
 void DoSomeBitCheck()

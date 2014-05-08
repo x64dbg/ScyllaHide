@@ -58,6 +58,8 @@ bool SendEventToServer(unsigned long notif_code, unsigned long ProcessId)
 	idaExchange.EnableNtSetContextThreadHook = pHideOptions.NtSetContextThread;
 	idaExchange.EnableNtContinueHook = pHideOptions.NtContinue;
 	idaExchange.EnableKiUserExceptionDispatcherHook = pHideOptions.KiUserExceptionDispatcher;
+	idaExchange.EnableNtSetInformationProcessHook = pHideOptions.NtSetInformationProcess;
+	idaExchange.EnableMalwareRunPeUnpacker = pHideOptions.malwareRunpeUnpacker;
 
 	idaExchange.EnableGetTickCountHook = pHideOptions.GetTickCount;
 	idaExchange.EnableGetTickCount64Hook = pHideOptions.GetTickCount64;

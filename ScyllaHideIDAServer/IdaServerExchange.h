@@ -86,7 +86,7 @@ enum server_dbg_notification_t
 #define RESULT_SUCCESS 1
 #define RESULT_FAILED 0
 
-#define IDA_SERVER_EXCHANGE_STRUCT_SIZE 643
+#define IDA_SERVER_EXCHANGE_STRUCT_SIZE 645
 
 typedef struct _IDA_SERVER_EXCHANGE
 {
@@ -105,9 +105,11 @@ typedef struct _IDA_SERVER_EXCHANGE
 	unsigned char EnableNtSetInformationThreadHook;
 	unsigned char EnableNtQuerySystemInformationHook;
 	unsigned char EnableNtQueryInformationProcessHook;
+	unsigned char EnableNtSetInformationProcessHook;
 	unsigned char EnableNtQueryObjectHook;
 	unsigned char EnableNtYieldExecutionHook;
 	unsigned char EnableNtCloseHook;
+	unsigned char EnableMalwareRunPeUnpacker;
 
 	unsigned char EnablePreventThreadCreation;
 	unsigned char EnableNtCreateThreadExHook;

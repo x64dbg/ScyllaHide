@@ -350,11 +350,13 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableGetSystemTimeHook = pHideOptions.GetSystemTime;
     data->EnableNtQuerySystemTimeHook = pHideOptions.NtQuerySystemTime;
     data->EnableNtQueryPerformanceCounterHook = pHideOptions.NtQueryPerformanceCounter;
+	data->EnableNtSetInformationProcessHook = pHideOptions.NtSetInformationProcess;
 
     data->EnableNtGetContextThreadHook = pHideOptions.NtGetContextThread;
     data->EnableNtSetContextThreadHook = pHideOptions.NtSetContextThread;
     data->EnableNtContinueHook = pHideOptions.NtContinue;
     data->EnableKiUserExceptionDispatcherHook = pHideOptions.KiUserExceptionDispatcher;
+	data->EnableMalwareRunPeUnpacker = pHideOptions.malwareRunpeUnpacker;
 
     data->isKernel32Hooked = FALSE;
     data->isNtdllHooked = FALSE;
