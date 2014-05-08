@@ -261,6 +261,12 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.preventThreadCreation = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_RUNPE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.malwareRunpeUnpacker = 1;
+    }
+    else
+        pHideOptions.malwareRunpeUnpacker = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_GETCHECK, 0, 0))
     {
         pHideOptions.removeDebugPrivileges = 1;
