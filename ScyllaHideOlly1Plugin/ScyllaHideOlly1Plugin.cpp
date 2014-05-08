@@ -86,7 +86,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
     hwmain=hw;
 
-    SetCurrentProfile(DEFAULT_PROFILE);
+    ReadCurrentProfile();
     CreateSettings();
     ReadSettings();
 

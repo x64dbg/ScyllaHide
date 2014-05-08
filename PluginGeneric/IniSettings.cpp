@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include "IniSettings.h"
 #include "..\PluginGeneric\Injector.h"
@@ -239,23 +240,46 @@ void GetProfileNames(char* profileNamesA)
     char buf[MAX_SECTION_NAME];
     WCHAR* profile = ProfileNames;
     strcpy(profileNamesA, "{");
-    while(*profile != 0x00) {
-        _ultoa(offset, buf, 10);
-        strcat(profileNamesA, buf);
-        wcstombs_s(NULL, buf, sizeof(buf)/sizeof(char), profile, _TRUNCATE);
-        strcat(profileNamesA, buf);
-        strcat(profileNamesA, ",");
+    while(*profile != 0x00)
+	{
+		if (_wcsicmp(profile, INDEPENDENT_SECTION))
+		{
+			_ultoa(offset, buf, 10);
+			strcat(profileNamesA, buf);
+			wcstombs_s(NULL, buf, _countof(buf), profile, _TRUNCATE);
+			strcat(profileNamesA, buf);
+			strcat(profileNamesA, ",");
 
-        offset++;
+			offset++;
+		}
+
         profile = profile + wcslen(profile) + 1;
     }
 
     strcat(profileNamesA, "}");
 }
 
-void SetCurrentProfile(WCHAR* profile)
+void SetCurrentProfile(const WCHAR* profile)
 {
     wcscpy(CurrentProfile, profile);
+	SaveCurrentProfile(profile);
+}
+
+void SaveCurrentProfile(const WCHAR* profile)
+{
+	WritePrivateProfileStringW(INDEPENDENT_SECTION, L"CurrentProfile", profile, ScyllaHideIniPath);
+}
+
+void ReadCurrentProfile()
+{
+	GetPrivateProfileStringW(INDEPENDENT_SECTION, L"CurrentProfile", L"", CurrentProfile, _countof(CurrentProfile), ScyllaHideIniPath);
+
+	if (wcslen(CurrentProfile) == 0)
+	{
+		wcscpy(CurrentProfile, DEFAULT_PROFILE);
+		CreateSettings();
+		SetCurrentProfile(DEFAULT_PROFILE);
+	}
 }
 
 void SetCurrentProfile(int index)
