@@ -51,8 +51,12 @@ static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
 
 static int Mprofiles(t_table *pt,wchar_t *name,ulong index,int mode)
 {
-    if (mode==MENU_VERIFY)
+    if (mode==MENU_VERIFY) {
+        if(wcscmp(CurrentProfile, name)==0)
+            return MENU_CHECKED;
+
         return MENU_NORMAL;
+    }
     else if (mode==MENU_EXECUTE)
     {
         int offset = 10;
