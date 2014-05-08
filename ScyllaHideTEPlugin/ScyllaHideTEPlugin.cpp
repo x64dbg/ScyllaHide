@@ -53,8 +53,9 @@ BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
             wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
             wcscat(NtApiIniPath, NtApiIniFilename);
 
-            SetCurrentProfile(DEFAULT_PROFILE);
-            CreateSettings();
+            ReadCurrentProfile();
+            ReadSettings();
+
             SetDebugPrivileges(); //set debug privilege
         }
     }
