@@ -106,6 +106,7 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"NtSetContextThreadHook", L"1", iniFile);
     WriteIniSettings(L"NtSetDebugFilterStateHook", L"1", iniFile);
     WriteIniSettings(L"NtSetInformationThreadHook", L"1", iniFile);
+    WriteIniSettings(L"NtSetInformationProcessHook", L"1", iniFile);
     WriteIniSettings(L"NtUserBuildHwndListHook", L"1", iniFile);
     WriteIniSettings(L"NtUserFindWindowExHook", L"1", iniFile);
     WriteIniSettings(L"NtUserQueryWindowHook", L"1", iniFile);
@@ -154,6 +155,7 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.NtSetContextThread = ReadIniSettingsInt(L"NtSetContextThreadHook", iniFile);
     pHideOptions.NtSetDebugFilterState = ReadIniSettingsInt(L"NtSetDebugFilterStateHook", iniFile);
     pHideOptions.NtSetInformationThread = ReadIniSettingsInt(L"NtSetInformationThreadHook", iniFile);
+    pHideOptions.NtSetInformationProcess = ReadIniSettingsInt(L"NtSetInformationProcessHook", iniFile);
     pHideOptions.NtUserBuildHwndList = ReadIniSettingsInt(L"NtUserBuildHwndListHook", iniFile);
     pHideOptions.NtUserFindWindowEx = ReadIniSettingsInt(L"NtUserFindWindowExHook", iniFile);
     pHideOptions.NtUserQueryWindow = ReadIniSettingsInt(L"NtUserQueryWindowHook", iniFile);
@@ -207,6 +209,7 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"NtSetContextThreadHook", pHideOptions.NtSetContextThread, iniFile);
     WriteIniSettingsInt(L"NtSetDebugFilterStateHook", pHideOptions.NtSetDebugFilterState, iniFile);
     WriteIniSettingsInt(L"NtSetInformationThreadHook", pHideOptions.NtSetInformationThread, iniFile);
+    WriteIniSettingsInt(L"NtSetInformationProcessHook", pHideOptions.NtSetInformationProcess, iniFile);
     WriteIniSettingsInt(L"NtUserBuildHwndListHook", pHideOptions.NtUserBuildHwndList, iniFile);
     WriteIniSettingsInt(L"NtUserFindWindowExHook", pHideOptions.NtUserFindWindowEx, iniFile);
     WriteIniSettingsInt(L"NtUserQueryWindowHook", pHideOptions.NtUserQueryWindow, iniFile);
@@ -240,18 +243,18 @@ void GetProfileNames(char* profileNamesA)
     char buf[MAX_SECTION_NAME];
     WCHAR* profile = ProfileNames;
     strcpy(profileNamesA, "{");
-	while(*profile != 0x00)
-	{
-		_ultoa(offset, buf, 10);
-		strcat(profileNamesA, buf);
-		wcstombs_s(NULL, buf, _countof(buf), profile, _TRUNCATE);
-		strcat(profileNamesA, buf);
-		strcat(profileNamesA, ",");
+    while(*profile != 0x00)
+    {
+        _ultoa(offset, buf, 10);
+        strcat(profileNamesA, buf);
+        wcstombs_s(NULL, buf, _countof(buf), profile, _TRUNCATE);
+        strcat(profileNamesA, buf);
+        strcat(profileNamesA, ",");
 
-		offset++;
+        offset++;
 
-		profile = profile + wcslen(profile) + 1;
-	}
+        profile = profile + wcslen(profile) + 1;
+    }
 
     strcat(profileNamesA, "}");
 }
@@ -259,46 +262,46 @@ void GetProfileNames(char* profileNamesA)
 void SetCurrentProfile(const WCHAR* profile)
 {
     wcscpy(CurrentProfile, profile);
-	SaveCurrentProfile(profile);
+    SaveCurrentProfile(profile);
 }
 
 void SaveCurrentProfile(const WCHAR* profile)
 {
-	WritePrivateProfileStringW(INDEPENDENT_SECTION, L"CurrentProfile", profile, ScyllaHideIniPath);
+    WritePrivateProfileStringW(INDEPENDENT_SECTION, L"CurrentProfile", profile, ScyllaHideIniPath);
 }
 
 void ReadCurrentProfile()
 {
-	GetPrivateProfileStringW(INDEPENDENT_SECTION, L"CurrentProfile", L"", CurrentProfile, _countof(CurrentProfile), ScyllaHideIniPath);
+    GetPrivateProfileStringW(INDEPENDENT_SECTION, L"CurrentProfile", L"", CurrentProfile, _countof(CurrentProfile), ScyllaHideIniPath);
 
-	if (wcslen(CurrentProfile) == 0)
-	{
-		wcscpy(CurrentProfile, DEFAULT_PROFILE);
-		CreateSettings();
-		SetCurrentProfile(DEFAULT_PROFILE);
-	}
+    if (wcslen(CurrentProfile) == 0)
+    {
+        wcscpy(CurrentProfile, DEFAULT_PROFILE);
+        CreateSettings();
+        SetCurrentProfile(DEFAULT_PROFILE);
+    }
 }
 
 void GetPrivateProfileSectionNamesWithFilter()
 {
-	WCHAR tempBuffer[_countof(ProfileNames)] = {0};
-	GetPrivateProfileSectionNamesW(tempBuffer, _countof(tempBuffer), ScyllaHideIniPath);
+    WCHAR tempBuffer[_countof(ProfileNames)] = {0};
+    GetPrivateProfileSectionNamesW(tempBuffer, _countof(tempBuffer), ScyllaHideIniPath);
 
-	ZeroMemory(ProfileNames, sizeof(ProfileNames));
+    ZeroMemory(ProfileNames, sizeof(ProfileNames));
 
-	WCHAR *profile = tempBuffer;
-	WCHAR *Copy = ProfileNames;
+    WCHAR *profile = tempBuffer;
+    WCHAR *Copy = ProfileNames;
 
-	while(*profile != 0x00)
-	{
-		if (_wcsicmp(profile, INDEPENDENT_SECTION) != 0)
-		{
-			wcscpy(Copy, profile);
-			Copy += wcslen(profile) + 1;
-		}
+    while(*profile != 0x00)
+    {
+        if (_wcsicmp(profile, INDEPENDENT_SECTION) != 0)
+        {
+            wcscpy(Copy, profile);
+            Copy += wcslen(profile) + 1;
+        }
 
-		profile = profile + wcslen(profile) + 1;
-	}
+        profile = profile + wcslen(profile) + 1;
+    }
 }
 
 void SetCurrentProfile(int index)

@@ -62,6 +62,7 @@ void UpdateOptions(HWND hWnd)
     else
         SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 0, 0);
     SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_SETCHECK, pHideOptions.NtSetInformationThread, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONPROCESS), BM_SETCHECK, pHideOptions.NtSetInformationProcess, 0);
     SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_SETCHECK, pHideOptions.NtQuerySystemInformation, 0);
     SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_SETCHECK, pHideOptions.NtQueryInformationProcess, 0);
     SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_SETCHECK, pHideOptions.NtQueryObject, 0);
@@ -152,6 +153,12 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.NtSetInformationThread = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONPROCESS), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.NtSetInformationProcess = 1;
+    }
+    else
+        pHideOptions.NtSetInformationProcess = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_GETCHECK, 0, 0))
     {
         pHideOptions.NtQuerySystemInformation = 1;
@@ -388,15 +395,15 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         WCHAR* profile = ProfileNames;
         int index = 0;
         while(*profile != 0x00)
-		{
+        {
 
-			SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_ADDSTRING,0,(LPARAM) profile);
+            SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_ADDSTRING,0,(LPARAM) profile);
 
-			if(wcscmp(profile, CurrentProfile) == 0)
-				SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_SETCURSEL, index, 0);
+            if(wcscmp(profile, CurrentProfile) == 0)
+                SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_SETCURSEL, index, 0);
 
 
-			index++;
+            index++;
             profile = profile + wcslen(profile) + 1;
         }
 
