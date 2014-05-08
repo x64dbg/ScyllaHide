@@ -472,7 +472,7 @@ void IncreaseSystemTime(LPSYSTEMTIME lpTime)
 }
 
 
-BYTE memory[0x1000] = {0};
+BYTE memory[sizeof(IMAGE_NT_HEADERS) + 0x100] = {0};
 
 void DumpMalware(DWORD dwProcessId)
 {
@@ -482,7 +482,9 @@ void DumpMalware(DWORD dwProcessId)
 		PEB_CURRENT * peb = (PEB_CURRENT *)GetPEBRemote(hProcess);
 		if (peb)
 		{
-			DWORD_PTR imagebase = peb->ImageBaseAddress;
+			DWORD_PTR imagebase = 0;
+			ReadProcessMemory(hProcess, (void *)&peb->ImageBaseAddress, &imagebase, sizeof(DWORD_PTR), 0);
+
 			ReadProcessMemory(hProcess, (void *)imagebase, memory, sizeof(memory), 0);
 
 			PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)memory;
@@ -496,7 +498,7 @@ void DumpMalware(DWORD dwProcessId)
 					{
 						ReadProcessMemory(hProcess,(void *)imagebase, tempMem, pNt->OptionalHeader.SizeOfImage, 0);
 						
-						WriteMalwareToDisk(tempMem, pNt->OptionalHeader.SizeOfImage);
+						WriteMalwareToDisk(tempMem, pNt->OptionalHeader.SizeOfImage, imagebase);
 
 						VirtualFree(tempMem, 0, MEM_RELEASE);
 					}
@@ -510,7 +512,7 @@ void DumpMalware(DWORD dwProcessId)
 WCHAR MalwareFile[MAX_PATH] = {0};
 const WCHAR MalwareFilename[] = L"Unpacked.exe";
 
-bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize)
+bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize, DWORD_PTR imagebase)
 {
 	if (MalwareFile[0] == 0)
 	{
@@ -526,24 +528,33 @@ bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize)
 		}
 
 		_wcscat(MalwareFile, MalwareFilename);
-		DeleteFileW(MalwareFile);
 	}
 
-	return WriteMemoryToFile(MalwareFile, buffer,bufferSize);
+	return WriteMemoryToFile(MalwareFile, buffer,bufferSize, imagebase);
 }
 
-bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize)
+bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize, DWORD_PTR imagebase)
 {
+	PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)buffer;
+	PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
+	PIMAGE_SECTION_HEADER pSection = IMAGE_FIRST_SECTION(pNt);
+
+	//pNt->OptionalHeader.ImageBase = imagebase;
+
 	bool ret = false;
-	HANDLE hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+	HANDLE hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
 		DWORD lpNumberOfBytesWritten = 0;
-		SetFilePointer(hFile, 0, 0, FILE_END);
-		if (WriteFile(hFile, buffer, bufferSize, &lpNumberOfBytesWritten, 0))
+		WriteFile(hFile, buffer, pNt->OptionalHeader.SizeOfHeaders, &lpNumberOfBytesWritten, 0);
+
+		for (WORD i = 0; i < pNt->FileHeader.NumberOfSections; i++)
 		{
-			ret = true;
+			WriteFile(hFile, (BYTE *)buffer + pSection->VirtualAddress, pSection->SizeOfRawData, &lpNumberOfBytesWritten, 0);
+			pSection++;
 		}
+
+		ret = true;
 		CloseHandle(hFile);
 	}
 

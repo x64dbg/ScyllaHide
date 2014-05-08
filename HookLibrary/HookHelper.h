@@ -32,7 +32,7 @@ void ThreadDebugContextSaveContext(const int index, const PCONTEXT ThreadContext
 void IncreaseSystemTime(LPSYSTEMTIME lpTime);
 
 void TerminateProcessByProcessId(DWORD dwProcess);
-bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize);
-bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize);
+bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize, DWORD_PTR imagebase);
+bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize, DWORD_PTR imagebase);
 void * GetPEBRemote(HANDLE hProcess);
 void DumpMalware(DWORD dwProcessId);

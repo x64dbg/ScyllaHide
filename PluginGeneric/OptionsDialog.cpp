@@ -85,6 +85,7 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, pHideOptions.NtCreateThreadEx, 0);
     SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_SETCHECK, pHideOptions.removeDebugPrivileges, 0);
     SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, pHideOptions.preventThreadCreation, 0);
+	SendMessage(GetDlgItem(hWnd, IDC_RUNPE), BM_SETCHECK, pHideOptions.malwareRunpeUnpacker, 0);
     SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
     SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
     SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
@@ -495,6 +496,8 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 #ifndef BUILD_IDA_64BIT
                 startInjection(ProcessId, ScyllaHideDllPath, true);
 #endif
+#else
+				startInjection(ProcessId, ScyllaHideDllPath, true);
 #endif
                 bHooked = true;
                 MessageBoxA(hWnd, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
