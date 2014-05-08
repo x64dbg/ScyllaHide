@@ -38,6 +38,7 @@ Timing Hooks:
 
 Special functions:
 - Prevent Thread creation - for protectors like Execryptor. Only use if you know what you are doing !
+- Malware RUNPE Unpacker - Hooks NtResumeThread and terminates + dumps the process created by malware
 
 Protecting and Stealthing DRx (Hardware Breakpoints):
 - NtGetContextThread
