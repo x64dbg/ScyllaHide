@@ -87,9 +87,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 
         SetDebugPrivileges();
 
-        SetCurrentProfile(DEFAULT_PROFILE);
-        CreateSettings();
-        ReadSettings();
+		ReadCurrentProfile();
+		ReadSettings();
 
         if (!StartWinsock())
         {

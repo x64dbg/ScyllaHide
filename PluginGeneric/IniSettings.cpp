@@ -242,7 +242,7 @@ void GetProfileNames(char* profileNamesA)
     strcpy(profileNamesA, "{");
     while(*profile != 0x00)
 	{
-		if (_wcsicmp(profile, INDEPENDENT_SECTION))
+		if (_wcsicmp(profile, INDEPENDENT_SECTION) != 0)
 		{
 			_ultoa(offset, buf, 10);
 			strcat(profileNamesA, buf);

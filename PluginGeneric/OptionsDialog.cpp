@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "OptionsDialog.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\Injector.h"
@@ -386,14 +387,19 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         //fill combobox with profiles
         WCHAR* profile = ProfileNames;
         int index = 0;
-        while(*profile != 0x00) {
-            SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_ADDSTRING,0,(LPARAM) profile);
+        while(*profile != 0x00)
+		{
+			if (_wcsicmp(profile, INDEPENDENT_SECTION) != 0)
+			{
+				SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_ADDSTRING,0,(LPARAM) profile);
 
-            if(wcscmp(profile, CurrentProfile) == 0)
-                SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_SETCURSEL, index, 0);
+				if(wcscmp(profile, CurrentProfile) == 0)
+					SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_SETCURSEL, index, 0);
 
+
+				index++;
+			}
             profile = profile + wcslen(profile) + 1;
-            index++;
         }
 
         UpdateOptions(hWnd);

@@ -87,7 +87,6 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
     hwmain=hw;
 
     ReadCurrentProfile();
-    CreateSettings();
     ReadSettings();
 
     _Addtolist(0,0,"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A);
