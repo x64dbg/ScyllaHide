@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include "IniSettings.h"
 #include "..\PluginGeneric\Injector.h"
@@ -233,29 +234,71 @@ void SaveSettingsToIni(const WCHAR * iniFile)
 
 void GetProfileNames(char* profileNamesA)
 {
-    GetPrivateProfileSectionNamesW(ProfileNames, sizeof(ProfileNames)/sizeof(WCHAR), ScyllaHideIniPath);
+    GetPrivateProfileSectionNamesWithFilter();
 
     int offset = 10; //increase when top-level menu needs more than 9 elements, probably never
     char buf[MAX_SECTION_NAME];
     WCHAR* profile = ProfileNames;
     strcpy(profileNamesA, "{");
-    while(*profile != 0x00) {
-        _ultoa(offset, buf, 10);
-        strcat(profileNamesA, buf);
-        wcstombs_s(NULL, buf, sizeof(buf)/sizeof(char), profile, _TRUNCATE);
-        strcat(profileNamesA, buf);
-        strcat(profileNamesA, ",");
+	while(*profile != 0x00)
+	{
+		_ultoa(offset, buf, 10);
+		strcat(profileNamesA, buf);
+		wcstombs_s(NULL, buf, _countof(buf), profile, _TRUNCATE);
+		strcat(profileNamesA, buf);
+		strcat(profileNamesA, ",");
 
-        offset++;
-        profile = profile + wcslen(profile) + 1;
-    }
+		offset++;
+
+		profile = profile + wcslen(profile) + 1;
+	}
 
     strcat(profileNamesA, "}");
 }
 
-void SetCurrentProfile(WCHAR* profile)
+void SetCurrentProfile(const WCHAR* profile)
 {
     wcscpy(CurrentProfile, profile);
+	SaveCurrentProfile(profile);
+}
+
+void SaveCurrentProfile(const WCHAR* profile)
+{
+	WritePrivateProfileStringW(INDEPENDENT_SECTION, L"CurrentProfile", profile, ScyllaHideIniPath);
+}
+
+void ReadCurrentProfile()
+{
+	GetPrivateProfileStringW(INDEPENDENT_SECTION, L"CurrentProfile", L"", CurrentProfile, _countof(CurrentProfile), ScyllaHideIniPath);
+
+	if (wcslen(CurrentProfile) == 0)
+	{
+		wcscpy(CurrentProfile, DEFAULT_PROFILE);
+		CreateSettings();
+		SetCurrentProfile(DEFAULT_PROFILE);
+	}
+}
+
+void GetPrivateProfileSectionNamesWithFilter()
+{
+	WCHAR tempBuffer[_countof(ProfileNames)] = {0};
+	GetPrivateProfileSectionNamesW(tempBuffer, _countof(tempBuffer), ScyllaHideIniPath);
+
+	ZeroMemory(ProfileNames, sizeof(ProfileNames));
+
+	WCHAR *profile = tempBuffer;
+	WCHAR *Copy = ProfileNames;
+
+	while(*profile != 0x00)
+	{
+		if (_wcsicmp(profile, INDEPENDENT_SECTION) != 0)
+		{
+			wcscpy(Copy, profile);
+			Copy += wcslen(profile) + 1;
+		}
+
+		profile = profile + wcslen(profile) + 1;
+	}
 }
 
 void SetCurrentProfile(int index)

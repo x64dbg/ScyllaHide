@@ -45,6 +45,7 @@ struct HideOptions
     WCHAR serverPort[6];
     int autostartServer;
 	int removeDebugPrivileges;
+	int malwareRunpeUnpacker;
 };
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess);

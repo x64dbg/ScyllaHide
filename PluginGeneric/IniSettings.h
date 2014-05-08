@@ -2,6 +2,7 @@
 #include <Windows.h>
 
 #define DEFAULT_PROFILE L"SCYLLA_HIDE"
+#define INDEPENDENT_SECTION L"SETTINGS"
 #define MAX_SECTION_NAME 256
 
 BOOL FileExists(LPCWSTR szPath);
@@ -17,5 +18,8 @@ void CreateDefaultSettings(const WCHAR * iniFile);
 void SaveSettings();
 void SaveSettingsToIni(const WCHAR * iniFile);
 void GetProfileNames(char* sectionNamesA);
-void SetCurrentProfile(WCHAR* profile);
+void SetCurrentProfile(const WCHAR* profile);
 void SetCurrentProfile(int index);
+void SaveCurrentProfile(const WCHAR* profile);
+void ReadCurrentProfile();
+void GetPrivateProfileSectionNamesWithFilter();

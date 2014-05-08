@@ -57,6 +57,7 @@ t_NtCreateThread _NtCreateThread = 0;
 t_NtCreateThreadEx _NtCreateThreadEx = 0;
 t_NtQuerySystemTime _NtQuerySystemTime = 0;
 t_NtQueryPerformanceCounter _NtQueryPerformanceCounter = 0;
+t_NtResumeThread _NtResumeThread = 0;
 
 void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
@@ -84,6 +85,7 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
     void * HookedNtCreateThreadEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtCreateThreadEx") + imageBase);
 	void * HookedNtQuerySystemTime = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQuerySystemTime") + imageBase);
 	void * HookedNtQueryPerformanceCounter = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQueryPerformanceCounter") + imageBase);
+	void * HookedNtResumeThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtResumeThread") + imageBase);
 
     HookedNativeCallInternal = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNativeCallInternal") + imageBase);
 
@@ -103,6 +105,7 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
     _NtCreateThreadEx = (t_NtCreateThreadEx)GetProcAddress(hNtdll, "NtCreateThreadEx");
 	_NtQuerySystemTime = (t_NtQuerySystemTime)GetProcAddress(hNtdll, "NtQuerySystemTime");
 	_NtQueryPerformanceCounter = (t_NtQueryPerformanceCounter)GetProcAddress(hNtdll, "NtQueryPerformanceCounter");
+	_NtResumeThread = (t_NtResumeThread)GetProcAddress(hNtdll, "NtResumeThread");
 
     if (dllexchange->EnableNtSetInformationThreadHook == TRUE) HOOK_NATIVE(NtSetInformationThread);
     if (dllexchange->EnableNtQuerySystemInformationHook == TRUE) HOOK_NATIVE(NtQuerySystemInformation);
@@ -129,6 +132,8 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
 
 	if (dllexchange->EnableNtQuerySystemTimeHook == TRUE && _NtQuerySystemTime != 0) HOOK_NATIVE(NtQuerySystemTime);
 	if (dllexchange->EnableNtQueryPerformanceCounterHook == TRUE) HOOK_NATIVE(NtQueryPerformanceCounter);
+
+	if (dllexchange->EnableMalwareRunPeUnpacker == TRUE) HOOK_NATIVE(NtResumeThread);
 
     dllexchange->isNtdllHooked = TRUE;
 

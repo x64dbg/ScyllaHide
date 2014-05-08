@@ -87,9 +87,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 
         SetDebugPrivileges();
 
-        SetCurrentProfile(DEFAULT_PROFILE);
-        CreateSettings();
-        ReadSettings();
+		ReadCurrentProfile();
+		ReadSettings();
 
         if (!StartWinsock())
         {
@@ -125,7 +124,7 @@ int IDAP_init(void)
     ZeroMemory(&ServerProcessInfo, sizeof(ServerProcessInfo));
 
     //read profile names
-    GetPrivateProfileSectionNamesW(ProfileNames, sizeof(ProfileNames)/sizeof(WCHAR), ScyllaHideIniPath);
+    GetPrivateProfileSectionNamesWithFilter();
 
     return PLUGIN_KEEP;
 }

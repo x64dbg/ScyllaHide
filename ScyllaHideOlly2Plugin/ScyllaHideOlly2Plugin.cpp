@@ -231,8 +231,7 @@ extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginnam
 //initialization happens in here
 extc int __cdecl ODBG2_Plugininit(void)
 {
-    SetCurrentProfile(DEFAULT_PROFILE);
-    CreateSettings();
+    ReadCurrentProfile();
     ReadSettings();
 
     Addtolist(0,0,L"ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_W);
@@ -249,15 +248,15 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
 {
     if (wcscmp(type,PWM_MAIN)==0) {
         //add profiles to menu
-        GetPrivateProfileSectionNamesW(ProfileNames, sizeof(ProfileNames)/sizeof(WCHAR), ScyllaHideIniPath);
+        GetPrivateProfileSectionNamesWithFilter();
 
         WCHAR* profile = ProfileNames;
         int i=0;
         while(*profile != 0x00 && i<MAX_PROFILES-1) {
-            t_menu profile_entry = {profile, profile, K_NONE, Mprofiles, NULL, i};
-            profilemenu[i] = profile_entry;
+			t_menu profile_entry = {profile, profile, K_NONE, Mprofiles, NULL, i};
+			profilemenu[i] = profile_entry;
+			i++;
 
-            i++;
             profile = profile + wcslen(profile) + 1;
         }
         t_menu menu_end = {NULL, NULL, K_NONE, NULL, NULL, 0};
