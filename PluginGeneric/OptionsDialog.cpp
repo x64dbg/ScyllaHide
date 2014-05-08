@@ -389,16 +389,14 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         int index = 0;
         while(*profile != 0x00)
 		{
-			if (_wcsicmp(profile, INDEPENDENT_SECTION) != 0)
-			{
-				SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_ADDSTRING,0,(LPARAM) profile);
 
-				if(wcscmp(profile, CurrentProfile) == 0)
-					SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_SETCURSEL, index, 0);
+			SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_ADDSTRING,0,(LPARAM) profile);
+
+			if(wcscmp(profile, CurrentProfile) == 0)
+				SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_SETCURSEL, index, 0);
 
 
-				index++;
-			}
+			index++;
             profile = profile + wcslen(profile) + 1;
         }
 

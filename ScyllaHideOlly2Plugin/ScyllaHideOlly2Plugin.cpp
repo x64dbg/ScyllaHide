@@ -244,19 +244,14 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
 {
     if (wcscmp(type,PWM_MAIN)==0) {
         //add profiles to menu
-        GetPrivateProfileSectionNamesW(ProfileNames, sizeof(ProfileNames)/sizeof(WCHAR), ScyllaHideIniPath);
+        GetPrivateProfileSectionNamesWithFilter();
 
         WCHAR* profile = ProfileNames;
         int i=0;
         while(*profile != 0x00 && i<MAX_PROFILES-1) {
-
-			if (_wcsicmp(profile, INDEPENDENT_SECTION) != 0)
-			{
-				t_menu profile_entry = {profile, profile, K_NONE, Mprofiles, NULL, i};
-				profilemenu[i] = profile_entry;
-
-				i++;
-			}
+			t_menu profile_entry = {profile, profile, K_NONE, Mprofiles, NULL, i};
+			profilemenu[i] = profile_entry;
+			i++;
 
             profile = profile + wcslen(profile) + 1;
         }

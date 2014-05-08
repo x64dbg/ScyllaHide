@@ -22,3 +22,4 @@ void SetCurrentProfile(const WCHAR* profile);
 void SetCurrentProfile(int index);
 void SaveCurrentProfile(const WCHAR* profile);
 void ReadCurrentProfile();
+void GetPrivateProfileSectionNamesWithFilter();

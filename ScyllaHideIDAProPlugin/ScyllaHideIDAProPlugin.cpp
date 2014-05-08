@@ -124,7 +124,7 @@ int IDAP_init(void)
     ZeroMemory(&ServerProcessInfo, sizeof(ServerProcessInfo));
 
     //read profile names
-    GetPrivateProfileSectionNamesW(ProfileNames, sizeof(ProfileNames)/sizeof(WCHAR), ScyllaHideIniPath);
+    GetPrivateProfileSectionNamesWithFilter();
 
     return PLUGIN_KEEP;
 }
