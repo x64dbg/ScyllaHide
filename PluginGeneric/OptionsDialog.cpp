@@ -17,6 +17,8 @@
 #include "..\ScyllaHideIDAProPlugin\idasdk\dbg.hpp"
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\ScyllaHideIDAProPlugin\IdaServerClient.h"
+#elif X64DBG
+#include "..\ScyllaHideX64DBGPlugin\resource.h"
 #endif
 
 extern WCHAR CurrentProfile[MAX_SECTION_NAME];
@@ -467,6 +469,9 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             newProfile = askstr(0, "", "New profile name?");
             if(newProfile != NULL) {
                 mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
+#elif X64DBG
+            if(1) { //todo
+                wcscpy(newProfileW, L"TODO");
 #endif
                 SetCurrentProfile(newProfileW);
                 SaveOptions(hWnd); //this creates the new section in the ini
@@ -497,7 +502,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
                 startInjection(ProcessId, ScyllaHideDllPath, true);
 #endif
 #else
-				startInjection(ProcessId, ScyllaHideDllPath, true);
+                startInjection(ProcessId, ScyllaHideDllPath, true);
 #endif
                 bHooked = true;
                 MessageBoxA(hWnd, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
@@ -645,7 +650,7 @@ default:
 {
     return FALSE;
 }
-}
+    }
 
-return 0;
+    return 0;
 }

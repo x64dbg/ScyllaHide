@@ -53,13 +53,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEX64DBGPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>X64DBG;WIN32;_DEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEX64DBGPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StructMemberAlignment>1Byte</StructMemberAlignment>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>x32_dbg.lib;x32_bridge.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)ntdll;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -70,7 +72,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEX64DBGPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>X64DBG;WIN32;NDEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEX64DBGPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StructMemberAlignment>1Byte</StructMemberAlignment>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -79,14 +81,59 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>x32_dbg.lib;x32_bridge.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)ntdll;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\distorm\decoder.c" />
+    <ClCompile Include="..\distorm\distorm.c" />
+    <ClCompile Include="..\distorm\instructions.c" />
+    <ClCompile Include="..\distorm\insts.c" />
+    <ClCompile Include="..\distorm\mnemonics.c" />
+    <ClCompile Include="..\distorm\operands.c" />
+    <ClCompile Include="..\distorm\prefix.c" />
+    <ClCompile Include="..\distorm\textdefs.c" />
+    <ClCompile Include="..\distorm\wstring.c" />
+    <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp" />
+    <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
+    <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp" />
+    <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
+    <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
+    <ClCompile Include="..\PluginGeneric\IniSettings.cpp" />
+    <ClCompile Include="..\PluginGeneric\Injector.cpp" />
+    <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp" />
+    <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp" />
     <ClCompile Include="ScyllaHideX64DBGPlugin.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\distorm\config.h" />
+    <ClInclude Include="..\distorm\decoder.h" />
+    <ClInclude Include="..\distorm\distorm.h" />
+    <ClInclude Include="..\distorm\instructions.h" />
+    <ClInclude Include="..\distorm\insts.h" />
+    <ClInclude Include="..\distorm\mnemonics.h" />
+    <ClInclude Include="..\distorm\operands.h" />
+    <ClInclude Include="..\distorm\prefix.h" />
+    <ClInclude Include="..\distorm\textdefs.h" />
+    <ClInclude Include="..\distorm\wstring.h" />
+    <ClInclude Include="..\distorm\x86defs.h" />
+    <ClInclude Include="..\InjectorCLI\ApplyHooking.h" />
+    <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
+    <ClInclude Include="..\InjectorCLI\ReadNtConfig.h" />
+    <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
+    <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
+    <ClInclude Include="..\PluginGeneric\IniSettings.h" />
+    <ClInclude Include="..\PluginGeneric\Injector.h" />
+    <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
+    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
+    <ClInclude Include="..\PluginGeneric\UpdateCheck.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="ScyllaHideX64DBGPlugin.h" />
     <ClInclude Include="_plugins.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ScyllaHideX64DBGPlugin.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

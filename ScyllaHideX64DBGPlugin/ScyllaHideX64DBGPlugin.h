@@ -24,3 +24,14 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct);
 #ifdef __cplusplus
 }
 #endif
+
+//scyllahide definitions
+
+#define MENU_OPTIONS 0
+#define MENU_PROFILES 1
+
+typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+
+static void cbMenuEntry(CBTYPE cbType, void* callbackInfo);
+void LogErrorWrapper(const WCHAR * format, ...);
+void LogWrapper(const WCHAR * format, ...);
