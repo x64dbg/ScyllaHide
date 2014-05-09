@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideIDAProPlugin", "S
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideIDAServer", "ScyllaHideIDAServer\ScyllaHideIDAServer.vcxproj", "{4506D672-19C3-439B-8E1B-F1BA8BE28844}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideX64DBGPlugin", "ScyllaHideX64DBGPlugin\ScyllaHideX64DBGPlugin.vcxproj", "{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -83,6 +85,12 @@ Global
 		{4506D672-19C3-439B-8E1B-F1BA8BE28844}.Release|Win32.Build.0 = Release|Win32
 		{4506D672-19C3-439B-8E1B-F1BA8BE28844}.Release|x64.ActiveCfg = Release|x64
 		{4506D672-19C3-439B-8E1B-F1BA8BE28844}.Release|x64.Build.0 = Release|x64
+		{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}.Debug|Win32.Build.0 = Debug|Win32
+		{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}.Debug|x64.ActiveCfg = Debug|Win32
+		{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}.Release|Win32.ActiveCfg = Release|Win32
+		{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}.Release|Win32.Build.0 = Release|Win32
+		{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
