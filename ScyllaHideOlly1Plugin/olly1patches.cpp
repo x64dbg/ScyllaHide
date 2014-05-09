@@ -105,6 +105,66 @@ void fixFPUBug()
     if(fixed) _Addtolist(0,-1,"Fixed FPU-Bug at 0xAA2F2");
 }
 
+//taken from olly-advanced RVA 8225+385
+void fixSprintfBug()
+{
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+
+    DWORD sprintf = (DWORD)handleSprintf;
+    DWORD patchAddr = 0xA74D0;
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &sprintf, 4, NULL);
+    patchAddr -= 1;
+    BYTE push[] = {0x68};
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &push, sizeof(push), NULL);
+    patchAddr += 5;
+    BYTE retn[] = {0xC3};
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &retn, sizeof(retn), NULL);
+}
+
+//logic taken from olly-advanced RVA 76AF and modified
+void __declspec(naked) handleSprintf()
+{
+    DWORD pFormat;
+    DWORD retAddr;
+
+    _asm {
+        pushfd
+        pushad
+        mov pFormat, edx
+        pushad
+    };
+
+    if(IsBadCodePtr((FARPROC) pFormat)==0) {
+        //all good
+        _asm {
+            popad
+            cmp byte ptr[edx], 0 //stolen bytes
+            jz goback
+            mov retAddr, 0x4a74c2
+            popad
+            popfd
+            jmp [retAddr]
+
+            goback:
+            mov retAddr, 0x4a759e
+        }
+    } else {
+        //a crash would have happened
+        _asm {
+            popad
+            mov retAddr, 0x4a759e
+        };
+
+    }
+
+    _asm {
+        popad
+        popfd
+        jmp [retAddr]
+    };
+}
+
 //taken from OllyAdvanced patch function at RVA 8225+3A0
 void patchEPOutsideCode()
 {
