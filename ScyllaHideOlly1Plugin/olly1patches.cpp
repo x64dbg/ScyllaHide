@@ -7,6 +7,9 @@ extern LPVOID ImageBase;
 extern DWORD ProcessId;
 extern DWORD_PTR epaddr;
 
+DWORD pFormat;
+DWORD retAddr;
+
 //taken from strongOD aka "fix NumOfRvaAndSizes"
 void fixBadPEBugs()
 {
@@ -125,9 +128,6 @@ void fixSprintfBug()
 //logic taken from olly-advanced RVA 76AF and modified
 void __declspec(naked) handleSprintf()
 {
-    DWORD pFormat;
-    DWORD retAddr;
-
     _asm {
         pushfd
         pushad
