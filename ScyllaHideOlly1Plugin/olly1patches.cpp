@@ -135,25 +135,27 @@ void __declspec(naked) handleSprintf()
         pushad
     };
 
+    retAddr = (DWORD)GetModuleHandle(NULL);
+
     if(IsBadCodePtr((FARPROC) pFormat)==0) {
         //all good
         _asm {
             popad
             cmp byte ptr[edx], 0 //stolen bytes
             jz goback
-            mov retAddr, 0x4a74c2
+            add retAddr, 0xa74c2
             popad
             popfd
             jmp [retAddr]
 
             goback:
-            mov retAddr, 0x4a759e
+            add retAddr, 0xa759e
         }
     } else {
         //a crash would have happened
         _asm {
             popad
-            mov retAddr, 0x4a759e
+            add retAddr, 0xa759e
         };
 
     }
