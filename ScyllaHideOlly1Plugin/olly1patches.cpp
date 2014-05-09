@@ -123,6 +123,8 @@ void fixSprintfBug()
     patchAddr += 5;
     BYTE retn[] = {0xC3};
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &retn, sizeof(retn), NULL);
+
+    _Addtolist(0,-1,"Patched sprintf bug at 0xA74CF");
 }
 
 //logic taken from olly-advanced RVA 76AF and modified
@@ -195,6 +197,7 @@ void hookOllyBreakpoints()
     BYTE call[] = {0xE8};
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &call, sizeof(call), NULL);
 
+    _Addtolist(0,-1,"Hooked Olly Breakpoints handler for TLS at 0x2F918");
 }
 
 void __declspec(naked) handleBreakpoints()
