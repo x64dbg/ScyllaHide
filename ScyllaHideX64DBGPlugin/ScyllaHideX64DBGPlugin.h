@@ -28,6 +28,11 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct);
 
 #define MENU_OPTIONS 0
 #define MENU_PROFILES 1
+#define MENU_INJECTDLL 2
+#define MENU_UPDATECHECK 3
+#define MENU_ABOUT 4
+
+#define MAX_PROFILES 128
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 

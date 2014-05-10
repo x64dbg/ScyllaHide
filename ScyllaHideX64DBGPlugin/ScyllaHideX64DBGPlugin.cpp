@@ -64,7 +64,55 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
         DialogBox(hinst, MAKEINTRESOURCE(IDD_OPTIONS), hwndDlg, &OptionsProc);
         break;
     }
+    case MENU_INJECTDLL:
+    {
+        if(ProcessId) {
+            wchar_t dllPath[MAX_PATH] = {};
+            if(GetFileDialog(dllPath))
+                injectDll(ProcessId, dllPath);
+        }
+        break;
+    }
+    case MENU_UPDATECHECK:
+    {
+        if(isNewVersionAvailable()) {
+            MessageBoxA(hwndDlg,
+                        "There is a new version of ScyllaHide available !\n\n"
+                        "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
+                        "or some RCE forums !",
+                        "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+        }
+        else {
+            MessageBoxA(hwndDlg,
+                        "You already have the latest version of ScyllaHide !",
+                        "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+        }
+        break;
+    }
+    case MENU_ABOUT:
+    {
+        MessageBoxA(hwndDlg,
+                    "ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_A"\n"
+                    "(Anti-Anti-Debug in usermode)\n\n"
+                    "Copyright (C) 2014 Aguila / cypher",
+                    "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+        break;
+    }
+    //profile names/count is dynamic so we catch loading them with default case
     default: {
+        SetCurrentProfile(info->hEntry);
+        ReadSettings();
+
+        if (ProcessId)
+        {
+            startInjection(ProcessId, ScyllaHideDllPath, true);
+            bHooked = true;
+            MessageBoxA(hwndDlg, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+        }
+        else
+        {
+            MessageBoxA(hwndDlg, "Please start the target to apply changes!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
+        }
         break;
     }
     }
@@ -83,9 +131,25 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
 
     _plugin_menuaddentry(hMenu, MENU_OPTIONS, "&Options");
     int hProfile = _plugin_menuadd(hMenu, "&Load Profile");
-    _plugin_menuaddentry(hProfile, MENU_PROFILES, "test");
-    //_plugin_menuaddentry(hMenu, MENU_TEST, "&Menu Test");
-    //_plugin_menuaddentry(hMenu, MENU_SELECTION, "&Selection API Test");
+
+    //add profiles to menu
+    GetPrivateProfileSectionNamesWithFilter();
+
+    WCHAR* profile = ProfileNames;
+    char buf[MAX_SECTION_NAME+1];
+    int i=10;
+    while(*profile != 0x00 && i<MAX_PROFILES-1) {
+        wcstombs(buf, profile, MAX_SECTION_NAME);
+        _plugin_menuaddentry(hProfile, i,buf);
+        i++;
+        profile = profile + wcslen(profile) + 1;
+    }
+
+    _plugin_menuaddseparator(hMenu);
+    _plugin_menuaddentry(hMenu, MENU_INJECTDLL, "&Inject DLL");
+    _plugin_menuaddseparator(hMenu);
+    _plugin_menuaddentry(hMenu, MENU_UPDATECHECK, "&Update-Check");
+    _plugin_menuaddentry(hMenu, MENU_ABOUT, "&About");
 }
 
 void cbDebugloop(CBTYPE cbType, void* callbackInfo)
