@@ -36,3 +36,5 @@ bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize, DWORD_PTR imagebase);
 bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize, DWORD_PTR imagebase);
 void * GetPEBRemote(HANDLE hProcess);
 void DumpMalware(DWORD dwProcessId);
+
+void checkStructAlignment();

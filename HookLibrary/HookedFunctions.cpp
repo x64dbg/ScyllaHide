@@ -1,11 +1,21 @@
 #include "HookMain.h"
-#include "HookedFunctions.h"
-#include "HookHelper.h"
 #include <intrin.h>
 
 #pragma intrinsic(_ReturnAddress)
 
 extern HOOK_DLL_EXCHANGE DllExchange;
+
+#pragma pack(show)
+#pragma pack(pop)
+#ifdef _WIN64
+#pragma pack(push, 8)
+#else
+#pragma pack(push, 4)
+#endif
+#pragma pack(show)
+
+#include "HookedFunctions.h"
+#include "HookHelper.h"
 
 void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo);
@@ -32,6 +42,7 @@ NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS
 
 NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
 {
+	//checkStructAlignment();
     if (SystemInformationClass == SystemKernelDebuggerInformation || SystemInformationClass == SystemProcessInformation)
     {
         NTSTATUS ntStat = DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
