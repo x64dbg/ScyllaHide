@@ -33,6 +33,7 @@ extern t_LogWrapper LogErrorWrap;
 static HINSTANCE hinst;
 
 HMODULE hNtdllModule = 0;
+bool specialPebFix = false;
 int pluginHandle;
 HWND hwndDlg;
 int hMenu;
@@ -155,6 +156,21 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
 void cbDebugloop(CBTYPE cbType, void* callbackInfo)
 {
     PLUG_CB_DEBUGEVENT* d = (PLUG_CB_DEBUGEVENT*)callbackInfo;
+
+    if (pHideOptions.PEBHeapFlags)
+    {
+        if (specialPebFix)
+        {
+            StartFixBeingDebugged(ProcessId, false);
+            specialPebFix = false;
+        }
+
+        if (d->DebugEvent->u.LoadDll.lpBaseOfDll == hNtdllModule)
+        {
+            StartFixBeingDebugged(ProcessId, true);
+            specialPebFix = true;
+        }
+    }
 
     switch(d->DebugEvent->dwDebugEventCode)
     {
