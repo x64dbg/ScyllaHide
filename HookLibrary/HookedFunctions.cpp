@@ -3,7 +3,7 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-extern HOOK_DLL_EXCHANGE DllExchange;
+HOOK_DLL_EXCHANGE DllExchange = { 0 };
 
 #pragma pack(show)
 #pragma pack(pop)
