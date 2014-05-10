@@ -48,6 +48,7 @@ DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct)
 
     _plugin_registercallback(pluginHandle, CB_MENUENTRY, cbMenuEntry);
     _plugin_registercallback(pluginHandle, CB_DEBUGEVENT, cbDebugloop);
+    _plugin_registercallback(pluginHandle, CB_STOPDEBUG, cbReset);
 
     return true;
 }
@@ -67,12 +68,6 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
         break;
     }
     }
-}
-
-DLL_EXPORT bool plugstop()
-{
-
-    return true;
 }
 
 DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
@@ -139,6 +134,13 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
     }
     }
 
+}
+
+void cbReset(CBTYPE cbType, void* callbackInfo)
+{
+    ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+    bHooked = false;
+    ProcessId = 0;
 }
 
 extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)

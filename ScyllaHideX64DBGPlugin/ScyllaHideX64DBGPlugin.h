@@ -18,7 +18,6 @@ extern "C"
 #endif
 
 DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct);
-DLL_EXPORT bool plugstop();
 DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct);
 
 #ifdef __cplusplus
@@ -34,5 +33,6 @@ typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 
 static void cbMenuEntry(CBTYPE cbType, void* callbackInfo);
 static void cbDebugloop(CBTYPE cbType, void* callbackInfo);
+static void cbReset(CBTYPE cbType, void* callbackInfo);
 void LogErrorWrapper(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
