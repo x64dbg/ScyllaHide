@@ -15,7 +15,12 @@
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
 
+#ifdef _WIN64
+const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
+#else
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
+#endif
+
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 
@@ -172,6 +177,10 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
         }
     }
 
+	//char text[1000];
+	//wsprintfA(text, "dwDebugEventCode %X dwProcessId %X dwThreadId %X ExceptionCode %X ExceptionFlags %X",d->DebugEvent->dwDebugEventCode, d->DebugEvent->dwProcessId, d->DebugEvent->dwThreadId, d->DebugEvent->u.Exception.ExceptionRecord.ExceptionCode,d->DebugEvent->u.Exception.ExceptionRecord.ExceptionFlags);
+	//MessageBoxA(0,text,text,0);
+
     switch(d->DebugEvent->dwDebugEventCode)
     {
     case CREATE_PROCESS_DEBUG_EVENT:
@@ -179,7 +188,6 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
         ProcessId = d->DebugEvent->dwProcessId;
         bHooked = false;
         ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
-
         break;
     }
     case LOAD_DLL_DEBUG_EVENT:
