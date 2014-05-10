@@ -1,182 +1,182 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Quelldateien">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Headerdateien">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Ressourcendateien">
+    <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Headerdateien\distorm">
-      <UniqueIdentifier>{a9949ea0-29ea-4e2d-aa53-283b1b460d59}</UniqueIdentifier>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Quelldateien\distorm">
+    <Filter Include="Source Files\distorm">
       <UniqueIdentifier>{97da1a4b-c98d-42d7-9305-66d57f3c73c5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headerdateien\idasdk">
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files\distorm">
+      <UniqueIdentifier>{a9949ea0-29ea-4e2d-aa53-283b1b460d59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\idasdk">
       <UniqueIdentifier>{ebe5d27a-a27d-4af4-88b3-769088500b8f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScyllaHideIDAProPlugin.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\distorm\decoder.c">
-      <Filter>Quelldateien\distorm</Filter>
+      <Filter>Source Files\distorm</Filter>
     </ClCompile>
     <ClCompile Include="..\distorm\distorm.c">
-      <Filter>Quelldateien\distorm</Filter>
+      <Filter>Source Files\distorm</Filter>
     </ClCompile>
     <ClCompile Include="..\distorm\instructions.c">
-      <Filter>Quelldateien\distorm</Filter>
+      <Filter>Source Files\distorm</Filter>
     </ClCompile>
     <ClCompile Include="..\distorm\insts.c">
-      <Filter>Quelldateien\distorm</Filter>
+      <Filter>Source Files\distorm</Filter>
     </ClCompile>
     <ClCompile Include="..\distorm\mnemonics.c">
-      <Filter>Quelldateien\distorm</Filter>
+      <Filter>Source Files\distorm</Filter>
     </ClCompile>
     <ClCompile Include="..\distorm\operands.c">
-      <Filter>Quelldateien\distorm</Filter>
+      <Filter>Source Files\distorm</Filter>
     </ClCompile>
     <ClCompile Include="..\distorm\prefix.c">
-      <Filter>Quelldateien\distorm</Filter>
+      <Filter>Source Files\distorm</Filter>
     </ClCompile>
     <ClCompile Include="..\distorm\textdefs.c">
-      <Filter>Quelldateien\distorm</Filter>
+      <Filter>Source Files\distorm</Filter>
     </ClCompile>
     <ClCompile Include="..\distorm\wstring.c">
-      <Filter>Quelldateien\distorm</Filter>
+      <Filter>Source Files\distorm</Filter>
     </ClCompile>
     <ClCompile Include="IdaServerClient.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\PluginGeneric\IniSettings.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\PluginGeneric\Injector.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScyllaHideIDAProPlugin.rc">
-      <Filter>Ressourcendateien</Filter>
+      <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\ApplyHooking.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\ReadNtConfig.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\RemoteHook.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\config.h">
-      <Filter>Headerdateien\distorm</Filter>
+      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\decoder.h">
-      <Filter>Headerdateien\distorm</Filter>
+      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\distorm.h">
-      <Filter>Headerdateien\distorm</Filter>
+      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\instructions.h">
-      <Filter>Headerdateien\distorm</Filter>
+      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\insts.h">
-      <Filter>Headerdateien\distorm</Filter>
+      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\mnemonics.h">
-      <Filter>Headerdateien\distorm</Filter>
+      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\operands.h">
-      <Filter>Headerdateien\distorm</Filter>
+      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\prefix.h">
-      <Filter>Headerdateien\distorm</Filter>
+      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\textdefs.h">
-      <Filter>Headerdateien\distorm</Filter>
+      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\wstring.h">
-      <Filter>Headerdateien\distorm</Filter>
+      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="..\distorm\x86defs.h">
-      <Filter>Headerdateien\distorm</Filter>
+      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="idasdk\dbg.hpp">
-      <Filter>Headerdateien\idasdk</Filter>
+      <Filter>Header Files\idasdk</Filter>
     </ClInclude>
     <ClInclude Include="idasdk\idp.hpp">
-      <Filter>Headerdateien\idasdk</Filter>
+      <Filter>Header Files\idasdk</Filter>
     </ClInclude>
     <ClInclude Include="idasdk\kernwin.hpp">
-      <Filter>Headerdateien\idasdk</Filter>
+      <Filter>Header Files\idasdk</Filter>
     </ClInclude>
     <ClInclude Include="idasdk\loader.hpp">
-      <Filter>Headerdateien\idasdk</Filter>
+      <Filter>Header Files\idasdk</Filter>
     </ClInclude>
     <ClInclude Include="idasdk\ida.hpp">
-      <Filter>Headerdateien\idasdk</Filter>
+      <Filter>Header Files\idasdk</Filter>
     </ClInclude>
     <ClInclude Include="idasdk\pro.h">
-      <Filter>Headerdateien\idasdk</Filter>
+      <Filter>Header Files\idasdk</Filter>
     </ClInclude>
     <ClInclude Include="IdaServerClient.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\IniSettings.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\Injector.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\UpdateCheck.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
