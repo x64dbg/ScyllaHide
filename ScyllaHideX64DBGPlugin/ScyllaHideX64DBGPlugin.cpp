@@ -10,7 +10,6 @@
 #include "..\PluginGeneric\OptionsDialog.h"
 
 #define plugin_name "ScyllaHide"
-#define plugin_version 001
 
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
@@ -47,7 +46,7 @@ bool bHooked = false;
 
 DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct)
 {
-    initStruct->pluginVersion=plugin_version;
+    initStruct->pluginVersion= (SCYLLA_HIDE_MAJOR_VERSION * 10) + SCYLLA_HIDE_MINOR_VERSION;
     initStruct->sdkVersion=PLUG_SDKVERSION;
     strcpy(initStruct->pluginName, plugin_name);
     pluginHandle=initStruct->pluginHandle;
