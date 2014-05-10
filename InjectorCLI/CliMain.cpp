@@ -9,7 +9,7 @@
 #include "RemoteHook.h"
 #include "RemotePebHider.h"
 #include "ApplyHooking.h"
-#include "..\UpdateCheck\UpdateCheck.h"
+#include "..\PluginGeneric\UpdateCheck.h"
 
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
