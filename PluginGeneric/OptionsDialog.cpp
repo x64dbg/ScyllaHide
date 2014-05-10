@@ -18,6 +18,7 @@
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\ScyllaHideIDAProPlugin\IdaServerClient.h"
 #elif X64DBG
+#include "..\ScyllaHideX64DBGPlugin\bridgemain.h"
 #include "..\ScyllaHideX64DBGPlugin\resource.h"
 #endif
 
@@ -470,8 +471,9 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             if(newProfile != NULL) {
                 mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
 #elif X64DBG
-            if(1) { //todo
-                wcscpy(newProfileW, L"TODO");
+            char newProfile[GUI_MAX_LINE_SIZE]="";
+            if(GuiGetLineWindow("New profile name?", newProfile)) {
+                mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
 #endif
                 SetCurrentProfile(newProfileW);
                 SaveOptions(hWnd); //this creates the new section in the ini
