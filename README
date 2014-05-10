@@ -89,7 +89,7 @@ Plugins:
 
 ini Note:
 The default ini contains settings for this protectors:
-- VMProtect x86
+- VMProtect x86/x64
 - Obsidium x86
 - Themida x86
 - Armadillo x86
