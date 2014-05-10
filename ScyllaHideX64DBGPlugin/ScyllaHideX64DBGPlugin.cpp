@@ -47,6 +47,7 @@ DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct)
     pluginHandle=initStruct->pluginHandle;
 
     _plugin_registercallback(pluginHandle, CB_MENUENTRY, cbMenuEntry);
+    _plugin_registercallback(pluginHandle, CB_DEBUGEVENT, cbDebugloop);
 
     return true;
 }
@@ -92,6 +93,54 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
     //_plugin_menuaddentry(hMenu, MENU_SELECTION, "&Selection API Test");
 }
 
+void cbDebugloop(CBTYPE cbType, void* callbackInfo)
+{
+    PLUG_CB_DEBUGEVENT* d = (PLUG_CB_DEBUGEVENT*)callbackInfo;
+
+    switch(d->DebugEvent->dwDebugEventCode)
+    {
+    case CREATE_PROCESS_DEBUG_EVENT:
+    {
+        ProcessId = d->DebugEvent->dwProcessId;
+        bHooked = false;
+        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+
+        break;
+    }
+    case LOAD_DLL_DEBUG_EVENT:
+    {
+        if (bHooked)
+        {
+            startInjection(ProcessId, ScyllaHideDllPath, false);
+        }
+        break;
+    }
+    case EXCEPTION_DEBUG_EVENT:
+    {
+        switch(d->DebugEvent->u.Exception.ExceptionRecord.ExceptionCode)
+        {
+        case STATUS_BREAKPOINT:
+        {
+            if (!bHooked)
+            {
+                _plugin_logprintf("[ScyllaHide] Reading NT API Information %S\n", NtApiIniPath);
+                ReadNtApiInformation();
+
+                bHooked = true;
+                startInjection(ProcessId, ScyllaHideDllPath, true);
+            }
+
+            break;
+        }
+
+        }
+
+        break;
+    }
+    }
+
+}
+
 extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     if (fdwReason==DLL_PROCESS_ATTACH)
@@ -130,7 +179,7 @@ void LogErrorWrapper(const WCHAR * format, ...)
 
     WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
 
-    _plugin_logprintf("&s",textA);
+    _plugin_logprintf("%s\n",textA);
 }
 
 void LogWrapper(const WCHAR * format, ...)
@@ -144,5 +193,5 @@ void LogWrapper(const WCHAR * format, ...)
 
     WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
 
-    _plugin_logprintf("&s",textA);
+    _plugin_logprintf("%s\n",textA);
 }

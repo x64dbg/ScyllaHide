@@ -33,5 +33,6 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct);
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 
 static void cbMenuEntry(CBTYPE cbType, void* callbackInfo);
+static void cbDebugloop(CBTYPE cbType, void* callbackInfo);
 void LogErrorWrapper(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
