@@ -1,5 +1,7 @@
 Version 1.0
+
 - added sprintf %s Olly1 bugfix to "Fix Olly bugs"
+- x64dbg 32/64bit plugins https://bitbucket.org/mrexodia/x64_dbg
 
 Version 0.9
 
