@@ -153,11 +153,8 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
         }
         case 1:
         {
-            MessageBoxA(hwmain,
-                        "ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_A"\n"
-                        "(Anti-Anti-Debug in usermode)\n\n"
-                        "Copyright (C) 2014 Aguila / cypher",
-                        "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+            ShowAbout(hwmain);
+
             break;
         }
         case 2:
@@ -314,17 +311,6 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         break;
     }
     }
-}
-
-extern "C" int __declspec(dllexport) _ODBG_Pausedex(int reason, int extdata, void* reg, DEBUG_EVENT *debugevent)
-{
-    /*
-    if(!bEPBreakRemoved && pHideOptions.removeEPBreak) {
-        _Deletebreakpoints(epaddr,epaddr+1, 0);
-        bEPBreakRemoved = true;
-    }*/
-
-    return 0;
 }
 
 //reset variables. new target started or restarted

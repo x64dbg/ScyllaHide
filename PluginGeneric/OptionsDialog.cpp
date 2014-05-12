@@ -2,6 +2,7 @@
 #include "OptionsDialog.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\Injector.h"
+#include "..\PluginGeneric\ScyllaHideVersion.h"
 
 #ifdef OLLY1
 #include "..\ScyllaHideOlly1Plugin\resource.h"
@@ -35,6 +36,24 @@ extern HWND hwmain;
 #elif __IDP__
 wchar_t DllPathForInjection[MAX_PATH] = {0};
 #endif
+
+void ShowAbout(HWND hWnd)
+{
+    MessageBoxA(hWnd,
+                "ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_A"\n"
+                "(Anti-Anti-Debug in usermode)\n\n"
+                "Copyright (C) 2014 Aguila / cypher\n\n"
+                "Special thanks to:\n"
+                "- What for his POISON Assembler source code\n"
+                "- waliedassar for his blog posts\n"
+                "- Peter Ferrie for his Anti-Debug PDFs\n"
+                "- Steve Micallef for his IDA SDK doc\n"
+                "- ReactOS & Gridstore for doc about undocumented NT APIs\n"
+                "- Authors of OllyAdvanced, PhantOm, StrongOD\n"
+                "- Tuts4You, Exetools, Exelab community for testing\n"
+                "- last but not least deepzero & mr.exodia for tech chats",
+                "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+}
 
 bool GetFileDialog(TCHAR Buffer[MAX_PATH])
 {
@@ -640,6 +659,11 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
                             "You already have the latest version of ScyllaHide !",
                             "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
             }
+            break;
+        }
+        case IDC_ABOUT:
+        {
+            ShowAbout((HWND)callui(ui_get_hwnd).vptr);
             break;
         }
 #endif

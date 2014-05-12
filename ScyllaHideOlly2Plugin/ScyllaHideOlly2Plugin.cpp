@@ -49,6 +49,7 @@ static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
     return MENU_ABSENT;
 }
 
+//Menu->Load Profile
 static int Mprofiles(t_table *pt,wchar_t *name,ulong index,int mode)
 {
     if (mode==MENU_VERIFY) {
@@ -79,6 +80,7 @@ static int Mprofiles(t_table *pt,wchar_t *name,ulong index,int mode)
     return MENU_ABSENT;
 }
 
+//Menu->Inject DLL
 static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode)
 {
     if (mode==MENU_VERIFY)
@@ -95,6 +97,7 @@ static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode)
     return MENU_ABSENT;
 }
 
+//Context Menu in Thread window -> Suspend/Resume all Threads
 static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode)
 {
     if (mode==MENU_VERIFY)
@@ -164,8 +167,6 @@ static int Mupdate(t_table *pt,wchar_t *name,ulong index,int mode)
 //Menu->About
 static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode)
 {
-    int n;
-    wchar_t s[TEXTLEN];
     if (mode==MENU_VERIFY)
         return MENU_NORMAL;
     else if (mode==MENU_EXECUTE)
@@ -173,13 +174,7 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode)
         // Debuggee should continue execution while message box is displayed.
         Resumeallthreads();
 
-        n=StrcopyW(s,TEXTLEN,L"ScyllaHide plugin v");
-        n+=StrcopyW(s+n,TEXTLEN-n, SCYLLA_HIDE_VERSION_STRING_W);
-        n+=StrcopyW(s+n,TEXTLEN-n,L"\n(Anti-Anti-Debug in usermode)\n\n");
-        n+=StrcopyW(s+n,TEXTLEN-n,L"\nCopyright (C) 2014 Aguila / cypher");
-
-        MessageBox(hwollymain,s,
-                   L"ScyllaHide plugin",MB_OK|MB_ICONINFORMATION);
+        ShowAbout(hwollymain);
 
         // Suspendallthreads() and Resumeallthreads() must be paired, even if they
         // are called in inverse order!
@@ -253,9 +248,9 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
         WCHAR* profile = ProfileNames;
         int i=0;
         while(*profile != 0x00 && i<MAX_PROFILES-1) {
-			t_menu profile_entry = {profile, profile, K_NONE, Mprofiles, NULL, i};
-			profilemenu[i] = profile_entry;
-			i++;
+            t_menu profile_entry = {profile, profile, K_NONE, Mprofiles, NULL, i};
+            profilemenu[i] = profile_entry;
+            i++;
 
             profile = profile + wcslen(profile) + 1;
         }

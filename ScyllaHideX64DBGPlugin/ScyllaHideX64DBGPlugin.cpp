@@ -96,11 +96,8 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
     }
     case MENU_ABOUT:
     {
-        MessageBoxA(hwndDlg,
-                    "ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_A"\n"
-                    "(Anti-Anti-Debug in usermode)\n\n"
-                    "Copyright (C) 2014 Aguila / cypher",
-                    "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+        ShowAbout(hwndDlg);
+
         break;
     }
     //profile names/count is dynamic so we catch loading them with default case
@@ -176,9 +173,9 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
         }
     }
 
-	//char text[1000];
-	//wsprintfA(text, "dwDebugEventCode %X dwProcessId %X dwThreadId %X ExceptionCode %X ExceptionFlags %X",d->DebugEvent->dwDebugEventCode, d->DebugEvent->dwProcessId, d->DebugEvent->dwThreadId, d->DebugEvent->u.Exception.ExceptionRecord.ExceptionCode,d->DebugEvent->u.Exception.ExceptionRecord.ExceptionFlags);
-	//MessageBoxA(0,text,text,0);
+    //char text[1000];
+    //wsprintfA(text, "dwDebugEventCode %X dwProcessId %X dwThreadId %X ExceptionCode %X ExceptionFlags %X",d->DebugEvent->dwDebugEventCode, d->DebugEvent->dwProcessId, d->DebugEvent->dwThreadId, d->DebugEvent->u.Exception.ExceptionRecord.ExceptionCode,d->DebugEvent->u.Exception.ExceptionRecord.ExceptionFlags);
+    //MessageBoxA(0,text,text,0);
 
     switch(d->DebugEvent->dwDebugEventCode)
     {

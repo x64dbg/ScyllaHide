@@ -1,6 +1,7 @@
 #pragma once
 #include <windows.h>
 
+void ShowAbout(HWND hWnd);
 bool GetFileDialog(TCHAR Buffer[MAX_PATH]);
 void UpdateOptions(HWND hWnd);
 void SaveOptions(HWND hWnd);
