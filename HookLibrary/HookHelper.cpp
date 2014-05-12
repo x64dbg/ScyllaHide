@@ -74,8 +74,6 @@ bool IsProcessBad(PUNICODE_STRING process)
 
 	memcpy(nameCopy, process->Buffer, process->Length);
 
-	DbgPrint("fuck");
-
 	for (int i = 0; i < _countof(BadProcessnameList); i++)
 	{
 		if (!lstrcmpiW(nameCopy, BadProcessnameList[i]))
