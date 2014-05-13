@@ -15,11 +15,11 @@ struct HideOptions
     int NtQueryObject;
     int NtYieldExecution;
     int GetTickCount;
-	int GetTickCount64;
-	int GetLocalTime;
-	int GetSystemTime;
-	int NtQuerySystemTime;
-	int NtQueryPerformanceCounter;
+    int GetTickCount64;
+    int GetLocalTime;
+    int GetSystemTime;
+    int NtQuerySystemTime;
+    int NtQueryPerformanceCounter;
     int OutputDebugStringA;
     int BlockInput;
     int NtGetContextThread;
@@ -44,10 +44,11 @@ struct HideOptions
     int DLLUnload;
     WCHAR serverPort[6];
     int autostartServer;
-	int removeDebugPrivileges;
-	int malwareRunpeUnpacker;
+    int removeDebugPrivileges;
+    int malwareRunpeUnpacker;
 };
 
+void InstallAntiAttachHook();
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess);
 void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess);
 void injectDll(DWORD targetPid, const WCHAR * dllPath);

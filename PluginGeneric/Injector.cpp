@@ -13,6 +13,70 @@ typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 t_LogWrapper LogWrap = 0;
 t_LogWrapper LogErrorWrap = 0;
 
+//anti-attach vars
+DWORD ExitThread_addr;
+BYTE* DbgUiIssueRemoteBreakin_addr;
+DWORD jmpback;
+DWORD DbgUiRemoteBreakin_addr;
+BYTE* RemoteBreakinPatch;
+BYTE code[8];
+HANDLE hDebuggee;
+
+void __declspec(naked) handleAntiAttach()
+{
+    _asm {
+        push ebp //stolen bytes
+        mov ebp,esp //stolen bytes
+        pushad
+        mov eax,dword ptr[ebp+0x8]
+        mov hDebuggee,eax
+    }
+
+    //write our RemoteBreakIn patch to target memory
+    RemoteBreakinPatch = (BYTE*) VirtualAllocEx(hDebuggee, 0, sizeof(code), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    WriteProcessMemory(hDebuggee, (LPVOID)RemoteBreakinPatch, code, sizeof(code), NULL);
+
+    //find push ntdll.DbgUiRemoteBreakin and patch our patch function addr there
+    while(*(DWORD*)DbgUiIssueRemoteBreakin_addr != DbgUiRemoteBreakin_addr) {
+        DbgUiIssueRemoteBreakin_addr++;
+    }
+    WriteProcessMemory(GetCurrentProcess(), DbgUiIssueRemoteBreakin_addr, &RemoteBreakinPatch, 4, NULL);
+
+    _asm {
+        popad
+        mov eax, jmpback
+        jmp eax
+    }
+}
+
+void InstallAntiAttachHook()
+{
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+
+    DbgUiIssueRemoteBreakin_addr = (BYTE*) GetProcAddress(GetModuleHandleA("ntdll.dll"),"DbgUiIssueRemoteBreakin");
+    DbgUiRemoteBreakin_addr = (DWORD) GetProcAddress(GetModuleHandleA("ntdll.dll"),"DbgUiRemoteBreakin");
+    ExitThread_addr = (DWORD) GetProcAddress(GetModuleHandleA("kernel32.dll"),"ExitThread");
+    jmpback = (DWORD)DbgUiIssueRemoteBreakin_addr;
+    jmpback += 5;
+
+    BYTE jmp[1] = {0xE9};
+    WriteProcessMemory(hOlly, DbgUiIssueRemoteBreakin_addr, &jmp, sizeof(jmp), NULL);
+    DWORD patch = (DWORD)handleAntiAttach;
+    patch -= (DWORD)DbgUiIssueRemoteBreakin_addr;
+    patch -= 5;
+    WriteProcessMemory(hOlly, DbgUiIssueRemoteBreakin_addr+1, &patch, 4, NULL);
+
+    //init our remote breakin patch
+    BYTE* p = &code[0];
+    *p=0xCC;  //int3
+    p++;
+    *p=0x68;  //push
+    p++;
+    *(DWORD*)(p) = ExitThread_addr;
+    p+=4;
+    *p=0xC3; //retn
+}
 
 void StartFixBeingDebugged(DWORD targetPid, bool setToNull)
 {
@@ -350,13 +414,13 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->EnableGetSystemTimeHook = pHideOptions.GetSystemTime;
     data->EnableNtQuerySystemTimeHook = pHideOptions.NtQuerySystemTime;
     data->EnableNtQueryPerformanceCounterHook = pHideOptions.NtQueryPerformanceCounter;
-	data->EnableNtSetInformationProcessHook = pHideOptions.NtSetInformationProcess;
+    data->EnableNtSetInformationProcessHook = pHideOptions.NtSetInformationProcess;
 
     data->EnableNtGetContextThreadHook = pHideOptions.NtGetContextThread;
     data->EnableNtSetContextThreadHook = pHideOptions.NtSetContextThread;
-    data->EnableNtContinueHook = pHideOptions.NtContinue;
+    data->EnableNtContinueHook = pHideOptions.NtContinue | pHideOptions.killAntiAttach;
     data->EnableKiUserExceptionDispatcherHook = pHideOptions.KiUserExceptionDispatcher;
-	data->EnableMalwareRunPeUnpacker = pHideOptions.malwareRunpeUnpacker;
+    data->EnableMalwareRunPeUnpacker = pHideOptions.malwareRunpeUnpacker;
 
     data->isKernel32Hooked = FALSE;
     data->isNtdllHooked = FALSE;
