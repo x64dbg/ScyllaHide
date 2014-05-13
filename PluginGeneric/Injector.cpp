@@ -356,7 +356,7 @@ BYTE * ReadFileToMemory(const WCHAR * targetFilePath)
     DWORD FileSize;
     BYTE* FilePtr = 0;
 
-    hFile = CreateFileW(targetFilePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    hFile = CreateFileW(targetFilePath, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
     if (hFile != INVALID_HANDLE_VALUE)
     {
         FileSize = GetFileSize(hFile, NULL);
