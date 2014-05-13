@@ -151,12 +151,6 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
     switch (notif_code)
     {
     case dbg_process_attach:
-    {
-        const debug_event_t* dbgEvent = va_arg(va, const debug_event_t*);
-
-    }
-    break;
-
     case dbg_process_start:
     {
         const debug_event_t* dbgEvent = va_arg(va, const debug_event_t*);
