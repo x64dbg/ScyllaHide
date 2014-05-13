@@ -118,6 +118,7 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"PebStartupInfo", L"1", iniFile);
     WriteIniSettings(L"PreventThreadCreation", L"0", iniFile); //special hook disabled by default
     WriteIniSettings(L"RemoveDebugPrivileges", L"1", iniFile);
+    WriteIniSettings(L"KillAntiAttach", L"1", iniFile);
 
     //ida specific
     WriteIniSettings(L"AutostartServer", L"1", iniFile);
@@ -167,6 +168,7 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.PEBStartupInfo = ReadIniSettingsInt(L"PebStartupInfo", iniFile);
     pHideOptions.preventThreadCreation = ReadIniSettingsInt(L"PreventThreadCreation", iniFile);
     pHideOptions.removeDebugPrivileges = ReadIniSettingsInt(L"RemoveDebugPrivileges", iniFile);
+    pHideOptions.killAntiAttach = ReadIniSettingsInt(L"KillAntiAttach", iniFile);
 
     if (pHideOptions.DLLNormal)
     {
@@ -221,6 +223,7 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"PebStartupInfo", pHideOptions.PEBStartupInfo, iniFile);
     WriteIniSettingsInt(L"PreventThreadCreation", pHideOptions.preventThreadCreation, iniFile);
     WriteIniSettingsInt(L"RemoveDebugPrivileges", pHideOptions.removeDebugPrivileges, iniFile);
+    WriteIniSettingsInt(L"KillAntiAttach", pHideOptions.killAntiAttach, iniFile);
 
     //ida specific
     WriteIniSettingsInt(L"AutostartServer", pHideOptions.autostartServer, iniFile);

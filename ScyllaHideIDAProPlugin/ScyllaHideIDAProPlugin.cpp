@@ -87,8 +87,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 
         SetDebugPrivileges();
 
-		ReadCurrentProfile();
-		ReadSettings();
+        ReadCurrentProfile();
+        ReadSettings();
 
         if (!StartWinsock())
         {
@@ -112,6 +112,10 @@ int IDAP_init(void)
     {
         msg("[ScyllaHide] Error hooking notification point\n");
         return PLUGIN_SKIP;
+    }
+
+    if(pHideOptions.killAntiAttach) {
+        InstallAntiAttachHook();
     }
 
     msg("##################################################\n");

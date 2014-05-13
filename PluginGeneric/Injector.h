@@ -46,6 +46,7 @@ struct HideOptions
     int autostartServer;
     int removeDebugPrivileges;
     int malwareRunpeUnpacker;
+    int killAntiAttach;
 };
 
 void InstallAntiAttachHook();

@@ -55,6 +55,10 @@ DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct)
     _plugin_registercallback(pluginHandle, CB_DEBUGEVENT, cbDebugloop);
     _plugin_registercallback(pluginHandle, CB_STOPDEBUG, cbReset);
 
+    if(pHideOptions.killAntiAttach) {
+        InstallAntiAttachHook();
+    }
+
     return true;
 }
 

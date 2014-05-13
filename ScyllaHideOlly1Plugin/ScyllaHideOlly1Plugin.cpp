@@ -106,6 +106,10 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
         patchEPOutsideCode();
     }
 
+    if(pHideOptions.killAntiAttach) {
+        InstallAntiAttachHook();
+    }
+
     return 0;
 };
 

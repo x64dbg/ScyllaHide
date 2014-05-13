@@ -235,6 +235,10 @@ extc int __cdecl ODBG2_Plugininit(void)
     //change olly caption
     SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
 
+    if(pHideOptions.killAntiAttach) {
+        InstallAntiAttachHook();
+    }
+
     return 0;
 }
 

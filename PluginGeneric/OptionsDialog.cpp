@@ -117,6 +117,7 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_SETCHECK, pHideOptions.GetSystemTime, 0);
     SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_SETCHECK, pHideOptions.NtQuerySystemTime, 0);
     SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, pHideOptions.NtQueryPerformanceCounter, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_KILLANTIATTACH), BM_SETCHECK, pHideOptions.killAntiAttach, 0);
 
 #ifdef OLLY1
     SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
@@ -350,6 +351,12 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.NtQueryPerformanceCounter = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_KILLANTIATTACH), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.killAntiAttach = 1;
+    }
+    else
+        pHideOptions.killAntiAttach = 0;
 
 #ifdef OLLY1
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_GETCHECK, 0, 0))
