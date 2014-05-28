@@ -400,7 +400,8 @@ void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo)
     {
         if (IsProcessBad(&pInfo->ImageName) || ((DllExchange.EnableProtectProcessId == TRUE) && (pInfo->UniqueProcessId == (HANDLE)DllExchange.dwProtectedProcessId)))
         {
-            ZeroMemory(pInfo->ImageName.Buffer, pInfo->ImageName.Length);
+			if (pInfo->ImageName.Buffer)
+				ZeroMemory(pInfo->ImageName.Buffer, pInfo->ImageName.Length);
 
             if (pInfo->NextEntryOffset == 0) //last element
             {

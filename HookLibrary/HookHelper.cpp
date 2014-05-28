@@ -59,7 +59,7 @@ bool IsProcessBad(PUNICODE_STRING process)
 {
     WCHAR nameCopy[400];
 
-    if (!process || process->Length == 0)
+    if (!process || process->Length == 0 || !process->Buffer)
     {
         return false;
     }
@@ -88,7 +88,7 @@ bool IsWindowClassBad(PUNICODE_STRING lpszClass)
 {
     WCHAR nameCopy[400];
 
-    if (!lpszClass || lpszClass->Length == 0)
+	if (!lpszClass || lpszClass->Length == 0 || !lpszClass->Buffer)
     {
         return false;
     }
@@ -117,7 +117,7 @@ bool IsWindowNameBad(PUNICODE_STRING lpszWindow)
 {
     WCHAR nameCopy[400];
 
-    if (!lpszWindow || lpszWindow->Length == 0)
+	if (!lpszWindow || lpszWindow->Length == 0 || !lpszWindow->Buffer)
     {
         return false;
     }
