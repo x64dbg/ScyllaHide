@@ -11,6 +11,7 @@ void hookOllyBreakpoints();
 void fixSprintfBug();
 DWORD _stdcall removeEPBreak(LPVOID lpParam);
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage);
+void advcancedCtrlG();
 
 //hooks
 void handleBreakpoints();

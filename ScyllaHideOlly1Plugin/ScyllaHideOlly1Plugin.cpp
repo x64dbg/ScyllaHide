@@ -24,7 +24,7 @@ const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 
 //globals
-static HINSTANCE hinst;
+HINSTANCE hinst;
 DWORD ProcessId;
 DWORD_PTR epaddr;
 bool bHooked = false;
@@ -110,6 +110,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
         InstallAntiAttachHook();
     }
 
+    advcancedCtrlG();
     return 0;
 };
 

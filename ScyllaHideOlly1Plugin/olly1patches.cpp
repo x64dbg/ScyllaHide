@@ -1,8 +1,10 @@
 #include "olly1patches.h"
 #include <Windows.h>
+#include "resource.h"
 #include "..\PluginGeneric\Injector.h"
 
 extern struct HideOptions pHideOptions;
+extern HINSTANCE hinst;
 extern LPVOID ImageBase;
 extern DWORD ProcessId;
 extern DWORD_PTR epaddr;
@@ -276,4 +278,24 @@ void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage)
     }
 
     CloseHandle(hProcess);
+}
+
+void advcancedCtrlG()
+{
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+
+    DWORD patchAddr = 0x4376C;
+    BYTE push[] = {0x68};
+    BYTE nopnop[] = {0x90,0x90};
+    //patch Hinstance param of DialogBoxParamA call
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &push, sizeof(push), NULL);
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+1), &hinst, sizeof(HINSTANCE), NULL);
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+5), &nopnop, sizeof(nopnop), NULL);
+    //patch templatename
+    DWORD resourceId = (DWORD)MAKEINTRESOURCE(IDD_GOTO);
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr-4), &resourceId, sizeof(DWORD), NULL);
+
+
+    //TODO hook WMINIT, WMCOMMAND, and save
 }
