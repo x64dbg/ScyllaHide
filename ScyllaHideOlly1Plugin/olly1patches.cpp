@@ -288,6 +288,7 @@ void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage)
     CloseHandle(hProcess);
 }
 
+//NOTE: for this to work IDC_EXPRESSION _NEEDS_ to be 5101, same as equivalent control in orig Olly
 void advcancedCtrlG()
 {
     HANDLE hOlly = GetCurrentProcess();
@@ -304,7 +305,7 @@ void advcancedCtrlG()
     DWORD resourceId = (DWORD)MAKEINTRESOURCE(IDD_GOTO);
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr-4), &resourceId, sizeof(DWORD), NULL);
 
-    //hook WMCOMMAND and WMINIT for the goto dialog
+    //hook WMCOMMAND and WMINIT and forwarding of entered value for the goto dialog
     BYTE retn[] = {0xC3};
     DWORD hookWMINITaddr = 0x432D0;
     DWORD hookWMINIT = (DWORD)advancedCtrlG_WMINIT;
@@ -318,7 +319,11 @@ void advcancedCtrlG()
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+hookWMCOMMANDaddr+1), &hookWMCOMMAND, sizeof(DWORD), NULL);
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+hookWMCOMMANDaddr+5), &retn, sizeof(retn), NULL);
 
-    //TODO hook save
+    DWORD hookSaveAddr = 0x43682;
+    DWORD hookSave = (DWORD)advancedCtrlG_Save;
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+hookSaveAddr), &push, sizeof(push), NULL);
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+hookSaveAddr+1), &hookSave, sizeof(DWORD), NULL);
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+hookSaveAddr+5), &retn, sizeof(retn), NULL);
 }
 
 void __declspec(naked) advancedCtrlG_WMINIT()
@@ -347,6 +352,7 @@ void __declspec(naked) advancedCtrlG_WMINIT()
     }
     while(Module32Next(hSnap, &moduleinfo) == TRUE);
     CloseHandle(hSnap);
+    SendMessageW(GetDlgItem(hGotoDialog, IDC_MODULES), CB_SETCURSEL, 0, 0);
     //end handle WM_INIT
 
     _asm {
@@ -378,10 +384,60 @@ void __declspec(naked) advancedCtrlG_WMCOMMAND()
     else if(wparam == IDC_RADIORVA || wparam == IDC_RADIOOFFSET) {
         ShowWindow(GetDlgItem(hGotoDialog, IDC_MODULES), SW_SHOW);
     }
+
+    if(wparam == IDOK ) {
+        _asm { pushad };
+
+        if(IsDlgButtonChecked(hGotoDialog, IDC_RADIOVA) == 1) {
+            //do nothing, VA is same as original olly does, so just jump back
+            _asm {
+                popad
+                add lpBase, 0x434ab
+                jmp [lpBase]
+            };
+        }
+        else if(IsDlgButtonChecked(hGotoDialog, IDC_RADIORVA) == 1) {
+            advancedCtrlG_handleGotoExpression(ADDR_TYPE_RVA);
+            _asm {
+                popad
+                add lpBase, 0x434ab
+                jmp [lpBase]
+            };
+        }
+        else if(IsDlgButtonChecked(hGotoDialog, IDC_RADIORVA) == 1) {
+            advancedCtrlG_handleGotoExpression(ADDR_TYPE_OFFSET);
+            _asm {
+                popad
+                add lpBase, 0x434ab
+                jmp [lpBase]
+            };
+        }
+
+        _asm { popad };
+    }
     //end handle WM_COMMAND
 
     _asm {
         add lpBase, 0x434a5
+        jmp [lpBase]
+    };
+}
+
+void advancedCtrlG_handleGotoExpression(int addrType)
+{
+
+}
+
+void __declspec(naked) advancedCtrlG_Save()
+{
+    lpBase = (DWORD)GetModuleHandle(NULL);
+
+    _asm {
+        mov eax,lpBase
+        add eax,0063EFCh
+        call eax
+        add esp,0ch
+        add lpBase, 4368ah
         jmp [lpBase]
     };
 }

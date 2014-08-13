@@ -2,6 +2,9 @@
 #include <Windows.h>
 #include "ollyplugindefinitions.h"
 
+#define ADDR_TYPE_RVA 2
+#define ADDR_TYPE_OFFSET 3
+
 void fixBadPEBugs();
 void fixForegroundWindow();
 void fixX64Bug();
@@ -12,9 +15,11 @@ void fixSprintfBug();
 DWORD _stdcall removeEPBreak(LPVOID lpParam);
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage);
 void advcancedCtrlG();
+void advancedCtrlG_handleGotoExpression(int addrType);
 
 //hooks
 void handleBreakpoints();
 void handleSprintf();
 void advancedCtrlG_WMINIT();
 void advancedCtrlG_WMCOMMAND();
+void advancedCtrlG_Save();
