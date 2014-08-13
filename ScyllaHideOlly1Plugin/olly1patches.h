@@ -16,3 +16,5 @@ void advcancedCtrlG();
 //hooks
 void handleBreakpoints();
 void handleSprintf();
+void advancedCtrlG_WMINIT();
+void advancedCtrlG_WMCOMMAND();

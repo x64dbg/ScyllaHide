@@ -1,5 +1,6 @@
 #include "olly1patches.h"
 #include <Windows.h>
+#include <TlHelp32.h>
 #include "resource.h"
 #include "..\PluginGeneric\Injector.h"
 
@@ -9,8 +10,15 @@ extern LPVOID ImageBase;
 extern DWORD ProcessId;
 extern DWORD_PTR epaddr;
 
+//naked declarations for handleSprintf
 DWORD pFormat;
 DWORD retAddr;
+//naked declarations for advancedCTRL-G hooks
+DWORD lpBase;
+HWND hGotoDialog;
+MODULEENTRY32 moduleinfo;
+HANDLE hSnap;
+WPARAM wparam;
 
 //taken from strongOD aka "fix NumOfRvaAndSizes"
 void fixBadPEBugs()
@@ -296,6 +304,84 @@ void advcancedCtrlG()
     DWORD resourceId = (DWORD)MAKEINTRESOURCE(IDD_GOTO);
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr-4), &resourceId, sizeof(DWORD), NULL);
 
+    //hook WMCOMMAND and WMINIT for the goto dialog
+    BYTE retn[] = {0xC3};
+    DWORD hookWMINITaddr = 0x432D0;
+    DWORD hookWMINIT = (DWORD)advancedCtrlG_WMINIT;
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+hookWMINITaddr), &push, sizeof(push), NULL);
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+hookWMINITaddr+1), &hookWMINIT, sizeof(DWORD), NULL);
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+hookWMINITaddr+5), &retn, sizeof(retn), NULL);
 
-    //TODO hook WMINIT, WMCOMMAND, and save
+    DWORD hookWMCOMMANDaddr = 0x4349A;
+    DWORD hookWMCOMMAND = (DWORD)advancedCtrlG_WMCOMMAND;
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+hookWMCOMMANDaddr), &push, sizeof(push), NULL);
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+hookWMCOMMANDaddr+1), &hookWMCOMMAND, sizeof(DWORD), NULL);
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+hookWMCOMMANDaddr+5), &retn, sizeof(retn), NULL);
+
+    //TODO hook save
+}
+
+void __declspec(naked) advancedCtrlG_WMINIT()
+{
+    lpBase = (DWORD)GetModuleHandle(NULL);
+    _asm { mov hGotoDialog, esi };
+
+    //stolen bytes
+    _asm {
+        mov edx,lpBase
+        add edx,0e3B68h
+        mov edx,dword ptr [edx]
+        push edx
+    };
+    _asm { pushad };
+
+    //handle WM_INIT
+    CheckDlgButton(hGotoDialog, IDC_RADIOVA, BST_CHECKED);
+
+    hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, ProcessId);
+    moduleinfo.dwSize = sizeof(MODULEENTRY32);
+    Module32First(hSnap, &moduleinfo);
+
+    do {
+        SendMessage(GetDlgItem(hGotoDialog, IDC_MODULES), CB_ADDSTRING, 0, (LPARAM)moduleinfo.szModule);
+    }
+    while(Module32Next(hSnap, &moduleinfo) == TRUE);
+    CloseHandle(hSnap);
+    //end handle WM_INIT
+
+    _asm {
+        add lpBase, 0x432d7
+        popad
+        jmp [lpBase]
+    };
+}
+
+void __declspec(naked) advancedCtrlG_WMCOMMAND()
+{
+    //stolen bytes
+    _asm {
+        mov edx,ebx
+        and dx,0FFFFh
+    };
+    //end stolen bytes
+
+    lpBase = (DWORD)GetModuleHandle(NULL);
+    _asm {
+        mov hGotoDialog, esi
+        mov wparam, edx
+    };
+
+    //handle WM_COMMAND
+    if(wparam == IDC_RADIOVA) {
+        ShowWindow(GetDlgItem(hGotoDialog, IDC_MODULES), SW_HIDE);
+    }
+    else if(wparam == IDC_RADIORVA || wparam == IDC_RADIOOFFSET) {
+        ShowWindow(GetDlgItem(hGotoDialog, IDC_MODULES), SW_SHOW);
+    }
+    //end handle WM_COMMAND
+
+    _asm {
+        add lpBase, 0x434a5
+        jmp [lpBase]
+    };
 }
