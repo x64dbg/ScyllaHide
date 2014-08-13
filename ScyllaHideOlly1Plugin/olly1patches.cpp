@@ -1,6 +1,7 @@
 #include "olly1patches.h"
 #include <Windows.h>
 #include <TlHelp32.h>
+#include <string>
 #include "resource.h"
 #include "..\PluginGeneric\Injector.h"
 
@@ -19,6 +20,8 @@ HWND hGotoDialog;
 MODULEENTRY32 moduleinfo;
 HANDLE hSnap;
 WPARAM wparam;
+char orgExpression[100];
+int selectedType;
 
 //taken from strongOD aka "fix NumOfRvaAndSizes"
 void fixBadPEBugs()
@@ -389,6 +392,7 @@ void __declspec(naked) advancedCtrlG_WMCOMMAND()
         _asm { pushad };
 
         if(IsDlgButtonChecked(hGotoDialog, IDC_RADIOVA) == 1) {
+            selectedType = 1;
             //do nothing, VA is same as original olly does, so just jump back
             _asm {
                 popad
@@ -397,6 +401,7 @@ void __declspec(naked) advancedCtrlG_WMCOMMAND()
             };
         }
         else if(IsDlgButtonChecked(hGotoDialog, IDC_RADIORVA) == 1) {
+            selectedType = ADDR_TYPE_RVA;
             advancedCtrlG_handleGotoExpression(ADDR_TYPE_RVA);
             _asm {
                 popad
@@ -405,6 +410,7 @@ void __declspec(naked) advancedCtrlG_WMCOMMAND()
             };
         }
         else if(IsDlgButtonChecked(hGotoDialog, IDC_RADIORVA) == 1) {
+            selectedType = ADDR_TYPE_OFFSET;
             advancedCtrlG_handleGotoExpression(ADDR_TYPE_OFFSET);
             _asm {
                 popad
@@ -425,12 +431,60 @@ void __declspec(naked) advancedCtrlG_WMCOMMAND()
 
 void advancedCtrlG_handleGotoExpression(int addrType)
 {
+    lpBase = (DWORD)GetModuleHandle(NULL);
 
+    char expression[100];
+    GetDlgItemTextA(hGotoDialog, IDC_EXPRESSION, expression, 100);
+    int len = lstrlenA(expression);
+
+    if(len>=9) { //bad address
+        SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address to long !");
+
+        _asm {
+            add esp,4
+            popad
+            add lpBase, 0x436a5
+            jmp [lpBase]
+        };
+    }
+
+    lstrcpyA(orgExpression, expression);
+
+    DWORD addrToFind;
+    sscanf(expression, "%X", &addrToFind);
+    int selectedModule = SendMessage(GetDlgItem(hGotoDialog, IDC_MODULES), CB_GETCURSEL, 0, 0);
+
+    hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, ProcessId);
+    moduleinfo.dwSize = sizeof(MODULEENTRY32);
+    Module32First(hSnap, &moduleinfo);
+
+    //step to the selected module
+    while(selectedModule!=0) {
+        Module32Next(hSnap, &moduleinfo);
+        selectedModule--;
+    }
+
+    //calc the VA based on the passed RVA/Offset
+    if(addrType == ADDR_TYPE_RVA) {
+        addrToFind += (DWORD)moduleinfo.modBaseAddr;
+        sprintf(expression, "%.8X", addrToFind);
+        SetDlgItemTextA(hGotoDialog, IDC_EXPRESSION, expression);
+    } else if(addrType == ADDR_TYPE_OFFSET) {
+
+    }
+
+    CloseHandle(hSnap);
 }
 
 void __declspec(naked) advancedCtrlG_Save()
 {
     lpBase = (DWORD)GetModuleHandle(NULL);
+
+    //TODO
+    /*
+    .if state!=1 && dword ptr [esp]==1
+    	mov dword ptr [esp+8],offset orgdlgitembuffer
+    .endif*/
 
     _asm {
         mov eax,lpBase
