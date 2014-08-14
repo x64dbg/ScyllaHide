@@ -530,3 +530,21 @@ void fixBadPEImage()
 
     if(fixed) _Addtolist(0,-1,"Patched bad PE image error");
 }
+
+void skipCompressedCode()
+{
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+
+    DWORD patchAddr = 0x7F5C8;
+    BYTE patch[] = {0x83,0xC4,0x10,0x90,0x90}; //add esp,10;nop;nop
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &patch, sizeof(patch), NULL);
+
+    if(pHideOptions.skipCompressedDoAnalyze) {
+        BYTE jmp[] = {0xEB};
+        WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+10), &jmp, sizeof(jmp), NULL);
+    } else if(pHideOptions.skipCompressedDoNothing) {
+        BYTE zero[] = {0x00};
+        WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+11), &zero, sizeof(zero), NULL);
+    }
+}

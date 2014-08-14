@@ -47,6 +47,10 @@ struct HideOptions
     int removeDebugPrivileges;
     int malwareRunpeUnpacker;
     int killAntiAttach;
+    int ignoreBadPEImage;
+    int advancedGoto;
+    int skipCompressedDoAnalyze;
+    int skipCompressedDoNothing;
 };
 
 void InstallAntiAttachHook();

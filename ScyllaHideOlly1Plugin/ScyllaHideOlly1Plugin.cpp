@@ -98,7 +98,6 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
         fixForegroundWindow();
         fixFPUBug();
         fixSprintfBug();
-        fixBadPEImage();
     }
     if(pHideOptions.x64Fix && isWindows64()) {
         fixX64Bug();
@@ -111,7 +110,17 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
         InstallAntiAttachHook();
     }
 
-    advcancedCtrlG();
+    if(pHideOptions.ignoreBadPEImage) {
+        fixBadPEImage();
+    }
+
+    if(pHideOptions.advancedGoto) {
+        advcancedCtrlG();
+    };
+
+    if(pHideOptions.skipCompressedDoAnalyze || pHideOptions.skipCompressedDoNothing) {
+        skipCompressedCode();
+    }
     return 0;
 };
 

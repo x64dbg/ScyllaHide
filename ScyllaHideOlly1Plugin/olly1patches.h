@@ -17,6 +17,7 @@ void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage);
 void advcancedCtrlG();
 bool advancedCtrlG_handleGotoExpression(int addrType);
 void fixBadPEImage();
+void skipCompressedCode();
 
 //hooks
 void handleBreakpoints();
