@@ -30,7 +30,7 @@ void fixBadPEBugs()
 {
     HANDLE hOlly = GetCurrentProcess();
     DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
-    BOOL fixed = false;
+    BOOL fixed = FALSE;
 
     BYTE peBug1Fix[] = {0xEB}; //JE (74 1C) to JMP (EB 1C)
     fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x5C671), &peBug1Fix, sizeof(peBug1Fix), NULL);
@@ -510,4 +510,23 @@ void __declspec(naked) advancedCtrlG_Save()
         add lpBase, 4368ah
         jmp [lpBase]
     };
+}
+
+void fixBadPEImage()
+{
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+    BOOL fixed = FALSE;
+
+    DWORD patchAddr = 0x5D5DF;
+    BYTE zero[] = {0x00};
+    BYTE eb[] = {0xEB};
+    BYTE nopjmp[] = {0x90,0xE9};
+    fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &zero, sizeof(zero), NULL);
+    patchAddr = 0x7F30F;
+    fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &eb, sizeof(eb), NULL);
+    patchAddr = 0x5d7c9;
+    fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &nopjmp, sizeof(nopjmp), NULL);
+
+    if(fixed) _Addtolist(0,-1,"Patched bad PE image error");
 }

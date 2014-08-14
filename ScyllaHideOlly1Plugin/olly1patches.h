@@ -16,6 +16,7 @@ DWORD _stdcall removeEPBreak(LPVOID lpParam);
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage);
 void advcancedCtrlG();
 bool advancedCtrlG_handleGotoExpression(int addrType);
+void fixBadPEImage();
 
 //hooks
 void handleBreakpoints();
