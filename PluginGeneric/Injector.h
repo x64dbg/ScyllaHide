@@ -51,6 +51,8 @@ struct HideOptions
     int advancedGoto;
     int skipCompressedDoAnalyze;
     int skipCompressedDoNothing;
+    int skipLoadDllDoLoad;
+    int skipLoadDllDoNothing;
 };
 
 void InstallAntiAttachHook();

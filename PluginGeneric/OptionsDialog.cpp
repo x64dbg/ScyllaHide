@@ -126,6 +126,23 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
     SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_SETCHECK, pHideOptions.skipEPOutsideCode, 0);
     SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, pHideOptions.breakTLS, 0);
+
+    if(pHideOptions.skipCompressedDoAnalyze || pHideOptions.skipCompressedDoNothing) {
+        SendMessage(GetDlgItem(hWnd, IDC_COMPRESSED), BM_SETCHECK, 1, 0);
+        EnableWindow(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), TRUE);
+        EnableWindow(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), TRUE);
+    }
+    SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), BM_SETCHECK, pHideOptions.skipCompressedDoAnalyze, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), BM_SETCHECK, pHideOptions.skipCompressedDoNothing, 0);
+    if(pHideOptions.skipLoadDllDoLoad || pHideOptions.skipLoadDllDoNothing) {
+        SendMessage(GetDlgItem(hWnd, IDC_LOADDLL), BM_SETCHECK, 1, 0);
+        EnableWindow(GetDlgItem(hWnd, IDC_LOADDLLLOAD), TRUE);
+        EnableWindow(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), TRUE);
+    }
+    SendMessage(GetDlgItem(hWnd, IDC_LOADDLLLOAD), BM_SETCHECK, pHideOptions.skipLoadDllDoLoad, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), BM_SETCHECK, pHideOptions.skipLoadDllDoNothing, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDGOTO), BM_SETCHECK, pHideOptions.advancedGoto, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_BADPEIMAGE), BM_SETCHECK, pHideOptions.ignoreBadPEImage, 0);
 #elif OLLY2
     SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
 #elif __IDP__
@@ -389,6 +406,42 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.skipEPOutsideCode = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BADPEIMAGE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.ignoreBadPEImage = 1;
+    }
+    else
+        pHideOptions.ignoreBadPEImage = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDGOTO), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.advancedGoto = 1;
+    }
+    else
+        pHideOptions.advancedGoto = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.skipCompressedDoAnalyze = 1;
+    }
+    else
+        pHideOptions.skipCompressedDoAnalyze = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.skipCompressedDoNothing = 1;
+    }
+    else
+        pHideOptions.skipCompressedDoNothing = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_LOADDLLLOAD), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.skipLoadDllDoLoad = 1;
+    }
+    else
+        pHideOptions.skipLoadDllDoLoad = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.skipLoadDllDoNothing = 1;
+    }
+    else
+        pHideOptions.skipLoadDllDoNothing = 0;
 #elif __IDP__
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_GETCHECK, 0, 0))
     {
@@ -603,6 +656,36 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
             if(allChecked<1) SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 0, 0);
             else SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
+            break;
+        }
+        case IDC_COMPRESSED:
+        {
+            WPARAM state;
+            (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_COMPRESSED), BM_GETCHECK, 0, 0))?state=1:state=0;
+
+            EnableWindow(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), state);
+            EnableWindow(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), state);
+
+            if(state == BST_UNCHECKED) {
+                SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), BM_SETCHECK, 0, 0);
+                SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), BM_SETCHECK, 0, 0);
+            }
+
+            break;
+        }
+        case IDC_LOADDLL:
+        {
+            WPARAM state;
+            (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_LOADDLL), BM_GETCHECK, 0, 0))?state=1:state=0;
+
+            EnableWindow(GetDlgItem(hWnd, IDC_LOADDLLLOAD), state);
+            EnableWindow(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), state);
+
+            if(state == BST_UNCHECKED) {
+                SendMessage(GetDlgItem(hWnd, IDC_LOADDLLLOAD), BM_SETCHECK, 0, 0);
+                SendMessage(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), BM_SETCHECK, 0, 0);
+            }
+
             break;
         }
 #ifdef __IDP__

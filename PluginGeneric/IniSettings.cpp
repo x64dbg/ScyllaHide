@@ -131,6 +131,12 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"SkipEPOutsideCode", L"1", iniFile);
     WriteIniSettings(L"X64Fix", L"0", iniFile);
     WriteIniSettings(L"WindowTitle", L"ScyllaHide", iniFile);
+    WriteIniSettings(L"advancedGoto", L"0", iniFile);
+    WriteIniSettings(L"ignoreBadPEImage", L"0", iniFile);
+    WriteIniSettings(L"skipCompressedDoAnalyze", L"0", iniFile);
+    WriteIniSettings(L"skipCompressedDoNothing", L"0", iniFile);
+    WriteIniSettings(L"skipLoadDllDoLoad", L"0", iniFile);
+    WriteIniSettings(L"skipLoadDllDoNothing", L"0", iniFile);
 }
 
 void ReadSettingsFromIni(const WCHAR * iniFile)
@@ -185,6 +191,12 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.removeEPBreak = ReadIniSettingsInt(L"RemoveEPBreak", iniFile);
     pHideOptions.skipEPOutsideCode = ReadIniSettingsInt(L"SkipEPOutsideCode", iniFile);
     pHideOptions.x64Fix = ReadIniSettingsInt(L"X64Fix", iniFile);
+    pHideOptions.advancedGoto = ReadIniSettingsInt(L"advancedGoto", iniFile);
+    pHideOptions.ignoreBadPEImage = ReadIniSettingsInt(L"ignoreBadPEImage", iniFile);
+    pHideOptions.skipCompressedDoAnalyze = ReadIniSettingsInt(L"skipCompressedDoAnalyze", iniFile);
+    pHideOptions.skipCompressedDoNothing = ReadIniSettingsInt(L"skipCompressedDoNothing", iniFile);
+    pHideOptions.skipLoadDllDoLoad = ReadIniSettingsInt(L"skipLoadDllDoLoad", iniFile);
+    pHideOptions.skipLoadDllDoNothing = ReadIniSettingsInt(L"skipLoadDllDoNothing", iniFile);
     ReadIniSettings(L"WindowTitle", iniFile, pHideOptions.ollyTitle, _countof(pHideOptions.ollyTitle));
 }
 
@@ -236,6 +248,12 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"SkipEPOutsideCode", pHideOptions.skipEPOutsideCode, iniFile);
     WriteIniSettingsInt(L"X64Fix", pHideOptions.x64Fix, iniFile);
     WriteIniSettings(L"WindowTitle", pHideOptions.ollyTitle, iniFile);
+    WriteIniSettingsInt(L"advancedGoto", pHideOptions.advancedGoto, iniFile);
+    WriteIniSettingsInt(L"ignoreBadPEImage", pHideOptions.ignoreBadPEImage, iniFile);
+    WriteIniSettingsInt(L"skipCompressedDoAnalyze", pHideOptions.skipCompressedDoAnalyze, iniFile);
+    WriteIniSettingsInt(L"skipCompressedDoNothing", pHideOptions.skipCompressedDoNothing, iniFile);
+    WriteIniSettingsInt(L"skipLoadDllDoLoad", pHideOptions.skipLoadDllDoLoad, iniFile);
+    WriteIniSettingsInt(L"skipLoadDllDoNothing", pHideOptions.skipLoadDllDoNothing, iniFile);
 }
 
 void GetProfileNames(char* profileNamesA)
