@@ -121,6 +121,10 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
     if(pHideOptions.skipCompressedDoAnalyze || pHideOptions.skipCompressedDoNothing) {
         skipCompressedCode();
     }
+
+    if(pHideOptions.skipLoadDllDoLoad || pHideOptions.skipLoadDllDoNothing) {
+        skipLoadDll();
+    }
     return 0;
 };
 

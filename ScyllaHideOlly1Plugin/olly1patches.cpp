@@ -548,3 +548,21 @@ void skipCompressedCode()
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+11), &zero, sizeof(zero), NULL);
     }
 }
+
+void skipLoadDll()
+{
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+
+    DWORD patchAddr = 0x77709;
+    BYTE patch[] = {0x83,0xC4,0x10,0x90,0x90}; //add esp,10;nop;nop
+    WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &patch, sizeof(patch), NULL);
+
+    if(pHideOptions.skipLoadDllDoLoad) {
+        BYTE jmp[] = {0xEB};
+        WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+8), &jmp, sizeof(jmp), NULL);
+    } else if(pHideOptions.skipLoadDllDoNothing) {
+        BYTE zero[] = {0x00};
+        WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+9), &zero, sizeof(zero), NULL);
+    }
+}
