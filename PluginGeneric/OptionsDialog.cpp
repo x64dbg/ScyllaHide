@@ -44,12 +44,12 @@ void ShowAbout(HWND hWnd)
                 "(Anti-Anti-Debug in usermode)\n\n"
                 "Copyright (C) 2014 Aguila / cypher\n\n"
                 "Special thanks to:\n"
-                "- What for his POISON Assembler source code\n"
+                "- What for his POISON assembler source code\n"
                 "- waliedassar for his blog posts\n"
                 "- Peter Ferrie for his Anti-Debug PDFs\n"
+				"- MaRKuS-DJM for OllyAdvanced assembler source code\n"
                 "- Steve Micallef for his IDA SDK doc\n"
-                "- ReactOS & Gridstore for doc about undocumented NT APIs\n"
-                "- Authors of OllyAdvanced, PhantOm, StrongOD\n"
+                "- Authors of PhantOm and StrongOD\n"
                 "- Tuts4You, Exetools, Exelab community for testing\n"
                 "- last but not least deepzero & mr.exodia for tech chats",
                 "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
