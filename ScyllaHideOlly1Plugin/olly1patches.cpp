@@ -438,51 +438,51 @@ BYTE tempMemory[0x1000] = {0};
 
 DWORD ConvertOffsetToRVA( const WCHAR * szExePath, DWORD offset )
 {
-	DWORD result = 0;
-	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)tempMemory;
-	PIMAGE_NT_HEADERS pNt = 0;
-	DWORD lpNumberOfBytesRead = 0;
-	LARGE_INTEGER lpFileSize = {0};
-	HANDLE hFile = CreateFileW(szExePath, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
-	if (hFile != INVALID_HANDLE_VALUE)
-	{
-		GetFileSizeEx(hFile, &lpFileSize);
-		long filesize = (long)lpFileSize.QuadPart;
+    DWORD result = 0;
+    PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)tempMemory;
+    PIMAGE_NT_HEADERS pNt = 0;
+    DWORD lpNumberOfBytesRead = 0;
+    LARGE_INTEGER lpFileSize = {0};
+    HANDLE hFile = CreateFileW(szExePath, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+    if (hFile != INVALID_HANDLE_VALUE)
+    {
+        GetFileSizeEx(hFile, &lpFileSize);
+        long filesize = (long)lpFileSize.QuadPart;
 
-		if (filesize > sizeof(tempMemory))
-		{
-			filesize = sizeof(tempMemory);
-		}
+        if (filesize > sizeof(tempMemory))
+        {
+            filesize = sizeof(tempMemory);
+        }
 
-		if (ReadFile(hFile, tempMemory, filesize, &lpNumberOfBytesRead, 0))
-		{
-			pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosHeader + pDosHeader->e_lfanew);
-			PIMAGE_SECTION_HEADER pSection = IMAGE_FIRST_SECTION(pNt);
+        if (ReadFile(hFile, tempMemory, filesize, &lpNumberOfBytesRead, 0))
+        {
+            pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosHeader + pDosHeader->e_lfanew);
+            PIMAGE_SECTION_HEADER pSection = IMAGE_FIRST_SECTION(pNt);
 
-			if (offset < pSection->PointerToRawData) //before the first section...
-			{
-				result = offset;
-			}
-			else
-			{
-				for (WORD i = 0; i < pNt->FileHeader.NumberOfSections; i++)
-				{
-					if ((pSection->PointerToRawData <= offset) && ((pSection->PointerToRawData + pSection->SizeOfRawData) > offset))
-					{
-						result = ((offset - pSection->PointerToRawData) + pSection->VirtualAddress);
-						break;
-					}
+            if (offset < pSection->PointerToRawData) //before the first section...
+            {
+                result = offset;
+            }
+            else
+            {
+                for (WORD i = 0; i < pNt->FileHeader.NumberOfSections; i++)
+                {
+                    if ((pSection->PointerToRawData <= offset) && ((pSection->PointerToRawData + pSection->SizeOfRawData) > offset))
+                    {
+                        result = ((offset - pSection->PointerToRawData) + pSection->VirtualAddress);
+                        break;
+                    }
 
-					pSection++;
-				}
-			}
+                    pSection++;
+                }
+            }
 
-		}
+        }
 
-		CloseHandle(hFile);
-	}
+        CloseHandle(hFile);
+    }
 
-	return result;
+    return result;
 }
 
 bool advancedCtrlG_handleGotoExpression(int addrType)
@@ -491,10 +491,10 @@ bool advancedCtrlG_handleGotoExpression(int addrType)
 
 
     if (!GetDlgItemTextA(hGotoDialog, IDC_EXPRESSION, expression, 100))
-	{
-		SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address wrong!");
-		return false;
-	}
+    {
+        SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address wrong!");
+        return false;
+    }
     int len = strlen(expression);
 
     if(len>=9) { //bad address
@@ -508,17 +508,21 @@ bool advancedCtrlG_handleGotoExpression(int addrType)
             jmp [lpBase]
         };*/
     } else if (len == 0) {
-		SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address wrong!");
-		return false;
-	}
+        SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address wrong!");
+        return false;
+    }
 
     DWORD addrToFind = strtoul(expression, 0, 16);
 
-	if (addrToFind == 0)
-	{
-		SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address wrong!");
-		return false;
-	}
+    if (addrToFind == 0)
+    {
+        SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address wrong!");
+        return false;
+    }
+
+    //copy original expression for history
+    lstrcpyA(orgExpression, expression);
+    pOrgExpr = (DWORD)orgExpression;
 
     int selectedModule = SendMessage(GetDlgItem(hGotoDialog, IDC_MODULES), CB_GETCURSEL, 0, 0);
 
@@ -534,24 +538,21 @@ bool advancedCtrlG_handleGotoExpression(int addrType)
 
     //calc the VA based on the passed RVA/Offset
 
-	if(addrType == ADDR_TYPE_OFFSET)
-	{
-		addrToFind = ConvertOffsetToRVA(moduleinfo.szExePath, addrToFind);
-		if (addrToFind == 0)
-		{
-			SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Invalid offset address!");
-			return false;
-		}
-	}
+    if(addrType == ADDR_TYPE_OFFSET)
+    {
+        addrToFind = ConvertOffsetToRVA(moduleinfo.szExePath, addrToFind);
+        if (addrToFind == 0)
+        {
+            SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Invalid offset address!");
+            return false;
+        }
+    }
 
     if(addrType == ADDR_TYPE_RVA || addrType == ADDR_TYPE_OFFSET) {
         addrToFind += (DWORD)moduleinfo.modBaseAddr;
         wsprintfA(expression, "%08X", addrToFind);
         SetDlgItemTextA(hGotoDialog, IDC_EXPRESSION, expression);
     }
-
-	lstrcpyA(orgExpression, expression);
-	pOrgExpr = (DWORD)orgExpression;
 
     CloseHandle(hSnap);
 
