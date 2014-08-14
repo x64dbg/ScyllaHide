@@ -15,7 +15,7 @@ void fixSprintfBug();
 DWORD _stdcall removeEPBreak(LPVOID lpParam);
 void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage);
 void advcancedCtrlG();
-void advancedCtrlG_handleGotoExpression(int addrType);
+bool advancedCtrlG_handleGotoExpression(int addrType);
 
 //hooks
 void handleBreakpoints();

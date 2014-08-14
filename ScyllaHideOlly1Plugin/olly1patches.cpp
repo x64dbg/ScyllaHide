@@ -21,7 +21,9 @@ MODULEENTRY32 moduleinfo;
 HANDLE hSnap;
 WPARAM wparam;
 char orgExpression[100];
+DWORD pOrgExpr;
 int selectedType;
+DWORD buffer = 0;
 
 //taken from strongOD aka "fix NumOfRvaAndSizes"
 void fixBadPEBugs()
@@ -402,21 +404,23 @@ void __declspec(naked) advancedCtrlG_WMCOMMAND()
         }
         else if(IsDlgButtonChecked(hGotoDialog, IDC_RADIORVA) == 1) {
             selectedType = ADDR_TYPE_RVA;
-            advancedCtrlG_handleGotoExpression(ADDR_TYPE_RVA);
-            _asm {
-                popad
-                add lpBase, 0x434ab
-                jmp [lpBase]
-            };
+            if(advancedCtrlG_handleGotoExpression(ADDR_TYPE_RVA)) {
+                _asm {
+                    popad
+                    add lpBase, 0x434ab
+                    jmp [lpBase]
+                };
+            }
         }
-        else if(IsDlgButtonChecked(hGotoDialog, IDC_RADIORVA) == 1) {
+        else if(IsDlgButtonChecked(hGotoDialog, IDC_RADIOOFFSET) == 1) {
             selectedType = ADDR_TYPE_OFFSET;
-            advancedCtrlG_handleGotoExpression(ADDR_TYPE_OFFSET);
-            _asm {
-                popad
-                add lpBase, 0x434ab
-                jmp [lpBase]
-            };
+            if(advancedCtrlG_handleGotoExpression(ADDR_TYPE_OFFSET)) {
+                _asm {
+                    popad
+                    add lpBase, 0x434ab
+                    jmp [lpBase]
+                };
+            }
         }
 
         _asm { popad };
@@ -429,7 +433,7 @@ void __declspec(naked) advancedCtrlG_WMCOMMAND()
     };
 }
 
-void advancedCtrlG_handleGotoExpression(int addrType)
+bool advancedCtrlG_handleGotoExpression(int addrType)
 {
     lpBase = (DWORD)GetModuleHandle(NULL);
 
@@ -439,16 +443,18 @@ void advancedCtrlG_handleGotoExpression(int addrType)
 
     if(len>=9) { //bad address
         SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address to long !");
-
+        return false;
+        /*
         _asm {
             add esp,4
             popad
             add lpBase, 0x436a5
             jmp [lpBase]
-        };
+        };*/
     }
 
     lstrcpyA(orgExpression, expression);
+    pOrgExpr = (DWORD)orgExpression;
 
     DWORD addrToFind;
     sscanf(expression, "%X", &addrToFind);
@@ -474,17 +480,27 @@ void advancedCtrlG_handleGotoExpression(int addrType)
     }
 
     CloseHandle(hSnap);
+
+    return true;
 }
 
 void __declspec(naked) advancedCtrlG_Save()
 {
     lpBase = (DWORD)GetModuleHandle(NULL);
 
-    //TODO
-    /*
-    .if state!=1 && dword ptr [esp]==1
-    	mov dword ptr [esp+8],offset orgdlgitembuffer
-    .endif*/
+    _asm {
+        mov eax, dword ptr[esp]
+        mov buffer, eax
+    };
+
+    //this is for adding the RVA/Offset value user typed in to the Goto history
+    //instead of the calculated VA
+    if(buffer==1 && selectedType!=1) {
+        _asm {
+            mov eax, pOrgExpr
+            mov dword ptr [esp+8], eax
+        };
+    }
 
     _asm {
         mov eax,lpBase
