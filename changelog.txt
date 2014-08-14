@@ -1,3 +1,11 @@
+Version 1.1
+- Added "thanks" to About
+All for Olly1:
+- Advanced CTRL+G
+- Skip "compressed code" message
+- Ignore bad PE image (WinUPack)
+- Skip "Load DLL" message
+
 Version 1.0
 
 - added sprintf %s Olly1 bugfix to "Fix Olly bugs"

@@ -2,7 +2,7 @@ ScyllaHide is an open-source x64/x86 usermode Anti-Anti-Debug library. It hooks
 various functions in usermode to hide debugging. This will stay usermode! 
 For kernelmode hooks use TitanHide.
 
-ScyllaHide is tested to work with VMProtect, Themida, Armadillo, Execryptor
+ScyllaHide is tested to work with VMProtect, Themida, Armadillo, Execryptor, Obsidium
 If you find any protector that still detects debugger, please tell us.
 
 Source code license:
@@ -66,6 +66,10 @@ Olly1:
 - Remove EP-Break
 - Break on TLS
 - Skip "EP outside code" message
+- Advanced CTRL+G
+- Skip "compressed code" message
+- Ignore bad PE image (WinUPack)
+- Skip "Load DLL" message
 
 ------------------------------------------------------
 
