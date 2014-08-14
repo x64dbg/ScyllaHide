@@ -349,13 +349,13 @@ void __declspec(naked) advancedCtrlG_WMINIT()
     CheckDlgButton(hGotoDialog, IDC_RADIOVA, BST_CHECKED);
 
     hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, ProcessId);
-    moduleinfo.dwSize = sizeof(MODULEENTRY32);
-    Module32First(hSnap, &moduleinfo);
+    moduleinfo.dwSize = sizeof(MODULEENTRY32W);
+    Module32FirstW(hSnap, &moduleinfo);
 
     do {
-        SendMessage(GetDlgItem(hGotoDialog, IDC_MODULES), CB_ADDSTRING, 0, (LPARAM)moduleinfo.szModule);
+        SendMessageW(GetDlgItem(hGotoDialog, IDC_MODULES), CB_ADDSTRING, 0, (LPARAM)moduleinfo.szModule);
     }
-    while(Module32Next(hSnap, &moduleinfo) == TRUE);
+    while(Module32NextW(hSnap, &moduleinfo) == TRUE);
     CloseHandle(hSnap);
     SendMessageW(GetDlgItem(hGotoDialog, IDC_MODULES), CB_SETCURSEL, 0, 0);
     //end handle WM_INIT
@@ -433,16 +433,72 @@ void __declspec(naked) advancedCtrlG_WMCOMMAND()
     };
 }
 
+char expression[100] = {0};
+BYTE tempMemory[0x1000] = {0};
+
+DWORD ConvertOffsetToRVA( const WCHAR * szExePath, DWORD offset )
+{
+	DWORD result = 0;
+	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)tempMemory;
+	PIMAGE_NT_HEADERS pNt = 0;
+	DWORD lpNumberOfBytesRead = 0;
+	LARGE_INTEGER lpFileSize = {0};
+	HANDLE hFile = CreateFileW(szExePath, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+	if (hFile != INVALID_HANDLE_VALUE)
+	{
+		GetFileSizeEx(hFile, &lpFileSize);
+		long filesize = (long)lpFileSize.QuadPart;
+
+		if (filesize > sizeof(tempMemory))
+		{
+			filesize = sizeof(tempMemory);
+		}
+
+		if (ReadFile(hFile, tempMemory, filesize, &lpNumberOfBytesRead, 0))
+		{
+			pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosHeader + pDosHeader->e_lfanew);
+			PIMAGE_SECTION_HEADER pSection = IMAGE_FIRST_SECTION(pNt);
+
+			if (offset < pSection->PointerToRawData) //before the first section...
+			{
+				result = offset;
+			}
+			else
+			{
+				for (WORD i = 0; i < pNt->FileHeader.NumberOfSections; i++)
+				{
+					if ((pSection->PointerToRawData <= offset) && ((pSection->PointerToRawData + pSection->SizeOfRawData) > offset))
+					{
+						result = ((offset - pSection->PointerToRawData) + pSection->VirtualAddress);
+						break;
+					}
+
+					pSection++;
+				}
+			}
+
+		}
+
+		CloseHandle(hFile);
+	}
+
+	return result;
+}
+
 bool advancedCtrlG_handleGotoExpression(int addrType)
 {
     lpBase = (DWORD)GetModuleHandle(NULL);
 
-    char expression[100];
-    GetDlgItemTextA(hGotoDialog, IDC_EXPRESSION, expression, 100);
-    int len = lstrlenA(expression);
+
+    if (!GetDlgItemTextA(hGotoDialog, IDC_EXPRESSION, expression, 100))
+	{
+		SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address wrong!");
+		return false;
+	}
+    int len = strlen(expression);
 
     if(len>=9) { //bad address
-        SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address to long !");
+        SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address to long!");
         return false;
         /*
         _asm {
@@ -451,32 +507,51 @@ bool advancedCtrlG_handleGotoExpression(int addrType)
             add lpBase, 0x436a5
             jmp [lpBase]
         };*/
-    }
+    } else if (len == 0) {
+		SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address wrong!");
+		return false;
+	}
 
-    lstrcpyA(orgExpression, expression);
-    pOrgExpr = (DWORD)orgExpression;
+    //lstrcpyA(orgExpression, expression);
+    //pOrgExpr = (DWORD)orgExpression;
 
-    DWORD addrToFind;
-    sscanf(expression, "%X", &addrToFind);
+
+    DWORD addrToFind = strtoul(expression, 0, 16);
+
+	if (addrToFind == 0)
+	{
+		SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address wrong!");
+		return false;
+	}
+
     int selectedModule = SendMessage(GetDlgItem(hGotoDialog, IDC_MODULES), CB_GETCURSEL, 0, 0);
 
     hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, ProcessId);
     moduleinfo.dwSize = sizeof(MODULEENTRY32);
-    Module32First(hSnap, &moduleinfo);
+    Module32FirstW(hSnap, &moduleinfo);
 
     //step to the selected module
     while(selectedModule!=0) {
-        Module32Next(hSnap, &moduleinfo);
+        Module32NextW(hSnap, &moduleinfo);
         selectedModule--;
     }
 
     //calc the VA based on the passed RVA/Offset
-    if(addrType == ADDR_TYPE_RVA) {
-        addrToFind += (DWORD)moduleinfo.modBaseAddr;
-        sprintf(expression, "%.8X", addrToFind);
-        SetDlgItemTextA(hGotoDialog, IDC_EXPRESSION, expression);
-    } else if(addrType == ADDR_TYPE_OFFSET) {
 
+	if(addrType == ADDR_TYPE_OFFSET)
+	{
+		addrToFind = ConvertOffsetToRVA(moduleinfo.szExePath, addrToFind);
+		if (addrToFind == 0)
+		{
+			SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Invalid offset address!");
+			return false;
+		}
+	}
+
+    if(addrType == ADDR_TYPE_RVA || addrType == ADDR_TYPE_OFFSET) {
+        addrToFind += (DWORD)moduleinfo.modBaseAddr;
+        wsprintfA(expression, "%.8X", addrToFind);
+        SetDlgItemTextA(hGotoDialog, IDC_EXPRESSION, expression);
     }
 
     CloseHandle(hSnap);
