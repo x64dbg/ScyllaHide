@@ -512,10 +512,6 @@ bool advancedCtrlG_handleGotoExpression(int addrType)
 		return false;
 	}
 
-    //lstrcpyA(orgExpression, expression);
-    //pOrgExpr = (DWORD)orgExpression;
-
-
     DWORD addrToFind = strtoul(expression, 0, 16);
 
 	if (addrToFind == 0)
@@ -550,9 +546,12 @@ bool advancedCtrlG_handleGotoExpression(int addrType)
 
     if(addrType == ADDR_TYPE_RVA || addrType == ADDR_TYPE_OFFSET) {
         addrToFind += (DWORD)moduleinfo.modBaseAddr;
-        wsprintfA(expression, "%.8X", addrToFind);
+        wsprintfA(expression, "%08X", addrToFind);
         SetDlgItemTextA(hGotoDialog, IDC_EXPRESSION, expression);
     }
+
+	lstrcpyA(orgExpression, expression);
+	pOrgExpr = (DWORD)orgExpression;
 
     CloseHandle(hSnap);
 
