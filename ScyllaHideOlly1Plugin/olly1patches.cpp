@@ -490,7 +490,7 @@ bool advancedCtrlG_handleGotoExpression(int addrType)
     lpBase = (DWORD)GetModuleHandle(NULL);
 
 
-    if (!GetDlgItemTextA(hGotoDialog, IDC_EXPRESSION, expression, 100))
+    if (!GetDlgItemTextA(hGotoDialog, IDC_EXPRESSION, expression, sizeof(expression)))
     {
         SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address wrong!");
         return false;
@@ -498,7 +498,7 @@ bool advancedCtrlG_handleGotoExpression(int addrType)
     int len = strlen(expression);
 
     if(len>=9) { //bad address
-        SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address to long!");
+        SetDlgItemTextA(hGotoDialog, IDC_ERROR, "Address too long!");
         return false;
         /*
         _asm {
@@ -520,8 +520,8 @@ bool advancedCtrlG_handleGotoExpression(int addrType)
         return false;
     }
 
-    //copy original expression for history
-    lstrcpyA(orgExpression, expression);
+    //copy original expression for history with style
+	wsprintfA(orgExpression, "%X", addrToFind);
     pOrgExpr = (DWORD)orgExpression;
 
     int selectedModule = SendMessage(GetDlgItem(hGotoDialog, IDC_MODULES), CB_GETCURSEL, 0, 0);
