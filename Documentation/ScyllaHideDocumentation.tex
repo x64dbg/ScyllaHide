@@ -6,11 +6,14 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{float}
+
 
 \lstdefinestyle{customc}{
   belowcaptionskip=1\baselineskip,
   breaklines=true,
-  frame=L,
+  frame=leftline,
   xleftmargin=\parindent,
   language=C,
   showstringspaces=false,
@@ -19,15 +22,9 @@
   commentstyle=\itshape\color{purple!40!black},
   identifierstyle=\color{blue},
   stringstyle=\color{orange},
-}
-
-\lstdefinestyle{customasm}{
-  belowcaptionskip=1\baselineskip,
-  frame=L,
-  xleftmargin=\parindent,
-  language=[x86masm]Assembler,
-  basicstyle=\footnotesize\ttfamily,
-  commentstyle=\itshape\color{purple!40!black},
+  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+  numbersep=9pt,                   % how far the line-numbers are from the code
+  numberstyle=\tiny\color{black}, % the style that is used for the line-numbers
 }
 
 \lstset{escapechar=@,style=customc}
@@ -39,8 +36,8 @@
 }
 
 \title{ScyllaHide v1.1 - Documentation}
-\author{Developed by NtQuery and cypher}
-\date{2014-08-15}
+\author{}
+\date{2014-08-16}
 
 \begin{document}
 
@@ -49,6 +46,8 @@
  
 \pagenumbering{Roman}
 \tableofcontents
+\listoffigures
+\lstlistoflistings
 
 \newpage
 \pagenumbering{arabic}
@@ -56,21 +55,102 @@
 \section{Features}
 
 \subsection{Anti-Anti-Debug}
+
 \subsubsection{Process Environment Block (PEB)}
+The most important anti-anti-debug option. Almost every protector checks for PEB values. There are three important options and one minor option.
+\begin{itemize}
+\item BeingDebugged: Very important option, should be always enabled. \textit{IsDebuggerPresent} is using this value to check for debuggers.
+\item NtGlobalFlag: Very important option, a lot of protectors check for this value.
+\item HeapFlags: Very important option. E.g. Themida checks for heap artifacts and heap flags.
+\item StartupInfo: This is not really important, only a few protectors check for this. Maybe Enigma checks it.
+\end{itemize}
+
+\subsubsection{NtSetInformationThread}
+\label{sec:NtSetInformationThread_section}
+The THREADINFOCLASS value ThreadHideFromDebugger (17) is a well-known anti-debug measurement. The debugger cannot handle hidden threads. This leads to a loss of control over the target.
+
+\subsubsection{NtSetInformationProcess}
+\label{sec:NtSetInformationProcess_section}
+The PROCESSINFOCLASS value ProcessHandleTracing (32) can be used to detect a debugger. The PROCESSINFOCLASS value ProcessBreakOnTermination (19) can be used to generate a Blue Screen of Death on process termination. ScyllaHide protects from both.
+
+\subsubsection{NtQuerySystemInformation}
+The SYSTEM\_INFORMATION\_CLASS value SystemKernelDebuggerInformation (35) can be used to detect kernel debuggers. The SYSTEM\_INFORMATION\_CLASS value SystemProcessInformation (5) is used to get a process list. A debugger should be hidden in a process list and the debugee should have a good parent process ID like the ID from explorer.exe.
+
+\subsubsection{NtQueryInformationProcess}
+A very important option. Various PROCESSINFOCLASS values can be used to detect a debugger:
+\begin{itemize}
+\item ProcessDebugFlags: Should be 1.
+\item ProcessDebugPort: Should be 0.
+\item ProcessBasicInformation: Reveals the parent process ID.
+\item ProcessBreakOnTermination: Please see \textit{NtSetInformationProcess} in Section~\ref{sec:NtSetInformationProcess_section}.
+\item ProcessHandleTracing: Please see \textit{NtSetInformationProcess} in Section~\ref{sec:NtSetInformationProcess_section}.
+\end{itemize}
+A lot of protectors use this to detect debuggers. The windows API \textit{CheckRemoteDebuggerPresent} uses \textit{NtQueryInformationProcess} internally.
+
+\subsubsection{NtQueryObject}
+The OBJECT\_INFORMATION\_CLASS ObjectTypesInformation (3) and ObjectTypeInformation (2) can be used to detect debuggers. ScyllaHide filters DebugObject references.
+
+\subsubsection{NtYieldExecution}
+A very unrealiable anti-debug method. This is only used in some UnpackMe's or in some Proof of Concept code. Only activate this if you really need it. Probably you will never need this option.
+
+\subsubsection{NtCreateThreadEx}
+Threads hidden from debuggers can be created with a special creation flag THREAD\_CREATE\_FLAGS\_HIDE\_FROM\_DEBUGGER (4). ScyllaHide doesn't allow hidden threads. The anti-debug effect is similar to \textit{NtSetInformationThread} in Section~\ref{sec:NtSetInformationThread_section}.
+
+\subsubsection{OutputDebugStringA}
+\textit{OutputDebugStringW} uses \textit{OutputDebugStringA} internally. ScyllaHide only hooks the ANSI version and this is therefore enough. This is a very unreliable anti-debug method, so you will not need this option very often.
+
+\subsubsection{BlockInput}
+Very effective anti-debug method. This is used e.g. in Yoda's Protector. "Blocks keyboard and mouse input events from reaching applications."
+
+\subsubsection{NtUserFindWindowEx}
+This is a system call function in user32.dll. The windows APIs \textit{FindWindowA/W} and \textit{FindWindowExA/W} call this internally. The debugger window will be hidden.
+
+\subsubsection{NtUserBuildHwndList}
+This is a system call function in user32.dll. The windows APIs \textit{EnumWindows} and \textit{EnumThreadWindows} call this internally. The debugger window will be hidden.
+
+\subsubsection{NtUserQueryWindow}
+This is a system call function in user32.dll. The windows API \textit{GetWindowThreadProcessId} calls this internally. This is used to hide the debugger process.
+
+\subsubsection{NtSetDebugFilterState}
+ScyllaHide returns always STATUS\_ACCESS\_DENIED. This anti-debug measurement isn't used very often. Probably you will never need this option in a real world target.
+
+\subsubsection{NtClose}
+This is called with an invalid handle to detect a debugger. ScyllaHide calls \textit{NtQueryObject} to check the validity of the handle. A few protectors are using this method.
+
+\subsubsection{Remove Debug Privileges}
+If a debugger creates the process of the target, the target will have debug privileges. This can be used to detect a debugger.
+
+\subsubsection{Hardware Breakpoint Protection (DRx)}
+Hardware breakpoints can be detected/cleared with exceptions or the windows APIs \textit{NtGetContextThread/NtSetContextThread}. Enable this option only if you need it!
+
+\subsubsection{Timing}
+There are a few windows APIs to measure the time. Timing can be used to detect debuggers, because they slow down the execution. Enable with care and only if you need it!
+
 \subsection{Special}
 \subsubsection{DLL Injection}
-\subsubsection{Prevent Thread Creation}
-\subsubsection{RunPE Unpacker}
+Normal DLL injection or stealth dll injection. You better try the normal injection first...
 
+\subsubsection{Prevent Thread Creation}
+This option prevents the creation of new threads. This can be useful if a protector uses a lot of protection threads. This option can be useful for EXECryptor. Enable with care and only if you need it! You must know what you are doing here!
+
+\subsubsection{RunPE Unpacker}
+This option hooks \textit{NtResumeThread}. If the malware creates a new process, option terminates and dumps the newly created process. If you are unpacking malware, enable and try it. Should be only used inside a Virtual Machine (VM).
 
 
 \subsection{OllyDbg v1 Specific}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=1]{ollyv1plugin.PNG}
+\caption{OllyDbg v1 Plugin}
+\end{figure}
+
 \subsubsection{Remove entry point breakpoint}
 Some protectors use Thread-Local-Storage (TLS) as entrypoint and check for breakpoints at the normal PE entrypoint address. You must remove the PE entrypoint to hide your debugger. This option is necessary for VMProtect.
 \subsubsection{Fix Olly Bugs}
 This option fixes various OllyDbg bugs: ForegroundWindow, PE fix for NumOfRvaAndSizes, FPU bug, sprintf bug
 \subsubsection{x64 single-step fix}
-OllyDbg doesn't work very well on x64 operating systems. This option fixes the most annoying bug.
+OllyDbg doesn't work very well on x64 operating systems. This option fixes the most annoying bug. More information here: \url{http://waleedassar.blogspot.de/2012/03/ollydbg-v110-and-wow64.html}
 \subsubsection{Skip Entrypoint outside code}
 Annoying warning can be skipped.
 \subsubsection{Ignore bad PE image}
@@ -80,24 +160,80 @@ Annoying warning can be skipped with a default behaviour.
 \subsubsection{Skip "load dll" warning}
 Annoying warning can be skipped with a default behaviour.
 \subsubsection{Break on TLS}
-This options sets a breakpoint to any available Thread-Local-Storage (TLS) address. This is necessary for various protectors e.g. VMProtect.
+This option sets a breakpoint to any available Thread-Local-Storage (TLS) address. This is necessary for various protectors e.g. VMProtect.
 \subsubsection{Advanced CTRL+G}
 Replaces the default OllyDbg "Go to Address" dialog. Now you can enter RVA and offset values. Be sure to select the correct module.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.8]{ollyadvancedctrlg.PNG}
+\caption{Advanced CTRL+G}
+\end{figure}
+
 \subsubsection{Change window caption}
 Change the OllyDbg window caption. This can be useful against e.g. FindWindow anti-debug tricks. You don't need to enable this, if you have the NtUser* hooks enabled! Hint: You can use it to make the currently used profile visible.
 
 
 \subsection{OllyDbg v2 Specific}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=1]{ollyv2plugin.PNG}
+\caption{OllyDbg v2 Plugin}
+\end{figure}
+
 \subsubsection{Change window caption}
 Change the OllyDbg window caption. This can be useful against e.g. FindWindow anti-debug tricks. You don't need to enable this, if you have the NtUser* hooks enabled! Hint: You can use it to make the currently used profile visible.
+
 \subsection{IDA Specific}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=1]{idaplugin.PNG}
+\caption{IDA Plugin}
+\end{figure}
+
+\subsubsection{Server Option}
+Remote debugging is fully supported. Define the TCP port for the special IDA Server application. X64 debugging requires remote debugging, because IDA (64-bit) is a 32-bit application.
+
 \subsection{x64dbg Specific}
 \subsection{TitanEngine Specific}
 \section{Advanced Information}
+\subsection{Nt* APIs from user32.dll}
+
+\begin{lstlisting}[language=C, caption=Special Nt* APIs declaration]
+HWND
+NTAPI
+NtUserFindWindowEx(
+    IN HWND hwndParent,
+    IN HWND hwndChild,
+    IN PUNICODE_STRING pstrClassName OPTIONAL,
+    IN PUNICODE_STRING pstrWindowName OPTIONAL,
+    IN DWORD dwType);
+
+NTSTATUS
+NTAPI
+NtUserBuildHwndList(
+    IN HDESK hdesk,
+    IN HWND hwndNext,
+    IN BOOL fEnumChildren,
+    IN DWORD idThread,
+    IN UINT cHwndMax,
+    OUT HWND *phwndFirst,
+    OUT PUINT pcHwndNeeded);
+
+HANDLE
+NTAPI
+NtUserQueryWindow(
+    IN HWND hwnd,
+    IN WINDOWINFOCLASS WindowInfo);
+
+\end{lstlisting}
+
 \subsection{Special PEB Fix Information}
 
 There is a special piece of code inside the debug loop of the plugins and it seems like there is a bug:
-\begin{lstlisting}
+\begin{lstlisting}[language=C, caption=Special PEB Fix Code]
     if (pHideOptions.PEBHeapFlags)
     {
         if (specialPebFix)
@@ -113,6 +249,47 @@ There is a special piece of code inside the debug loop of the plugins and it see
         }
     }
 \end{lstlisting}
-But this code is correct and very important. This nice trick removes heap artifacts (You can read more about it here: http://pferrie.tripod.com/papers/unpackers.pdf "The heap"). Themida and other protectors are checking for heap artifacts. Instead of manually wiping the artifacts, the code prevents the heap artifact creation.
+But this code is correct and very important. This nice trick removes heap artifacts (You can read more about it here: \url{http://pferrie.tripod.com/papers/unpackers.pdf} "The heap"). Themida and other protectors are checking for heap artifacts. Instead of manually wiping the artifacts, the code prevents the heap artifact creation.
+
+\section{Frequently Asked Questions}
+The error "NT APIs missing" appears, how to solve it?
+\begin{itemize}
+\item You need to put NtApiCollection.ini in the same directory as ScyllaHide.dll or the following hooks will not work: NtUserQueryWindow, NtUserBuildHwndList, NtUserFindWindowEx
+\item Some Nt* WINAPI functions are not exported by a DLL, so it is necessary to get the function addresses from another source. The other source is the PDB file. The adresses can be resolved with this tool: \url{https://bitbucket.org/NtQuery/pdb-getprocaddress} It will download the PDB file from the Microsoft server to resolve the missing function addresses. Binaries available here \url{https://bitbucket.org/NtQuery/scyllahide/downloads/NtApiTool.rar}
+\end{itemize}
+
+\section{Developer Contact Information}
+
+\begin{center}
+\textbf{Carbon} \textit{alias} \textbf{Aguila} \textit{alias} \textbf{NtQuery}
+\begin{itemize}
+\item \url{https://github.com/NtQuery/}
+\item \url{https://bitbucket.org/NtQuery/}
+\item \url{https://forum.tuts4you.com/user/22354-aguila/}
+\item \url{https://forum.exetools.com/member.php?u=36473}
+\end{itemize}
+
+
+\textbf{cypher} \textit{alias} \textbf{cypherpunk}
+\begin{itemize}
+\item \url{https://bitbucket.org/cypherpunk/}
+\item \url{https://forum.tuts4you.com/user/77269-cypher/}
+\item \url{https://forum.exetools.com/member.php?u=36610}
+\end{itemize}
+\end{center}
+
+\section{Version History}
+
+Version 1.1
+\begin{itemize}
+\item Added "thanks" to About
+\item Added kill anti-attach (for x86 only)
+\item Olly v1 Plugin: Advanced CTRL+G
+\item Olly v1 Plugin: Skip "compressed code" message
+\item Olly v1 Plugin: Ignore bad PE image (WinUPack)
+\item Olly v1 Plugin: Skip "Load DLL" message
+\end{itemize}
+
+\include{gpl-3.0}
 
 \end{document}
