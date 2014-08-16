@@ -1,6 +1,6 @@
 Version 1.1
 - Added "thanks" to About
-- Added kill anti-attach
+- Added kill anti-attach (for x86 only)
 - Olly v1 Plugin: Advanced CTRL+G
 - Olly v1 Plugin: Skip "compressed code" message
 - Olly v1 Plugin: Ignore bad PE image (WinUPack)
