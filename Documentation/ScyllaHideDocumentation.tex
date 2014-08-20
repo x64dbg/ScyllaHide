@@ -35,9 +35,9 @@
   citecolor    = red      % Colour of citations
 }
 
-\title{ScyllaHide v1.1 - Documentation}
+\title{ScyllaHide v1.2 - Documentation}
 \author{}
-\date{2014-08-16}
+\date{2014-08-20}
 
 \begin{document}
 
@@ -79,11 +79,12 @@ The SYSTEM\_INFORMATION\_CLASS value SystemKernelDebuggerInformation (35) can be
 \subsubsection{NtQueryInformationProcess}
 A very important option. Various PROCESSINFOCLASS values can be used to detect a debugger:
 \begin{itemize}
-\item ProcessDebugFlags: Should be 1.
-\item ProcessDebugPort: Should be 0.
-\item ProcessBasicInformation: Reveals the parent process ID.
-\item ProcessBreakOnTermination: Please see \textit{NtSetInformationProcess} in Section~\ref{sec:NtSetInformationProcess_section}.
-\item ProcessHandleTracing: Please see \textit{NtSetInformationProcess} in Section~\ref{sec:NtSetInformationProcess_section}.
+\item ProcessDebugFlags (31): Should return 1 in the supplied buffer.
+\item ProcessDebugPort (7): Should return 0 in the supplied buffer.
+\item ProcessDebugObjectHandle (30): Should return 0 in the supplied buffer and the error STATUS\_PORT\_NOT\_SET (0xC0000353).
+\item ProcessBasicInformation (0): Reveals the parent process ID.
+\item ProcessBreakOnTermination (29): Please see \textit{NtSetInformationProcess} in Section~\ref{sec:NtSetInformationProcess_section}.
+\item ProcessHandleTracing (32): Please see \textit{NtSetInformationProcess} in Section~\ref{sec:NtSetInformationProcess_section}.
 \end{itemize}
 A lot of protectors use this to detect debuggers. The windows API \textit{CheckRemoteDebuggerPresent} uses \textit{NtQueryInformationProcess} internally.
 
@@ -105,11 +106,17 @@ Very effective anti-debug method. This is used e.g. in Yoda's Protector. "Blocks
 \subsubsection{NtUserFindWindowEx}
 This is a system call function in user32.dll. The windows APIs \textit{FindWindowA/W} and \textit{FindWindowExA/W} call this internally. The debugger window will be hidden.
 
+Note: Requires a valid relative virtual address in NtApiCollection.ini.
+
 \subsubsection{NtUserBuildHwndList}
 This is a system call function in user32.dll. The windows APIs \textit{EnumWindows} and \textit{EnumThreadWindows} call this internally. The debugger window will be hidden.
 
+Note: Requires a valid relative virtual address in NtApiCollection.ini.
+
 \subsubsection{NtUserQueryWindow}
 This is a system call function in user32.dll. The windows API \textit{GetWindowThreadProcessId} calls this internally. This is used to hide the debugger process.
+
+Note: Requires a valid relative virtual address in NtApiCollection.ini.
 
 \subsubsection{NtSetDebugFilterState}
 ScyllaHide returns always STATUS\_ACCESS\_DENIED. This anti-debug measurement isn't used very often. Probably you will never need this option in a real world target.
@@ -134,8 +141,15 @@ Normal DLL injection or stealth dll injection. You better try the normal injecti
 This option prevents the creation of new threads. This can be useful if a protector uses a lot of protection threads. This option can be useful for EXECryptor. Enable with care and only if you need it! You must know what you are doing here!
 
 \subsubsection{RunPE Unpacker}
-This option hooks \textit{NtResumeThread}. If the malware creates a new process, option terminates and dumps the newly created process. If you are unpacking malware, enable and try it. Should be only used inside a Virtual Machine (VM).
+This option hooks \textit{NtResumeThread}. If the malware creates a new process, ScyllaHide terminates and dumps any newly created process. If you are unpacking malware, enable and try it. Should be only used inside a Virtual Machine (VM).
 
+A typical RunPE workflow:
+
+\begin{enumerate}
+\item Create a new process of any target in suspended state (Process flag CREATE\_SUSPENDED: 0x00000004)
+\item Replace the original process PE image with a new (malicious) PE image. This can involve several steps and various windows API functions.
+\item Start the process with the windows API function \textit{ResumeThread} (or \textit{NtResumeThread})
+\end{enumerate}
 
 \subsection{OllyDbg v1 Specific}
 
@@ -148,7 +162,15 @@ This option hooks \textit{NtResumeThread}. If the malware creates a new process,
 \subsubsection{Remove entry point breakpoint}
 Some protectors use Thread-Local-Storage (TLS) as entrypoint and check for breakpoints at the normal PE entrypoint address. You must remove the PE entrypoint to hide your debugger. This option is necessary for VMProtect.
 \subsubsection{Fix Olly Bugs}
-This option fixes various OllyDbg bugs: ForegroundWindow, PE fix for NumOfRvaAndSizes, FPU bug, sprintf bug
+This option fixes various OllyDbg bugs: 
+\begin{itemize}
+\item PE fix for NumOfRvaAndSizes
+\item ForegroundWindow fix
+\item FPU bug
+\item Format string (sprintf) bug, CVE-2004-0733 \url{http://www.cvedetails.com/cve/CVE-2004-0733/}
+\item NT Symbols path bug, patch by blabberer \url{http://www.woodmann.com/forum/showthread.php?8460-Debug-symbols-information-symbol-server-setup&p=56246&viewfull=1#post56246}
+\end{itemize}
+
 \subsubsection{x64 single-step fix}
 OllyDbg doesn't work very well on x64 operating systems. This option fixes the most annoying bug. More information here: \url{http://waleedassar.blogspot.de/2012/03/ollydbg-v110-and-wow64.html}
 \subsubsection{Skip Entrypoint outside code}
@@ -279,6 +301,11 @@ The error "NT APIs missing" appears, how to solve it?
 \end{center}
 
 \section{Version History}
+
+Version 1.2
+\begin{itemize}
+\item Olly v1 Plugin: Fix for NT Symbols path bug
+\end{itemize}
 
 Version 1.1
 \begin{itemize}
