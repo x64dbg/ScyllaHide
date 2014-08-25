@@ -119,11 +119,11 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, pHideOptions.NtQueryPerformanceCounter, 0);
 
 #ifdef _WIN64
-	EnableWindow(GetDlgItem(hWnd, IDC_KILLANTIATTACH), FALSE);
+    EnableWindow(GetDlgItem(hWnd, IDC_KILLANTIATTACH), FALSE);
 #else
-	SendMessage(GetDlgItem(hWnd, IDC_KILLANTIATTACH), BM_SETCHECK, pHideOptions.killAntiAttach, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_KILLANTIATTACH), BM_SETCHECK, pHideOptions.killAntiAttach, 0);
 #endif
-    
+
 
 #ifdef OLLY1
     SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
@@ -471,6 +471,140 @@ void SaveOptions(HWND hWnd)
     SaveSettings();
 }
 
+HWND CreateTooltips(HWND hwndDlg)
+{
+    HWND      hwndTT;
+    HINSTANCE hInstance;
+
+    static const struct _CtrlTips
+    {
+        UINT    uId;
+        LPCWSTR lpszText;
+    } CtrlTips[] = {
+        { IDOK,                          L"Apply Settings and close the dialog"   },
+        { IDC_PROFILES,                  L"Select profile"                        },
+        { IDC_SAVEPROFILE,               L"Save profile"                          },
+        { IDC_PEB,                       L"The most important anti-anti-debug option. Almost every protector checks for\r\nPEB values. There are three important options and one minor option."},
+        { IDC_PEBBEINGDEBUGGED,          L"Very important option, should be always enabled.\r\nIsDebuggerPresent is using this value to check for debuggers."},
+        { IDC_PEBHEAPFLAGS,              L"Very important option, a lot of protectors check for this value."},
+        { IDC_PEBNTGLOBALFLAG,           L"Very important option. E.g. Themida checks for heap artifacts and heap flags."},
+        { IDC_PEBSTARTUPINFO,            L"This is not really important, only a few protectors check for this. Maybe Enigma checks it."},
+        { IDC_NTSETINFORMATIONTHREAD,    L"The THREADINFOCLASS value ThreadHideFromDebugger is a well-known\r\nanti-debug measurement. The debugger cannot handle hidden threads.\r\nThis leads to a loss of control over the target."},
+        { IDC_NTSETINFORMATIONPROCESS,   L"The PROCESSINFOCLASS value ProcessHandleTracing can be used to\r\ndetect a debugger. The PROCESSINFOCLASS value ProcessBreakOnTermination\r\ncan be used to generate a Blue Screen of Death on process termination."},
+        { IDC_NTQUERYSYSTEMINFORMATION,  L"The SYSTEM_INFORMATION_CLASS value SystemKernelDebuggerInformation\r\ncan be used to detect kernel debuggers. The SYSTEM_INFORMATION_CLASS\r\nvalue SystemProcessInformation is used to get a process list. A debugger\r\nshould be hidden in a process list and the debugee should have a good parent\r\nprocess ID like the ID from explorer.exe."},
+        { IDC_NTQUERYINFORMATIONPROCESS, L"NtQueryInformationProcess"             },
+        { IDC_NTQUERYOBJECT,             L"NtQueryObject"                         },
+        { IDC_NTYIELDEXECUTION,          L"NtYieldExecution"                      },
+        { IDC_NTCREATETHREADEX,          L"NtCreateThreadEx"                      },
+        { IDC_OUTPUTDEBUGSTRINGA,        L"OutputDebugStringA"                    },
+        { IDC_BLOCKINPUT,                L"BlockInput"                            },
+        { IDC_NTUSERFINDWINDOWEX,        L"NtUserFindWindowEx"                    },
+        { IDC_NTUSERBUILDHWNDLIST,       L"NtUserBuildHwndList"                   },
+        { IDC_NTUSERQUERYWINDOW,         L"NtUserQueryWindow"                     },
+        { IDC_NTSETDEBUGFILTERSTATE,     L"NtSetDebugFilterState"                 },
+        { IDC_NTCLOSE,                   L"NtClose"                               },
+        { IDC_REMOVEDEBUGPRIV,           L"Remove Debug Privileges"               },
+        { IDC_PROTECTDRX,                L"DRx Protection"                        },
+        { IDC_NTGETCONTEXTTHREAD,        L"NtGetContextThread"                    },
+        { IDC_NTSETCONTEXTTHREAD,        L"NtSetContextThread"                    },
+        { IDC_NTCONTINUE,                L"NtContinue"                            },
+        { IDC_KIUED,                     L"KiUserExceptionDispatcher"             },
+        { IDC_GETTICKCOUNT,              L"GetTickCount"                          },
+        { IDC_GETTICKCOUNT64,            L"GetTickCount64"                        },
+        { IDC_GETLOCALTIME,              L"GetLocalTime"                          },
+        { IDC_GETSYSTEMTIME,             L"GetSystemTime"                         },
+        { IDC_NTQUERYSYSTEMTIME,         L"NtQuerySystemTime"                     },
+        { IDC_NTQUERYPERFCOUNTER,        L"NtQueryPerf.Counter"                   },
+        { IDC_PREVENTTHREADCREATION,     L"Prevent Thread creation"               },
+        { IDC_RUNPE,                     L"RunPE Unpacker"                        },
+        { IDC_DLLSTEALTH,                L"Stealth Injection"                     },
+        { IDC_DLLNORMAL,                 L"Normal Injection"                      },
+        { IDC_DLLUNLOAD,                 L"Unload after DLLMain"                  },
+        { IDC_KILLANTIATTACH,            L"Kill Anti-Attach"                      },
+#ifdef OLLY1
+        { IDC_OLLYTITLE,                 L"Olly caption"                          },
+        { IDC_DELEPBREAK,                L"Remove EP break"                       },
+        { IDC_FIXOLLY,                   L"Fix Olly Bugs"                         },
+        { IDC_X64FIX,                    L"x64 single-step Fix"                   },
+        { IDC_SKIPEPOUTSIDE,             L"Skip\"EP outside of Code\""            },
+        { IDC_BREAKTLS,                  L"Break on TLS"                          },
+        { IDC_COMPRESSED,                L"Skip compressed code"                  },
+        { IDC_COMPRESSEDANALYZE,         L"Skip compressed code and analyze"      },
+        { IDC_COMPRESSEDNOTHING,         L"Skip compressed code and do nothing"   },
+        { IDC_LOADDLL,                   L"Skip \"Load Dll\" and"                 },
+        { IDC_LOADDLLLOAD,               L"Skip \"Load Dll\" and load DLL"        },
+        { IDC_LOADDLLNOTHING,            L"Skip \"Load Dll\" and do nothing"      },
+        { IDC_ADVANCEDGOTO,              L"Advanced CTRL+G"                       },
+        { IDC_BADPEIMAGE,                L"Ignore bad image (WinUPack)"           },
+#elif OLLY2
+        { IDC_OLLYTITLE,                 L"Olly caption"                          },
+#elif __IDP__
+        { IDC_AUTOSTARTSERVER,           L""                                      },
+        { IDC_SERVERPORT,                L""                                      },
+        { IDC_INJECTDLL,                 L""                                      },
+#endif
+    };
+
+    if (!IsWindow(hwndDlg))
+        return NULL;
+
+    hInstance = (HINSTANCE)GetWindowLongPtr(hwndDlg, GWLP_HINSTANCE);
+    if (hInstance == NULL)
+        return NULL;
+
+    // Create tooltip for main window
+    hwndTT = CreateWindowEx(WS_EX_TOPMOST,
+                            TOOLTIPS_CLASS,
+                            NULL,
+                            WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
+                            CW_USEDEFAULT,
+                            CW_USEDEFAULT,
+                            CW_USEDEFAULT,
+                            CW_USEDEFAULT,
+                            hwndDlg,
+                            NULL,
+                            hInstance,
+                            NULL
+                           );
+
+    if (hwndTT)
+    {
+        int count = 0;
+        size_t i;
+
+        //	Add tooltips to every control (above)
+        for (i = 0; i < sizeof(CtrlTips) / sizeof(CtrlTips[0]); ++i)
+        {
+            LPCWSTR lpszText = CtrlTips[i].lpszText;
+            if (lpszText && *lpszText)
+            {
+                HWND hwnd = GetDlgItem(hwndDlg, CtrlTips[i].uId);
+                if (hwnd)
+                {
+                    TOOLINFO ti;
+
+                    ti.cbSize   = TTTOOLINFO_V1_SIZE;
+                    ti.uFlags   = TTF_SUBCLASS | TTF_IDISHWND;
+                    ti.hwnd     = hwndDlg;
+                    ti.uId      = (UINT_PTR)hwnd;
+                    ti.hinst    = hInstance;
+                    ti.lpszText = (LPWSTR)lpszText;
+                    ti.lParam   = 0;
+
+                    if ((BOOL)SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti))
+                        ++count;
+                }
+            }
+        }
+
+        if (count) {
+            SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, 500);
+            SendMessage(hwndTT, TTM_ACTIVATE, TRUE, 0);
+        }
+    }
+    return hwndTT;
+}
+
 //options dialog proc
 INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -510,6 +644,8 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             EnableWindow(GetDlgItem(hWnd, IDC_X64FIX), FALSE);
         }
 #endif
+
+        CreateTooltips(hWnd);
 
         break;
     }
