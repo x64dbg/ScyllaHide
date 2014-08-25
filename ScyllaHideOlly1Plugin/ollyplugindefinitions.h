@@ -24,6 +24,7 @@ extern "C" int _Setbreakpoint(unsigned long addr,unsigned long type,unsigned cha
 extern "C" int _Plugingetvalue(int type);
 extern "C" void _Tempbreakpoint(unsigned long addr,int mode);
 extern "C" int _Gettext(char *title,char *text, char letter,int type,int fontindex);
+extern "C" int _Attachtoactiveprocess(int newprocessid);
 
 #define NBAR 17 // Max allowed number of segments in bar
 #define PLUGIN_VERSION 110

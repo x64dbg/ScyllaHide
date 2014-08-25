@@ -81,6 +81,9 @@
     <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\PluginGeneric\AttachDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h">
@@ -155,10 +158,24 @@
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\PluginGeneric\AttachDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScyllaHideOlly1Plugin.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\PluginGeneric\finderf.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\PluginGeneric\findere.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\PluginGeneric\searchwindow.cur">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

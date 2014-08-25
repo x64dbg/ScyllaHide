@@ -10,6 +10,7 @@
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
+#include "..\PluginGeneric\AttachDialog.h"
 
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
@@ -141,7 +142,7 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
         GetProfileNames(sectionNamesA);
         strcpy(data, "0 &Options, 4 &Load Profile");
         strcat(data, sectionNamesA);
-        strcat(data, ",|2 &Inject DLL| 3 &Update-Check, 1 &About");
+        strcat(data, ",|2 &Inject DLL|5 &Attach process|3 &Update-Check, 1 &About");
 
         //also patch olly title
         SetWindowTextW(hwmain, pHideOptions.ollyTitle);
@@ -202,6 +203,11 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
                             "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
             }
 
+            break;
+        }
+        case 5:
+        {
+            DialogBox(hinst, MAKEINTRESOURCE(IDD_ATTACH), hwmain, &AttachProc);
             break;
         }
         //profile names/count is dynamic so we catch loading them with default case
