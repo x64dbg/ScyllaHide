@@ -47,7 +47,7 @@ void ShowAbout(HWND hWnd)
                 "- What for his POISON assembler source code\n"
                 "- waliedassar for his blog posts\n"
                 "- Peter Ferrie for his Anti-Debug PDFs\n"
-				"- MaRKuS-DJM for OllyAdvanced assembler source code\n"
+                "- MaRKuS-DJM for OllyAdvanced assembler source code\n"
                 "- Steve Micallef for his IDA SDK doc\n"
                 "- Authors of PhantOm and StrongOD\n"
                 "- Tuts4You, Exetools, Exelab community for testing\n"
@@ -658,6 +658,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             else SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
             break;
         }
+#ifdef OLLY1
         case IDC_COMPRESSED:
         {
             WPARAM state;
@@ -688,6 +689,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
             break;
         }
+#endif
 #ifdef __IDP__
         case IDC_DLLNORMAL:
         case IDC_DLLSTEALTH:
