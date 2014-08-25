@@ -20,6 +20,7 @@ void fixBadPEImage();
 void skipCompressedCode();
 void skipLoadDll();
 void fixNTSymbols();
+void fixFaultyHandleOnExit();
 
 //hooks
 void handleBreakpoints();

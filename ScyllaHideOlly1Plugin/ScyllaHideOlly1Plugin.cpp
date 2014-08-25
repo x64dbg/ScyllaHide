@@ -98,7 +98,8 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
         fixForegroundWindow();
         fixFPUBug();
         fixSprintfBug();
-		fixNTSymbols();
+        fixNTSymbols();
+        fixFaultyHandleOnExit();
     }
     if(pHideOptions.x64Fix && isWindows64()) {
         fixX64Bug();

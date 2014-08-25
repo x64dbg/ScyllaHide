@@ -521,7 +521,7 @@ bool advancedCtrlG_handleGotoExpression(int addrType)
     }
 
     //copy original expression for history with style
-	wsprintfA(orgExpression, "%X", addrToFind);
+    wsprintfA(orgExpression, "%X", addrToFind);
     pOrgExpr = (DWORD)orgExpression;
 
     int selectedModule = SendMessage(GetDlgItem(hGotoDialog, IDC_MODULES), CB_GETCURSEL, 0, 0);
@@ -645,20 +645,31 @@ void skipLoadDll()
 
 //Thanks to blabberer
 //http://www.woodmann.com/forum/showthread.php?8460-Debug-symbols-information-symbol-server-setup&p=56246&viewfull=1#post56246
-//Fix so Olly doesn't override the default symbols search path. 
+//Fix so Olly doesn't override the default symbols search path.
 void fixNTSymbols()
 {
-	HANDLE hOlly = GetCurrentProcess();
-	DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
-	BOOL fixed = FALSE;
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+    BOOL fixed = FALSE;
 
-	//00491107  81CA 10120000    OR EDX,1210
-	BYTE ntSym1Fix[] = {0x37,0x02,0x03,0x80}; // change 10120000 to 37020380
-	fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x91109), &ntSym1Fix, sizeof(ntSym1Fix), NULL);
-	if(fixed) _Addtolist(0,-1,"Fixed load NT Symbols at 0x91109");
+    //00491107  81CA 10120000    OR EDX,1210
+    BYTE ntSym1Fix[] = {0x37,0x02,0x03,0x80}; // change 10120000 to 37020380
+    fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x91109), &ntSym1Fix, sizeof(ntSym1Fix), NULL);
+    if(fixed) _Addtolist(0,-1,"Fixed load NT Symbols at 0x91109");
 
-	//004911EC  74 2E  JE 0049121C
-	BYTE ntSym2Fix[] = {0xEB}; // change 74 to eb
-	fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x911EC), &ntSym2Fix, sizeof(ntSym2Fix), NULL);
-	if(fixed) _Addtolist(0,-1,"Fixed load NT Symbols at 0x911EC");
+    //004911EC  74 2E  JE 0049121C
+    BYTE ntSym2Fix[] = {0xEB}; // change 74 to eb
+    fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x911EC), &ntSym2Fix, sizeof(ntSym2Fix), NULL);
+    if(fixed) _Addtolist(0,-1,"Fixed load NT Symbols at 0x911EC");
+}
+
+void fixFaultyHandleOnExit()
+{
+    HANDLE hOlly = GetCurrentProcess();
+    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
+    BOOL fixed = false;
+
+    BYTE faultyHandleFix[] = {0xEB}; //JNZ (75 4D) to JMP (EB 4D)
+    fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x7599f), &faultyHandleFix, sizeof(faultyHandleFix), NULL);
+    if(fixed) _Addtolist(0,-1,"Fixed ERROR_ACCESS_DENIED with faulty handle at 0x7599f");
 }
