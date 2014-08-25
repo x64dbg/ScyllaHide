@@ -117,7 +117,13 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_SETCHECK, pHideOptions.GetSystemTime, 0);
     SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_SETCHECK, pHideOptions.NtQuerySystemTime, 0);
     SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, pHideOptions.NtQueryPerformanceCounter, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_KILLANTIATTACH), BM_SETCHECK, pHideOptions.killAntiAttach, 0);
+
+#ifdef _WIN64
+	EnableWindow(GetDlgItem(hWnd, IDC_KILLANTIATTACH), FALSE);
+#else
+	SendMessage(GetDlgItem(hWnd, IDC_KILLANTIATTACH), BM_SETCHECK, pHideOptions.killAntiAttach, 0);
+#endif
+    
 
 #ifdef OLLY1
     SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
@@ -519,7 +525,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         {
         case IDC_PROFILES:
         {
-            int profileIndex = SendMessage(GetDlgItem(hWnd, IDC_PROFILES), (UINT) CB_GETCURSEL, 0, 0);
+            int profileIndex = (int)SendMessage(GetDlgItem(hWnd, IDC_PROFILES), (UINT) CB_GETCURSEL, 0, 0);
             profileIndex+=10; //increase when top-level menu needs more than 9 elements, probably never
 
             SetCurrentProfile(profileIndex);
@@ -562,7 +568,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
                 wcscat(title, CurrentProfile);
                 SetWindowTextW(hWnd, title);
                 SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_ADDSTRING,0,(LPARAM) newProfileW);
-                int profileCount = SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_GETCOUNT, 0, 0);
+                int profileCount = (int)SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_GETCOUNT, 0, 0);
                 SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_SETCURSEL, profileCount-1, 0);
 
                 //need to update the ProfileNames buffer so re-selecting new profile while dialog hasnt been closed will work

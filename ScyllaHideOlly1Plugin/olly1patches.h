@@ -19,6 +19,7 @@ bool advancedCtrlG_handleGotoExpression(int addrType);
 void fixBadPEImage();
 void skipCompressedCode();
 void skipLoadDll();
+void fixNTSymbols();
 
 //hooks
 void handleBreakpoints();

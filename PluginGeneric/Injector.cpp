@@ -22,6 +22,7 @@ BYTE* RemoteBreakinPatch;
 BYTE code[8];
 HANDLE hDebuggee;
 
+#ifndef _WIN64
 void __declspec(naked) handleAntiAttach()
 {
     _asm {
@@ -48,9 +49,11 @@ void __declspec(naked) handleAntiAttach()
         jmp eax
     }
 }
+#endif
 
 void InstallAntiAttachHook()
 {
+#ifndef _WIN64
     HANDLE hOlly = GetCurrentProcess();
     DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
 
@@ -76,6 +79,7 @@ void InstallAntiAttachHook()
     *(DWORD*)(p) = ExitThread_addr;
     p+=4;
     *p=0xC3; //retn
+#endif
 }
 
 void StartFixBeingDebugged(DWORD targetPid, bool setToNull)
