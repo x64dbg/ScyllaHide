@@ -224,7 +224,7 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
                 GetModuleFileNameEx(hProc, NULL, filepath, MAX_PATH);
                 CloseHandle(hProc);
                 GetWindowTextW(hwndCurrentWindow, title, sizeof(title)-1);
-                wsprintfW(pidTextHex, L"%08X", pid);
+                wsprintfW(pidTextHex, L"%X", pid);
                 wsprintfW(pidTextDec, L"%d", pid);
                 SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
                 SetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec);
