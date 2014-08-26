@@ -150,10 +150,14 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
         }
         case IDC_PIDDEC:
         {
-            if(0<GetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec, sizeof(pidTextDec))) {
+            wchar_t buf[11];
+            if(0<GetDlgItemTextW(hWnd, IDC_PIDDEC, buf, sizeof(buf))) {
+                if(wcscmp(buf, pidTextDec)!=0) {
+                    wcscpy(pidTextDec, buf);
                 swscanf(pidTextDec, L"%d", &pid);
                 wsprintfW(pidTextHex, L"%X", pid);
                 SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
+            }
             }
             break;
         }
