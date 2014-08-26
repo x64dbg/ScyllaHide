@@ -6,13 +6,20 @@
 #ifdef OLLY1
 #include "..\ScyllaHideOlly1Plugin\resource.h"
 #include "..\ScyllaHideOlly1Plugin\ollyplugindefinitions.h"
+#elif OLLY2
+#include "..\ScyllaHideOlly2Plugin\resource.h"
+#include "..\ScyllaHideOlly2Plugin\plugin.h"
 #endif
 
 #define BULLSEYE_CENTER_X_OFFSET		15
 #define BULLSEYE_CENTER_Y_OFFSET		18
 
 extern HINSTANCE hinst;
+#ifdef OLLY1
 extern HWND hwmain; // Handle of main OllyDbg window
+#elif OLLY2
+HWND hwmain = hwollymain;
+#endif
 HBITMAP hBitmapFinderToolFilled = NULL;
 HBITMAP hBitmapFinderToolEmpty = NULL;
 HCURSOR hCursorPrevious = NULL;
@@ -128,8 +135,16 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
     {
         switch(LOWORD(wParam)) {
         case IDOK: { //attach
-            if(pid!=NULL) _Attachtoactiveprocess(pid);
-            EndDialog(hWnd, NULL);
+            if(pid!=NULL) {
+                EndDialog(hWnd, NULL);
+#ifdef OLLY1
+                _Attachtoactiveprocess(pid);
+#elif OLLY2
+                typedef int AttachProcess(int pid);
+                AttachProcess* attach = (AttachProcess*)0x44D426;
+                attach(pid);
+#endif
+            }
             break;
         }
         case IDCANCEL: {
@@ -154,10 +169,10 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
             if(0<GetDlgItemTextW(hWnd, IDC_PIDDEC, buf, sizeof(buf))) {
                 if(wcscmp(buf, pidTextDec)!=0) {
                     wcscpy(pidTextDec, buf);
-                swscanf(pidTextDec, L"%d", &pid);
-                wsprintfW(pidTextHex, L"%X", pid);
-                SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
-            }
+                    swscanf(pidTextDec, L"%d", &pid);
+                    wsprintfW(pidTextHex, L"%X", pid);
+                    SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
+                }
             }
             break;
         }

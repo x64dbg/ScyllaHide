@@ -15,6 +15,7 @@ static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mupdate(t_table *pt,wchar_t *name,ulong index,int mode);
 static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode);
 static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode);
+static int MattachProcess(t_table *pt,wchar_t *name,ulong index,int mode);
 
 //menus
 static t_menu profilemenu[MAX_PROFILES];
@@ -35,6 +36,11 @@ static t_menu mainmenu[] =
         L"|Inject DLL",
         L"Inject a DLL into the debugged process",
         K_NONE, MinjectDll, NULL, 0
+    },
+    {
+        L"|Attach process",
+        L"Attach to a process by window finder or PID",
+        K_NONE, MattachProcess, NULL, 0
     },
     {
         L"|Update-Check",

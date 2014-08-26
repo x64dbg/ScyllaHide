@@ -10,6 +10,7 @@
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
+#include "..\PluginGeneric\AttachDialog.h"
 
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
@@ -92,6 +93,19 @@ static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode)
         if(GetFileDialog(dllPath))
             injectDll(ProcessId, dllPath);
 
+        return MENU_REDRAW;
+    };
+    return MENU_ABSENT;
+}
+
+//Menu->Attach Process
+static int MattachProcess(t_table *pt,wchar_t *name,ulong index,int mode)
+{
+    if (mode==MENU_VERIFY)
+        return MENU_NORMAL;
+    else if (mode==MENU_EXECUTE)
+    {
+        DialogBox(hinst, MAKEINTRESOURCE(IDD_ATTACH), hwollymain, &AttachProc);
         return MENU_REDRAW;
     };
     return MENU_ABSENT;
