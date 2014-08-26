@@ -235,7 +235,7 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 
 					if (wcslen(filepath) > 0)
 					{
-						SetDlgItemTextW(hWnd, IDC_EXEPATH, filepath);
+						SetDlgItemTextW(hWnd, IDC_EXEPATH, wcsrchr(filepath, L'\\')+1);
 					}
 					else
 					{
@@ -247,7 +247,7 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 					SetDlgItemTextW(hWnd, IDC_EXEPATH, L"UNKNOWN");
 				}
 
-                if (GetWindowTextW(hwndCurrentWindow, title, sizeof(title)-1) > 0)
+                if (GetWindowTextW(hwndCurrentWindow, title, _countof(title)) > 0)
 				{
 					SetDlgItemTextW(hWnd, IDC_TITLE, title);
 				}
