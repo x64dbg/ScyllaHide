@@ -1,3 +1,8 @@
+Version 1.2
+- Added helpful tooltips to GUI
+- Olly v1 Plugin: Fix for NT symbol path bug added to "Fix Olly Bugs", thanks to redblkjck 
+- Olly v1&v2 Plugin: Advanced "attach process" feature
+
 Version 1.1
 - Added "thanks" to About
 - Added kill anti-attach (for x86 only)
