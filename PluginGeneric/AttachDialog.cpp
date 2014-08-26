@@ -14,6 +14,10 @@
 #define BULLSEYE_CENTER_X_OFFSET		15
 #define BULLSEYE_CENTER_Y_OFFSET		18
 
+typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
+
+t_AttachProcess _AttachProcess = 0;
+
 extern HINSTANCE hinst;
 #ifdef OLLY1
 extern HWND hwmain; // Handle of main OllyDbg window
@@ -137,13 +141,15 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
         case IDOK: { //attach
             if(pid!=NULL) {
                 EndDialog(hWnd, NULL);
-#ifdef OLLY1
-                _Attachtoactiveprocess(pid);
-#elif OLLY2
-                typedef int AttachProcess(int pid);
-                AttachProcess* attach = (AttachProcess*)0x44D426;
-                attach(pid);
-#endif
+
+				if (_AttachProcess != 0)
+				{
+					_AttachProcess(pid);
+				}
+				else
+				{
+					MessageBoxW(0, L"Developer!!! You forgot something _AttachProcess!!!!!", L"ERROR", 0);
+				}
             }
             break;
         }

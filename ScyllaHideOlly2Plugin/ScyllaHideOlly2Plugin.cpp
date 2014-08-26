@@ -15,6 +15,14 @@
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
 
+typedef int (__cdecl * t_Attachtoactiveprocess)(int newprocessid);
+#define OLLY201_Attachtoactiveprocess_VA 0x44B108
+//PUSH EBP
+#define OLLY201_Attachtoactiveprocess_CHECKVALUE 0x55
+
+typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
+void AttachProcess(DWORD dwPID);
+
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
@@ -28,6 +36,7 @@ extern WCHAR ProfileNames[2048];
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
+extern t_AttachProcess _AttachProcess;
 
 //globals
 HINSTANCE hinst;
@@ -203,6 +212,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
+		_AttachProcess = AttachProcess;
         LogWrap = LogWrapper;
         LogErrorWrap = LogErrorWrapper;
 
@@ -375,4 +385,20 @@ void LogWrapper(const WCHAR * format, ...)
     wvsprintfW(text, format, va_alist);
 
     Message(0,L"%s", text);
+}
+
+void AttachProcess(DWORD dwPID)
+{
+	t_Attachtoactiveprocess _Attachtoactiveprocess = (t_Attachtoactiveprocess)OLLY201_Attachtoactiveprocess_VA;
+	BYTE * pCheck = (BYTE *)OLLY201_Attachtoactiveprocess_VA;
+
+	if (*pCheck == OLLY201_Attachtoactiveprocess_CHECKVALUE)
+	{
+		_Attachtoactiveprocess((int)dwPID);
+		Setstatus(STAT_ATTACHING);
+	}
+	else
+	{
+		MessageBoxW(0, L"Your Olly Version is not supported! Please use version 201 http://www.ollydbg.de/odbg201.zip", L"ERROR", MB_ICONERROR);
+	}
 }

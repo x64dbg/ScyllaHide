@@ -12,10 +12,11 @@
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
 
-
+typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
 void LogErrorWrapper(const WCHAR * format, ...);
+void AttachProcess(DWORD dwPID);
 
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
@@ -41,6 +42,7 @@ extern WCHAR ProfileNames[2048];
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
+extern t_AttachProcess _AttachProcess;
 
 HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
@@ -50,6 +52,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
+		_AttachProcess = AttachProcess;
         LogWrap = LogWrapper;
         LogErrorWrap = LogErrorWrapper;
 
@@ -375,4 +378,9 @@ void LogWrapper(const WCHAR * format, ...)
     WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
 
     _Message(0,"%s", textA);
+}
+
+void AttachProcess(DWORD dwPID)
+{
+	_Attachtoactiveprocess((int)dwPID);
 }
