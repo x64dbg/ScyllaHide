@@ -230,15 +230,6 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
                 SetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec);
                 SetDlgItemTextW(hWnd, IDC_EXEPATH, filepath);
                 SetDlgItemTextW(hWnd, IDC_TITLE, title);
-
-                // remove highlighting from previous window.
-                //if (hwndFoundWindow)
-                //{
-                //    RefreshWindow(hwndFoundWindow);
-                //}
-
-                // highlight the found window.
-                /*HighlightFoundWindow(hWnd, hwndCurrentWindow);*/
             }
         }
 
@@ -254,12 +245,6 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
             {
                 SetCursor(hCursorPrevious);
             }
-
-            // remove highlighting from window.
-            //if (g_hwndFoundWindow)
-            //{
-            //    RefreshWindow (g_hwndFoundWindow);
-            //}
 
             SetFinderToolImage(hWnd, TRUE);
 
