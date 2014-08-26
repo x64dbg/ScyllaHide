@@ -227,15 +227,36 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
                 //get some info about the window
                 GetWindowThreadProcessId(hwndFoundWindow, &pid);
                 hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-                GetModuleFileNameEx(hProc, NULL, filepath, MAX_PATH);
-                CloseHandle(hProc);
-                GetWindowTextW(hwndCurrentWindow, title, sizeof(title)-1);
+				if (hProc)
+				{
+					ZeroMemory(filepath, sizeof(filepath));
+					GetModuleFileNameExW(hProc, NULL, filepath, _countof(filepath));
+					CloseHandle(hProc);
+
+					if (wcslen(filepath) > 0)
+					{
+						SetDlgItemTextW(hWnd, IDC_EXEPATH, filepath);
+					}
+					else
+					{
+						SetDlgItemTextW(hWnd, IDC_EXEPATH, L"UNKNOWN");
+					}
+				}
+				else
+				{
+					SetDlgItemTextW(hWnd, IDC_EXEPATH, L"UNKNOWN");
+				}
+
+                if (GetWindowTextW(hwndCurrentWindow, title, sizeof(title)-1) > 0)
+				{
+					SetDlgItemTextW(hWnd, IDC_TITLE, title);
+				}
                 wsprintfW(pidTextHex, L"%X", pid);
                 wsprintfW(pidTextDec, L"%d", pid);
                 SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
                 SetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec);
-                SetDlgItemTextW(hWnd, IDC_EXEPATH, filepath);
-                SetDlgItemTextW(hWnd, IDC_TITLE, title);
+                
+                
             }
         }
 
