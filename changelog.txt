@@ -1,7 +1,8 @@
 Version 1.2
-- Added helpful tooltips to GUI
+- All Plugins: New attach dialog with crosshair/bullseye window finder.
+- All Plugins: Tooltips with information (unfinished).
+- Olly v1 Plugin: Fix for faulty handle bug
 - Olly v1 Plugin: Fix for NT symbol path bug added to "Fix Olly Bugs", thanks to redblkjck 
-- Olly v1&v2 Plugin: Advanced "attach process" feature
 
 Version 1.1
 - Added "thanks" to About
