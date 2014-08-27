@@ -370,7 +370,24 @@ void LogWrapper(const WCHAR * format, ...)
 
 void __cdecl AttachProcess(DWORD dwPID)
 {
-    attach_process((pid_t)dwPID);
+    int res = attach_process((pid_t)dwPID);
+
+    switch(res) {
+    case -1:
+    {
+        MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
+                    "Can't attach to that process !",
+                    "ScyllaHide Plugin",MB_OK|MB_ICONERROR);
+        break;
+    }
+    case -2:
+    {
+        MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
+                    "Can't find that PID !",
+                    "ScyllaHide Plugin",MB_OK|MB_ICONERROR);
+        break;
+    }
+    }
 }
 
 // There isn't much use for these yet, but I set them anyway.
