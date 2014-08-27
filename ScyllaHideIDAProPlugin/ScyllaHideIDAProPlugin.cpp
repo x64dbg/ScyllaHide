@@ -26,10 +26,13 @@
 #include "IdaServerClient.h"
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\OptionsDialog.h"
+#include "..\PluginGeneric\AttachDialog.h"
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
 void LogWrapper(const WCHAR * format, ...);
 void LogErrorWrapper(const WCHAR * format, ...);
+void __cdecl AttachProcess(DWORD dwPID);
 int idaapi debug_mainloop(void *user_data, int notif_code, va_list va);
 bool SetDebugPrivileges();
 
@@ -51,6 +54,7 @@ extern WCHAR ProfileNames[2048];
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
+extern t_AttachProcess _AttachProcess;
 
 //globals
 HINSTANCE hinst;
@@ -66,6 +70,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
+        _AttachProcess = AttachProcess;
         LogWrap = LogWrapper;
         LogErrorWrap = LogErrorWrapper;
 
@@ -361,6 +366,11 @@ void LogWrapper(const WCHAR * format, ...)
 
     msg("%s",textA);
     msg("\n");
+}
+
+void __cdecl AttachProcess(DWORD dwPID)
+{
+    attach_process((pid_t)dwPID);
 }
 
 // There isn't much use for these yet, but I set them anyway.

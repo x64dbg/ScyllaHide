@@ -18,6 +18,7 @@
 #include "..\ScyllaHideIDAProPlugin\idasdk\dbg.hpp"
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\ScyllaHideIDAProPlugin\IdaServerClient.h"
+#include "..\PluginGeneric\AttachDialog.h"
 #elif X64DBG
 #include "..\ScyllaHideX64DBGPlugin\bridgemain.h"
 #include "..\ScyllaHideX64DBGPlugin\resource.h"
@@ -34,6 +35,7 @@ extern bool bHooked;
 #ifdef OLLY1
 extern HWND hwmain;
 #elif __IDP__
+extern HINSTANCE hinst;
 wchar_t DllPathForInjection[MAX_PATH] = {0};
 #endif
 
@@ -878,6 +880,12 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
                 }
             }
+            break;
+        }
+        case IDC_ATTACH:
+        {
+            EndDialog(hWnd, NULL);
+            DialogBox(hinst, MAKEINTRESOURCE(IDD_ATTACH), (HWND)callui(ui_get_hwnd).vptr, &AttachProc);
             break;
         }
         case IDC_UPDATE:

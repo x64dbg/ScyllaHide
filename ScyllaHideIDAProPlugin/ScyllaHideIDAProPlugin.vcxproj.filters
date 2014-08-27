@@ -84,6 +84,9 @@
     <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\PluginGeneric\AttachDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScyllaHideIDAProPlugin.rc">
@@ -178,5 +181,19 @@
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\PluginGeneric\AttachDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\PluginGeneric\findere.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\PluginGeneric\finderf.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\PluginGeneric\searchwindow.cur">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

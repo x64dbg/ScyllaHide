@@ -5,10 +5,12 @@
 
 #ifdef OLLY1
 #include "..\ScyllaHideOlly1Plugin\resource.h"
-#include "..\ScyllaHideOlly1Plugin\ollyplugindefinitions.h"
 #elif OLLY2
 #include "..\ScyllaHideOlly2Plugin\resource.h"
 #include "..\ScyllaHideOlly2Plugin\plugin.h"
+#elif __IDP__
+#include "..\ScyllaHideIDAProPlugin\resource.h"
+#include "..\ScyllaHideIDAProPlugin\idasdk\idp.hpp"
 #endif
 
 #define BULLSEYE_CENTER_X_OFFSET		15
@@ -23,6 +25,8 @@ extern HINSTANCE hinst;
 extern HWND hwmain; // Handle of main OllyDbg window
 #elif OLLY2
 HWND hwmain = hwollymain;
+#elif __IDP__
+HWND hwmain = (HWND)callui(ui_get_hwnd).vptr;
 #endif
 HBITMAP hBitmapFinderToolFilled = NULL;
 HBITMAP hBitmapFinderToolEmpty = NULL;
@@ -142,14 +146,14 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
             if(pid!=NULL) {
                 EndDialog(hWnd, NULL);
 
-				if (_AttachProcess != 0)
-				{
-					_AttachProcess(pid);
-				}
-				else
-				{
-					MessageBoxW(0, L"Developer!!! You forgot something _AttachProcess!!!!!", L"ERROR", 0);
-				}
+                if (_AttachProcess != 0)
+                {
+                    _AttachProcess(pid);
+                }
+                else
+                {
+                    MessageBoxW(0, L"Developer!!! You forgot something _AttachProcess!!!!!", L"ERROR", 0);
+                }
             }
             break;
         }
@@ -227,36 +231,36 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
                 //get some info about the window
                 GetWindowThreadProcessId(hwndFoundWindow, &pid);
                 hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-				if (hProc)
-				{
-					ZeroMemory(filepath, sizeof(filepath));
-					GetModuleFileNameExW(hProc, NULL, filepath, _countof(filepath));
-					CloseHandle(hProc);
+                if (hProc)
+                {
+                    ZeroMemory(filepath, sizeof(filepath));
+                    GetModuleFileNameExW(hProc, NULL, filepath, _countof(filepath));
+                    CloseHandle(hProc);
 
-					if (wcslen(filepath) > 0)
-					{
-						SetDlgItemTextW(hWnd, IDC_EXEPATH, wcsrchr(filepath, L'\\')+1);
-					}
-					else
-					{
-						SetDlgItemTextW(hWnd, IDC_EXEPATH, L"UNKNOWN");
-					}
-				}
-				else
-				{
-					SetDlgItemTextW(hWnd, IDC_EXEPATH, L"UNKNOWN");
-				}
+                    if (wcslen(filepath) > 0)
+                    {
+                        SetDlgItemTextW(hWnd, IDC_EXEPATH, wcsrchr(filepath, L'\\')+1);
+                    }
+                    else
+                    {
+                        SetDlgItemTextW(hWnd, IDC_EXEPATH, L"UNKNOWN");
+                    }
+                }
+                else
+                {
+                    SetDlgItemTextW(hWnd, IDC_EXEPATH, L"UNKNOWN");
+                }
 
                 if (GetWindowTextW(hwndCurrentWindow, title, _countof(title)) > 0)
-				{
-					SetDlgItemTextW(hWnd, IDC_TITLE, title);
-				}
+                {
+                    SetDlgItemTextW(hWnd, IDC_TITLE, title);
+                }
                 wsprintfW(pidTextHex, L"%X", pid);
                 wsprintfW(pidTextDec, L"%d", pid);
                 SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
                 SetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec);
-                
-                
+
+
             }
         }
 
