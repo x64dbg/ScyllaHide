@@ -42,9 +42,7 @@ HWND hwndFoundWindow = NULL;
 wchar_t title[256];
 wchar_t pidTextHex[9];
 wchar_t pidTextDec[11];
-wchar_t filepath[MAX_PATH];
 DWORD pid = NULL;
-HANDLE hProc = NULL;
 
 //toggles the finder image
 void SetFinderToolImage (HWND hwnd, BOOL bSet)
@@ -125,6 +123,30 @@ BOOL CheckWindowValidity (HWND hwnd, HWND hwndToCheck)
     return TRUE;
 }
 
+void DisplayExe( HWND hwnd, DWORD dwPid )
+{
+	WCHAR filepath[MAX_PATH] = {0};
+	HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwPid);
+	if (hProc)
+	{
+		GetModuleFileNameExW(hProc, NULL, filepath, _countof(filepath));
+		CloseHandle(hProc);
+
+		if (wcslen(filepath) > 0)
+		{
+			SetDlgItemTextW(hwnd, IDC_EXEPATH, wcsrchr(filepath, L'\\')+1);
+		}
+		else
+		{
+			SetDlgItemTextW(hwnd, IDC_EXEPATH, L"UNKNOWN");
+		}
+	}
+	else
+	{
+		SetDlgItemTextW(hwnd, IDC_EXEPATH, L"UNKNOWN");
+	}
+}
+
 //attach dialog proc
 INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -179,6 +201,8 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
                     swscanf(pidTextHex, L"%X", &pid);
                     wsprintfW(pidTextDec, L"%d", pid);
                     SetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec);
+					DisplayExe(hWnd, pid);
+					SetDlgItemTextW(hWnd, IDC_TITLE, L"");
                 }
             }
             break;
@@ -192,6 +216,8 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
                     swscanf(pidTextDec, L"%d", &pid);
                     wsprintfW(pidTextHex, L"%X", pid);
                     SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
+					DisplayExe(hWnd, pid);
+					SetDlgItemTextW(hWnd, IDC_TITLE, L"");
                 }
             }
             break;
@@ -240,26 +266,8 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
             {
                 //get some info about the window
                 GetWindowThreadProcessId(hwndFoundWindow, &pid);
-                hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-                if (hProc)
-                {
-                    ZeroMemory(filepath, sizeof(filepath));
-                    GetModuleFileNameExW(hProc, NULL, filepath, _countof(filepath));
-                    CloseHandle(hProc);
 
-                    if (wcslen(filepath) > 0)
-                    {
-                        SetDlgItemTextW(hWnd, IDC_EXEPATH, wcsrchr(filepath, L'\\')+1);
-                    }
-                    else
-                    {
-                        SetDlgItemTextW(hWnd, IDC_EXEPATH, L"UNKNOWN");
-                    }
-                }
-                else
-                {
-                    SetDlgItemTextW(hWnd, IDC_EXEPATH, L"UNKNOWN");
-                }
+				DisplayExe(hWnd,pid);
 
                 if (GetWindowTextW(hwndCurrentWindow, title, _countof(title)) > 0)
 				{
