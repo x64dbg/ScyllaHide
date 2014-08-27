@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#include <string>
 #include "resource.h"
 #include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "ScyllaHideX64DBGPlugin.h"
@@ -8,6 +9,7 @@
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
+#include "..\PluginGeneric\AttachDialog.h"
 
 #define plugin_name "ScyllaHide"
 
@@ -32,10 +34,10 @@ extern WCHAR ProfileNames[2048];
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
+extern t_AttachProcess _AttachProcess;
 
 //globals
-static HINSTANCE hinst;
-
+HINSTANCE hinst;
 HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
 int pluginHandle;
@@ -80,6 +82,11 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
             if(GetFileDialog(dllPath))
                 injectDll(ProcessId, dllPath);
         }
+        break;
+    }
+    case MENU_ATTACH:
+    {
+        DialogBox(hinst, MAKEINTRESOURCE(IDD_ATTACH), hwndDlg, &AttachProc);
         break;
     }
     case MENU_UPDATECHECK:
@@ -153,6 +160,8 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
 
     _plugin_menuaddseparator(hMenu);
     _plugin_menuaddentry(hMenu, MENU_INJECTDLL, "&Inject DLL");
+    _plugin_menuaddseparator(hMenu);
+    _plugin_menuaddentry(hMenu, MENU_ATTACH, "&Attach process");
     _plugin_menuaddseparator(hMenu);
     _plugin_menuaddentry(hMenu, MENU_UPDATECHECK, "&Update-Check");
     _plugin_menuaddentry(hMenu, MENU_ABOUT, "&About");
@@ -235,6 +244,7 @@ extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 {
     if (fdwReason==DLL_PROCESS_ATTACH)
     {
+        _AttachProcess = AttachProcess;
         LogWrap = LogWrapper;
         LogErrorWrap = LogErrorWrapper;
 
@@ -284,4 +294,11 @@ void LogWrapper(const WCHAR * format, ...)
     WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
 
     _plugin_logprintf("%s\n",textA);
+}
+
+void AttachProcess(DWORD dwPID)
+{
+    char cmd[10] = "";
+    sprintf(cmd, "attach %x", dwPID);
+    DbgCmdExec(cmd);
 }

@@ -78,6 +78,9 @@
     <ClCompile Include="..\distorm\wstring.c">
       <Filter>Source Files\distorm</Filter>
     </ClCompile>
+    <ClCompile Include="..\PluginGeneric\AttachDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ScyllaHideX64DBGPlugin.h">
@@ -152,10 +155,24 @@
     <ClInclude Include="..\distorm\x86defs.h">
       <Filter>Header Files\distorm</Filter>
     </ClInclude>
+    <ClInclude Include="..\PluginGeneric\AttachDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScyllaHideX64DBGPlugin.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\PluginGeneric\findere.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\PluginGeneric\finderf.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\PluginGeneric\searchwindow.cur">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

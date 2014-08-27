@@ -11,6 +11,8 @@
 #elif __IDP__
 #include "..\ScyllaHideIDAProPlugin\resource.h"
 #include "..\ScyllaHideIDAProPlugin\idasdk\idp.hpp"
+#elif X64DBG
+#include "..\ScyllaHideX64DBGPlugin\resource.h"
 #endif
 
 #define BULLSEYE_CENTER_X_OFFSET		15
@@ -27,6 +29,9 @@ extern HWND hwmain; // Handle of main OllyDbg window
 HWND hwmain = hwollymain;
 #elif __IDP__
 HWND hwmain = (HWND)callui(ui_get_hwnd).vptr;
+#elif X64DBG
+extern HWND hwndDlg;
+HWND hwmain;
 #endif
 HBITMAP hBitmapFinderToolFilled = NULL;
 HBITMAP hBitmapFinderToolEmpty = NULL;
@@ -127,6 +132,10 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
     {
     case WM_INITDIALOG:
     {
+#ifdef X64DBG
+        hwmain = hwndDlg;
+#endif
+
         hBitmapFinderToolFilled = LoadBitmap(hinst, MAKEINTRESOURCE(IDB_FINDERFILLED));
         hBitmapFinderToolEmpty = LoadBitmap(hinst, MAKEINTRESOURCE(IDB_FINDEREMPTY));
         hCursorSearchWindow = LoadCursor(hinst, MAKEINTRESOURCE(IDC_CURSOR_SEARCH_WINDOW));
