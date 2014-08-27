@@ -298,7 +298,12 @@ void LogWrapper(const WCHAR * format, ...)
 
 void AttachProcess(DWORD dwPID)
 {
-    char cmd[10] = "";
-    sprintf(cmd, "attach %x", dwPID);
-    DbgCmdExec(cmd);
+	char cmd[30] = {0};
+    wsprintfA(cmd, "attach %x", dwPID);
+    if (!DbgCmdExec(cmd))
+	{
+		MessageBoxW(hwndDlg,
+			L"Can't attach to that process !",
+			L"ScyllaHide Plugin",MB_OK|MB_ICONERROR);
+	}
 }

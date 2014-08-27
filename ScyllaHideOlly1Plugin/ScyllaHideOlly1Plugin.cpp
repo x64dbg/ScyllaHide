@@ -382,5 +382,12 @@ void LogWrapper(const WCHAR * format, ...)
 
 void AttachProcess(DWORD dwPID)
 {
-	_Attachtoactiveprocess((int)dwPID);
+	int result = _Attachtoactiveprocess((int)dwPID);
+
+	if (result != 0)
+	{
+		MessageBoxW(hwmain,
+			L"Can't attach to that process !",
+			L"ScyllaHide Plugin",MB_OK|MB_ICONERROR);
+	}
 }

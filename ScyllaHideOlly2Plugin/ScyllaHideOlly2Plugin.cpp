@@ -394,11 +394,21 @@ void AttachProcess(DWORD dwPID)
 
 	if (*pCheck == OLLY201_Attachtoactiveprocess_CHECKVALUE)
 	{
-		_Attachtoactiveprocess((int)dwPID);
-		Setstatus(STAT_ATTACHING);
+		int result = _Attachtoactiveprocess((int)dwPID);
+		if (result == 0)
+		{
+			Setstatus(STAT_ATTACHING);
+		}
+		else
+		{
+			//Olly displays an error message
+			//MessageBoxW(hwollymain,
+			//	L"Can't attach to that process !",
+			//	L"ScyllaHide Plugin",MB_OK|MB_ICONERROR);
+		}
 	}
 	else
 	{
-		MessageBoxW(0, L"Your Olly Version is not supported! Please use version 201 http://www.ollydbg.de/odbg201.zip", L"ERROR", MB_ICONERROR);
+		MessageBoxW(hwollymain, L"Your Olly Version is not supported! Please use version 201 http://www.ollydbg.de/odbg201.zip", L"ERROR", MB_ICONERROR);
 	}
 }

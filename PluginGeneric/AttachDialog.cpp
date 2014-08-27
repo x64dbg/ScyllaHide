@@ -128,6 +128,8 @@ BOOL CheckWindowValidity (HWND hwnd, HWND hwndToCheck)
 //attach dialog proc
 INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	wchar_t buf[20] = {0};
+
     switch (message)
     {
     case WM_INITDIALOG:
@@ -171,8 +173,7 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
             break;
         }
         case IDC_PIDHEX: {
-            wchar_t buf[9];
-            if(0<GetDlgItemTextW(hWnd, IDC_PIDHEX, buf, sizeof(buf))) {
+            if(0<GetDlgItemTextW(hWnd, IDC_PIDHEX, buf, _countof(buf))) {
                 if(wcscmp(buf, pidTextHex)!=0) {
                     wcscpy(pidTextHex, buf);
                     swscanf(pidTextHex, L"%X", &pid);
@@ -184,8 +185,8 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
         }
         case IDC_PIDDEC:
         {
-            wchar_t buf[11];
-            if(0<GetDlgItemTextW(hWnd, IDC_PIDDEC, buf, sizeof(buf))) {
+			
+            if(0<GetDlgItemTextW(hWnd, IDC_PIDDEC, buf, _countof(buf))) {
                 if(wcscmp(buf, pidTextDec)!=0) {
                     wcscpy(pidTextDec, buf);
                     swscanf(pidTextDec, L"%d", &pid);
@@ -260,14 +261,19 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
                     SetDlgItemTextW(hWnd, IDC_EXEPATH, L"UNKNOWN");
                 }
 
-                GetWindowTextW(hwndCurrentWindow, title, _countof(title));
-                SetDlgItemTextW(hWnd, IDC_TITLE, title);
+                if (GetWindowTextW(hwndCurrentWindow, title, _countof(title)) > 0)
+				{
+					SetDlgItemTextW(hWnd, IDC_TITLE, title);
+				}
+				else
+				{
+					SetDlgItemTextW(hWnd, IDC_TITLE, L"");
+				}
 
                 wsprintfW(pidTextHex, L"%X", pid);
                 wsprintfW(pidTextDec, L"%d", pid);
                 SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
                 SetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec);
-
 
             }
         }
