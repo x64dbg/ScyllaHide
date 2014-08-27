@@ -260,10 +260,9 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
                     SetDlgItemTextW(hWnd, IDC_EXEPATH, L"UNKNOWN");
                 }
 
-                if (GetWindowTextW(hwndCurrentWindow, title, _countof(title)) > 0)
-                {
-                    SetDlgItemTextW(hWnd, IDC_TITLE, title);
-                }
+                GetWindowTextW(hwndCurrentWindow, title, _countof(title));
+                SetDlgItemTextW(hWnd, IDC_TITLE, title);
+
                 wsprintfW(pidTextHex, L"%X", pid);
                 wsprintfW(pidTextDec, L"%d", pid);
                 SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
