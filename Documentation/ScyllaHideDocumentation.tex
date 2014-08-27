@@ -37,7 +37,7 @@
 
 \title{ScyllaHide v1.2 - Documentation}
 \author{}
-\date{2014-08-20}
+\date{2014-08-27}
 
 \begin{document}
 
@@ -151,6 +151,14 @@ A typical RunPE workflow:
 \item Start the process with the windows API function \textit{ResumeThread} (or \textit{NtResumeThread})
 \end{enumerate}
 
+\subsubsection{Improved Attach Dialog}
+Use the integrated window finder to quickly select your attach target. Drag'n'Drop the bullseye/crosshair to your target window or enter the Process ID manually in decimal or hexadecimal notation.
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.8]{newattachdialog.PNG}
+\caption{Improved Attach Dialog}
+\end{figure}
+
 \subsection{OllyDbg v1 Specific}
 
 \begin{figure}[H]
@@ -169,6 +177,7 @@ This option fixes various OllyDbg bugs:
 \item FPU bug
 \item Format string (sprintf) bug, CVE-2004-0733 \url{http://www.cvedetails.com/cve/CVE-2004-0733/}
 \item NT Symbols path bug, patch by blabberer \url{http://www.woodmann.com/forum/showthread.php?8460-Debug-symbols-information-symbol-server-setup&p=56246&viewfull=1#post56246}
+\item Faulty handle bug. Sometimes Olly does not terminate, error appears "Operating system reports error ERROR\_ACCESS\_DENIED"
 \end{itemize}
 
 \subsubsection{x64 single-step fix}
@@ -304,7 +313,9 @@ The error "NT APIs missing" appears, how to solve it?
 
 Version 1.2
 \begin{itemize}
-\item Olly v1 Plugin: Fix for NT Symbols path bug
+\item All Plugins: New attach dialog with crosshair/bullseye window finder.
+\item Olly v1 Plugin: Fix for NT Symbols path
+\item Olly v1 Plugin: Fix for faulty handle bug
 \end{itemize}
 
 Version 1.1
