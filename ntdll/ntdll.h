@@ -447,6 +447,15 @@ VOID
     __in_opt PVOID ApcArgument3
 );
 
+typedef struct _RTLP_CURDIR_REF *PRTLP_CURDIR_REF;
+
+typedef struct _RTL_RELATIVE_NAME_U
+{
+	UNICODE_STRING RelativeName;
+	HANDLE ContainingDirectory;
+	PRTLP_CURDIR_REF CurDirRef;
+} RTL_RELATIVE_NAME_U, *PRTL_RELATIVE_NAME_U;
+
 typedef struct _INITIAL_TEB
 {
 	struct {
@@ -961,6 +970,23 @@ typedef enum _FILE_INFORMATION_CLASS
     FileMaximumInformation
 } FILE_INFORMATION_CLASS, *PFILE_INFORMATION_CLASS;
 
+
+typedef struct _RTL_BUFFER {
+	PUCHAR    Buffer;
+	PUCHAR    StaticBuffer;
+	SIZE_T    Size;
+	SIZE_T    StaticSize;
+	SIZE_T    ReservedForAllocatedSize; // for future doubling
+	PVOID     ReservedForIMalloc; // for future pluggable growth
+} RTL_BUFFER, *PRTL_BUFFER;
+
+struct _RTL_UNICODE_STRING_BUFFER;
+
+typedef struct _RTL_UNICODE_STRING_BUFFER {
+	UNICODE_STRING String;
+	RTL_BUFFER     ByteBuffer;
+	UCHAR          MinimumStaticBufferForTerminalNul[sizeof(WCHAR)];
+} RTL_UNICODE_STRING_BUFFER, *PRTL_UNICODE_STRING_BUFFER;
 
 #define InitializeObjectAttributes( p, n, a, r, s ) { \
     (p)->Length = sizeof( OBJECT_ATTRIBUTES );          \
@@ -1939,6 +1965,56 @@ NTSYSCALLAPI
 VOID
 DbgBreakPoint (
 	void
+);
+
+NTSYSCALLAPI
+VOID
+DbgUiRemoteBreakin (
+	IN PVOID Context
+);
+
+NTSYSCALLAPI
+BOOLEAN
+NTAPI
+RtlDosPathNameToNtPathName_U (
+	__in PCWSTR DosFileName,
+	__out PUNICODE_STRING NtFileName,
+	__out_opt PWSTR *FilePart,
+	__reserved PVOID Reserved
+);
+
+NTSYSCALLAPI
+BOOLEAN
+NTAPI
+RtlDosPathNameToRelativeNtPathName_U (
+	__in PCWSTR DosFileName,
+	__out PUNICODE_STRING NtFileName,
+	__out_opt PWSTR *FilePart,
+	__out_opt PRTL_RELATIVE_NAME_U RelativeName
+);
+
+NTSYSCALLAPI
+VOID
+NTAPI
+RtlReleaseRelativeName (
+	IN PRTL_RELATIVE_NAME_U RelativeName
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtDeleteFile (
+	__in POBJECT_ATTRIBUTES ObjectAttributes
+);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlNtPathNameToDosPathName(
+	__in ULONG Flags,
+	__inout PRTL_UNICODE_STRING_BUFFER Path,
+	__out_opt PULONG Disposition,
+	__inout_opt PWSTR* FilePart
 );
 
 #ifdef __cplusplus
