@@ -28,11 +28,25 @@ void Test_NtGetContextThread();
 void Test_PEB();
 void Test_StartUpInfo();
 void Test_Time();
+void Test_HandleTracing();
+void Test_DebugPrivileges();
+bool IsSysWow64();
+void Test_RunpeUnpacker();
+void Test_AntiAttach();
+
+BYTE memory[0x3000] = { 0 };
 
 
 int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow)
 {
-	Test_Time();
+	//ShowMessageBox("%d\n", sizeof(UNICODE_STRING));
+
+	Test_AntiAttach();;
+
+	//Test_RunpeUnpacker();
+	//Test_DebugPrivileges();
+	//Test_HandleTracing();
+	//Test_Time();
 	//Test_StartUpInfo();
 	//Test_PEB();
 	//Test_NtGetContextThread();
@@ -44,6 +58,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	//Test_NtQueryInformationProcess();
 	//Test_NtQueryObject2();
 	//Test_NtQueryObject1();
+	ExitProcess(0);
 	return 0;
 }
 
@@ -58,6 +73,210 @@ void ShowMessageBox(const char * format, ...)
 	MessageBoxA(0, text, "Text", 0);
 }
 
+void Test_AntiAttach()
+{
+	BYTE NopDbgBreakPoint[] = {0xC3};
+	BYTE BytesExit32[] = {0xB8 ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xE0};
+	BYTE BytesExit64[] = {0x48,0xB8  ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF,0xFF ,0xFF ,0xFF ,0xFF ,0xE0};
+
+	BYTE * pFuncDbgBreakPoint = (BYTE*)DbgBreakPoint;
+	BYTE * pFuncDbgBreakUiRemoteBreakin = (BYTE*)DbgUiRemoteBreakin;
+	BYTE * pFuncNtContinue = (BYTE*)NtContinue;
+	
+#ifdef _WIN64
+	DWORD_PTR * pAddr = (DWORD_PTR *)&BytesExit64[2];
+	int byteSize = sizeof(BytesExit64);
+	BYTE * patch = BytesExit64;
+#else
+	DWORD_PTR * pAddr = (DWORD_PTR *)&BytesExit32[1];
+	int byteSize = sizeof(BytesExit32);
+	BYTE * patch = BytesExit32;
+#endif
+	*pAddr = (DWORD_PTR)ExitProcess;
+
+	WriteProcessMemory(GetCurrentProcess(), pFuncDbgBreakPoint, NopDbgBreakPoint, sizeof(NopDbgBreakPoint), 0);
+
+	MessageBoxA(0, "DbgBreakPoint patched, attach now", "Attach", MB_OK);
+
+	WriteProcessMemory(GetCurrentProcess(), pFuncDbgBreakUiRemoteBreakin, patch, byteSize, 0);
+
+	MessageBoxA(0, "DbgUiRemoteBreakin patched, attach now", "Attach", MB_OK);
+
+	WriteProcessMemory(GetCurrentProcess(), pFuncNtContinue, patch, byteSize, 0);
+
+	MessageBoxA(0, "NtContinue patched, attach now", "Attach", MB_OK);
+	
+	MessageBoxA(0, "Am I still running? Cool", "Attach", MB_OK);
+}
+
+void Test_RunpeUnpacker()
+{
+	STARTUPINFO si = {0};
+	PROCESS_INFORMATION pi = {0};
+	WCHAR path[] = L"InjectorCLIx86.exe";
+
+	CreateProcessW(0,path,0,0,0,CREATE_SUSPENDED,0,0,&si, &pi);
+	ResumeThread(pi.hThread);
+}
+
+#define PROCESS_HANDLE_TRACING_MAX_STACKS 16
+
+typedef struct _PROCESS_HANDLE_TRACING_ENTRY
+{
+	HANDLE Handle;
+	CLIENT_ID ClientId;
+	ULONG Type;
+	PVOID Stacks[PROCESS_HANDLE_TRACING_MAX_STACKS];
+} PROCESS_HANDLE_TRACING_ENTRY, *PPROCESS_HANDLE_TRACING_ENTRY;
+
+typedef struct _PROCESS_HANDLE_TRACING_QUERY {
+	HANDLE Handle;
+	ULONG  TotalTraces;
+	PROCESS_HANDLE_TRACING_ENTRY HandleTrace[1];
+} PROCESS_HANDLE_TRACING_QUERY, *PPROCESS_HANDLE_TRACING_QUERY;
+
+typedef struct _CLIENT_ID64
+{
+	ULONGLONG UniqueProcess;
+	ULONGLONG UniqueThread;
+} CLIENT_ID64, *PCLIENT_ID64;
+
+typedef struct _PROCESS_HANDLE_TRACING_ENTRY64
+{
+	ULONGLONG Handle;
+	CLIENT_ID64 ClientId;
+	ULONG Type;
+	ULONGLONG Stacks[PROCESS_HANDLE_TRACING_MAX_STACKS];
+} PROCESS_HANDLE_TRACING_ENTRY64, *PPROCESS_HANDLE_TRACING_ENTRY64;
+
+typedef struct _PROCESS_HANDLE_TRACING_QUERY64 {
+	ULONGLONG Handle;
+	ULONG  TotalTraces;
+	PROCESS_HANDLE_TRACING_ENTRY64 HandleTrace[1];
+} PROCESS_HANDLE_TRACING_QUERY64, *PPROCESS_HANDLE_TRACING_QUERY64;
+
+typedef struct _PROCESS_HANDLE_TRACING_ENABLE {
+	ULONG Flags;
+} PROCESS_HANDLE_TRACING_ENABLE, *PPROCESS_HANDLE_TRACING_ENABLE;
+
+
+LONG NTAPI HandleTracingExceptionHandler(struct _EXCEPTION_POINTERS *ExceptionInfo)
+{
+	if (STATUS_INVALID_HANDLE == ExceptionInfo->ExceptionRecord->ExceptionCode)
+	{
+#ifndef _WIN64
+		ShowMessageBox("ExceptionCode %X ExceptionAddress %p EIP %p", ExceptionInfo->ExceptionRecord->ExceptionCode,ExceptionInfo->ExceptionRecord->ExceptionAddress, ExceptionInfo->ContextRecord->Eip);
+#else
+		ShowMessageBox("ExceptionCode %X ExceptionAddress %p RIP %p", ExceptionInfo->ExceptionRecord->ExceptionCode,ExceptionInfo->ExceptionRecord->ExceptionAddress, ExceptionInfo->ContextRecord->Rip);
+#endif
+		return EXCEPTION_CONTINUE_EXECUTION;
+	}
+	else
+	{
+		return EXCEPTION_CONTINUE_SEARCH;
+	}
+
+}
+void Test_HandleTracing()
+{
+	NTSTATUS ntStat;
+	PROCESS_HANDLE_TRACING_ENABLE tracing = {0};
+	PPROCESS_HANDLE_TRACING_QUERY query = (PPROCESS_HANDLE_TRACING_QUERY)memory;
+	PPROCESS_HANDLE_TRACING_QUERY64 query64 = (PPROCESS_HANDLE_TRACING_QUERY64)memory;
+	ULONG length = 0;
+
+	AddVectoredExceptionHandler(1, HandleTracingExceptionHandler);
+
+	ntStat = NtSetInformationProcess(NtCurrentProcess, ProcessHandleTracing, &tracing, sizeof(PROCESS_HANDLE_TRACING_ENABLE));
+
+	HANDLE handleToTrace = (HANDLE)0xBAD;
+	NtClose(handleToTrace);
+	query->Handle = (HANDLE)handleToTrace;
+
+	ntStat = NtQueryInformationProcess(NtCurrentProcess, ProcessHandleTracing, query, sizeof(memory), &length);
+
+	if (ntStat == STATUS_INFO_LENGTH_MISMATCH)
+	{
+		//ShowMessageBox("NtQueryInformationProcess STATUS_INFO_LENGTH_MISMATCH %d %d",sizeof(PROCESS_HANDLE_TRACING_QUERY),length );
+		//ntStat = NtQueryInformationProcess(NtCurrentProcess, ProcessHandleTracing, query, sizeof(memory), &length);
+		//goto again;
+		ShowMessageBox("NtQueryInformationProcess STATUS_INFO_LENGTH_MISMATCH");
+	}
+	else if (ntStat == STATUS_SUCCESS)
+	{
+		if (!IsSysWow64())
+		{
+			ShowMessageBox("Handle %X TotalTraces %d", query->Handle, query->TotalTraces);
+		}
+		else
+		{
+			ShowMessageBox("Handle %I64X TotalTraces %d", query64->Handle, query64->TotalTraces);
+		}
+		
+	
+		for (int j = 0; j < 2; j++)
+		{
+			if (!IsSysWow64())
+			{
+				ShowMessageBox("Type %d Handle %p UniqueProcess %p UniqueThread %p", 
+					query->HandleTrace[j].Type, 
+					query->HandleTrace[j].Handle, 
+					query->HandleTrace[j].ClientId.UniqueProcess,
+					query->HandleTrace[j].ClientId.UniqueThread);
+			}
+			else
+			{
+				ShowMessageBox("Type %d Handle %I64X UniqueProcess %I64X UniqueThread %I64X", 
+					query64->HandleTrace[j].Type, 
+					query64->HandleTrace[j].Handle, 
+					query64->HandleTrace[j].ClientId.UniqueProcess,
+					query64->HandleTrace[j].ClientId.UniqueThread);
+			}
+
+			for (int i = 0; i < PROCESS_HANDLE_TRACING_MAX_STACKS; i++)
+			{
+				if (!IsSysWow64())
+				{
+					if (query->HandleTrace[j].Stacks[i]) ShowMessageBox("Stack %d -> %p", i, query->HandleTrace[j].Stacks[i]);
+				}
+				else
+				{
+					if (query64->HandleTrace[j].Stacks[i]) ShowMessageBox("Stack %d -> %I64X", i, query64->HandleTrace[j].Stacks[i]);
+				}
+				
+			}
+		}
+	}
+	else
+	{
+		ShowMessageBox("NtQueryInformationProcess error %X", ntStat);
+	}
+
+}
+
+void Test_DebugPrivileges()
+{
+	ULONG flags = 0;
+	NTSTATUS ntStat;
+
+	ntStat = NtQuerySystemInformation(SystemFlagsInformation, &ntStat, sizeof(ULONG), NULL);
+	ntStat = NtSetSystemInformation(SystemFlagsInformation, &ntStat, sizeof(ULONG));
+
+	if (ntStat >= 0)
+	{
+		ShowMessageBox("Debug Privileges enabled!");
+	}
+	else if (ntStat == STATUS_ACCESS_DENIED)
+	{
+		ShowMessageBox("Debug Privileges disabled!");
+	}
+	else
+	{
+		ShowMessageBox("Test_DebugPrivileges -> Something wrong %X!",ntStat);
+	}
+
+}
+
 void Test_Time()
 {
 	SYSTEMTIME systime;
@@ -69,7 +288,10 @@ void Test_Time()
 	LARGE_INTEGER performnative;
 	LARGE_INTEGER frequennative;
 
-	NtQuerySystemTime(&sysTimeNative);
+	NTSTATUS ntstat = 0;
+
+	ntstat = NtQuerySystemTime(&sysTimeNative);
+	ntstat = NtQuerySystemTime(0);
 	
 	GetSystemTime(&systime);
 	GetLocalTime(&localtime);
@@ -77,7 +299,10 @@ void Test_Time()
 	QueryPerformanceCounter(&perform);
 	QueryPerformanceFrequency(&frequen);
 
-	NtQueryPerformanceCounter(&performnative, &frequennative);
+	ntstat = NtQueryPerformanceCounter(&performnative, &frequennative);
+	ntstat = NtQueryPerformanceCounter(0, &frequennative);
+	ntstat = NtQueryPerformanceCounter(&performnative, 0);
+	ntstat = NtQueryPerformanceCounter(0, 0);
 
 	DWORD tick = GetTickCount();
 	ULONGLONG tick64 = GetTickCount64();
@@ -250,7 +475,6 @@ DWORD GetProcessIdByThreadHandle(HANDLE hThread)
 }
 
 
-BYTE memory[0x2000] = { 0 };
 
 void Test_NtQueryObject2()
 {
@@ -368,4 +592,14 @@ void Test_NtSetInformationThread()
 	{
 		ShowMessageBox("Anti-Anti-Debug Tool detected!\n");
 	}
+}
+
+bool IsSysWow64()
+{
+#ifndef _WIN64
+	return ((DWORD)__readfsdword(0xC0) != 0);
+
+#else
+	return false;
+#endif
 }
