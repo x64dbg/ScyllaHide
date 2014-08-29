@@ -536,6 +536,8 @@ int GetDetourLen(const void * lpStart, const int minSize)
     while (totalLen < minSize)
     {
         len = (int)LengthDisassemble((void *)lpDataPos);
+		if (len < 1) //len < 1 will cause infinite loops
+			len = 1;
         lpDataPos += len;
         totalLen += len;
     }
@@ -562,5 +564,5 @@ int LengthDisassemble(LPVOID DisassmAddress)
 		}
 	}
 
-	return -1;
+	return -1; //this is dangerous
 }
