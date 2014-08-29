@@ -28,7 +28,7 @@ const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 //globals
 HINSTANCE hinst;
 DWORD ProcessId;
-DWORD_PTR epaddr;
+DWORD_PTR epaddr = 0;
 bool bHooked = false;
 static bool bEPBreakRemoved = false;
 HWND hwmain; // Handle of main OllyDbg window
@@ -296,6 +296,20 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         ProcessId=debugevent->dwProcessId;
         bHooked = false;
         epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
+
+		if (epaddr == NULL)
+		{
+			//ATTACH to an existing process!
+			//Apply anti-anti-attach
+			 if(pHideOptions.killAntiAttach)
+			 {
+				 if (!ApplyAntiAntiAttach(ProcessId))
+				 {
+					 MessageBoxW(hwmain, L"Anti-Anti-Attach failed", L"Error", MB_ICONERROR);
+				 }
+			 }
+		}
+
         ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
         //change olly caption again !

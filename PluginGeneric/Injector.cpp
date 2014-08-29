@@ -2,6 +2,7 @@
 #include "..\InjectorCLI\RemoteHook.h"
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\\ApplyHooking.h"
+#include <Psapi.h>
 
 extern struct HideOptions pHideOptions;
 
@@ -81,6 +82,7 @@ void InstallAntiAttachHook()
     *p=0xC3; //retn
 #endif
 }
+
 
 void StartFixBeingDebugged(DWORD targetPid, bool setToNull)
 {
@@ -494,4 +496,52 @@ bool RemoveDebugPrivileges(HANDLE hProcess)
     }
 
     return false;
+}
+
+#define DbgBreakPoint_FUNC_SIZE 2
+#ifdef _WIN64
+#define DbgUiRemoteBreakin_FUNC_SIZE 0x42
+#define NtContinue_FUNC_SIZE 11
+#else
+#define DbgUiRemoteBreakin_FUNC_SIZE 0x54
+#define NtContinue_FUNC_SIZE 0x18
+#endif
+
+
+bool ApplyAntiAntiAttach(DWORD targetPid)
+{
+	bool resu = false;
+
+	WCHAR modName[MAX_PATH] = {0};
+	 HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+
+	 if (!hProcess)
+		 return resu;
+
+	HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
+	BYTE * pFuncDbgBreakPoint = (BYTE*)GetProcAddress(hMod, "DbgBreakPoint");
+	BYTE * pFuncDbgBreakUiRemoteBreakin = (BYTE*)GetProcAddress(hMod, "DbgUiRemoteBreakin");
+	BYTE * pFuncNtContinue = (BYTE*)GetProcAddress(hMod, "NtContinue");
+
+	//has remote ntdll same image base? if not -> crap
+	if (GetModuleBaseNameW(hProcess, hMod, modName, _countof(modName)))
+	{
+		if (wcsstr(modName, L"ntdll") || wcsstr(modName, L"NTDLL"))
+		{
+			if (WriteProcessMemory(hProcess, pFuncDbgBreakPoint, pFuncDbgBreakPoint, DbgBreakPoint_FUNC_SIZE, 0))
+			{
+				if (WriteProcessMemory(hProcess, pFuncDbgBreakUiRemoteBreakin, pFuncDbgBreakUiRemoteBreakin, DbgUiRemoteBreakin_FUNC_SIZE, 0))
+				{
+					if (WriteProcessMemory(hProcess, pFuncNtContinue, pFuncNtContinue, NtContinue_FUNC_SIZE, 0))
+					{
+						resu = true;
+					}
+				}
+			}
+		}
+	}
+
+	CloseHandle(hProcess);
+
+	return resu;
 }

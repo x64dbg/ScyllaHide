@@ -241,7 +241,10 @@ void __declspec(naked) handleBreakpoints()
 DWORD _stdcall removeEPBreak(LPVOID lpParam)
 {
     Sleep(0x200);
-    _Deletebreakpoints(epaddr,epaddr+2, 0);
+    if (epaddr != NULL)
+    {
+        _Deletebreakpoints(epaddr,epaddr+2, 0);
+    }
     return 0;
 }
 
