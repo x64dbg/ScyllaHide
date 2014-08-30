@@ -57,10 +57,6 @@ DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct)
     _plugin_registercallback(pluginHandle, CB_DEBUGEVENT, cbDebugloop);
     _plugin_registercallback(pluginHandle, CB_STOPDEBUG, cbReset);
 
-    if(pHideOptions.killAntiAttach) {
-        InstallAntiAttachHook();
-    }
-
     return true;
 }
 
@@ -197,6 +193,19 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
         ProcessId = d->DebugEvent->dwProcessId;
         bHooked = false;
         ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+
+		if (d->DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
+		{
+			//ATTACH
+			if(pHideOptions.killAntiAttach)
+			{
+				if (!ApplyAntiAntiAttach(ProcessId))
+				{
+					MessageBoxW(hwndDlg, L"Anti-Anti-Attach failed", L"Error", MB_ICONERROR);
+				}
+			}
+		}
+
         break;
     }
     case LOAD_DLL_DEBUG_EVENT:

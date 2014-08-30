@@ -324,6 +324,18 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         bHooked = false;
         ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
+		if (debugevent->u.CreateProcessInfo.lpStartAddress == NULL)
+		{
+			//ATTACH
+			if(pHideOptions.killAntiAttach)
+			{
+				if (!ApplyAntiAntiAttach(ProcessId))
+				{
+					MessageBoxW(hwollymain, L"Anti-Anti-Attach failed", L"Error", MB_ICONERROR);
+				}
+			}
+		}
+
         //change olly caption again !
         SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
     }

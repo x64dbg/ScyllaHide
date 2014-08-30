@@ -507,37 +507,63 @@ bool RemoveDebugPrivileges(HANDLE hProcess)
 #define NtContinue_FUNC_SIZE 0x18
 #endif
 
+typedef struct _PATCH_FUNC {
+	PCHAR funcName;
+	PVOID funcAddr;
+	SIZE_T funcSize;
+} PATCH_FUNC;
+
+
+PATCH_FUNC patchFunctions[] = {
+	{
+		"DbgBreakPoint", 0, DbgBreakPoint_FUNC_SIZE
+	},
+	{
+		"DbgUiRemoteBreakin",0,DbgUiRemoteBreakin_FUNC_SIZE
+	},
+	{
+		"NtContinue", 0, NtContinue_FUNC_SIZE
+	}
+};
 
 bool ApplyAntiAntiAttach(DWORD targetPid)
 {
 	bool resu = false;
 
 	WCHAR modName[MAX_PATH] = {0};
-	 HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+	HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
 
-	 if (!hProcess)
-		 return resu;
+	if (!hProcess)
+		return resu;
 
 	HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
-	BYTE * pFuncDbgBreakPoint = (BYTE*)GetProcAddress(hMod, "DbgBreakPoint");
-	BYTE * pFuncDbgBreakUiRemoteBreakin = (BYTE*)GetProcAddress(hMod, "DbgUiRemoteBreakin");
-	BYTE * pFuncNtContinue = (BYTE*)GetProcAddress(hMod, "NtContinue");
+
+	for (int i = 0; i < _countof(patchFunctions); i++)
+	{
+		patchFunctions[i].funcAddr = GetProcAddress(hMod, patchFunctions[i].funcName);
+	}
 
 	//has remote ntdll same image base? if not -> crap
 	if (GetModuleBaseNameW(hProcess, hMod, modName, _countof(modName)))
 	{
 		if (wcsstr(modName, L"ntdll") || wcsstr(modName, L"NTDLL"))
 		{
-			if (WriteProcessMemory(hProcess, pFuncDbgBreakPoint, pFuncDbgBreakPoint, DbgBreakPoint_FUNC_SIZE, 0))
+			for (int i = 0; i < _countof(patchFunctions); i++)
 			{
-				if (WriteProcessMemory(hProcess, pFuncDbgBreakUiRemoteBreakin, pFuncDbgBreakUiRemoteBreakin, DbgUiRemoteBreakin_FUNC_SIZE, 0))
+				if (WriteProcessMemory(hProcess, patchFunctions[i].funcAddr, patchFunctions[i].funcAddr, patchFunctions[i].funcSize, 0))
 				{
-					if (WriteProcessMemory(hProcess, pFuncNtContinue, pFuncNtContinue, NtContinue_FUNC_SIZE, 0))
-					{
-						resu = true;
-					}
+					resu = true;
+				}
+				else
+				{
+					resu = false;
+					break;
 				}
 			}
+		}
+		else
+		{
+			MessageBoxA(0, "Remote NTDLL does not have the same image base, please contact ScyllaHide developers!", "Error", MB_ICONERROR);
 		}
 	}
 
