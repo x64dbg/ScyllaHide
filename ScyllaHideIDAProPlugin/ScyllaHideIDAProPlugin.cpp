@@ -119,10 +119,6 @@ int IDAP_init(void)
         return PLUGIN_SKIP;
     }
 
-    if(pHideOptions.killAntiAttach) {
-        InstallAntiAttachHook();
-    }
-
     msg("##################################################\n");
     msg("# ScyllaHide v"SCYLLA_HIDE_VERSION_STRING_A" Copyright 2014 Aguila / cypher #\n");
     msg("##################################################\n");
@@ -154,14 +150,22 @@ void IDAP_run(int arg)
     return;
 }
 
+bool isAttach = false;
+
 //callback for various debug events
 int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 {
     switch (notif_code)
     {
     case dbg_process_attach:
+		{
+			isAttach = true;
+			break; //attaching not supported
+		}
     case dbg_process_start:
     {
+		isAttach = false;
+
         const debug_event_t* dbgEvent = va_arg(va, const debug_event_t*);
 
         ProcessId = dbgEvent->pid;
@@ -252,6 +256,8 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                     bHooked = true;
                     startInjection(ProcessId, ScyllaHideDllPath, true);
                 }
+#else
+				msg("[ScyllaHide] Error IDA_64BIT please contact ScyllaHide developers!\n");
 #endif
             }
         }
@@ -260,7 +266,7 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
     case dbg_process_exit:
     {
-        if (dbg->is_remote())
+        if (!isAttach && dbg->is_remote())
         {
             if (!SendEventToServer(notif_code, ProcessId))
             {
@@ -277,14 +283,14 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
     case dbg_library_load:
     {
 
-        if (dbg->is_remote())
+        if (!isAttach && dbg->is_remote())
         {
             if (!SendEventToServer(notif_code, ProcessId))
             {
                 msg("[ScyllaHide] SendEventToServer failed\n");
             }
         }
-        else
+        else if (!isAttach)
         {
 #ifndef BUILD_IDA_64BIT
             if (bHooked)
