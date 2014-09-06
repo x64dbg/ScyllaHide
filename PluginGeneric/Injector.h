@@ -64,6 +64,7 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data);
 void StartFixBeingDebugged(DWORD targetPid, bool setToNull);
 bool ApplyAntiAntiAttach(DWORD targetPid);
 
+DWORD_PTR GetAddressOfEntryPoint( BYTE * dllMemory );
 bool IsProcessWOW64(HANDLE hProcess);
 bool isWindows64();
 bool RemoveDebugPrivileges(HANDLE hProcess);

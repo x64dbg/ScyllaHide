@@ -10,9 +10,11 @@ HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
 static LPVOID remoteImageBase = 0;
 
+typedef void (__cdecl * t_SetDebuggerBreakpoint)(DWORD_PTR address);
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 t_LogWrapper LogWrap = 0;
 t_LogWrapper LogErrorWrap = 0;
+t_SetDebuggerBreakpoint _SetDebuggerBreakpoint = 0;
 
 //anti-attach vars
 DWORD ExitThread_addr;
@@ -255,22 +257,30 @@ LPVOID NormalDllInjection( HANDLE hProcess, const WCHAR * dllPath )
     return (LPVOID)hModule;
 }
 
-LPVOID StealthDllInjection( HANDLE hProcess, const WCHAR * dllPath )
+DWORD_PTR GetAddressOfEntryPoint( BYTE * dllMemory )
+{
+	PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)dllMemory;
+	PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
+	return pNt->OptionalHeader.AddressOfEntryPoint;
+}
+
+LPVOID StealthDllInjection( HANDLE hProcess, const WCHAR * dllPath,  BYTE * dllMemory )
 {
     LPVOID remoteImageBaseOfInjectedDll = 0;
 
-    BYTE * dllMemory = ReadFileToMemory(dllPath);
     if (dllMemory)
     {
         remoteImageBaseOfInjectedDll = MapModuleToProcess(hProcess, dllMemory);
         if(remoteImageBaseOfInjectedDll)
         {
-            PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)dllMemory;
-            PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
 
-            if (pNt->OptionalHeader.AddressOfEntryPoint)
+			DWORD_PTR entryPoint = GetAddressOfEntryPoint(dllMemory);
+
+            if (entryPoint)
             {
-                DWORD_PTR dllMain = pNt->OptionalHeader.AddressOfEntryPoint + (DWORD_PTR)remoteImageBaseOfInjectedDll;
+                DWORD_PTR dllMain = entryPoint + (DWORD_PTR)remoteImageBaseOfInjectedDll;
+
+				LogWrap(L"[ScyllaHide] DLL INJECTION: Starting thread at RVA %p VA %p!", entryPoint, dllMain);
 
                 HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)dllMain,remoteImageBaseOfInjectedDll,CREATE_SUSPENDED, 0);
                 if (hThread)
@@ -298,14 +308,20 @@ LPVOID StealthDllInjection( HANDLE hProcess, const WCHAR * dllPath )
 void injectDll(DWORD targetPid, const WCHAR * dllPath)
 {
     HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
-    if (hProcess)
+    BYTE * dllMemory = ReadFileToMemory(dllPath);
+
+	if (hProcess && dllMemory)
     {
         LPVOID remoteImage = 0;
+
+		DWORD entryPoint = (DWORD)GetAddressOfEntryPoint(dllMemory);
+
+		if (entryPoint) LogWrap(L"[ScyllaHide] DLL entry point (DllMain) RVA %X!", entryPoint);
 
         if (pHideOptions.DLLStealth)
         {
             LogWrap(L"[ScyllaHide] Starting Stealth DLL Injection!");
-            remoteImage = StealthDllInjection(hProcess, dllPath);
+            remoteImage = StealthDllInjection(hProcess, dllPath, dllMemory);
         }
         else if (pHideOptions.DLLNormal)
         {
@@ -347,11 +363,13 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
             }
         }
 
+		free(dllMemory);
         CloseHandle(hProcess);
     }
     else
     {
-        LogWrap(L"[ScyllaHide] DLL INJECTION: Cannot open process handle %d", targetPid);
+        if (!hProcess) LogWrap(L"[ScyllaHide] DLL INJECTION: Cannot open process handle %d", targetPid);
+		if (!dllMemory) LogWrap(L"[ScyllaHide] DLL INJECTION: Failed to read file %s!", dllPath);
     }
 }
 
