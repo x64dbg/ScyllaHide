@@ -33,6 +33,7 @@ void Test_DebugPrivileges();
 bool IsSysWow64();
 void Test_RunpeUnpacker();
 void Test_AntiAttach();
+void Test_RaiseException();
 
 BYTE memory[0x3000] = { 0 };
 
@@ -41,7 +42,8 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 {
 	//ShowMessageBox("%d\n", sizeof(UNICODE_STRING));
 
-	Test_AntiAttach();;
+	Test_RaiseException();
+	//Test_AntiAttach();;
 
 	//Test_RunpeUnpacker();
 	//Test_DebugPrivileges();
@@ -60,6 +62,29 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	//Test_NtQueryObject1();
 	ExitProcess(0);
 	return 0;
+}
+
+void Test_RaiseException()
+{
+	__try
+	{
+		RaiseException(0x40010007, 0, 0, 0); //0x40010007 DBG_RIPEXCEPTION
+		ShowMessageBox("DBG_RIPEXCEPTION -> Debugger detected");
+	}
+	__except(EXCEPTION_EXECUTE_HANDLER)
+	{
+		ShowMessageBox("DBG_RIPEXCEPTION -> Debugger NOT detected");
+	}
+
+	__try
+	{
+		RaiseException(0x40010006, 0, 0, 0); //0x40010006 DBG_PRINTEXCEPTION_C
+		ShowMessageBox("DBG_PRINTEXCEPTION_C -> Debugger detected");
+	}
+	__except(EXCEPTION_EXECUTE_HANDLER)
+	{
+		ShowMessageBox("DBG_PRINTEXCEPTION_C -> Debugger NOT detected");
+	}
 }
 
 void ShowMessageBox(const char * format, ...)
@@ -93,6 +118,8 @@ void Test_AntiAttach()
 	BYTE * patch = BytesExit32;
 #endif
 	*pAddr = (DWORD_PTR)ExitProcess;
+
+	MessageBoxA(0, "Nothing patched, attach now", "Attach", MB_OK);
 
 	WriteProcessMemory(GetCurrentProcess(), pFuncDbgBreakPoint, NopDbgBreakPoint, sizeof(NopDbgBreakPoint), 0);
 
