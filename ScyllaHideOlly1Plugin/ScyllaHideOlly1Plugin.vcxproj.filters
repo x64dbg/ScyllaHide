@@ -84,6 +84,9 @@
     <ClCompile Include="..\PluginGeneric\AttachDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\PluginGeneric\CustomExceptionHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h">
@@ -159,6 +162,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\AttachDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PluginGeneric\CustomExceptionHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

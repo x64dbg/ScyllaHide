@@ -11,12 +11,16 @@
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
+#include "..\PluginGeneric\CustomExceptionHandler.h"
 
 typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+typedef void (__cdecl * t_SetDebuggerBreakpoint)(DWORD_PTR address);
+
 void LogWrapper(const WCHAR * format, ...);
 void LogErrorWrapper(const WCHAR * format, ...);
 void AttachProcess(DWORD dwPID);
+void SetDebuggerBreakpoint(DWORD_PTR address);
 
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
@@ -43,6 +47,7 @@ extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
 extern t_AttachProcess _AttachProcess;
+extern t_SetDebuggerBreakpoint _SetDebuggerBreakpoint;
 
 HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
@@ -89,6 +94,8 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
         return -1;
 
     hwmain=hw;
+
+	HookDebugLoop();
 
     ReadCurrentProfile();
     ReadSettings();
@@ -404,4 +411,9 @@ void AttachProcess(DWORD dwPID)
 			L"Can't attach to that process !",
 			L"ScyllaHide Plugin",MB_OK|MB_ICONERROR);
 	}
+}
+
+void SetDebuggerBreakpoint(DWORD_PTR address)
+{
+
 }
