@@ -718,6 +718,38 @@ void dumpProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         _Infoline("VA: 0x%08X -> 0x%08X | Size: 0x%08X Bytes | Module: [%s]%s", startAddr, endAddr, endAddr-startAddr, modName, sectName);
     }
+    else if(message == WM_KEYUP) {
+        switch(wParam) {
+        case VK_DELETE: {
+                t_dump* dump = (t_dump*) _Plugingetvalue(VAL_CPUDDUMP);
+                DWORD startAddr = dump->sel0;
+                DWORD endAddr = dump->sel1;
+
+                BYTE nop[1] = {0x90};
+            while(startAddr <= endAddr) {
+            _Writememory(nop, startAddr, sizeof(BYTE), MM_RESTORE | MM_DELANAL);
+                startAddr++;
+            }
+
+        break;
+        }
+        case VK_INSERT: {
+                t_dump* dump = (t_dump*) _Plugingetvalue(VAL_CPUDDUMP);
+                DWORD startAddr = dump->sel0;
+                DWORD endAddr = dump->sel1;
+
+                BYTE zero[1] = {0x00};
+            while(startAddr <= endAddr) {
+            _Writememory(zero, startAddr, sizeof(BYTE), MM_RESTORE | MM_DELANAL);
+                startAddr++;
+            }
+        break;
+        }
+        default: {
+                break;
+            }
+            }
+    }
 
     //forward the call to Olly
     CallWindowProc((WNDPROC)GetWindowLong(hWnd, GWL_USERDATA), hWnd, message, wParam, lParam);

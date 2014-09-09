@@ -30,6 +30,7 @@ extern "C" int _Gettext(char *title,char *text, char letter,int type,int fontind
 extern "C" int _Attachtoactiveprocess(int newprocessid);
 extern "C" void _Infoline(char *format,...);
 extern "C" t_module* _Findmodule(unsigned long addr);
+extern "C" unsigned long _Writememory(void *buf,unsigned long addr,unsigned long size,int mode);
 
 #define NBAR 17 // Max allowed number of segments in bar
 #define PLUGIN_VERSION 110
@@ -43,6 +44,10 @@ extern "C" t_module* _Findmodule(unsigned long addr);
 
 #define NREGSTACK      32              // Length of stack trace buffer
 #define NVERS          32              // Max allowed length of file version
+
+#define MM_RESTORE     0x01            // Restore or remove INT3 breakpoints
+#define MM_SILENT      0x02            // Don't display error message
+#define MM_DELANAL     0x04            // Delete analysis from the memory
 
 typedef unsigned long  ulong;
 typedef unsigned char  uchar;
