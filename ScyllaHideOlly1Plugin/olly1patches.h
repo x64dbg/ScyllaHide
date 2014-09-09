@@ -21,6 +21,7 @@ void skipCompressedCode();
 void skipLoadDll();
 void fixNTSymbols();
 void fixFaultyHandleOnExit();
+void hookOllyDumpWindowProc();
 
 //hooks
 void handleBreakpoints();
@@ -28,3 +29,4 @@ void handleSprintf();
 void advancedCtrlG_WMINIT();
 void advancedCtrlG_WMCOMMAND();
 void advancedCtrlG_Save();
+void dumpProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

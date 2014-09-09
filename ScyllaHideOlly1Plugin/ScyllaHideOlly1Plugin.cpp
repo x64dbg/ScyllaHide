@@ -36,6 +36,7 @@ DWORD_PTR epaddr = 0;
 bool bHooked = false;
 static bool bEPBreakRemoved = false;
 HWND hwmain; // Handle of main OllyDbg window
+bool bHookedDumpProc = false;
 
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
@@ -57,7 +58,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
     {
-		_AttachProcess = AttachProcess;
+        _AttachProcess = AttachProcess;
         LogWrap = LogWrapper;
         LogErrorWrap = LogErrorWrapper;
 
@@ -95,7 +96,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
     hwmain=hw;
 
-	HookDebugLoop();
+    HookDebugLoop();
 
     ReadCurrentProfile();
     ReadSettings();
@@ -304,24 +305,28 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         bHooked = false;
         epaddr = (DWORD_PTR)debugevent->u.CreateProcessInfo.lpStartAddress;
 
-		if (epaddr == NULL)
-		{
-			//ATTACH to an existing process!
-			//Apply anti-anti-attach
-			 if(pHideOptions.killAntiAttach)
-			 {
-				 if (!ApplyAntiAntiAttach(ProcessId))
-				 {
-					 MessageBoxW(hwmain, L"Anti-Anti-Attach failed", L"Error", MB_ICONERROR);
-				 }
-			 }
-		}
+        if (epaddr == NULL)
+        {
+            //ATTACH to an existing process!
+            //Apply anti-anti-attach
+            if(pHideOptions.killAntiAttach)
+            {
+                if (!ApplyAntiAntiAttach(ProcessId))
+                {
+                    MessageBoxW(hwmain, L"Anti-Anti-Attach failed", L"Error", MB_ICONERROR);
+                }
+            }
+        }
 
         ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
         //change olly caption again !
         SetWindowTextW(hwmain, pHideOptions.ollyTitle);
 
+        if(!bHookedDumpProc) {
+            hookOllyDumpWindowProc();
+            bHookedDumpProc = true;
+        }
         hookOllyBreakpoints();
     }
     break;
@@ -403,14 +408,14 @@ void LogWrapper(const WCHAR * format, ...)
 
 void AttachProcess(DWORD dwPID)
 {
-	int result = _Attachtoactiveprocess((int)dwPID);
+    int result = _Attachtoactiveprocess((int)dwPID);
 
-	if (result != 0)
-	{
-		MessageBoxW(hwmain,
-			L"Can't attach to that process !",
-			L"ScyllaHide Plugin",MB_OK|MB_ICONERROR);
-	}
+    if (result != 0)
+    {
+        MessageBoxW(hwmain,
+                    L"Can't attach to that process !",
+                    L"ScyllaHide Plugin",MB_OK|MB_ICONERROR);
+    }
 }
 
 void SetDebuggerBreakpoint(DWORD_PTR address)

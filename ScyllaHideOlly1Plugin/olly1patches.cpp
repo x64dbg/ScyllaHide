@@ -676,3 +676,49 @@ void fixFaultyHandleOnExit()
     fixed = WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+0x7599f), &faultyHandleFix, sizeof(faultyHandleFix), NULL);
     if(fixed) _Addtolist(0,-1,"Fixed ERROR_ACCESS_DENIED with faulty handle at 0x7599f");
 }
+
+void hookOllyDumpWindowProc()
+{
+    t_dump* dump = (t_dump*) _Plugingetvalue(VAL_CPUDDUMP);
+    HWND hDump = dump->table.hw;
+
+    DWORD hookedDumpProc = (DWORD)dumpProc;
+    LONG hOllyDumpProc = SetWindowLong(hDump, GWL_WNDPROC, (LONG)hookedDumpProc);
+    SetWindowLong(hDump, GWL_USERDATA, hOllyDumpProc);
+}
+
+void dumpProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if(message == WM_LBUTTONUP ||
+            ((message == WM_LBUTTONDOWN || WM_MOUSEMOVE) && wParam == MK_LBUTTON)
+      )  {
+        t_dump* dump = (t_dump*) _Plugingetvalue(VAL_CPUDDUMP);
+        DWORD startAddr = dump->sel0;
+        DWORD endAddr = dump->sel1;
+
+        t_module* module = _Findmodule(startAddr);
+
+        char modName[20] = "unknown";
+        char sectName[20] = "unknown";
+        if(module != NULL) {
+            strncpy(modName, module->name, SHORTLEN);
+            strcat(modName, "\0");
+
+            IMAGE_SECTION_HEADER* hdr = module->sect;
+            for(int i=0; i<module->nsect; i++) {
+                if((hdr->VirtualAddress+module->base) < startAddr && (hdr->VirtualAddress+module->base+hdr->Misc.VirtualSize) > startAddr) {
+                    strncpy(sectName, (char*)hdr->Name, SHORTLEN);
+                    strcat(sectName, "\0");
+                    break;
+                }
+
+                hdr++;
+            }
+        }
+
+        _Infoline("VA: 0x%08X -> 0x%08X | Size: 0x%08X Bytes | Module: [%s]%s", startAddr, endAddr, endAddr-startAddr, modName, sectName);
+    }
+
+    //forward the call to Olly
+    CallWindowProc((WNDPROC)GetWindowLong(hWnd, GWL_USERDATA), hWnd, message, wParam, lParam);
+}
