@@ -54,6 +54,8 @@ HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
 LPVOID ImageBase = 0;
 
+bool executeOnce = false;
+
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 {
     if (reason==DLL_PROCESS_ATTACH)
@@ -95,8 +97,6 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
         return -1;
 
     hwmain=hw;
-
-    HookDebugLoop();
 
     ReadCurrentProfile();
     ReadSettings();
@@ -300,6 +300,17 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
     {
     case CREATE_PROCESS_DEBUG_EVENT:
     {
+
+		if (pHideOptions.dontConsumePrintException || pHideOptions.dontConsumeRipException)
+		{
+			if (executeOnce == false)
+			{
+				HookDebugLoop();
+				executeOnce = true;
+			}
+		}
+
+
         ImageBase = debugevent->u.CreateProcessInfo.lpBaseOfImage;
         ProcessId=debugevent->dwProcessId;
         bHooked = false;

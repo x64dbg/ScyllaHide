@@ -1,4 +1,5 @@
 #include "CustomExceptionHandler.h"
+#include "Injector.h"
 #include "..\InjectorCLI\RemoteHook.h"
 
 
@@ -7,6 +8,8 @@ DWORD WaitForDebugEventBackupSize = 0;
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 extern t_LogWrapper LogWrap;
+
+extern struct HideOptions pHideOptions;
 
 
 void handleOutputDebugString( LPDEBUG_EVENT lpDebugEvent )
@@ -67,19 +70,24 @@ void handleRipEvent( LPDEBUG_EVENT lpDebugEvent )
 
 bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 {
-	if (lpDebugEvent->dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
+	if (pHideOptions.dontConsumePrintException != 0 && lpDebugEvent->dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
 	{
 		handleOutputDebugString(lpDebugEvent);
 		return true;
 	}
-	else if (lpDebugEvent->dwDebugEventCode == RIP_EVENT)
+	else if (pHideOptions.dontConsumeRipException != 0 && lpDebugEvent->dwDebugEventCode == RIP_EVENT)
 	{
 		handleRipEvent(lpDebugEvent);
 		return true;
 	}
 	else if (lpDebugEvent->dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
 	{
-		//TODO fix OLLY1
+		//FIX F******* OLLY1
+		if (lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION)
+		{
+			LogWrap(L"[ScyllaHide] Ignoring Illegal Instruction Exception at %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+			return true;
+		}
 	}
 
 	return false;
