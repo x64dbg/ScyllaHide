@@ -133,6 +133,29 @@ Hardware breakpoints can be detected/cleared with exceptions or the windows APIs
 \subsubsection{Timing}
 There are a few windows APIs to measure the time. Timing can be used to detect debuggers, because they slow down the execution. Enable with care and only if you need it!
 
+\subsubsection{Raise Exception}
+It is possible to raise specific exceptions with various windows API functions (e.g. \textit{RaiseException} from kernel32.dll). The problem is that various debuggers consume various different exceptions and the exception is not returned to the application. The application can detect a debugger if there is no exception triggered. Example code can look like this:
+
+\begin{lstlisting}[language=C, caption=Raise Exception Example]
+__try
+{
+    RaiseException(0x40010006, 0, 0, 0);//DBG_PRINTEXCEPTION_C
+    MessageBox("Debugger detected");
+}
+__except(EXCEPTION_EXECUTE_HANDLER) //catch exception
+{
+    MessageBox("Debugger NOT detected");
+}
+\end{lstlisting}
+
+Examples for swallowed exceptions are:
+
+\begin{itemize}
+\item 0x40010007 DBG\_RIPEXCEPTION
+\item 0x40010006 DBG\_PRINTEXCEPTION\_C
+\item 0xC000001D EXCEPTION\_ILLEGAL\_INSTRUCTION
+\end{itemize}
+
 \subsection{Special}
 \subsubsection{DLL Injection}
 Normal DLL injection or stealth dll injection. You better try the normal injection first...
@@ -310,6 +333,13 @@ The error "NT APIs missing" appears, how to solve it?
 \end{center}
 
 \section{Version History}
+
+Version 1.3
+\begin{itemize}
+\item All Plugins: Don't swallow exceptions like DBG\_RIPEXCEPTION or DBG\_PRINTEXCEPTION\_C
+\item Olly v1 Plugin: Custom Toolbar
+\item Olly v1 Plugin: Special shortcuts
+\end{itemize}
 
 Version 1.2
 \begin{itemize}

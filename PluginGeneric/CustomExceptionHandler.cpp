@@ -83,7 +83,7 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 	else if (lpDebugEvent->dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
 	{
 		//FIX F******* OLLY1
-		if (lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION)
+		if (pHideOptions.dontConsumeIllegalInstructionException != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION)
 		{
 			LogWrap(L"[ScyllaHide] Ignoring Illegal Instruction Exception at %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
