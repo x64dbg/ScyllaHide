@@ -119,6 +119,8 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"PreventThreadCreation", L"0", iniFile); //special hook disabled by default
     WriteIniSettings(L"RemoveDebugPrivileges", L"1", iniFile);
     WriteIniSettings(L"KillAntiAttach", L"1", iniFile);
+    WriteIniSettings(L"dontConsumePrintException", L"1", iniFile);
+    WriteIniSettings(L"dontConsumeRipException", L"1", iniFile);
 
     //ida specific
     WriteIniSettings(L"AutostartServer", L"1", iniFile);
@@ -137,6 +139,7 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"skipCompressedDoNothing", L"0", iniFile);
     WriteIniSettings(L"skipLoadDllDoLoad", L"0", iniFile);
     WriteIniSettings(L"skipLoadDllDoNothing", L"0", iniFile);
+    WriteIniSettings(L"advancedInfobar", L"0", iniFile);
 }
 
 void ReadSettingsFromIni(const WCHAR * iniFile)
@@ -175,6 +178,8 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.preventThreadCreation = ReadIniSettingsInt(L"PreventThreadCreation", iniFile);
     pHideOptions.removeDebugPrivileges = ReadIniSettingsInt(L"RemoveDebugPrivileges", iniFile);
     pHideOptions.killAntiAttach = ReadIniSettingsInt(L"KillAntiAttach", iniFile);
+    pHideOptions.dontConsumePrintException = ReadIniSettingsInt(L"dontConsumePrintException", iniFile);
+    pHideOptions.dontConsumeRipException = ReadIniSettingsInt(L"dontConsumeRipException", iniFile);
 
     if (pHideOptions.DLLNormal)
     {
@@ -197,6 +202,7 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.skipCompressedDoNothing = ReadIniSettingsInt(L"skipCompressedDoNothing", iniFile);
     pHideOptions.skipLoadDllDoLoad = ReadIniSettingsInt(L"skipLoadDllDoLoad", iniFile);
     pHideOptions.skipLoadDllDoNothing = ReadIniSettingsInt(L"skipLoadDllDoNothing", iniFile);
+    pHideOptions.advancedInfobar = ReadIniSettingsInt(L"advancedInfobar", iniFile);
     ReadIniSettings(L"WindowTitle", iniFile, pHideOptions.ollyTitle, _countof(pHideOptions.ollyTitle));
 }
 
@@ -236,6 +242,8 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"PreventThreadCreation", pHideOptions.preventThreadCreation, iniFile);
     WriteIniSettingsInt(L"RemoveDebugPrivileges", pHideOptions.removeDebugPrivileges, iniFile);
     WriteIniSettingsInt(L"KillAntiAttach", pHideOptions.killAntiAttach, iniFile);
+    WriteIniSettingsInt(L"dontConsumePrintException", pHideOptions.dontConsumePrintException, iniFile);
+    WriteIniSettingsInt(L"dontConsumeRipException", pHideOptions.dontConsumeRipException, iniFile);
 
     //ida specific
     WriteIniSettingsInt(L"AutostartServer", pHideOptions.autostartServer, iniFile);
@@ -254,6 +262,7 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"skipCompressedDoNothing", pHideOptions.skipCompressedDoNothing, iniFile);
     WriteIniSettingsInt(L"skipLoadDllDoLoad", pHideOptions.skipLoadDllDoLoad, iniFile);
     WriteIniSettingsInt(L"skipLoadDllDoNothing", pHideOptions.skipLoadDllDoNothing, iniFile);
+    WriteIniSettingsInt(L"advancedInfobar", pHideOptions.advancedInfobar, iniFile);
 }
 
 void GetProfileNames(char* profileNamesA)

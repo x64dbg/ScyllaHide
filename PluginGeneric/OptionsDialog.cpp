@@ -146,6 +146,7 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), BM_SETCHECK, pHideOptions.skipLoadDllDoNothing, 0);
     SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDGOTO), BM_SETCHECK, pHideOptions.advancedGoto, 0);
     SendMessage(GetDlgItem(hWnd, IDC_BADPEIMAGE), BM_SETCHECK, pHideOptions.ignoreBadPEImage, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDINFOBAR), BM_SETCHECK, pHideOptions.advancedInfobar, 0);
 #elif OLLY2
     SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
 #elif __IDP__
@@ -161,6 +162,12 @@ void UpdateOptions(HWND hWnd)
 
     if(ProcessId) EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), TRUE);
     else EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), FALSE);
+#endif
+
+//all but x64dbg
+#ifndef X64DBG
+    SendMessage(GetDlgItem(hWnd, IDC_EXCEPTION_PRINT), BM_SETCHECK, pHideOptions.dontConsumePrintException, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_EXCEPTION_RIP), BM_SETCHECK, pHideOptions.dontConsumeRipException, 0);
 #endif
 }
 
@@ -445,6 +452,12 @@ void SaveOptions(HWND hWnd)
     }
     else
         pHideOptions.skipLoadDllDoNothing = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDINFOBAR), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.advancedInfobar = 1;
+    }
+    else
+        pHideOptions.advancedInfobar = 0;
 #elif __IDP__
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_GETCHECK, 0, 0))
     {
@@ -462,6 +475,21 @@ void SaveOptions(HWND hWnd)
 #elif OLLY2
     GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
     SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
+#endif
+
+#ifndef X64DBG
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_EXCEPTION_PRINT), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.dontConsumePrintException = 1;
+    }
+    else
+        pHideOptions.dontConsumePrintException = 0;
+    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_EXCEPTION_RIP), BM_GETCHECK, 0, 0))
+    {
+        pHideOptions.dontConsumeRipException = 1;
+    }
+    else
+        pHideOptions.dontConsumeRipException = 0;
 #endif
 
     //save all options

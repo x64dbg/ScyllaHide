@@ -53,6 +53,9 @@ struct HideOptions
     int skipCompressedDoNothing;
     int skipLoadDllDoLoad;
     int skipLoadDllDoNothing;
+    int advancedInfobar;
+    int dontConsumePrintException;
+    int dontConsumeRipException;
 };
 
 void InstallAntiAttachHook();

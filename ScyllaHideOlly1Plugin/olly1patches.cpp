@@ -689,8 +689,9 @@ void hookOllyDumpWindowProc()
 
 void dumpProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    if(message == WM_LBUTTONUP ||
-            ((message == WM_LBUTTONDOWN || WM_MOUSEMOVE) && wParam == MK_LBUTTON)
+    if((message == WM_LBUTTONUP ||
+            ((message == WM_LBUTTONDOWN || WM_MOUSEMOVE) && wParam == MK_LBUTTON)) &&
+            pHideOptions.advancedInfobar
       )  {
         t_dump* dump = (t_dump*) _Plugingetvalue(VAL_CPUDDUMP);
         DWORD startAddr = dump->sel0;
