@@ -134,7 +134,7 @@ Hardware breakpoints can be detected/cleared with exceptions or the windows APIs
 There are a few windows APIs to measure the time. Timing can be used to detect debuggers, because they slow down the execution. Enable with care and only if you need it!
 
 \subsubsection{Raise Exception}
-It is possible to raise specific exceptions with various windows API functions (e.g. \textit{RaiseException} from kernel32.dll). The problem is that various debuggers consume various different exceptions and the exception is not returned to the application. The application can detect a debugger if there is no exception triggered. Example code can look like this:
+It is possible to raise specific exceptions with various windows API functions (e.g. \textit{RaiseException} from kernel32.dll). The problem is that various debuggers consume various different exceptions and the exception is not returned to the application. The application can detect a debugger if there is no exception triggered. Please see the Listing for an example code.
 
 \begin{lstlisting}[language=C, caption=Raise Exception Example]
 __try
@@ -151,10 +151,31 @@ __except(EXCEPTION_EXECUTE_HANDLER) //catch exception
 Examples for swallowed exceptions are:
 
 \begin{itemize}
-\item 0x40010007 DBG\_RIPEXCEPTION
+\item 0x4000001F STATUS\_WX86\_BREAKPOINT
 \item 0x40010006 DBG\_PRINTEXCEPTION\_C
+\item 0x40010007 DBG\_RIPEXCEPTION
+\item 0x80000001 STATUS\_GUARD\_PAGE\_VIOLATION
+\item 0x80000003 STATUS\_BREAKPOINT
 \item 0xC000001D EXCEPTION\_ILLEGAL\_INSTRUCTION
+\item 0xC0000025 STATUS\_NONCONTINUABLE\_EXCEPTION
+\item 0xC0000420 STATUS\_ASSERTION\_FAILURE
 \end{itemize}
+
+\begin{table}[H]
+\caption{OllyDbg v1, v2 and WinDbg comparision on a Windows 7 64-bit operating system.}
+\begin{tabular}{lrcccl}
+ & \multicolumn{1}{c}{} & \textbf{Olly v1}    & \textbf{Olly v2}    & \textbf{WinDbg v6}    &  \\
+ & \textbf{DBG\_RIPEXCEPTION}     & X                    & X                    & X                    &  \\
+ & \textbf{DBG\_PRINTEXCEPTION\_C}      & X                    & X                    & X                    &  \\
+ & \textbf{NONCONTINUABLE\_EXCEPTION}      & X                    & X                    &                     &  \\
+ & \textbf{WX86\_BREAKPOINT}      & X                    &                     &                     &  \\
+ & \textbf{GUARD\_PAGE\_VIOLATION}      & X                    &                     &                     &  \\
+ & \textbf{BREAKPOINT}      & X                    &                     &                     &  \\
+ & \textbf{ILLEGAL\_INSTRUCTION}      & X                    &                     &                     &  \\
+ & \textbf{ASSERTION\_FAILURE}      &                     &                     & X                    &  \\
+ & \multicolumn{1}{l}{} & \multicolumn{1}{l}{} & \multicolumn{1}{l}{} & \multicolumn{1}{l}{} & 
+\end{tabular}
+\end{table}
 
 \subsection{Special}
 \subsubsection{DLL Injection}
