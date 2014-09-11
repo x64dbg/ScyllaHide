@@ -517,49 +517,71 @@ HWND CreateTooltips(HWND hwndDlg)
         { IDC_NTSETINFORMATIONTHREAD,    L"The THREADINFOCLASS value ThreadHideFromDebugger is a well-known\r\nanti-debug measurement. The debugger cannot handle hidden threads.\r\nThis leads to a loss of control over the target."},
         { IDC_NTSETINFORMATIONPROCESS,   L"The PROCESSINFOCLASS value ProcessHandleTracing can be used to\r\ndetect a debugger. The PROCESSINFOCLASS value ProcessBreakOnTermination\r\ncan be used to generate a Blue Screen of Death on process termination."},
         { IDC_NTQUERYSYSTEMINFORMATION,  L"The SYSTEM_INFORMATION_CLASS value SystemKernelDebuggerInformation\r\ncan be used to detect kernel debuggers. The SYSTEM_INFORMATION_CLASS\r\nvalue SystemProcessInformation is used to get a process list. A debugger\r\nshould be hidden in a process list and the debugee should have a good parent\r\nprocess ID like the ID from explorer.exe."},
-        { IDC_NTQUERYINFORMATIONPROCESS, L"NtQueryInformationProcess"             },
-        { IDC_NTQUERYOBJECT,             L"NtQueryObject"                         },
-        { IDC_NTYIELDEXECUTION,          L"NtYieldExecution"                      },
-        { IDC_NTCREATETHREADEX,          L"NtCreateThreadEx"                      },
-        { IDC_OUTPUTDEBUGSTRINGA,        L"OutputDebugStringA"                    },
-        { IDC_BLOCKINPUT,                L"BlockInput"                            },
-        { IDC_NTUSERFINDWINDOWEX,        L"NtUserFindWindowEx"                    },
-        { IDC_NTUSERBUILDHWNDLIST,       L"NtUserBuildHwndList"                   },
-        { IDC_NTUSERQUERYWINDOW,         L"NtUserQueryWindow"                     },
-        { IDC_NTSETDEBUGFILTERSTATE,     L"NtSetDebugFilterState"                 },
-        { IDC_NTCLOSE,                   L"NtClose"                               },
-        { IDC_REMOVEDEBUGPRIV,           L"Remove Debug Privileges"               },
-        { IDC_PROTECTDRX,                L"DRx Protection"                        },
-        { IDC_NTGETCONTEXTTHREAD,        L"NtGetContextThread"                    },
-        { IDC_NTSETCONTEXTTHREAD,        L"NtSetContextThread"                    },
-        { IDC_NTCONTINUE,                L"NtContinue"                            },
-        { IDC_KIUED,                     L"KiUserExceptionDispatcher"             },
-        { IDC_GETTICKCOUNT,              L"GetTickCount"                          },
-        { IDC_GETTICKCOUNT64,            L"GetTickCount64"                        },
-        { IDC_GETLOCALTIME,              L"GetLocalTime"                          },
-        { IDC_GETSYSTEMTIME,             L"GetSystemTime"                         },
-        { IDC_NTQUERYSYSTEMTIME,         L"NtQuerySystemTime"                     },
-        { IDC_NTQUERYPERFCOUNTER,        L"NtQueryPerf.Counter"                   },
-        { IDC_PREVENTTHREADCREATION,     L"Prevent Thread creation"               },
-        { IDC_RUNPE,                     L"RunPE Unpacker"                        },
-        { IDC_DLLSTEALTH,                L"Stealth Injection"                     },
-        { IDC_DLLNORMAL,                 L"Normal Injection"                      },
+        {   IDC_NTQUERYINFORMATIONPROCESS, L"A very important option. Various PROCESSINFOCLASS values can be used\r\nto detect a debugger.\r\n\
+    ProcessDebugFlags: Should return 1 in the supplied buffer.\r\n\
+    ProcessDebugPort: Should return 0 in the supplied buffer.\r\n\
+    ProcessDebugObjectHandle: Should return 0 in the supplied buffer\r\nand the error STATUS_PORT_NOT_SET (0xC0000353)\r\n\
+    ProcessBasicInformation: Reveals the parent process ID.\r\n\
+    ProcessBreakOnTermination: Please see NtSetInformationProcess\r\n\
+    ProcessHandleTracing: Please see NtSetInformationProcess\r\n\
+A lot of protectors use this to detect debuggers. The windows API CheckRemoteDebuggerPresent uses NtQueryInformationProcess internally."
+        },
+        { IDC_NTQUERYOBJECT,             L"The OBJECT_INFORMATION_CLASS ObjectTypesInformation and ObjectTypeInformation\r\ncan be used to detect debuggers. ScyllaHide filters DebugObject references."},
+        { IDC_NTYIELDEXECUTION,          L"A very unrealiable anti-debug method. This is only used in some UnpackMe's\r\nor in some Proof of Concept code. Only activate this if you really need it.\r\nProbably you will never need this option."},
+        { IDC_NTCREATETHREADEX,          L"Threads hidden from debuggers can be created with a special creation flag\r\nTHREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER. ScyllaHide doesn't\r\nallow hidden threads. The anti-debug effect is similar to NtSetInformationThread"},
+        { IDC_OUTPUTDEBUGSTRINGA,        L"OutputDebugStringW uses OutputDebugStringA internally. ScyllaHide only hooks\r\nthe ANSI version and this is therefore enough. This is a very unreliable\r\nantidebug method, so you will not need this option very often."},
+        { IDC_BLOCKINPUT,                L"Very effective anti-debug method. This is used e.g. in Yoda's Protector. \r\n\"Blocks keyboard and mouse input events from reaching applications.\""},
+        { IDC_NTUSERFINDWINDOWEX,        L"This is a system call function in user32.dll. The windows APIs FindWindowA/W\r\n and FindWindowExA/W call this internally. The debugger window will be hidden."},
+        { IDC_NTUSERBUILDHWNDLIST,       L"This is a system call function in user32.dll. The windows APIs EnumWindows\r\nand EnumThreadWindows call this internally. The debugger window will be hidden."},
+        { IDC_NTUSERQUERYWINDOW,         L"This is a system call function in user32.dll. The windows API GetWindowThreadProcessId\r\n calls this internally. This is used to hide the debugger process."},
+        { IDC_NTSETDEBUGFILTERSTATE,     L"ScyllaHide returns always STATUS_ACCESS_DENIED. This anti-debugn measurement\r\nisn't used very often. Probably you will never need this option in a real world target."},
+        { IDC_NTCLOSE,                   L"This is called with an invalid handle to detect a debugger. ScyllaHide calls\r\nNtQueryObject to check the validity of the handle. A few protectors are using\r\nthis method."},
+        { IDC_REMOVEDEBUGPRIV,           L"If a debugger creates the process of the target, the target will have debug\r\nprivileges. This can be used to detect a debugger."},
+        { IDC_PROTECTDRX,                L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!"},
+        { IDC_NTGETCONTEXTTHREAD,        L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!"},
+        { IDC_NTSETCONTEXTTHREAD,        L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!"},
+        { IDC_NTCONTINUE,                L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!"},
+        { IDC_KIUED,                     L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!"},
+        { IDC_GETTICKCOUNT,              L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
+        { IDC_GETTICKCOUNT64,            L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
+        { IDC_GETLOCALTIME,              L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
+        { IDC_GETSYSTEMTIME,             L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
+        { IDC_NTQUERYSYSTEMTIME,         L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
+        { IDC_NTQUERYPERFCOUNTER,        L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
+        { IDC_PREVENTTHREADCREATION,     L"This option prevents the creation of new threads. This can be useful if a protector\r\n uses a lot of protection threads. This option can be useful for EXECryptor.\r\nEnable with care and only if you need it!\r\nYou must know what you are doing here!"},
+        {   IDC_RUNPE,                     L"This option hooks NtResumeThread. If the malware creates a new process,\r\nScyllaHide terminates and dumps any newly created process. If you are unpacking\r\nmalware, enable and try it. Should be only used inside a VM.\r\n\
+A typical RunPE workflow:\r\n\
+    1. Create a new process of any target in suspended state (Process flag\r\nCREATE_SUSPENDED: 0x00000004)\r\n\
+    2. Replace the original process PE image with a new (malicious) PE image.\r\nThis can involve several steps and various windows API functions.\r\n\
+    3. Start the process with the windows API function ResumeThread (or NtResumeThread)."
+        },
+        { IDC_DLLSTEALTH,                L"Normal DLL injection or stealth dll injection. You better try the normal\r\ninjection first..."},
+        { IDC_DLLNORMAL,                 L"Normal DLL injection or stealth dll injection. You better try the normal\r\ninjection first..."},
         { IDC_DLLUNLOAD,                 L"Unload after DLLMain"                  },
         { IDC_KILLANTIATTACH,            L"Kill Anti-Attach"                      },
 #ifdef OLLY1
         { IDC_OLLYTITLE,                 L"Olly caption"                          },
-        { IDC_DELEPBREAK,                L"Remove EP break"                       },
-        { IDC_FIXOLLY,                   L"Fix Olly Bugs"                         },
-        { IDC_X64FIX,                    L"x64 single-step Fix"                   },
+        { IDC_DELEPBREAK,                L"Some protectors use Thread-Local-Storage (TLS) as entrypoint and check for\r\nbreakpoints at the normal PE entrypoint address. You must remove the PE\r\nentrypoint to hide your debugger. This option is necessary for VMProtect."},
+        {   IDC_FIXOLLY,                   L"This option fixes various OllyDbg bugs:\r\n\
+    - PE Fix for NumOfRvaAndSizes\r\n\
+    - ForegroundWindow Fix\r\n\
+    - FPU bugfix\r\n\
+    - Format string (sprintf) bug\r\n\
+    - NT Symbols path bug, patch by blabberer\r\n\
+    - Faulty handle bug. Sometimes Olly does not terminate,\r\n\
+    error appears \"Operating system reports error ERROR_ACCESS_DENIED\""
+        },
+        { IDC_X64FIX,                    L"OllyDbg doesn't work very well on x64 operating systems.\r\nThis option fixes the most annoying bug."},
         { IDC_SKIPEPOUTSIDE,             L"Skip\"EP outside of Code\""            },
-        { IDC_BREAKTLS,                  L"Break on TLS"                          },
+        { IDC_BREAKTLS,                  L"This option sets a breakpoint to any available Thread-Local-Storage (TLS)\r\naddress. This is necessary for various protectors e.g. VMProtect."},
         { IDC_COMPRESSED,                L"Skip compressed code"                  },
         { IDC_COMPRESSEDANALYZE,         L"Skip compressed code and analyze"      },
         { IDC_COMPRESSEDNOTHING,         L"Skip compressed code and do nothing"   },
         { IDC_LOADDLL,                   L"Skip \"Load Dll\" and"                 },
         { IDC_LOADDLLLOAD,               L"Skip \"Load Dll\" and load DLL"        },
         { IDC_LOADDLLNOTHING,            L"Skip \"Load Dll\" and do nothing"      },
-        { IDC_ADVANCEDGOTO,              L"Advanced CTRL+G"                       },
+        { IDC_ADVANCEDGOTO,              L"Replaces the default OllyDbg \"Go to Address\" dialog. Now you can enter\r\nRVA and offset values. "},
+        { IDC_ADVANCEDINFOBAR,           L"Displays info about selected Bytes in CPU/Dump like Start/End address and size."},
         { IDC_BADPEIMAGE,                L"Ignore bad image (WinUPack)"           },
 #elif OLLY2
         { IDC_OLLYTITLE,                 L"Olly caption"                          },
