@@ -11,6 +11,7 @@ extern t_LogWrapper LogWrap;
 
 extern struct HideOptions pHideOptions;
 
+char OutputDebugStringBuffer[500] = {0};
 
 void handleOutputDebugString( LPDEBUG_EVENT lpDebugEvent )
 {
@@ -20,18 +21,18 @@ void handleOutputDebugString( LPDEBUG_EVENT lpDebugEvent )
 
 		if (hProcess)
 		{
-			char* localbuffer = (char*)VirtualAlloc(0, lpDebugEvent->u.DebugString.nDebugStringLength + sizeof(WCHAR), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-			if (localbuffer)
+			if (lpDebugEvent->u.DebugString.nDebugStringLength < sizeof(OutputDebugStringBuffer))
 			{
-				ZeroMemory(localbuffer, lpDebugEvent->u.DebugString.nDebugStringLength + sizeof(WCHAR));
-				if (ReadProcessMemory(hProcess, lpDebugEvent->u.DebugString.lpDebugStringData, localbuffer, lpDebugEvent->u.DebugString.nDebugStringLength, NULL))
+				ZeroMemory(OutputDebugStringBuffer, sizeof(OutputDebugStringBuffer));
+				if (ReadProcessMemory(hProcess, lpDebugEvent->u.DebugString.lpDebugStringData, OutputDebugStringBuffer, lpDebugEvent->u.DebugString.nDebugStringLength, NULL))
 				{
-					LogWrap(L"[ScyllaHide] OUTPUT_DEBUG_STRING: %S", localbuffer);
+					LogWrap(L"[ScyllaHide] Debug String: %S", OutputDebugStringBuffer);
 				}
-
-				VirtualFree(localbuffer, 0, MEM_RELEASE);
 			}
-
+			else
+			{
+				LogWrap(L"[ScyllaHide] Debug String is too long: %d", lpDebugEvent->u.DebugString.nDebugStringLength);
+			}
 			CloseHandle(hProcess);
 		}		
 	}
@@ -83,9 +84,14 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 	else if (lpDebugEvent->dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
 	{
 		//FIX F******* OLLY1
-		if (pHideOptions.dontConsumeIllegalInstructionException != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION)
+		if (pHideOptions.dontConsumeSpecialExceptions != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ILLEGAL_INSTRUCTION)
 		{
-			LogWrap(L"[ScyllaHide] Ignoring Illegal Instruction Exception at %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+			LogWrap(L"[ScyllaHide] Illegal Instruction %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+			return true;
+		}
+		else if (pHideOptions.dontConsumeSpecialExceptions != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_INVALID_LOCK_SEQUENCE)
+		{
+			LogWrap(L"[ScyllaHide] Invalid Lock Sequence %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
 	}
