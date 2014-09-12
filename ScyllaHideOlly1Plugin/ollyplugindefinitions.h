@@ -41,6 +41,7 @@ extern "C" unsigned long _Writememory(void *buf,unsigned long addr,unsigned long
 #define VAL_MAINBASE 24 // Base of main module in the process
 #define VAL_THREADS 43 // Table of active threads
 #define VAL_CPUDDUMP 54 // Dump descriptor of CPU Dump
+#define VAL_CPUDASM  53 // Dump descriptor of CPU Disassembler
 
 #define NREGSTACK      32              // Length of stack trace buffer
 #define NVERS          32              // Max allowed length of file version

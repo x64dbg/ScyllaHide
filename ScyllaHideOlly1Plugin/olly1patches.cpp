@@ -25,6 +25,9 @@ DWORD pOrgExpr;
 int selectedType;
 DWORD buffer = 0;
 
+HWND hDump;
+HWND hDasm;
+
 //taken from strongOD aka "fix NumOfRvaAndSizes"
 void fixBadPEBugs()
 {
@@ -677,23 +680,34 @@ void fixFaultyHandleOnExit()
     if(fixed) _Addtolist(0,-1,"Fixed ERROR_ACCESS_DENIED with faulty handle at 0x7599f");
 }
 
-void hookOllyDumpWindowProc()
+void hookOllyWindowProcs()
 {
     t_dump* dump = (t_dump*) _Plugingetvalue(VAL_CPUDDUMP);
-    HWND hDump = dump->table.hw;
+    t_dump* dasm = (t_dump*) _Plugingetvalue(VAL_CPUDASM);
+    hDump = dump->table.hw;
+    hDasm = dasm->table.hw;
 
-    DWORD hookedDumpProc = (DWORD)dumpProc;
-    LONG hOllyDumpProc = SetWindowLong(hDump, GWL_WNDPROC, (LONG)hookedDumpProc);
+    DWORD hookedProc = (DWORD)hookedOllyWindowProc;
+    LONG hOllyDumpProc = SetWindowLong(hDump, GWL_WNDPROC, (LONG)hookedProc);
     SetWindowLong(hDump, GWL_USERDATA, hOllyDumpProc);
+    LONG hOllyDasmProc = SetWindowLong(hDasm, GWL_WNDPROC, (LONG)hookedProc);
+    SetWindowLong(hDasm, GWL_USERDATA, hOllyDasmProc);
 }
 
-void dumpProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    int window = 0;
+    if(hWnd == hDasm) {
+        window = VAL_CPUDASM;
+    } else {
+        window = VAL_CPUDDUMP;
+    }
+    t_dump* dump = (t_dump*) _Plugingetvalue(window);
+
     if((message == WM_LBUTTONUP ||
             ((message == WM_LBUTTONDOWN || WM_MOUSEMOVE) && wParam == MK_LBUTTON)) &&
             pHideOptions.advancedInfobar
       )  {
-        t_dump* dump = (t_dump*) _Plugingetvalue(VAL_CPUDDUMP);
         DWORD startAddr = dump->sel0;
         DWORD endAddr = dump->sel1;
 
@@ -722,12 +736,11 @@ void dumpProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     else if(message == WM_KEYUP) {
         switch(wParam) {
         case VK_DELETE: {
-                t_dump* dump = (t_dump*) _Plugingetvalue(VAL_CPUDDUMP);
                 DWORD startAddr = dump->sel0;
                 DWORD endAddr = dump->sel1;
 
                 BYTE nop[1] = {0x90};
-            while(startAddr <= endAddr) {
+            while(startAddr < endAddr) {
             _Writememory(nop, startAddr, sizeof(BYTE), MM_RESTORE | MM_DELANAL);
                 startAddr++;
             }
@@ -735,12 +748,11 @@ void dumpProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
         }
         case VK_INSERT: {
-                t_dump* dump = (t_dump*) _Plugingetvalue(VAL_CPUDDUMP);
                 DWORD startAddr = dump->sel0;
                 DWORD endAddr = dump->sel1;
 
                 BYTE zero[1] = {0x00};
-            while(startAddr <= endAddr) {
+            while(startAddr < endAddr) {
             _Writememory(zero, startAddr, sizeof(BYTE), MM_RESTORE | MM_DELANAL);
                 startAddr++;
             }

@@ -301,15 +301,15 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
     case CREATE_PROCESS_DEBUG_EVENT:
     {
 
-		if (pHideOptions.dontConsumePrintException || pHideOptions.dontConsumeRipException ||
-			pHideOptions.dontConsumeSpecialExceptions)
-		{
-			if (executeOnce == false)
-			{
-				HookDebugLoop();
-				executeOnce = true;
-			}
-		}
+        if (pHideOptions.dontConsumePrintException || pHideOptions.dontConsumeRipException ||
+                pHideOptions.dontConsumeSpecialExceptions)
+        {
+            if (executeOnce == false)
+            {
+                HookDebugLoop();
+                executeOnce = true;
+            }
+        }
 
 
         ImageBase = debugevent->u.CreateProcessInfo.lpBaseOfImage;
@@ -336,7 +336,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
         SetWindowTextW(hwmain, pHideOptions.ollyTitle);
 
         if(!bHookedDumpProc) {
-            hookOllyDumpWindowProc();
+            hookOllyWindowProcs();
             bHookedDumpProc = true;
         }
         hookOllyBreakpoints();
