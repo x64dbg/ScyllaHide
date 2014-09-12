@@ -156,13 +156,12 @@ Examples for swallowed exceptions are:
 \item 0x40010007 DBG\_RIPEXCEPTION
 \item 0x80000001 STATUS\_GUARD\_PAGE\_VIOLATION
 \item 0x80000003 STATUS\_BREAKPOINT
-\item 0xC000001D EXCEPTION\_ILLEGAL\_INSTRUCTION
 \item 0xC0000025 STATUS\_NONCONTINUABLE\_EXCEPTION
 \item 0xC0000420 STATUS\_ASSERTION\_FAILURE
 \end{itemize}
 
 \begin{table}[H]
-\caption{OllyDbg v1, v2 and WinDbg comparision on a Windows 7 64-bit operating system.}
+\caption{OllyDbg v1, v2 and WinDbg v6 comparision on Windows 7 64-bit.}
 \begin{tabular}{lrcccl}
  & \multicolumn{1}{c}{} & \textbf{Olly v1}    & \textbf{Olly v2}    & \textbf{WinDbg v6}    &  \\
  & \textbf{DBG\_RIPEXCEPTION}     & X                    & X                    & X                    &  \\
@@ -171,7 +170,6 @@ Examples for swallowed exceptions are:
  & \textbf{WX86\_BREAKPOINT}      & X                    &                     &                     &  \\
  & \textbf{GUARD\_PAGE\_VIOLATION}      & X                    &                     &                     &  \\
  & \textbf{BREAKPOINT}      & X                    &                     &                     &  \\
- & \textbf{ILLEGAL\_INSTRUCTION}      & X                    &                     &                     &  \\
  & \textbf{ASSERTION\_FAILURE}      &                     &                     & X                    &  \\
  & \multicolumn{1}{l}{} & \multicolumn{1}{l}{} & \multicolumn{1}{l}{} & \multicolumn{1}{l}{} & 
 \end{tabular}
@@ -248,6 +246,15 @@ Replaces the default OllyDbg "Go to Address" dialog. Now you can enter RVA and o
 \subsubsection{Change window caption}
 Change the OllyDbg window caption. This can be useful against e.g. FindWindow anti-debug tricks. You don't need to enable this, if you have the NtUser* hooks enabled! Hint: You can use it to make the currently used profile visible.
 
+\subsubsection{Exception Problem}
+OllyDbg has a problem with several exceptions. The exceptions can be triggered in different ways. They cannot be ignored with the exception options.
+
+\begin{itemize}
+\item 0x40010006 STATUS\_ILLEGAL\_INSTRUCTION
+\item 0xC000001E STATUS\_INVALID\_LOCK\_SEQUENCE
+\end{itemize}
+
+For example, EXECryptor uses STATUS\_INVALID\_LOCK\_SEQUENCE to defeat OllyDbg. Obsidium uses STATUS\_ILLEGAL\_INSTRUCTION.
 
 \subsection{OllyDbg v2 Specific}
 
