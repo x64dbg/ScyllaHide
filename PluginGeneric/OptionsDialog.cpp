@@ -39,6 +39,8 @@ extern HINSTANCE hinst;
 wchar_t DllPathForInjection[MAX_PATH] = {0};
 #endif
 
+void createExceptionWindow(HWND hwnd);
+
 void ShowAbout(HWND hWnd)
 {
     MessageBoxA(hWnd,
@@ -164,11 +166,15 @@ void UpdateOptions(HWND hWnd)
     else EnableWindow(GetDlgItem(hWnd, IDC_INJECTDLL), FALSE);
 #endif
 
-//all but x64dbg
-#ifndef X64DBG
-    SendMessage(GetDlgItem(hWnd, IDC_EXCEPTION_PRINT), BM_SETCHECK, pHideOptions.dontConsumePrintException, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_EXCEPTION_RIP), BM_SETCHECK, pHideOptions.dontConsumeRipException, 0);
-#endif
+
+	if (pHideOptions.dontConsumeIllegalInstruction &&
+		pHideOptions.dontConsumeInvalidLockSequence &&
+		pHideOptions.dontConsumeNoncontinuableException &&
+		pHideOptions.dontConsumePrintException &&
+		pHideOptions.dontConsumeRipException)
+	{
+		CheckDlgButton(hWnd, IDC_EXCEPTION_ALL, BST_CHECKED);
+	}
 }
 
 void SaveOptions(HWND hWnd)
@@ -477,21 +483,6 @@ void SaveOptions(HWND hWnd)
     SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
 #endif
 
-#ifndef X64DBG
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_EXCEPTION_PRINT), BM_GETCHECK, 0, 0))
-    {
-        pHideOptions.dontConsumePrintException = 1;
-    }
-    else
-        pHideOptions.dontConsumePrintException = 0;
-    if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_EXCEPTION_RIP), BM_GETCHECK, 0, 0))
-    {
-        pHideOptions.dontConsumeRipException = 1;
-    }
-    else
-        pHideOptions.dontConsumeRipException = 0;
-#endif
-
     //save all options
     SaveSettings();
 }
@@ -790,6 +781,26 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             SaveOptions(hWnd);
             break;
         }
+		case IDC_EXCEPTION_ALL:
+			{
+				if (IsDlgButtonChecked(hWnd, IDC_EXCEPTION_ALL) == BST_CHECKED)
+				{
+					pHideOptions.dontConsumePrintException = 1;
+					pHideOptions.dontConsumeIllegalInstruction = 1;
+					pHideOptions.dontConsumeInvalidLockSequence = 1;
+					pHideOptions.dontConsumeNoncontinuableException = 1;
+					pHideOptions.dontConsumeRipException = 1;
+				}
+				else
+				{
+					pHideOptions.dontConsumePrintException = 0;
+					pHideOptions.dontConsumeIllegalInstruction = 0;
+					pHideOptions.dontConsumeInvalidLockSequence = 0;
+					pHideOptions.dontConsumeNoncontinuableException = 0;
+					pHideOptions.dontConsumeRipException = 0;
+				}
+
+			}
         case IDC_PROTECTDRX:
         {
             WPARAM state;
@@ -954,8 +965,25 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             break;
         }
 #endif
-
+		case IDC_SELECT_EXCEPTIONS:
+			{
+				createExceptionWindow(hWnd);
+				if (pHideOptions.dontConsumeIllegalInstruction &&
+					pHideOptions.dontConsumeInvalidLockSequence &&
+					pHideOptions.dontConsumeNoncontinuableException &&
+					pHideOptions.dontConsumePrintException &&
+					pHideOptions.dontConsumeRipException)
+				{
+					CheckDlgButton(hWnd, IDC_EXCEPTION_ALL, BST_CHECKED);
+				}
+				else
+				{
+					CheckDlgButton(hWnd, IDC_EXCEPTION_ALL, 0);
+				}
+				break;
+			}
     }
+
 }
 break;
 
@@ -966,4 +994,142 @@ default:
     }
 
     return 0;
+}
+
+enum {
+	ID_EXCEPTION_PRINT = 200,
+	ID_EXCEPTION_RIP,
+	ID_EXCEPTION_Illegal,
+	ID_EXCEPTION_InvalidLockSequence,
+	ID_EXCEPTION_Noncontinable,
+	ID_EXCEPTION_APPLY,
+	ID_EXCEPTION_CANCEL
+};
+
+WCHAR * exceptionNames[] = {
+	L"Print",
+	L"RIP",
+	L"Illegal Instruction",
+	L"Invalid Lock Sequence",
+	L"Non-continuable",
+};
+
+#define EXCEPTION_WINDOW_HEIGHT 150
+#define EXCEPTION_WINDOW_WIDTH 200
+LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+	RECT rect;
+	LONG height;
+	HINSTANCE hInst = GetModuleHandleW(0);
+
+	if (msg == WM_CREATE)
+	{
+		GetClientRect(hwnd, &rect);
+		height = rect.bottom;
+		GetWindowRect(hwnd, &rect);
+		height = rect.bottom - rect.top - height + EXCEPTION_WINDOW_HEIGHT;
+		SetWindowPos(hwnd, NULL, 0, 0, rect.right - rect.left, height, SWP_NOMOVE | SWP_NOZORDER);
+
+		for (int i = 0, j = 200; i < _countof(exceptionNames); i++, j++)
+		{
+			CreateWindowExW(0, L"Button", exceptionNames[i], WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 1, i*20, EXCEPTION_WINDOW_WIDTH, 16, hwnd, (HMENU)j, hInst, NULL);
+		}
+
+		if (pHideOptions.dontConsumePrintException) CheckDlgButton(hwnd, ID_EXCEPTION_PRINT, BST_CHECKED);
+		if (pHideOptions.dontConsumeIllegalInstruction) CheckDlgButton(hwnd, ID_EXCEPTION_Illegal, BST_CHECKED);
+		if (pHideOptions.dontConsumeInvalidLockSequence) CheckDlgButton(hwnd, ID_EXCEPTION_InvalidLockSequence, BST_CHECKED);
+		if (pHideOptions.dontConsumeNoncontinuableException) CheckDlgButton(hwnd, ID_EXCEPTION_Noncontinable, BST_CHECKED);
+		if (pHideOptions.dontConsumeRipException) CheckDlgButton(hwnd, ID_EXCEPTION_RIP, BST_CHECKED);
+
+		CreateWindowExW(0, L"Button", L"Apply", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, 5*20 + 1, 100, 20, hwnd, (HMENU)ID_EXCEPTION_APPLY, hInst, NULL);
+		CreateWindowExW(0, L"Button", L"Cancel", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,1, 6*20 + 1, 100, 20, hwnd, (HMENU)ID_EXCEPTION_CANCEL, hInst, NULL);
+	}
+	else if (msg == WM_COMMAND)
+	{
+		if (LOWORD(wparam) == ID_EXCEPTION_APPLY)
+		{
+			pHideOptions.dontConsumePrintException = 0;
+			pHideOptions.dontConsumeIllegalInstruction = 0;
+			pHideOptions.dontConsumeInvalidLockSequence = 0;
+			pHideOptions.dontConsumeNoncontinuableException = 0;
+			pHideOptions.dontConsumeRipException = 0;
+
+			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_PRINT) == BST_CHECKED)
+			{
+				pHideOptions.dontConsumePrintException = 1;
+			}
+			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Illegal) == BST_CHECKED)
+			{
+				pHideOptions.dontConsumeIllegalInstruction = 1;
+			}
+			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_InvalidLockSequence) == BST_CHECKED)
+			{
+				pHideOptions.dontConsumeInvalidLockSequence = 1;
+			}
+			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Noncontinable) == BST_CHECKED)
+			{
+				pHideOptions.dontConsumeNoncontinuableException = 1;
+			}
+			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_RIP) == BST_CHECKED)
+			{
+				pHideOptions.dontConsumeRipException = 1;
+			}
+			DestroyWindow(hwnd);
+		}
+		else if (LOWORD(wparam) == ID_EXCEPTION_CANCEL)
+		{
+			DestroyWindow(hwnd);
+		}
+	}
+	else if (msg == WM_CLOSE)
+	{
+		DestroyWindow(hwnd);
+	}
+	else if (msg == WM_DESTROY)
+	{
+		PostQuitMessage(0);
+	}
+	return DefWindowProcW(hwnd, msg, wparam, lparam);
+}
+
+void createExceptionWindow(HWND hwnd)
+{
+	WCHAR * classname = L"exception_window_config_scyllahide";
+	WNDCLASSW wc = {0};
+	HWND     wnd;
+	MSG      msg;
+	//wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
+	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
+	wc.hInstance     = GetModuleHandleW(0);
+	wc.style         = CS_PARENTDC | CS_DBLCLKS;
+	wc.lpfnWndProc   = ExceptionSettingsWndproc;
+	wc.lpszClassName = classname;
+	RegisterClassW(&wc);
+
+	wnd = CreateWindowExW(0,
+		classname,
+		L"Exception Settings",
+		WS_VISIBLE | WS_SYSMENU | WS_OVERLAPPED | DS_SYSMODAL,
+		(GetSystemMetrics(SM_CXSCREEN) - EXCEPTION_WINDOW_WIDTH) / 2,
+		(GetSystemMetrics(SM_CYSCREEN) - EXCEPTION_WINDOW_HEIGHT) / 2,
+		EXCEPTION_WINDOW_WIDTH,
+		EXCEPTION_WINDOW_HEIGHT,
+		hwnd,
+		NULL,
+		GetModuleHandleW(0),
+		NULL);
+
+	ShowWindow(wnd, SW_SHOWNORMAL);
+	UpdateWindow(wnd);
+
+	//EnableWindow(hwnd, FALSE);
+
+	while (GetMessageW(&msg, NULL, 0, 0))
+	{
+		TranslateMessage(&msg);
+		DispatchMessageW(&msg);
+	}
+
+	//EnableWindow(hwnd, TRUE);
+	UnregisterClassW(classname, 0);
 }
