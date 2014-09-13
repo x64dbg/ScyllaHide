@@ -56,7 +56,9 @@ struct HideOptions
     int advancedInfobar;
     int dontConsumePrintException;
     int dontConsumeRipException;
-    int dontConsumeSpecialExceptions;
+    int dontConsumeInvalidLockSequence;
+	int dontConsumeIllegalInstruction;
+	int dontConsumeNoncontinuableException;
 };
 
 void InstallAntiAttachHook();

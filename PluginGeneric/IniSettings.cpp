@@ -181,9 +181,15 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.killAntiAttach = ReadIniSettingsInt(L"KillAntiAttach", iniFile);
     pHideOptions.dontConsumePrintException = ReadIniSettingsInt(L"dontConsumePrintException", iniFile);
     pHideOptions.dontConsumeRipException = ReadIniSettingsInt(L"dontConsumeRipException", iniFile);
-	pHideOptions.dontConsumeSpecialExceptions = ReadIniSettingsInt(L"dontConsumeSpecialExceptions", iniFile);
 
-	pHideOptions.dontConsumeSpecialExceptions = 1;
+	pHideOptions.dontConsumeIllegalInstruction = ReadIniSettingsInt(L"dontConsumeIllegalInstruction", iniFile);
+	pHideOptions.dontConsumeInvalidLockSequence = ReadIniSettingsInt(L"dontConsumeInvalidLockSequence", iniFile);
+	pHideOptions.dontConsumeNoncontinuableException = ReadIniSettingsInt(L"dontConsumeNoncontinuableException", iniFile);
+
+
+	pHideOptions.dontConsumeIllegalInstruction = 1;
+	pHideOptions.dontConsumeInvalidLockSequence = 1;
+	pHideOptions.dontConsumeNoncontinuableException = 1;
 
     if (pHideOptions.DLLNormal)
     {
@@ -248,7 +254,10 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"KillAntiAttach", pHideOptions.killAntiAttach, iniFile);
     WriteIniSettingsInt(L"dontConsumePrintException", pHideOptions.dontConsumePrintException, iniFile);
     WriteIniSettingsInt(L"dontConsumeRipException", pHideOptions.dontConsumeRipException, iniFile);
-	WriteIniSettingsInt(L"dontConsumeSpecialExceptions", pHideOptions.dontConsumeSpecialExceptions, iniFile);
+	
+	WriteIniSettingsInt(L"dontConsumeIllegalInstruction", pHideOptions.dontConsumeIllegalInstruction, iniFile);
+	WriteIniSettingsInt(L"dontConsumeInvalidLockSequence", pHideOptions.dontConsumeInvalidLockSequence, iniFile);
+	WriteIniSettingsInt(L"dontConsumeNoncontinuableException", pHideOptions.dontConsumeNoncontinuableException, iniFile);
 
     //ida specific
     WriteIniSettingsInt(L"AutostartServer", pHideOptions.autostartServer, iniFile);

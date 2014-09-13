@@ -301,8 +301,11 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
     case CREATE_PROCESS_DEBUG_EVENT:
     {
 
-        if (pHideOptions.dontConsumePrintException || pHideOptions.dontConsumeRipException ||
-                pHideOptions.dontConsumeSpecialExceptions)
+        if (pHideOptions.dontConsumePrintException || 
+            pHideOptions.dontConsumeRipException ||
+            pHideOptions.dontConsumeIllegalInstruction ||
+            pHideOptions.dontConsumeInvalidLockSequence ||
+            pHideOptions.dontConsumeNoncontinuableException)
         {
             if (executeOnce == false)
             {

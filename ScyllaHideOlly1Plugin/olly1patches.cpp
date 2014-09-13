@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "olly1patches.h"
 #include <Windows.h>
 #include <TlHelp32.h>
@@ -715,15 +716,16 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         char modName[20] = "unknown";
         char sectName[20] = "unknown";
-        if(module != NULL) {
+        if(module != NULL) 
+		{
+			ZeroMemory(modName, sizeof(modName));
             strncpy(modName, module->name, SHORTLEN);
-            strcat(modName, "\0");
 
             IMAGE_SECTION_HEADER* hdr = module->sect;
             for(int i=0; i<module->nsect; i++) {
                 if((hdr->VirtualAddress+module->base) < startAddr && (hdr->VirtualAddress+module->base+hdr->Misc.VirtualSize) > startAddr) {
-                    strncpy(sectName, (char*)hdr->Name, SHORTLEN);
-                    strcat(sectName, "\0");
+                    ZeroMemory(sectName, sizeof(sectName));
+					strncpy(sectName, (char*)hdr->Name, SHORTLEN);
                     break;
                 }
 
