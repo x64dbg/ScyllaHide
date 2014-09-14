@@ -151,6 +151,7 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDGOTO), BM_SETCHECK, pHideOptions.advancedGoto, 0);
     SendMessage(GetDlgItem(hWnd, IDC_BADPEIMAGE), BM_SETCHECK, pHideOptions.ignoreBadPEImage, 0);
     SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDINFOBAR), BM_SETCHECK, pHideOptions.advancedInfobar, 0);
+	EnableWindow(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), FALSE);
 #elif OLLY2
     SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
 #elif __IDP__
