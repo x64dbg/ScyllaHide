@@ -4,14 +4,17 @@
 
 
 t_WaitForDebugEvent dWaitForDebugEvent = 0;
-DWORD WaitForDebugEventBackupSize = 0;
+t_ContinueDebugEvent dContinueDebugEvent = 0;
 
+typedef bool (__cdecl * t_IsAddressBreakpoint)(DWORD_PTR address);
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 extern t_LogWrapper LogWrap;
 
 extern struct HideOptions pHideOptions;
 
 char OutputDebugStringBuffer[500] = {0};
+
+t_IsAddressBreakpoint _IsAddressBreakpoint = 0;
 
 void handleOutputDebugString( LPDEBUG_EVENT lpDebugEvent )
 {
@@ -69,6 +72,35 @@ void handleRipEvent( LPDEBUG_EVENT lpDebugEvent )
 	
 }
 
+DWORD_PTR hNtdll = 0;
+DWORD_PTR hKernel = 0;
+
+bool IsNotInsideKernelOrNtdll( DWORD dwProcessId, DWORD_PTR address )
+{	
+	PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)hNtdll;
+	PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
+
+	DWORD imageSizeNtdll = pNt->OptionalHeader.SizeOfImage;
+
+	pDos = (PIMAGE_DOS_HEADER)hKernel;
+	pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
+
+	DWORD imageSizeKernel = pNt->OptionalHeader.SizeOfImage;
+
+	if (address > hNtdll && address < (hNtdll + imageSizeNtdll))
+	{
+		return false;
+	}
+	else if (address > hKernel && address < (hKernel + imageSizeKernel))
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
 bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 {
 	if (pHideOptions.handleExceptionPrint != 0 && lpDebugEvent->dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
@@ -83,7 +115,6 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 	}
 	else if (lpDebugEvent->dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
 	{
-		//FIX OLLY1
 		if (pHideOptions.handleExceptionIllegalInstruction != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ILLEGAL_INSTRUCTION)
 		{
 			LogWrap(L"[ScyllaHide] Illegal Instruction %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
@@ -97,6 +128,40 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 		else if (pHideOptions.handleExceptionNoncontinuableException != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
 		{
 			LogWrap(L"[ScyllaHide] Non-continuable Exception %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+			return true;
+		}
+		else if (pHideOptions.handleExceptionAssertionFailure != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ASSERTION_FAILURE)
+		{
+			LogWrap(L"[ScyllaHide] Assertion Failure %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+			return true;
+		}
+		else if (pHideOptions.handleExceptionBreakpoint != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT)
+		{
+			if (_IsAddressBreakpoint((DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress) == false)
+			{
+				//system breakpoint?
+				if (IsNotInsideKernelOrNtdll(lpDebugEvent->dwProcessId, (DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress))
+				{
+					LogWrap(L"[ScyllaHide] Breakpoint %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+					return true;
+				}
+			}
+		}
+		else if (pHideOptions.handleExceptionWx86Breakpoint != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_WX86_BREAKPOINT)
+		{
+			if (_IsAddressBreakpoint((DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress) == false)
+			{
+				//system breakpoint?
+				if (IsNotInsideKernelOrNtdll(lpDebugEvent->dwProcessId, (DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress))
+				{
+					LogWrap(L"[ScyllaHide] Wx86 Breakpoint %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+					return true;
+				}
+			}
+		}
+		else if (pHideOptions.handleExceptionGuardPageViolation != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_GUARD_PAGE_VIOLATION)
+		{
+			LogWrap(L"[ScyllaHide] Guard Page Violation %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
 	}
@@ -132,17 +197,32 @@ BOOL WINAPI HookedWaitForDebugEvent(LPDEBUG_EVENT lpDebugEvent, DWORD dwMillisec
 	return retV;
 }
 
+BOOL WINAPI HookedContinueDebugEvent(DWORD dwProcessId,DWORD dwThreadId,DWORD dwContinueStatus)
+{
+	BOOL retV = dContinueDebugEvent(dwProcessId, dwThreadId, dwContinueStatus);
+	return retV;
+}
+
 
 void HookDebugLoop()
 {
-	BYTE * WaitForIt = (BYTE *)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "WaitForDebugEvent");
+	hNtdll = (DWORD_PTR)GetModuleHandleW(L"ntdll.dll");
+	hKernel = (DWORD_PTR)GetModuleHandleW(L"kernel32.dll");
 
-	if (*WaitForIt == 0xE9)
+	BYTE * WaitForIt = (BYTE *)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "WaitForDebugEvent");
+	BYTE * ContinueIt = (BYTE *)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "ContinueDebugEvent");
+
+	if (*WaitForIt == 0xE9 || *WaitForIt == 0x68) //JMP, PUSH
 	{
-		MessageBoxW(0, L"WaitForDebugEvent is hooked already!", L"Error", MB_ICONERROR);
+		MessageBoxW(0, L"kernel32.dll - WaitForDebugEvent is hooked already!", L"Error", MB_ICONERROR);
+	}
+	else if (*ContinueIt == 0xE9 || *ContinueIt == 0x68) //JMP, PUSH
+	{
+		MessageBoxW(0, L"kernel32.dll - ContinueDebugEvent is hooked already!", L"Error", MB_ICONERROR);
 	}
 	else
 	{
 		dWaitForDebugEvent = (t_WaitForDebugEvent)DetourCreate(WaitForIt,HookedWaitForDebugEvent, true);
-	}	
+		//dContinueDebugEvent = (t_ContinueDebugEvent)DetourCreate(ContinueIt,HookedContinueDebugEvent, true);
+	}
 }

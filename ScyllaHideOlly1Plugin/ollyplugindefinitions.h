@@ -36,12 +36,63 @@ extern "C" unsigned long _Writememory(void *buf,unsigned long addr,unsigned long
 #define PLUGIN_VERSION 110
 #define PM_MAIN 0 // Main window        (NULL)
 #define PM_THREADS 13 // Threads window     (t_thread*)
-#define VAL_HPROCESS 20 // Handle of Debuggee
-#define VAL_PROCESSID 21 // Process ID of Debuggee
-#define VAL_MAINBASE 24 // Base of main module in the process
-#define VAL_THREADS 43 // Table of active threads
-#define VAL_CPUDDUMP 54 // Dump descriptor of CPU Dump
-#define VAL_CPUDASM  53 // Dump descriptor of CPU Disassembler
+#define VAL_HINST              1       // Current program instance
+#define VAL_HWMAIN             2       // Handle of the main window
+#define VAL_HWCLIENT           3       // Handle of the MDI client window
+#define VAL_NCOLORS            4       // Number of common colors
+#define VAL_COLORS             5       // RGB values of common colors
+#define VAL_BRUSHES            6       // Handles of common color brushes
+#define VAL_PENS               7       // Handles of common color pens
+#define VAL_NFONTS             8       // Number of common fonts
+#define VAL_FONTS              9       // Handles of common fonts
+#define VAL_FONTNAMES          10      // Internal font names
+#define VAL_FONTWIDTHS         11      // Average widths of common fonts
+#define VAL_FONTHEIGHTS        12      // Average heigths of common fonts
+#define VAL_NFIXFONTS          13      // Actual number of fixed-pitch fonts
+#define VAL_DEFFONT            14      // Index of default font
+#define VAL_NSCHEMES           15      // Number of color schemes
+#define VAL_SCHEMES            16      // Color schemes
+#define VAL_DEFSCHEME          17      // Index of default colour scheme
+#define VAL_DEFHSCROLL         18      // Default horizontal scroll
+#define VAL_RESTOREWINDOWPOS   19      // Restore window positions from .ini
+#define VAL_HPROCESS           20      // Handle of Debuggee
+#define VAL_PROCESSID          21      // Process ID of Debuggee
+#define VAL_HMAINTHREAD        22      // Handle of main thread
+#define VAL_MAINTHREADID       23      // Thread ID of main thread
+#define VAL_MAINBASE           24      // Base of main module in the process
+#define VAL_PROCESSNAME        25      // Name of the active process
+#define VAL_EXEFILENAME        26      // Name of the main debugged file
+#define VAL_CURRENTDIR         27      // Current directory for debugged process
+#define VAL_SYSTEMDIR          28      // Windows system directory
+#define VAL_DECODEANYIP        29      // Decode registers dependless on EIP
+#define VAL_PASCALSTRINGS      30      // Decode Pascal-style string constants
+#define VAL_ONLYASCII          31      // Only printable ASCII chars in dump
+#define VAL_DIACRITICALS       32      // Allow diacritical symbols in strings
+#define VAL_GLOBALSEARCH       33      // Search from the beginning of block
+#define VAL_ALIGNEDSEARCH      34      // Search aligned to item's size
+#define VAL_IGNORECASE         35      // Ignore case in string search
+#define VAL_SEARCHMARGIN       36      // Floating search allows error margin
+#define VAL_KEEPSELSIZE        37      // Keep size of hex edit selection
+#define VAL_MMXDISPLAY         38      // MMX display mode in dialog
+#define VAL_WINDOWFONT         39      // Use calling window's font in dialog
+#define VAL_TABSTOPS           40      // Distance between tab stops
+#define VAL_MODULES            41      // Table of modules (.EXE and .DLL)
+#define VAL_MEMORY             42      // Table of allocated memory blocks
+#define VAL_THREADS            43      // Table of active threads
+#define VAL_BREAKPOINTS        44      // Table of active breakpoints
+#define VAL_REFERENCES         45      // Table with found references
+#define VAL_SOURCELIST         46      // Table of source files
+#define VAL_WATCHES            47      // Table of watches
+#define VAL_CPUFEATURES        50      // CPU feature bits
+#define VAL_TRACEFILE          51      // Handle of run trace log file
+#define VAL_ALIGNDIALOGS       52      // Whether to align dialogs
+#define VAL_CPUDASM            53      // Dump descriptor of CPU Disassembler
+#define VAL_CPUDDUMP           54      // Dump descriptor of CPU Dump
+#define VAL_CPUDSTACK          55      // Dump descriptor of CPU Stack
+#define VAL_APIHELP            56      // Name of selected API help file
+#define VAL_HARDBP             57      // Whether hardware breakpoints enabled
+#define VAL_PATCHES            58      // Table of patches
+#define VAL_HINTS              59      // Sorted data with analysis hints
 
 #define NREGSTACK      32              // Length of stack trace buffer
 #define NVERS          32              // Max allowed length of file version
@@ -317,3 +368,14 @@ typedef struct t_module {              // Executable module descriptor
     int            njddata;              // Number of recognized jumps
     ulong          reserved[15];         // Reserved for plugin compatibility
 } t_module;
+
+typedef struct t_bpoint {              // Description of INT3 breakpoint
+	ulong          addr;                 // Address of breakpoint
+	ulong          dummy;                // Always 1
+	ulong          type;                 // Type of breakpoint, TY_xxx
+	char           cmd;                  // Old value of command
+	ulong          passcount;            // Actual pass count
+} t_bpoint;
+
+
+extern "C" void*   cdecl _Getsortedbyselection(t_sorted *sd,int index);

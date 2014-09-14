@@ -41,6 +41,7 @@ wchar_t DllPathForInjection[MAX_PATH] = {0};
 
 void createExceptionWindow(HWND hwnd);
 void ResetAllExceptions();
+void HandleGuiException(HWND hwnd);
 
 void ShowAbout(HWND hWnd)
 {
@@ -168,14 +169,7 @@ void UpdateOptions(HWND hWnd)
 #endif
 
 
-	if (pHideOptions.handleExceptionIllegalInstruction &&
-		pHideOptions.handleExceptionInvalidLockSequence &&
-		pHideOptions.handleExceptionNoncontinuableException &&
-		pHideOptions.handleExceptionPrint &&
-		pHideOptions.handleExceptionRip)
-	{
-		CheckDlgButton(hWnd, IDC_EXCEPTION_ALL, BST_CHECKED);
-	}
+	HandleGuiException(hWnd);
 }
 
 void SaveOptions(HWND hWnd)
@@ -965,30 +959,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		case IDC_SELECT_EXCEPTIONS:
 			{
 				createExceptionWindow(hWnd);
-#ifdef OLLY1
-				if (pHideOptions.handleExceptionIllegalInstruction &&
-					pHideOptions.handleExceptionInvalidLockSequence &&
-					pHideOptions.handleExceptionNoncontinuableException &&
-					pHideOptions.handleExceptionPrint &&
-					pHideOptions.handleExceptionRip &&
-					pHideOptions.handleExceptionBreakpoint &&
-					pHideOptions.handleExceptionWx86Breakpoint &&
-					pHideOptions.handleExceptionGuardPageViolation
-					)
-#endif
-#ifdef OLLY2
-					if (pHideOptions.handleExceptionNoncontinuableException &&
-						pHideOptions.handleExceptionPrint &&
-						pHideOptions.handleExceptionRip
-						)
-#endif
-				{
-					CheckDlgButton(hWnd, IDC_EXCEPTION_ALL, BST_CHECKED);
-				}
-				else
-				{
-					CheckDlgButton(hWnd, IDC_EXCEPTION_ALL, 0);
-				}
+				HandleGuiException(hWnd);
 				break;
 			}
     }
@@ -1003,6 +974,34 @@ default:
     }
 
     return 0;
+}
+
+void HandleGuiException(HWND hwnd)
+{
+#ifdef OLLY1
+	if (pHideOptions.handleExceptionIllegalInstruction &&
+		pHideOptions.handleExceptionInvalidLockSequence &&
+		pHideOptions.handleExceptionNoncontinuableException &&
+		pHideOptions.handleExceptionPrint &&
+		pHideOptions.handleExceptionRip &&
+		pHideOptions.handleExceptionBreakpoint &&
+		pHideOptions.handleExceptionWx86Breakpoint &&
+		pHideOptions.handleExceptionGuardPageViolation
+		)
+#endif
+#ifdef OLLY2
+		if (pHideOptions.handleExceptionNoncontinuableException &&
+			pHideOptions.handleExceptionPrint &&
+			pHideOptions.handleExceptionRip
+			)
+#endif
+		{
+			CheckDlgButton(hwnd, IDC_EXCEPTION_ALL, BST_CHECKED);
+		}
+		else
+		{
+			CheckDlgButton(hwnd, IDC_EXCEPTION_ALL, 0);
+		}
 }
 
 typedef struct _NAME_TOOLTIP {
