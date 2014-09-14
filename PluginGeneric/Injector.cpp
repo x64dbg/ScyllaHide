@@ -119,7 +119,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 
     if (newProcess == false)
     {
-        LogWrap(L"[ScyllaHide] Apply hooks again");
+        //LogWrap(L"[ScyllaHide] Apply hooks again");
         if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
         {
             WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
