@@ -40,6 +40,7 @@ wchar_t DllPathForInjection[MAX_PATH] = {0};
 #endif
 
 void createExceptionWindow(HWND hwnd);
+void ResetAllExceptions();
 
 void ShowAbout(HWND hWnd)
 {
@@ -167,11 +168,11 @@ void UpdateOptions(HWND hWnd)
 #endif
 
 
-	if (pHideOptions.dontConsumeIllegalInstruction &&
-		pHideOptions.dontConsumeInvalidLockSequence &&
-		pHideOptions.dontConsumeNoncontinuableException &&
-		pHideOptions.dontConsumePrintException &&
-		pHideOptions.dontConsumeRipException)
+	if (pHideOptions.handleExceptionIllegalInstruction &&
+		pHideOptions.handleExceptionInvalidLockSequence &&
+		pHideOptions.handleExceptionNoncontinuableException &&
+		pHideOptions.handleExceptionPrint &&
+		pHideOptions.handleExceptionRip)
 	{
 		CheckDlgButton(hWnd, IDC_EXCEPTION_ALL, BST_CHECKED);
 	}
@@ -783,23 +784,19 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         }
 		case IDC_EXCEPTION_ALL:
 			{
+				ResetAllExceptions();
 				if (IsDlgButtonChecked(hWnd, IDC_EXCEPTION_ALL) == BST_CHECKED)
 				{
-					pHideOptions.dontConsumePrintException = 1;
-					pHideOptions.dontConsumeIllegalInstruction = 1;
-					pHideOptions.dontConsumeInvalidLockSequence = 1;
-					pHideOptions.dontConsumeNoncontinuableException = 1;
-					pHideOptions.dontConsumeRipException = 1;
+					pHideOptions.handleExceptionPrint = 1;
+					pHideOptions.handleExceptionIllegalInstruction = 1;
+					pHideOptions.handleExceptionInvalidLockSequence = 1;
+					pHideOptions.handleExceptionNoncontinuableException = 1;
+					pHideOptions.handleExceptionRip = 1;
+					pHideOptions.handleExceptionAssertionFailure = 1;
+					pHideOptions.handleExceptionBreakpoint = 1;
+					pHideOptions.handleExceptionGuardPageViolation = 1;
+					pHideOptions.handleExceptionWx86Breakpoint = 1;
 				}
-				else
-				{
-					pHideOptions.dontConsumePrintException = 0;
-					pHideOptions.dontConsumeIllegalInstruction = 0;
-					pHideOptions.dontConsumeInvalidLockSequence = 0;
-					pHideOptions.dontConsumeNoncontinuableException = 0;
-					pHideOptions.dontConsumeRipException = 0;
-				}
-
 			}
         case IDC_PROTECTDRX:
         {
@@ -968,11 +965,23 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		case IDC_SELECT_EXCEPTIONS:
 			{
 				createExceptionWindow(hWnd);
-				if (pHideOptions.dontConsumeIllegalInstruction &&
-					pHideOptions.dontConsumeInvalidLockSequence &&
-					pHideOptions.dontConsumeNoncontinuableException &&
-					pHideOptions.dontConsumePrintException &&
-					pHideOptions.dontConsumeRipException)
+#ifdef OLLY1
+				if (pHideOptions.handleExceptionIllegalInstruction &&
+					pHideOptions.handleExceptionInvalidLockSequence &&
+					pHideOptions.handleExceptionNoncontinuableException &&
+					pHideOptions.handleExceptionPrint &&
+					pHideOptions.handleExceptionRip &&
+					pHideOptions.handleExceptionBreakpoint &&
+					pHideOptions.handleExceptionWx86Breakpoint &&
+					pHideOptions.handleExceptionGuardPageViolation
+					)
+#endif
+#ifdef OLLY2
+					if (pHideOptions.handleExceptionNoncontinuableException &&
+						pHideOptions.handleExceptionPrint &&
+						pHideOptions.handleExceptionRip
+						)
+#endif
 				{
 					CheckDlgButton(hWnd, IDC_EXCEPTION_ALL, BST_CHECKED);
 				}
@@ -999,38 +1008,75 @@ default:
 typedef struct _NAME_TOOLTIP {
 	const WCHAR * name;
 	WCHAR * tooltip;
+	int windowId;
 } NAME_TOOLTIP;
 
 
 enum {
 	ID_EXCEPTION_PRINT = 200,
 	ID_EXCEPTION_RIP,
+	ID_EXCEPTION_Noncontinable,
 	ID_EXCEPTION_Illegal,
 	ID_EXCEPTION_InvalidLockSequence,
-	ID_EXCEPTION_Noncontinable,
+	ID_EXCEPTION_AssertionFailure,
+	ID_EXCEPTION_GuardPage,
+	ID_EXCEPTION_Breakpoint,
+	ID_EXCEPTION_Wx86Breakpoint,
 	ID_EXCEPTION_APPLY,
 	ID_EXCEPTION_CANCEL
 };
 
 NAME_TOOLTIP exceptionNamesTooltip[] = {
 	{
-		L"Print",L"DBG_PRINTEXCEPTION_C 0x40010006"
+		L"Print",L"DBG_PRINTEXCEPTION_C 0x40010006", ID_EXCEPTION_PRINT
 	},
 	{
-		L"RIP", L"DBG_RIPEXCEPTION 0x40010007"
-	},
-	{
-		L"Illegal Instruction", L"STATUS_ILLEGAL_INSTRUCTION 0xC000001D"
-	},
-	{
-		L"Invalid Lock Sequence", L"STATUS_INVALID_LOCK_SEQUENCE 0xC000001E"
-	},
-	{
-		L"Non-continuable", L"STATUS_NONCONTINUABLE_EXCEPTION 0xC0000025"
+		L"RIP", L"DBG_RIPEXCEPTION 0x40010007", ID_EXCEPTION_RIP
 	}
+#if defined(OLLY1) || defined(OLLY2)
+	,{
+		L"Non-continuable", L"STATUS_NONCONTINUABLE_EXCEPTION 0xC0000025", ID_EXCEPTION_Noncontinable
+	}
+#endif
+#ifdef OLLY1
+	,{
+		L"Illegal Instruction", L"STATUS_ILLEGAL_INSTRUCTION 0xC000001D", ID_EXCEPTION_Illegal
+	},
+	{
+		L"Invalid Lock Sequence", L"STATUS_INVALID_LOCK_SEQUENCE 0xC000001E", ID_EXCEPTION_InvalidLockSequence
+	},
+	{
+		L"Guard Page Violation", L"STATUS_GUARD_PAGE_VIOLATION 0x80000001", ID_EXCEPTION_GuardPage
+	},
+	{
+		L"Breakpoint", L"STATUS_BREAKPOINT 0x80000003", ID_EXCEPTION_Breakpoint
+	},
+	{
+		L"WX86 Breakpoint", L"STATUS_WX86_BREAKPOINT 0x4000001F", ID_EXCEPTION_Wx86Breakpoint
+	}
+#endif
+#ifdef __IDP__
+	,{
+		L"Assertion Failure", L"STATUS_ASSERTION_FAILURE 0xC0000420", ID_EXCEPTION_AssertionFailure
+	}
+#endif
 };
 
-#define EXCEPTION_WINDOW_HEIGHT 150
+void ResetAllExceptions()
+{
+	pHideOptions.handleExceptionPrint = 0;
+	pHideOptions.handleExceptionIllegalInstruction = 0;
+	pHideOptions.handleExceptionInvalidLockSequence = 0;
+	pHideOptions.handleExceptionNoncontinuableException = 0;
+	pHideOptions.handleExceptionRip = 0;
+	pHideOptions.handleExceptionAssertionFailure = 0;
+	pHideOptions.handleExceptionBreakpoint = 0;
+	pHideOptions.handleExceptionGuardPageViolation = 0;
+	pHideOptions.handleExceptionWx86Breakpoint = 0;
+}
+
+#define HEIGHT_OF_EXCEPTION_CHECKBOX 16
+#define EXCEPTION_WINDOW_BASE_HEIGHT 46
 #define EXCEPTION_WINDOW_WIDTH 200
 LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -1040,23 +1086,32 @@ LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
 	if (msg == WM_CREATE)
 	{
+		int numOfExceptions = _countof(exceptionNamesTooltip);
+
 		HWND control;
 		GetClientRect(hwnd, &rect);
 		height = rect.bottom;
 		GetWindowRect(hwnd, &rect);
-		height = rect.bottom - rect.top - height + EXCEPTION_WINDOW_HEIGHT;
+		height = rect.bottom - rect.top - height + (EXCEPTION_WINDOW_BASE_HEIGHT + (numOfExceptions*(HEIGHT_OF_EXCEPTION_CHECKBOX+5)));
 		SetWindowPos(hwnd, NULL, 0, 0, rect.right - rect.left, height, SWP_NOMOVE | SWP_NOZORDER);
 
+		HFONT hFont;
 		NONCLIENTMETRICSW metric = {0};
 		metric.cbSize = sizeof(NONCLIENTMETRICSW);
-		SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &metric, 0);
-		HFONT hFont = CreateFontIndirectW(&metric.lfMessageFont);
+		if (SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &metric, 0))
+		{
+			hFont = CreateFontIndirectW(&metric.lfMessageFont);
+		}
+		else
+		{
+			hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+		}
 
 		HWND hwndTT = CreateWindowExW(WS_EX_TOPMOST,TOOLTIPS_CLASS,NULL,WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,hwnd,NULL,0,NULL);
 
-		for (int i = 0, j = 200; i < _countof(exceptionNamesTooltip); i++, j++)
+		for (int i = 0, j = 200; i < numOfExceptions; i++, j++)
 		{
-			control = CreateWindowExW(0, L"Button", exceptionNamesTooltip[i].name, WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 1, i*20, EXCEPTION_WINDOW_WIDTH, 16, hwnd, (HMENU)j, hInst, NULL);
+			control = CreateWindowExW(0, L"Button", exceptionNamesTooltip[i].name, WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 1, i*20, EXCEPTION_WINDOW_WIDTH, HEIGHT_OF_EXCEPTION_CHECKBOX, hwnd, (HMENU)exceptionNamesTooltip[i].windowId, hInst, NULL);
 			SendMessage(control,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(1,0));
 
 			TOOLINFO ti = {0};
@@ -1070,46 +1125,66 @@ LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LP
 			SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
 		}
 
-		if (pHideOptions.dontConsumePrintException) CheckDlgButton(hwnd, ID_EXCEPTION_PRINT, BST_CHECKED);
-		if (pHideOptions.dontConsumeIllegalInstruction) CheckDlgButton(hwnd, ID_EXCEPTION_Illegal, BST_CHECKED);
-		if (pHideOptions.dontConsumeInvalidLockSequence) CheckDlgButton(hwnd, ID_EXCEPTION_InvalidLockSequence, BST_CHECKED);
-		if (pHideOptions.dontConsumeNoncontinuableException) CheckDlgButton(hwnd, ID_EXCEPTION_Noncontinable, BST_CHECKED);
-		if (pHideOptions.dontConsumeRipException) CheckDlgButton(hwnd, ID_EXCEPTION_RIP, BST_CHECKED);
+		if (pHideOptions.handleExceptionPrint) CheckDlgButton(hwnd, ID_EXCEPTION_PRINT, BST_CHECKED);
+		if (pHideOptions.handleExceptionIllegalInstruction) CheckDlgButton(hwnd, ID_EXCEPTION_Illegal, BST_CHECKED);
+		if (pHideOptions.handleExceptionInvalidLockSequence) CheckDlgButton(hwnd, ID_EXCEPTION_InvalidLockSequence, BST_CHECKED);
+		if (pHideOptions.handleExceptionNoncontinuableException) CheckDlgButton(hwnd, ID_EXCEPTION_Noncontinable, BST_CHECKED);
+		if (pHideOptions.handleExceptionAssertionFailure) CheckDlgButton(hwnd, ID_EXCEPTION_AssertionFailure, BST_CHECKED);
+		if (pHideOptions.handleExceptionBreakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Breakpoint, BST_CHECKED);
+		if (pHideOptions.handleExceptionGuardPageViolation) CheckDlgButton(hwnd, ID_EXCEPTION_GuardPage, BST_CHECKED);
+		if (pHideOptions.handleExceptionWx86Breakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Wx86Breakpoint, BST_CHECKED);
+		if (pHideOptions.handleExceptionRip) CheckDlgButton(hwnd, ID_EXCEPTION_RIP, BST_CHECKED);
 
-		control = CreateWindowExW(0, L"Button", L"Apply", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, 5*20 + 1, 100, 20, hwnd, (HMENU)ID_EXCEPTION_APPLY, hInst, NULL);
+		control = CreateWindowExW(0, L"Button", L"Apply", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, (numOfExceptions)*20 + 1, 100, 20, hwnd, (HMENU)ID_EXCEPTION_APPLY, hInst, NULL);
 		SendMessage(control,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(1,0));
-		control = CreateWindowExW(0, L"Button", L"Cancel", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,1, 6*20 + 1, 100, 20, hwnd, (HMENU)ID_EXCEPTION_CANCEL, hInst, NULL);
+		control = CreateWindowExW(0, L"Button", L"Cancel", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,1, (numOfExceptions+1)*20 + 1, 100, 20, hwnd, (HMENU)ID_EXCEPTION_CANCEL, hInst, NULL);
 		SendMessage(control,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(1,0));
+
+		//DeleteObject(hFont);
+
 	}
 	else if (msg == WM_COMMAND)
 	{
 		if (LOWORD(wparam) == ID_EXCEPTION_APPLY)
 		{
-			pHideOptions.dontConsumePrintException = 0;
-			pHideOptions.dontConsumeIllegalInstruction = 0;
-			pHideOptions.dontConsumeInvalidLockSequence = 0;
-			pHideOptions.dontConsumeNoncontinuableException = 0;
-			pHideOptions.dontConsumeRipException = 0;
+
+			ResetAllExceptions();
 
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_PRINT) == BST_CHECKED)
 			{
-				pHideOptions.dontConsumePrintException = 1;
+				pHideOptions.handleExceptionPrint = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Illegal) == BST_CHECKED)
 			{
-				pHideOptions.dontConsumeIllegalInstruction = 1;
+				pHideOptions.handleExceptionIllegalInstruction = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_InvalidLockSequence) == BST_CHECKED)
 			{
-				pHideOptions.dontConsumeInvalidLockSequence = 1;
+				pHideOptions.handleExceptionInvalidLockSequence = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Noncontinable) == BST_CHECKED)
 			{
-				pHideOptions.dontConsumeNoncontinuableException = 1;
+				pHideOptions.handleExceptionNoncontinuableException = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_RIP) == BST_CHECKED)
 			{
-				pHideOptions.dontConsumeRipException = 1;
+				pHideOptions.handleExceptionRip = 1;
+			}
+			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_GuardPage) == BST_CHECKED)
+			{
+				pHideOptions.handleExceptionGuardPageViolation = 1;
+			}
+			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Breakpoint) == BST_CHECKED)
+			{
+				pHideOptions.handleExceptionBreakpoint = 1;
+			}
+			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Wx86Breakpoint) == BST_CHECKED)
+			{
+				pHideOptions.handleExceptionWx86Breakpoint = 1;
+			}
+			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_AssertionFailure) == BST_CHECKED)
+			{
+				pHideOptions.handleExceptionAssertionFailure = 1;
 			}
 			DestroyWindow(hwnd);
 		}
@@ -1143,14 +1218,16 @@ void createExceptionWindow(HWND hwnd)
 	wc.lpszClassName = classname;
 	RegisterClassW(&wc);
 
+	int windowHeight = EXCEPTION_WINDOW_BASE_HEIGHT + (_countof(exceptionNamesTooltip)*(HEIGHT_OF_EXCEPTION_CHECKBOX+5) );
+
 	wnd = CreateWindowExW(0,
 		classname,
 		L"Exception Settings",
 		WS_VISIBLE | WS_SYSMENU | WS_OVERLAPPED | DS_SYSMODAL,
 		(GetSystemMetrics(SM_CXSCREEN) - EXCEPTION_WINDOW_WIDTH) / 2,
-		(GetSystemMetrics(SM_CYSCREEN) - EXCEPTION_WINDOW_HEIGHT) / 2,
+		(GetSystemMetrics(SM_CYSCREEN) - windowHeight) / 2,
 		EXCEPTION_WINDOW_WIDTH,
-		EXCEPTION_WINDOW_HEIGHT,
+		windowHeight,
 		hwnd,
 		NULL,
 		GetModuleHandleW(0),

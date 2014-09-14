@@ -301,11 +301,15 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
     case CREATE_PROCESS_DEBUG_EVENT:
     {
 
-        if (pHideOptions.dontConsumePrintException || 
-            pHideOptions.dontConsumeRipException ||
-            pHideOptions.dontConsumeIllegalInstruction ||
-            pHideOptions.dontConsumeInvalidLockSequence ||
-            pHideOptions.dontConsumeNoncontinuableException)
+        if (pHideOptions.handleExceptionPrint || 
+            pHideOptions.handleExceptionRip ||
+            pHideOptions.handleExceptionIllegalInstruction ||
+            pHideOptions.handleExceptionInvalidLockSequence ||
+            pHideOptions.handleExceptionNoncontinuableException ||
+			pHideOptions.handleExceptionBreakpoint ||
+			pHideOptions.handleExceptionWx86Breakpoint ||
+			pHideOptions.handleExceptionGuardPageViolation
+			)
         {
             if (executeOnce == false)
             {
@@ -313,7 +317,6 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
                 executeOnce = true;
             }
         }
-
 
         ImageBase = debugevent->u.CreateProcessInfo.lpBaseOfImage;
         ProcessId=debugevent->dwProcessId;

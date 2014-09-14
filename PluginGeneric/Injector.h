@@ -54,11 +54,15 @@ struct HideOptions
     int skipLoadDllDoLoad;
     int skipLoadDllDoNothing;
     int advancedInfobar;
-    int dontConsumePrintException;
-    int dontConsumeRipException;
-    int dontConsumeInvalidLockSequence;
-	int dontConsumeIllegalInstruction;
-	int dontConsumeNoncontinuableException;
+    int handleExceptionPrint;
+    int handleExceptionRip;
+    int handleExceptionInvalidLockSequence;
+	int handleExceptionIllegalInstruction;
+	int handleExceptionNoncontinuableException;
+	int handleExceptionAssertionFailure;
+	int handleExceptionBreakpoint;
+	int handleExceptionWx86Breakpoint;
+	int handleExceptionGuardPageViolation;
 };
 
 void InstallAntiAttachHook();

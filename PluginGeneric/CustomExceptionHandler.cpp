@@ -71,12 +71,12 @@ void handleRipEvent( LPDEBUG_EVENT lpDebugEvent )
 
 bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 {
-	if (pHideOptions.dontConsumePrintException != 0 && lpDebugEvent->dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
+	if (pHideOptions.handleExceptionPrint != 0 && lpDebugEvent->dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
 	{
 		handleOutputDebugString(lpDebugEvent);
 		return true;
 	}
-	else if (pHideOptions.dontConsumeRipException != 0 && lpDebugEvent->dwDebugEventCode == RIP_EVENT)
+	else if (pHideOptions.handleExceptionRip != 0 && lpDebugEvent->dwDebugEventCode == RIP_EVENT)
 	{
 		handleRipEvent(lpDebugEvent);
 		return true;
@@ -84,17 +84,17 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 	else if (lpDebugEvent->dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
 	{
 		//FIX OLLY1
-		if (pHideOptions.dontConsumeIllegalInstruction != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ILLEGAL_INSTRUCTION)
+		if (pHideOptions.handleExceptionIllegalInstruction != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ILLEGAL_INSTRUCTION)
 		{
 			LogWrap(L"[ScyllaHide] Illegal Instruction %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
-		else if (pHideOptions.dontConsumeInvalidLockSequence != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_INVALID_LOCK_SEQUENCE)
+		else if (pHideOptions.handleExceptionInvalidLockSequence != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_INVALID_LOCK_SEQUENCE)
 		{
 			LogWrap(L"[ScyllaHide] Invalid Lock Sequence %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
-		else if (pHideOptions.dontConsumeNoncontinuableException != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
+		else if (pHideOptions.handleExceptionNoncontinuableException != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
 		{
 			LogWrap(L"[ScyllaHide] Non-continuable Exception %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;

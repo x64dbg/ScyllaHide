@@ -119,9 +119,16 @@ void CreateDefaultSettings(const WCHAR * iniFile)
     WriteIniSettings(L"PreventThreadCreation", L"0", iniFile); //special hook disabled by default
     WriteIniSettings(L"RemoveDebugPrivileges", L"1", iniFile);
     WriteIniSettings(L"KillAntiAttach", L"1", iniFile);
-    WriteIniSettings(L"dontConsumePrintException", L"1", iniFile);
-    WriteIniSettings(L"dontConsumeRipException", L"1", iniFile);
-	WriteIniSettings(L"dontConsumeSpecialExceptions", L"1", iniFile);
+
+    WriteIniSettings(L"handleExceptionPrint", L"1", iniFile);
+    WriteIniSettings(L"handleExceptionRip", L"1", iniFile);
+	WriteIniSettings(L"handleExceptionInvalidLockSequence", L"1", iniFile);
+	WriteIniSettings(L"handleExceptionIllegalInstruction", L"1", iniFile);
+	WriteIniSettings(L"handleExceptionNoncontinuableException", L"1", iniFile);
+	WriteIniSettings(L"handleExceptionAssertionFailure", L"1", iniFile);
+	WriteIniSettings(L"handleExceptionBreakpoint", L"1", iniFile);
+	WriteIniSettings(L"handleExceptionWx86Breakpoint", L"1", iniFile);
+	WriteIniSettings(L"handleExceptionGuardPageViolation", L"1", iniFile);
 
     //ida specific
     WriteIniSettings(L"AutostartServer", L"1", iniFile);
@@ -179,17 +186,16 @@ void ReadSettingsFromIni(const WCHAR * iniFile)
     pHideOptions.preventThreadCreation = ReadIniSettingsInt(L"PreventThreadCreation", iniFile);
     pHideOptions.removeDebugPrivileges = ReadIniSettingsInt(L"RemoveDebugPrivileges", iniFile);
     pHideOptions.killAntiAttach = ReadIniSettingsInt(L"KillAntiAttach", iniFile);
-    pHideOptions.dontConsumePrintException = ReadIniSettingsInt(L"dontConsumePrintException", iniFile);
-    pHideOptions.dontConsumeRipException = ReadIniSettingsInt(L"dontConsumeRipException", iniFile);
 
-	pHideOptions.dontConsumeIllegalInstruction = ReadIniSettingsInt(L"dontConsumeIllegalInstruction", iniFile);
-	pHideOptions.dontConsumeInvalidLockSequence = ReadIniSettingsInt(L"dontConsumeInvalidLockSequence", iniFile);
-	pHideOptions.dontConsumeNoncontinuableException = ReadIniSettingsInt(L"dontConsumeNoncontinuableException", iniFile);
-
-
-	pHideOptions.dontConsumeIllegalInstruction = 1;
-	pHideOptions.dontConsumeInvalidLockSequence = 1;
-	pHideOptions.dontConsumeNoncontinuableException = 1;
+    pHideOptions.handleExceptionPrint = ReadIniSettingsInt(L"handleExceptionPrint", iniFile);
+    pHideOptions.handleExceptionRip = ReadIniSettingsInt(L"handleExceptionRip", iniFile);
+	pHideOptions.handleExceptionIllegalInstruction = ReadIniSettingsInt(L"handleExceptionIllegalInstruction", iniFile);
+	pHideOptions.handleExceptionInvalidLockSequence = ReadIniSettingsInt(L"handleExceptionInvalidLockSequence", iniFile);
+	pHideOptions.handleExceptionNoncontinuableException = ReadIniSettingsInt(L"handleExceptionNoncontinuableException", iniFile);
+	pHideOptions.handleExceptionAssertionFailure = ReadIniSettingsInt(L"handleExceptionAssertionFailure", iniFile);
+	pHideOptions.handleExceptionBreakpoint = ReadIniSettingsInt(L"handleExceptionBreakpoint", iniFile);
+	pHideOptions.handleExceptionGuardPageViolation = ReadIniSettingsInt(L"handleExceptionGuardPageViolation", iniFile);
+	pHideOptions.handleExceptionWx86Breakpoint = ReadIniSettingsInt(L"handleExceptionWx86Breakpoint", iniFile);
 
     if (pHideOptions.DLLNormal)
     {
@@ -252,12 +258,17 @@ void SaveSettingsToIni(const WCHAR * iniFile)
     WriteIniSettingsInt(L"PreventThreadCreation", pHideOptions.preventThreadCreation, iniFile);
     WriteIniSettingsInt(L"RemoveDebugPrivileges", pHideOptions.removeDebugPrivileges, iniFile);
     WriteIniSettingsInt(L"KillAntiAttach", pHideOptions.killAntiAttach, iniFile);
-    WriteIniSettingsInt(L"dontConsumePrintException", pHideOptions.dontConsumePrintException, iniFile);
-    WriteIniSettingsInt(L"dontConsumeRipException", pHideOptions.dontConsumeRipException, iniFile);
-	
-	WriteIniSettingsInt(L"dontConsumeIllegalInstruction", pHideOptions.dontConsumeIllegalInstruction, iniFile);
-	WriteIniSettingsInt(L"dontConsumeInvalidLockSequence", pHideOptions.dontConsumeInvalidLockSequence, iniFile);
-	WriteIniSettingsInt(L"dontConsumeNoncontinuableException", pHideOptions.dontConsumeNoncontinuableException, iniFile);
+
+    WriteIniSettingsInt(L"handleExceptionPrint", pHideOptions.handleExceptionPrint, iniFile);
+    WriteIniSettingsInt(L"handleExceptionRip", pHideOptions.handleExceptionRip, iniFile);
+	WriteIniSettingsInt(L"handleExceptionIllegalInstruction", pHideOptions.handleExceptionIllegalInstruction, iniFile);
+	WriteIniSettingsInt(L"handleExceptionInvalidLockSequence", pHideOptions.handleExceptionInvalidLockSequence, iniFile);
+	WriteIniSettingsInt(L"handleExceptionNoncontinuableException", pHideOptions.handleExceptionNoncontinuableException, iniFile);
+	WriteIniSettingsInt(L"handleExceptionAssertionFailure", pHideOptions.handleExceptionAssertionFailure, iniFile);
+	WriteIniSettingsInt(L"handleExceptionBreakpoint", pHideOptions.handleExceptionBreakpoint, iniFile);
+	WriteIniSettingsInt(L"handleExceptionGuardPageViolation", pHideOptions.handleExceptionGuardPageViolation, iniFile);
+	WriteIniSettingsInt(L"handleExceptionWx86Breakpoint", pHideOptions.handleExceptionWx86Breakpoint, iniFile);
+
 
     //ida specific
     WriteIniSettingsInt(L"AutostartServer", pHideOptions.autostartServer, iniFile);
