@@ -705,6 +705,13 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     t_dump* dump = (t_dump*) _Plugingetvalue(window);
 
+	if (!dump)
+	{
+		MessageBoxW(hWnd, L"t_dump is NULL", L"Error", MB_ICONERROR);
+		CallWindowProc((WNDPROC)GetWindowLong(hWnd, GWL_USERDATA), hWnd, message, wParam, lParam);
+		return;
+	}
+
     if((message == WM_LBUTTONUP ||
             ((message == WM_LBUTTONDOWN || WM_MOUSEMOVE) && wParam == MK_LBUTTON)) &&
             pHideOptions.advancedInfobar
@@ -741,6 +748,12 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 DWORD startAddr = dump->sel0;
                 DWORD endAddr = dump->sel1;
 
+				if (dump->backup == 0)
+				{
+					_Dumpbackup(dump, BKUP_CREATE);
+				}
+				
+
                 BYTE nop[1] = {0x90};
             while(startAddr < endAddr) {
             _Writememory(nop, startAddr, sizeof(BYTE), MM_RESTORE | MM_DELANAL);
@@ -752,6 +765,11 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case VK_INSERT: {
                 DWORD startAddr = dump->sel0;
                 DWORD endAddr = dump->sel1;
+
+				if (dump->backup == 0)
+				{
+					_Dumpbackup(dump, BKUP_CREATE);
+				}
 
                 BYTE zero[1] = {0x00};
             while(startAddr < endAddr) {

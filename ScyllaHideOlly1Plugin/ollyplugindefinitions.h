@@ -377,5 +377,14 @@ typedef struct t_bpoint {              // Description of INT3 breakpoint
 	ulong          passcount;            // Actual pass count
 } t_bpoint;
 
+// Dumpbackup() actions.
+#define BKUP_CREATE    1               // Create or update backup copy
+#define BKUP_VIEWDATA  2               // View original data
+#define BKUP_VIEWCOPY  3               // View backup copy
+#define BKUP_LOADCOPY  4               // Read backup copy from file
+#define BKUP_SAVEDATA  5               // Save original data to file
+#define BKUP_SAVECOPY  6               // Save backup copy to file
+#define BKUP_DELETE    7               // Delete backup copy
 
 extern "C" void*   cdecl _Getsortedbyselection(t_sorted *sd,int index);
+extern "C" void    cdecl _Dumpbackup(t_dump *pd,int action);
