@@ -35,9 +35,9 @@
   citecolor    = red      % Colour of citations
 }
 
-\title{ScyllaHide v1.2 - Documentation}
+\title{ScyllaHide v1.3 - Documentation}
 \author{}
-\date{2014-08-27}
+\date{2014-09-22}
 
 \begin{document}
 
@@ -51,6 +51,63 @@
 
 \newpage
 \pagenumbering{arabic}
+
+\section{Description}
+
+ScyllaHide is an advanced open-source x64/x86 usermode Anti-Anti-Debug library. It hooks various functions in usermode to hide debugging. This tool is intended to stay in usermode (ring3). If you need kernelmode (ring0) Anti-Anti-Debug please see \href{https://bitbucket.org/mrexodia/titanhide}{TitanHide}.
+
+ScyllaHide supports various debuggers with plugins:
+\begin{itemize}
+\item OllyDbg v1 and v2 \url{http://www.ollydbg.de}
+\item x64\_dbg \url{http://x64dbg.com} or \url{https://bitbucket.org/mrexodia/x64_dbg}
+\item Hex-Rays IDA v6+ \url{https://www.hex-rays.com/products/ida/}
+\item TitanEngine v2 \url{https://bitbucket.org/mrexodia/titanengine-update} and \url{http://www.reversinglabs.com/open-source/titanengine.html}
+\end{itemize}
+
+PE x64 debugging is fully supported with plugins for x64\_dbg and IDA.
+
+Please note: ScyllaHide is not limited to these debuggers. You can use the standalone commandline version of ScyllaHide. You can inject ScyllaHide in any process debugged by any debugger.
+
+\section{Usage Information}
+\subsubsection{Standalone (debugger-independent)}
+InjectorCLI.exe "process name" "HookLibrary.dll path"
+
+For example:
+InjectorCLI.exe crackme.exe \path{C:\HookLibrary.dll}
+
+\subsubsection{OllyDbg v1}
+Copy scylla\_hide.ini, NtApiCollection.ini, HookLibraryx86.dll and ScyllaHideOlly1.dll to your specific plugins directory.
+
+\subsubsection{OllyDbg v2}
+Copy scylla\_hide.ini, NtApiCollection.ini, HookLibraryx86.dll and ScyllaHideOlly2.dll to your specific plugins directory.
+
+\subsubsection{IDA v6}
+\textbf{32-bit:}
+Copy scylla\_hide.ini, NtApiCollection.ini, HookLibraryx86.dll and ScyllaHideIDA.plw to your IDA plugins directory.
+
+\textbf{64-bit:}
+Copy scylla\_hide.ini, NtApiCollection.ini, HookLibraryx64.dll, ScyllaHideIDASrvx64.exe and ScyllaHideIDA.p64 to your IDA plugins directory.
+
+Note: \\Start ScyllaHideIDASrvx64.exe to debug 64bit applications (remotely). \\Start ScyllaHideIDASrvx86.exe to debug 32bit applications remotely.
+
+Commandline: ScyllaHideIDASrvxXX.exe "port"\\
+For example: ScyllaHideIDASrvxXX.exe 1345
+
+ScyllaHideIDASrv needs HookLibraryxXX.dll and NtApiCollection.ini
+
+\subsubsection{x64\_dbg}
+\textbf{32-bit:}
+Copy scylla\_hide.ini, NtApiCollection.ini, HookLibraryx86.dll and ScyllaHideX64DBGPlugin.dp32 to your \path{\x32\plugins\} directory.
+
+\textbf{64-bit:}
+Copy scylla\_hide.ini, NtApiCollection.ini, HookLibraryx64.dll and ScyllaHideX64DBGPlugin.dp64 to your \path{\x64\plugins\} directory.
+
+\subsubsection{TitanEngine}
+\textbf{32-bit:}
+Copy scylla\_hide.ini, NtApiCollection.ini, HookLibraryx86.dll and ScyllaHideTEx86.dll to your \path{\plugins\x86\} directory.
+
+\textbf{64-bit:}
+Copy scylla\_hide.ini, NtApiCollection.ini, HookLibraryx64.dll and ScyllaHideTEx64.dll to your \path{\plugins\x64\} directory.
 
 \section{Features}
 

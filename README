@@ -1,117 +1,21 @@
-ScyllaHide is an open-source x64/x86 usermode Anti-Anti-Debug library. It hooks 
-various functions in usermode to hide debugging. This will stay usermode! 
-For kernelmode hooks use TitanHide.
+ScyllaHide is an advanced open-source x64/x86 usermode Anti-Anti-Debug library. It hooks various functions in usermode to hide debugging. This tool is intended to stay in usermode (ring3). If you need kernelmode (ring0) Anti-Anti-Debug please see TitanHide https://bitbucket.org/mrexodia/titanhide.
 
-ScyllaHide is tested to work with VMProtect, Themida, Armadillo, Execryptor, Obsidium
-If you find any protector that still detects debugger, please tell us.
+ScyllaHide supports various debuggers with plugins:
+- OllyDbg v1 and v2 http://www.ollydbg.de
+- x64_dbg http://x64dbg.com or https://bitbucket.org/mrexodia/x64_dbg
+- Hex-Rays IDA v6+ https://www.hex-rays.com/products/ida/
+- TitanEngine v2 https://bitbucket.org/mrexodia/titanengine-update and http://www.reversinglabs.com/open-source/titanengine.html
+
+PE x64 debugging is fully supported with plugins for x64_dbg and IDA.
+
+Please note: ScyllaHide is not limited to these debuggers. You can use the standalone commandline version of ScyllaHide. You can inject ScyllaHide in any process debugged by any debugger.
+
+More information is available in the documentation: https://bitbucket.org/NtQuery/scyllahide/downloads/ScyllaHide.pdf
 
 Source code license:
 GNU General Public License v3 https://www.gnu.org/licenses/gpl-3.0.en.html
 
 ------------------------------------------------------
-
-Debugger Hiding:
-- PEB - BeingDebugged, NtGlobalFlag, Heap Flags
-- NtSetInformationThread - ThreadHideFromDebugger
-- NtQuerySystemInformation - SystemKernelDebuggerInformation, SystemProcessInformation
-- NtQueryInformationProcess - ProcessDebugFlags, ProcessDebugObjectHandle, ProcessDebugPort, ProcessBasicInformation, ProcessBreakOnTermination, ProcessHandleTracing
-- NtSetInformationProcess - ProcessBreakOnTermination, ProcessHandleTracing
-- NtQueryObject - ObjectTypesInformation, ObjectTypeInformation
-- NtYieldExecution
-- NtSetDebugFilterState
-- NtUserBuildHwndList - EnumWindows
-- NtUserFindWindowEx - FindWindowA/W, FindWindowExA/W
-- NtUserQueryWindow
-- NtClose
-- NtCreateThreadEx
-- BlockInput
-- Remove Debug Privileges
-- OutputDebugStringA - OutputDebugStringW
-
-Timing Hooks:
-- GetTickCount
-- GetTickCount64
-- GetLocalTime
-- GetSystemTime
-- NtQuerySystemTimeHook
-- NtQueryPerformanceCounter
-
-Special functions:
-- Prevent Thread creation - for protectors like Execryptor. Only use if you know what you are doing !
-- Malware RUNPE Unpacker - Hooks NtResumeThread and terminates + dumps the process created by malware
-- Kill Anti-Attach
-
-Protecting and Stealthing DRx (Hardware Breakpoints):
-- NtGetContextThread
-- NtSetContextThread
-- KiUserExceptionDispatcher (only x86)
-- NtContinue (only x86)
-
-Hooks:
-- Stealth hooks for 32-bit targets (Tested against Themida/VMProtect)
-
-Plugin specific:
-- Update-Check
-IDA:
-- DLL injection (stealth / normal)
-- IDA 64bit plugin
-- IDA 32/64bit remote server
-Olly1&2:
-- Change Olly title
-- Resume/Suspend all Threads in Thread window
-- DLL injection (stealth / normal)
-Olly1:
-- Fix PE-Bugs
-- Fix FPU Bug
-- x64 compatibility mode
-- Remove EP-Break
-- Break on TLS
-- Skip "EP outside code" message
-- Advanced CTRL+G
-- Skip "compressed code" message
-- Ignore bad PE image (WinUPack)
-- Skip "Load DLL" message
-
-------------------------------------------------------
-
-Usage standalone (debugger-independent):
-InjectorCLI.exe <process name> <HookLibrary.dll path>
-
-For example:
-InjectorCLI.exe crackme.exe C:\HookLibrary.dll
-
-------------------------------------------------------
-
-Plugins:
-- for TitanEngine: Copy HookLibrary.dll and ScyllaHide.dll to plugins\x86\ or plugins\x64\
-  (can be combined with TitanHide which does kernelmode hiding)
-- for OllyDbg v1.10: Copy HookLibraryx86.dll and ScyllaHideOlly1.dll to your plugins directory
-- for OllyDbg v2.01: Copy HookLibraryx86.dll and ScyllaHideOlly2.dll to your plugins directory
-- for IDA v6 32bit: Copy HookLibraryx86.dll, NtApiCollection.ini and ScyllaHideIDA.plw to your plugins directory
-- for IDA v6 64bit: Copy ScyllaHideIDA.p64, NtApiCollection.ini, ScyllaHideIDASrvx64.exe and HookLibraryx64.dll to your plugins directory
-- for x64dbg 32bit: Copy HookLibraryx86.dll, NtApiCollection.ini and ScyllaHideX64DBGPlugin.dp32 to your plugins directory 
-- for x64dbg 64bit: Copy HookLibraryx64.dll, NtApiCollection.ini and ScyllaHideX64DBGPlugin.dp64 to your plugins directory 
-
-ini Note:
-The default ini contains settings for this protectors:
-- VMProtect x86/x64
-- Obsidium x86
-- Themida x86
-- Armadillo x86
-
-Feel free to contribute settings for other protectors!
-
-IDA Note:
-- Start ScyllaHideIDASrvx64.exe to debug 64bit applications
-- Start ScyllaHideIDASrvx86.exe to debug remotely 32bit applications
-
-Commandline: ScyllaHideIDASrvxXX.exe <port>
-
-ScyllaHideIDASrv Note:
-- Server needs HookLibraryxXX.dll and NtApiCollection.ini
-
-------------------------------------------------------
-
 Special thanks to:
 
 - What for his POISON Assembler source code https://tuts4you.com/download.php?view.2281
@@ -119,21 +23,3 @@ Special thanks to:
 - Peter Ferrie for his PDFs http://pferrie.host22.com
 - MaRKuS-DJM for OllyAdvanced assembler source code
 - MS Spy++ style Window Finder http://www.codeproject.com/Articles/1698/MS-Spy-style-Window-Finder
-
-------------------------------------------------------
-
-ToDo:
-- x64 Exception Support
-
-------------------------------------------------------
-
-NOTE: You need to put NtApiCollection.ini in the same directory as ScyllaHide.dll 
-or the following hooks will not work: 
-NtUserQueryWindow, NtUserBuildHwndList, NtUserFindWindowEx
-
-Info about NtApiCollection.ini:
-Some Nt* WINAPI functions are not exported by a DLL, so it is necessary to get 
-the function adresses from another source. The other source is the PDB file. 
-The adresses can be resolved with this tool: https://bitbucket.org/NtQuery/pdb-getprocaddress
-It will download the PDB file from the Microsoft server to resolve the missing function adresses.
-Binaries: https://bitbucket.org/NtQuery/scyllahide/downloads/NtApiTool.rar
