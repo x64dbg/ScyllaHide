@@ -388,3 +388,42 @@ typedef struct t_bpoint {              // Description of INT3 breakpoint
 
 extern "C" void*   cdecl _Getsortedbyselection(t_sorted *sd,int index);
 extern "C" void    cdecl _Dumpbackup(t_dump *pd,int action);
+
+
+// Types of names used in name functions. Note that higher-priority types have
+// smaller identifiers!
+#define NM_NONAME      0x00            // Undefined name
+#define NM_ANYNAME     0xFF            // Name of any type
+// Names saved in the data file of module they appear.
+#define NM_PLUGCMD     0x30            // Plugin commands to execute at break
+#define NM_LABEL       0x31            // User-defined label
+#define NM_EXPORT      0x32            // Exported (global) name
+#define NM_IMPORT      0x33            // Imported name
+#define NM_LIBRARY     0x34            // Name from library or object file
+#define NM_CONST       0x35            // User-defined constant
+#define NM_COMMENT     0x36            // User-defined comment
+#define NM_LIBCOMM     0x37            // Comment from library or object file
+#define NM_BREAK       0x38            // Condition related with breakpoint
+#define NM_ARG         0x39            // Arguments decoded by analyzer
+#define NM_ANALYSE     0x3A            // Comment added by analyzer
+#define NM_BREAKEXPR   0x3B            // Expression related with breakpoint
+#define NM_BREAKEXPL   0x3C            // Explanation related with breakpoint
+#define NM_ASSUME      0x3D            // Assume function with known arguments
+#define NM_STRUCT      0x3E            // Code structure decoded by analyzer
+#define NM_CASE        0x3F            // Case description decoded by analyzer
+// Names saved in the data file of main module.
+#define NM_INSPECT     0x40            // Several last inspect expressions
+#define NM_WATCH       0x41            // Watch expressions
+#define NM_ASM         0x42            // Several last assembled strings
+#define NM_FINDASM     0x43            // Several last find assembler strings
+#define NM_LASTWATCH   0x48            // Several last watch expressions
+#define NM_SOURCE      0x49            // Several last source search strings
+#define NM_REFTXT      0x4A            // Several last ref text search strings
+#define NM_GOTO        0x4B            // Several last expressions to follow
+#define NM_GOTODUMP    0x4C            // Several expressions to follow in Dump
+#define NM_TRPAUSE     0x4D            // Several expressions to pause trace
+// Pseudonames.
+#define NM_IMCALL      0xFE            // Intermodular call
+
+#define NMHISTORY      0x40            // Converts NM_xxx to type of init list
+extern "C" int     cdecl _Insertname(ulong addr,int type,char *name);

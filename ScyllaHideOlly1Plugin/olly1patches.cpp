@@ -257,6 +257,7 @@ void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage)
     BYTE memory[0x1000] = {0};
     IMAGE_TLS_DIRECTORY tlsDir = {0};
     PVOID callbacks[64] = {0};
+	CHAR label[100] = {0};
 
     HANDLE hProcess = OpenProcess(PROCESS_VM_READ, 0, dwProcessId);
 
@@ -287,6 +288,10 @@ void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage)
                     {
                         _Message(0, "[ScyllaHide] TLS callback found: Index %d Address %X", i, callbacks[i]);
                         _Tempbreakpoint((DWORD)callbacks[i], TY_ONESHOT);
+
+						sprintf(label, "TLS_CALLBACK_%d", i+1);
+						_Insertname((DWORD)callbacks[i], NM_LABEL, label);
+						_Insertname((DWORD)callbacks[i], NM_COMMENT, label);
                     }
                     else
                     {
