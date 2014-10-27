@@ -700,6 +700,21 @@ void hookOllyWindowProcs()
     SetWindowLong(hDasm, GWL_USERDATA, hOllyDasmProc);
 }
 
+void memsetRemoteMemory(DWORD startAddress, DWORD endAddress, BYTE byte)
+{
+	if (endAddress > startAddress)
+	{
+		DWORD len = endAddress - startAddress;
+		BYTE* tempmem = (BYTE*)malloc(len);
+		if (tempmem)
+		{
+			memset(tempmem,byte,len);
+			_Writememory(tempmem, startAddress, len, MM_RESTORE | MM_DELANAL);
+			free(tempmem);
+		}
+	}
+}
+
 void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     int window = 0;
@@ -757,13 +772,8 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					_Dumpbackup(dump, BKUP_CREATE);
 				}
-				
-
-                BYTE nop[1] = {0x90};
-            while(startAddr < endAddr) {
-            _Writememory(nop, startAddr, sizeof(BYTE), MM_RESTORE | MM_DELANAL);
-                startAddr++;
-            }
+			
+				memsetRemoteMemory(startAddr, endAddr, 0x90);
 
         break;
         }
@@ -776,11 +786,7 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					_Dumpbackup(dump, BKUP_CREATE);
 				}
 
-                BYTE zero[1] = {0x00};
-            while(startAddr < endAddr) {
-            _Writememory(zero, startAddr, sizeof(BYTE), MM_RESTORE | MM_DELANAL);
-                startAddr++;
-            }
+				memsetRemoteMemory(startAddr, endAddr, 0x00);
         break;
         }
         default: {

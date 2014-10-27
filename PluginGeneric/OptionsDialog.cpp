@@ -19,6 +19,9 @@
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\ScyllaHideIDAProPlugin\IdaServerClient.h"
 #include "..\PluginGeneric\AttachDialog.h"
+
+#define IDC_EXCEPTION_ALL 123432
+#define IDC_SELECT_EXCEPTIONS 23949
 #elif X64DBG
 #include "..\ScyllaHideX64DBGPlugin\bridgemain.h"
 #include "..\ScyllaHideX64DBGPlugin\resource.h"
@@ -46,8 +49,7 @@ void HandleGuiException(HWND hwnd);
 void ShowAbout(HWND hWnd)
 {
     MessageBoxA(hWnd,
-                "ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_A"\n"
-                "(Anti-Anti-Debug in usermode)\n\n"
+                "ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_A" ("__DATE__")\n\n"
                 "Copyright (C) 2014 Aguila / cypher\n\n"
                 "Special thanks to:\n"
                 "- What for his POISON assembler source code\n"
@@ -995,6 +997,13 @@ void HandleGuiException(HWND hwnd)
 			pHideOptions.handleExceptionPrint &&
 			pHideOptions.handleExceptionRip
 			)
+#endif
+#ifdef __IDP__
+			if (pHideOptions.handleExceptionNoncontinuableException &&
+				pHideOptions.handleExceptionPrint &&
+				pHideOptions.handleExceptionAssertionFailure &&
+				pHideOptions.handleExceptionRip
+				)
 #endif
 		{
 			CheckDlgButton(hwnd, IDC_EXCEPTION_ALL, BST_CHECKED);
