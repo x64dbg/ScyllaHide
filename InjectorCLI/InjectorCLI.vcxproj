@@ -88,6 +88,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -161,6 +162,7 @@
     <ClCompile Include="..\distorm\prefix.c" />
     <ClCompile Include="..\distorm\textdefs.c" />
     <ClCompile Include="..\distorm\wstring.c" />
+    <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp" />
     <ClCompile Include="ApplyHooking.cpp" />
     <ClCompile Include="DynamicMapping.cpp" />
     <ClCompile Include="CliMain.cpp" />
@@ -187,6 +189,13 @@
     <ClInclude Include="ReadNtConfig.h" />
     <ClInclude Include="RemoteHook.h" />
     <ClInclude Include="RemotePebHider.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Icon.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\PluginGeneric\ghost.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

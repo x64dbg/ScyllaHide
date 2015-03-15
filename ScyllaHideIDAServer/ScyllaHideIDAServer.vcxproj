@@ -190,6 +190,13 @@
     <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
     <ClInclude Include="idaserver.h" />
     <ClInclude Include="IdaServerExchange.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Icon.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\PluginGeneric\ghost.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
