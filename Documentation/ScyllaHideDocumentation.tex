@@ -54,7 +54,7 @@
 
 \section{Description}
 
-ScyllaHide is an advanced open-source x64/x86 usermode Anti-Anti-Debug library. It hooks various functions in usermode to hide debugging. This tool is intended to stay in usermode (ring3). If you need kernelmode (ring0) Anti-Anti-Debug please see \href{https://bitbucket.org/mrexodia/titanhide}{TitanHide}.
+ScyllaHide is an advanced open-source x64/x86 usermode Anti-Anti-Debug library. It hooks various functions in usermode to hide debugging. This tool is intended to stay in usermode (ring3). If you need kernelmode (ring0) Anti-Anti-Debug please see \href{https://bitbucket.org/mrexodia/titanhide}{TitanHide}. ScyllaHide hooks as stealth as possible in usermode and the goal is to not interfere any other functionality.
 
 ScyllaHide supports various debuggers with plugins:
 \begin{itemize}
@@ -143,7 +143,7 @@ A very important option. Various PROCESSINFOCLASS values can be used to detect a
 \item ProcessBreakOnTermination (29): Please see \textit{NtSetInformationProcess} in Section~\ref{sec:NtSetInformationProcess_section}.
 \item ProcessHandleTracing (32): Please see \textit{NtSetInformationProcess} in Section~\ref{sec:NtSetInformationProcess_section}.
 \end{itemize}
-A lot of protectors use this to detect debuggers. The windows API \textit{CheckRemoteDebuggerPresent} uses \textit{NtQueryInformationProcess} internally.
+A lot of protectors use this to detect debuggers. The windows API \textit{CheckRemoteDebuggerPresent} uses \textit{NtQueryInformationProcess} with ProcessDebugPort internally.
 
 \subsubsection{NtQueryObject}
 The OBJECT\_INFORMATION\_CLASS ObjectTypesInformation (3) and ObjectTypeInformation (2) can be used to detect debuggers. ScyllaHide filters DebugObject references.
@@ -305,6 +305,7 @@ This option fixes various OllyDbg bugs:
 \item Format string (sprintf) bug, CVE-2004-0733 \url{http://www.cvedetails.com/cve/CVE-2004-0733/}
 \item NT Symbols path bug, patch by blabberer \url{http://www.woodmann.com/forum/showthread.php?8460-Debug-symbols-information-symbol-server-setup&p=56246&viewfull=1#post56246}
 \item Faulty handle bug. Sometimes Olly does not terminate and this error appears "Operating system reports error ERROR\_ACCESS\_DENIED"
+\item System DLL detection on Windows x64. Olly thinks that the system dlls are located at C:\textbackslash{}windows\textbackslash{}system32 but on Windows x64 they are at C:\textbackslash{}windows\textbackslash{}SysWOW64. The result is that various Olly features will not work properly for example "Execute till user code".
 \end{itemize}
 
 \subsubsection{x64 single-step fix}
@@ -351,6 +352,10 @@ OllyDbg has a problem with several exceptions. The exceptions can be triggered i
 \end{itemize}
 
 For example, EXECryptor uses STATUS\_INVALID\_LOCK\_SEQUENCE to defeat OllyDbg. Obsidium uses STATUS\_ILLEGAL\_INSTRUCTION.
+
+\subsubsection{Detach Process}
+Olly v1 does not support detaching from a process. ScyllaHide implements a "detach process" feature. All user software breakpoints will be cleared prior to detaching the process. Olly will be terminated, but the process will be alive.
+
 
 \subsection{OllyDbg v2 Specific}
 
@@ -456,6 +461,13 @@ The error "NT APIs missing" appears, how to solve it?
 \end{center}
 
 \section{Version History}
+
+Version 1.4
+\begin{itemize}
+\item All Plugins: Cool ghost icon
+\item Olly v1 Plugin: Fix bug - system dll detection
+\item Olly v1 Plugin: Detach from process feature
+\end{itemize}
 
 Version 1.3
 \begin{itemize}
