@@ -427,3 +427,15 @@ extern "C" void    cdecl _Dumpbackup(t_dump *pd,int action);
 
 #define NMHISTORY      0x40            // Converts NM_xxx to type of init list
 extern "C" int     cdecl _Insertname(ulong addr,int type,char *name);
+
+
+typedef enum t_status {                // Thread/process status
+	STAT_NONE=0,                         // Thread/process is empty
+	STAT_STOPPED,                        // Thread/process suspended
+	STAT_EVENT,                          // Processing debug event, process paused
+	STAT_RUNNING,                        // Thread/process running
+	STAT_FINISHED,                       // Process finished
+	STAT_CLOSING                         // Process is requested to terminate
+} t_status;
+
+extern "C" t_status cdecl _Getstatus(void);
