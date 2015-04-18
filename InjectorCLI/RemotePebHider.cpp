@@ -163,7 +163,7 @@ bool FixStartUpInfo( PEB_CURRENT* myPEB, HANDLE hProcess )
 	return retVal;
 }
 
-void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase)
+void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase, bool isDefaultHeap)
 {
 	void * heapFlagsAddress = 0;
 	DWORD heapFlags = 0;
@@ -179,7 +179,16 @@ void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase)
 
 	if (ReadProcessMemory(hProcess, heapFlagsAddress, &heapFlags, sizeof(DWORD), 0))
 	{
-		heapFlags &= HEAP_GROWABLE;
+		if (isDefaultHeap)
+		{
+			heapFlags &= HEAP_GROWABLE;
+		}
+		else
+		{
+			//user defined heaps with user defined flags
+			//flags from RtlCreateHeap/HeapCreate
+			heapFlags &= (HEAP_GROWABLE | HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_CREATE_ENABLE_EXECUTE);
+		}
 		WriteProcessMemory(hProcess, heapFlagsAddress, &heapFlags, sizeof(DWORD), 0);
 	}
 	if (ReadProcessMemory(hProcess, heapForceFlagsAddress, &heapForceFlags, sizeof(DWORD), 0))
@@ -192,18 +201,42 @@ void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase)
 void FixPebBeingDebugged(HANDLE hProcess, bool SetToNull)
 {
 	PEB_CURRENT myPEB = { 0 };
+#ifndef _WIN64
+	PEB64 myPEB64 = { 0 };
+	void * AddressOfPEB64 = GetPEBLocation64(hProcess);
+#endif
 	void * AddressOfPEB = GetPEBLocation(hProcess);
 	ReadProcessMemory(hProcess, AddressOfPEB, (void*)&myPEB, 0x10, 0);
+
+#ifndef _WIN64
+	if (AddressOfPEB64)
+	{
+		ReadProcessMemory(hProcess, AddressOfPEB64, (void*)&myPEB64, 0x10, 0);
+	}
+#endif
 
 	if (SetToNull)
 	{
 		myPEB.BeingDebugged = FALSE;
+#ifndef _WIN64
+		myPEB64.BeingDebugged = FALSE;
+#endif
 	}
 	else
 	{
 		myPEB.BeingDebugged = TRUE;
+#ifndef _WIN64
+		myPEB64.BeingDebugged = TRUE;
+#endif
 	}
 	WriteProcessMemory(hProcess, AddressOfPEB, (void*)&myPEB, 0x10, 0);
+
+#ifndef _WIN64
+	if (AddressOfPEB64)
+	{
+		WriteProcessMemory(hProcess, AddressOfPEB64, (void*)&myPEB64, 0x10, 0);
+	}
+#endif
 }
 
 bool FixPebInProcess(HANDLE hProcess, DWORD EnableFlags)
@@ -243,17 +276,20 @@ bool FixPebInProcess(HANDLE hProcess, DWORD EnableFlags)
 
 		if (EnableFlags & PEB_PATCH_HeapFlags)
 		{
-			FixHeapFlag(hProcess, myPEB.ProcessHeap);
-			if (myPEB.NumberOfHeaps > 0)
+			//handle to the default heap of the calling process
+			FixHeapFlag(hProcess, myPEB.ProcessHeap, true);
+
+			if (myPEB.NumberOfHeaps > 1) //first is always default heap -> myPEB.ProcessHeap
 			{
 				PVOID * heapArray = (PVOID *)calloc(myPEB.NumberOfHeaps, sizeof(PVOID));
 				if (heapArray)
 				{
 					ReadProcessMemory(hProcess, (PVOID)myPEB.ProcessHeaps, heapArray, myPEB.NumberOfHeaps*sizeof(PVOID), 0);
 
-					for (DWORD i = 0; i < myPEB.NumberOfHeaps; i++)
+					//skip index 0 same as default heap myPEB.ProcessHeap
+					for (DWORD i = 1; i < myPEB.NumberOfHeaps; i++)
 					{
-						FixHeapFlag(hProcess, (DWORD_PTR)heapArray[i]);
+						FixHeapFlag(hProcess, (DWORD_PTR)heapArray[i], false);
 					}
 				}
 				free(heapArray);
