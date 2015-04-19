@@ -20,11 +20,11 @@
 #include "..\ScyllaHideIDAProPlugin\IdaServerClient.h"
 #include "..\PluginGeneric\AttachDialog.h"
 
-#define IDC_EXCEPTION_ALL 123432
-#define IDC_SELECT_EXCEPTIONS 23949
 #elif X64DBG
 #include "..\ScyllaHideX64DBGPlugin\bridgemain.h"
 #include "..\ScyllaHideX64DBGPlugin\resource.h"
+#define IDC_EXCEPTION_ALL 123432
+#define IDC_SELECT_EXCEPTIONS 23949
 #endif
 
 extern WCHAR CurrentProfile[MAX_SECTION_NAME];
@@ -1005,6 +1005,9 @@ void HandleGuiException(HWND hwnd)
 				pHideOptions.handleExceptionRip
 				)
 #endif
+#ifdef X64DBG
+		if (1)
+#endif
 		{
 			CheckDlgButton(hwnd, IDC_EXCEPTION_ALL, BST_CHECKED);
 		}
@@ -1101,7 +1104,7 @@ LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LP
 		GetClientRect(hwnd, &rect);
 		height = rect.bottom;
 		GetWindowRect(hwnd, &rect);
-		height = rect.bottom - rect.top - height + (EXCEPTION_WINDOW_BASE_HEIGHT + (numOfExceptions*(HEIGHT_OF_EXCEPTION_CHECKBOX+5)));
+		height = rect.bottom - rect.top - height + (EXCEPTION_WINDOW_BASE_HEIGHT + (numOfExceptions*(HEIGHT_OF_EXCEPTION_CHECKBOX+5))) + 5;
 		SetWindowPos(hwnd, NULL, 0, 0, rect.right - rect.left, height, SWP_NOMOVE | SWP_NOZORDER);
 
 		HFONT hFont;
@@ -1144,9 +1147,9 @@ LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LP
 		if (pHideOptions.handleExceptionWx86Breakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Wx86Breakpoint, BST_CHECKED);
 		if (pHideOptions.handleExceptionRip) CheckDlgButton(hwnd, ID_EXCEPTION_RIP, BST_CHECKED);
 
-		control = CreateWindowExW(0, L"Button", L"Apply", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, (numOfExceptions)*20 + 1, 100, 20, hwnd, (HMENU)ID_EXCEPTION_APPLY, hInst, NULL);
+		control = CreateWindowExW(0, L"Button", L"Apply", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, (numOfExceptions)*20 + 1, 100, 25, hwnd, (HMENU)ID_EXCEPTION_APPLY, hInst, NULL);
 		SendMessage(control,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(1,0));
-		control = CreateWindowExW(0, L"Button", L"Cancel", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,1, (numOfExceptions+1)*20 + 1, 100, 20, hwnd, (HMENU)ID_EXCEPTION_CANCEL, hInst, NULL);
+		control = CreateWindowExW(0, L"Button", L"Cancel", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,1, (numOfExceptions+1)*20 + 5, 100, 25, hwnd, (HMENU)ID_EXCEPTION_CANCEL, hInst, NULL);
 		SendMessage(control,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(1,0));
 
 		//DeleteObject(hFont);
