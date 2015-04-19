@@ -68,7 +68,7 @@ void ReadNtApiInformation()
 
     if (!DllExchangeLoader.NtUserBuildHwndListRVA || !DllExchangeLoader.NtUserFindWindowExRVA || !DllExchangeLoader.NtUserQueryWindowRVA)
     {
-        wsprintfW(text, L"NT APIs missing\r\nsection\r\n%s\r\nfile\r\n%s", OsId, NtApiIniPath);
+        wsprintfW(text, L"NtUser* API Addresses missing!\r\nSection: %s\r\nFile: %s\r\n\r\nPlease read the documentation to fix this problem! https://bitbucket.org/NtQuery/scyllahide/downloads/ScyllaHide.pdf", OsId, NtApiIniPath);
         MessageBoxW(0, text, L"ERROR", MB_ICONERROR);
     }
 }

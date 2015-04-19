@@ -3,7 +3,7 @@ ScyllaHide is an advanced open-source x64/x86 usermode Anti-Anti-Debug library. 
 ScyllaHide supports various debuggers with plugins:
 
 - OllyDbg v1 and v2 http://www.ollydbg.de
-- x64_dbg http://x64dbg.com or https://bitbucket.org/mrexodia/x64_dbg
+- x64_dbg http://x64dbg.com or https://github.com/x64dbg/x64dbg
 - Hex-Rays IDA v6+ https://www.hex-rays.com/products/ida/
 - TitanEngine v2 https://bitbucket.org/mrexodia/titanengine-update and http://www.reversinglabs.com/open-source/titanengine.html
 

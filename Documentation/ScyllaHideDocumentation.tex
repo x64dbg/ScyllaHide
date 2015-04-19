@@ -35,9 +35,9 @@
   citecolor    = red      % Colour of citations
 }
 
-\title{ScyllaHide v1.3 - Documentation}
+\title{ScyllaHide v1.4 - Documentation}
 \author{}
-\date{2014-09-22}
+\date{2015-04-19}
 
 \begin{document}
 
@@ -59,7 +59,7 @@ ScyllaHide is an advanced open-source x64/x86 usermode Anti-Anti-Debug library. 
 ScyllaHide supports various debuggers with plugins:
 \begin{itemize}
 \item OllyDbg v1 and v2 \url{http://www.ollydbg.de}
-\item x64\_dbg \url{http://x64dbg.com} or \url{https://bitbucket.org/mrexodia/x64_dbg}
+\item x64\_dbg \url{http://x64dbg.com} or \url{https://github.com/x64dbg/x64dbg}
 \item Hex-Rays IDA v6+ \url{https://www.hex-rays.com/products/ida/}
 \item TitanEngine v2 \url{https://bitbucket.org/mrexodia/titanengine-update} and \url{http://www.reversinglabs.com/open-source/titanengine.html}
 \end{itemize}
@@ -354,7 +354,7 @@ OllyDbg has a problem with several exceptions. The exceptions can be triggered i
 For example, EXECryptor uses STATUS\_INVALID\_LOCK\_SEQUENCE to defeat OllyDbg. Obsidium uses STATUS\_ILLEGAL\_INSTRUCTION.
 
 \subsubsection{Detach Process}
-Olly v1 does not support detaching from a process. ScyllaHide implements a "detach process" feature. All user software breakpoints will be cleared prior to detaching the process. Olly will be terminated, but the process will be alive.
+Olly v1 does not support detaching from a process. ScyllaHide implements a "detach process" feature. All user software breakpoints will be cleared prior to detaching the process. Olly is terminated, but the process will be alive.
 
 
 \subsection{OllyDbg v2 Specific}
@@ -464,6 +464,7 @@ The error "NT APIs missing" appears, how to solve it?
 
 Version 1.4
 \begin{itemize}
+\item Fixed bug with PEB heap flags, bug found by kao \url{http://lifeinhex.com/net-scyllahide-and-heap_create_enable_execute/}
 \item All Plugins: Cool ghost icon
 \item Olly v1 Plugin: Fix bug - system dll detection
 \item Olly v1 Plugin: Detach from process feature
