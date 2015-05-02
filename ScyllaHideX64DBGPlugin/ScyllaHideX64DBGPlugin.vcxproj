@@ -71,7 +71,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)\plugins\</OutDir>
-    <TargetExt>.dp64</TargetExt>
+    <TargetExt>.dp32</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -134,7 +134,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>x32_dbg.lib;x32_bridge.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>x32dbg.lib;x32bridge.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)ntdll;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -155,7 +155,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>x64_dbg.lib;x64_bridge.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>x64dbg.lib;x64bridge.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)ntdll;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -215,6 +215,7 @@
     <None Include="..\PluginGeneric\findere.bmp" />
     <None Include="..\PluginGeneric\finderf.bmp" />
     <None Include="..\PluginGeneric\searchwindow.cur" />
+    <None Include="Ghost-icon.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

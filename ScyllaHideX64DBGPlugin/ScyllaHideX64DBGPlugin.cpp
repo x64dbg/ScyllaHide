@@ -45,6 +45,7 @@ HWND hwndDlg;
 int hMenu;
 DWORD ProcessId = 0;
 bool bHooked = false;
+ICONDATA mainIconData = {0};
 
 DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct)
 {
@@ -161,6 +162,36 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
     _plugin_menuaddseparator(hMenu);
     _plugin_menuaddentry(hMenu, MENU_UPDATECHECK, "&Update-Check");
     _plugin_menuaddentry(hMenu, MENU_ABOUT, "&About");
+
+	//load png
+
+	HRSRC hResPng = FindResourceW(hinst, MAKEINTRESOURCEW(IDB_GHOSTPNG), L"PNG");
+	if (hResPng != NULL)
+	{
+		HGLOBAL hResLoad = LoadResource(hinst, hResPng);
+		if (hResLoad != NULL)
+		{
+			mainIconData.data = LockResource(hResLoad);
+			mainIconData.size = SizeofResource(hinst, hResPng);
+
+			if (mainIconData.data != NULL && mainIconData.size != 0)
+			{
+				_plugin_menuseticon(hMenu, (const ICONDATA *)&mainIconData);
+			}
+			else
+			{
+				_plugin_logprintf("Warning: Cannot lock ScyllaHide icon!\n");
+			}
+		}
+		else
+		{
+			_plugin_logprintf("Warning: Cannot load ScyllaHide icon!\n");
+		}
+	}
+	else
+	{
+		_plugin_logprintf("Warning: Cannot find ScyllaHide icon!\n");
+	}
 }
 
 void cbDebugloop(CBTYPE cbType, void* callbackInfo)
