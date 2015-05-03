@@ -45,16 +45,22 @@ extern _InstNode Table_0F, Table_0F_38, Table_0F_3A;
  * The inst_lookup will return on of these two instructions according to the specified decoding mode.
  * ARPL or MOVSXD on 64 bits is one byte instruction at index 0x63.
  */
-extern _InstInfo II_ARPL;
 extern _InstInfo II_MOVSXD;
 
 /*
  * The NOP instruction can be prefixed by REX in 64bits, therefore we have to decide in runtime whether it's an XCHG or NOP instruction.
- * If 0x90 is prefixed by a useable REX it will become XCHG, otherwise it will become a NOP.
+ * If 0x90 is prefixed by a usable REX it will become XCHG, otherwise it will become a NOP.
  * Also note that if it's prefixed by 0xf3, it becomes a Pause.
  */
 extern _InstInfo II_NOP;
 extern _InstInfo II_PAUSE;
+
+/*
+ * RDRAND and VMPTRLD share same 2.3 bytes opcode, and then alternates on the MOD bits,
+ * RDRAND is OT_FULL_REG while VMPTRLD is OT_MEM, and there's no such mixed type.
+ * So a hack into the inst_lookup was added for this decision, the DB isn't flexible enough. :(
+ */
+extern _InstInfo II_RDRAND;
 
 /*
  * Used for letting the extract operand know the type of operands without knowing the
@@ -63,7 +69,7 @@ extern _InstInfo II_PAUSE;
  */
 extern _InstInfo II_3DNOW;
 
-/* Helper tables for pesudo compare mnemonics. */
+/* Helper tables for pseudo compare mnemonics. */
 extern uint16_t CmpMnemonicOffsets[8]; /* SSE */
 extern uint16_t VCmpMnemonicOffsets[32]; /* AVX */
 

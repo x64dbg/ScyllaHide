@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include "instructions.h"
 
 
-extern uint16_t _REGISTERTORCLASS[];
+extern uint32_t _REGISTERTORCLASS[];
 
 int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
                      _iflags instFlags, _OpType type, _OperandNumberType opNum,

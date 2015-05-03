@@ -42,7 +42,7 @@ When you read a byte and have to decide if it's enough or you should read more b
 It's really fast because you POP the instruction info in top 3 iterates on the DB, because an instruction can be formed from two bytes + 3 bits reg from the ModR/M byte.
 For a simple explanation, check this out:
 http://www.csse.monash.edu.au/~lloyd/tildeAlgDS/Tree/Trie/
-Futher reading: http://en.wikipedia.org/wiki/Trie
+Further reading: http://en.wikipedia.org/wiki/Trie
 
 The first GATE (array you read off a trie data structure), as I call them, is statically allocated by the compiler.
 The second and third gates if used are being allocated dynamically by the instructions-insertion functionality.
@@ -86,9 +86,9 @@ But if you read 1, you know that you go to an instruction (in this case, a RET).
 That's why there's an Instruction-Node structure, it tells you whether you got to an instruction or another list
 so you should keep on reading byte).
 
-In Intel, you could go through 4 gates at top, because there're instructions which are built from 2 bytes and another smaller list
+In Intel, you could go through 4 gates at top, because there are instructions which are built from 2 bytes and another smaller list
 for the REG part, or newest SSE4 instructions which use 4 bytes for opcode.
-Therefore, Intel's first gate is 256 long, and other gates are 256 (/72) or 8 long, yes, it costs pretty much alot of memory
+Therefore, Intel's first gate is 256 long, and other gates are 256 (/72) or 8 long, yes, it costs pretty much a lot of memory
 for non-used defined instructions, but I think that it still rocks.
 */
 
@@ -139,7 +139,7 @@ static _InstInfo* inst_get_info(_InstNode in, int index)
  * Now, it's a mandatory prefix and NOT an operand size one.
  * 66480f2dc0 db 0x48; CVTPD2PI XMM0, XMM0
  * Although this instruction doesn't require a REX.W, it just shows, that even if it did - it doesn't matter.
- * REX.W is dropped because it's not requried, but the decode function disabled the operand size even so.
+ * REX.W is dropped because it's not required, but the decode function disabled the operand size even so.
  */
 static _InstInfo* inst_lookup_prefixed(_InstNode in, _PrefixState* ps)
 {
@@ -228,7 +228,7 @@ static _InstInfo* inst_vex_mod_lookup(_CodeInfo* ci, _InstNode in, _InstInfo* ii
 		/* Make a second lookup for this special instruction. */
 		return inst_get_info(in, index);
 	}
-	/* Return the original one, in case we didn't find a stuited instruction. */
+	/* Return the original one, in case we didn't find a suited instruction. */
 	return ii;
 }
 
@@ -423,7 +423,7 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 		return instType == INT_INFO ? &InstInfos[INST_NODE_INDEX(in)] : (_InstInfo*)&InstInfosEx[INST_NODE_INDEX(in)];
 	}
 
-	/* Read second byte, still doens't mean all of its bits are used (I.E: ModRM). */
+	/* Read second byte, still doesn't mean all of its bits are used (I.E: ModRM). */
 	ci->code += 1;
 	ci->codeLen -= 1;
 	if (ci->codeLen < 0) return NULL;
@@ -434,7 +434,7 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 
 	/* Try single byte instruction + reg byte OR one whole byte (OCST_1dBYTES). */
 	if (instType == INT_LIST_DIVIDED) {
-		/* OCST_1dBYTES is relatively simple to OCST_2dBYTES, since it's really divided at 0xc0. */
+		/* OCST_1dBYTES is relatively similar to OCST_2dBYTES, since it's really divided at 0xc0. */
 		if (tmpIndex1 < INST_DIVIDED_MODRM) {
 			/* An instruction which requires a ModR/M byte. Thus it's 1.3 bytes long instruction. */
 			tmpIndex1 = (tmpIndex1 >> 3) & 7; /* Isolate the 3 REG/OPCODE bits. */
@@ -443,7 +443,7 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 			 * Divided instructions can't be in the range of 0x8-0xc0.
 			 * That's because 0-8 are used for 3 bits group.
 			 * And 0xc0-0xff are used for not-divided instruction.
-			 * So the inbetween range is omitted, thus saving some more place in the tables.
+			 * So the in between range is omitted, thus saving some more place in the tables.
 			 */
 			tmpIndex1 -= INST_DIVIDED_MODRM - 8;
 		}
@@ -484,14 +484,14 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 			return instType == INT_INFO ? &InstInfos[INST_NODE_INDEX(in)] : (_InstInfo*)&InstInfosEx[INST_NODE_INDEX(in)];
 
 		/*
-		 * 2 bytes + mandatory perfix.
+		 * 2 bytes + mandatory prefix.
 		 * Mandatory prefixes can be anywhere in the prefixes.
 		 * There cannot be more than one mandatory prefix, unless it's a normal operand size prefix.
 		 */
 		if (instType == INT_LIST_PREFIXED) return inst_lookup_prefixed(in, ps);
 	}
 
-	/* Read third byte, still doens't mean all of its bits are used (I.E: ModRM). */
+	/* Read third byte, still doesn't mean all of its bits are used (I.E: ModRM). */
 	ci->code += 1;
 	ci->codeLen -= 1;
 	if (ci->codeLen < 0) return NULL;
@@ -507,7 +507,10 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 			return instType == INT_INFO ? &InstInfos[INST_NODE_INDEX(in)] : (_InstInfo*)&InstInfosEx[INST_NODE_INDEX(in)];
 
 		/* It has to be a prefixed table then. */
-		return inst_lookup_prefixed(in, ps);
+		ii = inst_lookup_prefixed(in, ps);
+		/* RDRAND and VMPTRLD share same 2.3 bytes opcode, and alternate on the MOD bits. See insts.h for more info. */
+		if ((ii != NULL) && (ii->opcodeId == I_VMPTRLD) && (tmpIndex1 >= INST_DIVIDED_MODRM)) return &II_RDRAND;
+		return ii;
 	}
 
 	/* Try 2 bytes + divided range (OCST_2dBYTES). */

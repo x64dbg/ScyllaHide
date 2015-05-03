@@ -29,11 +29,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 
 /* Maps a register to its register-class mask. */
-uint16_t _REGISTERTORCLASS[] = /* Based on _RegisterType enumeration! */
-{RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, 0, 0, 0, 0, 0, 0, 0, 0,
- RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, 0, 0, 0, 0, 0, 0, 0, 0,
- RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, 0, 0, 0, 0, 0, 0, 0, 0,
- RM_AX, RM_CX, RM_DX, RM_BX, RM_AX, RM_CX, RM_DX, RM_BX, 0, 0, 0, 0, 0, 0, 0, 0,
+uint32_t _REGISTERTORCLASS[] = /* Based on _RegisterType enumeration! */
+{RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, RM_R8, RM_R9, RM_R10, RM_R11, RM_R12, RM_R13, RM_R14, RM_R15,
+ RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, RM_R8, RM_R9, RM_R10, RM_R11, RM_R12, RM_R13, RM_R14, RM_R15,
+ RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, RM_R8, RM_R9, RM_R10, RM_R11, RM_R12, RM_R13, RM_R14, RM_R15,
+ RM_AX, RM_CX, RM_DX, RM_BX, RM_AX, RM_CX, RM_DX, RM_BX, RM_R8, RM_R9, RM_R10, RM_R11, RM_R12, RM_R13, RM_R14, RM_R15,
  RM_SP, RM_BP, RM_SI, RM_DI,
  0, 0, 0, 0, 0, 0,
  0,
@@ -728,8 +728,12 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 		case OT_IMM32:
 			op->type = O_IMM;
 			if (ci->dt == Decode64Bits) {
-				/* Imm32 is sign extended to 64 bits! */
-				op->size = 64;
+				/*
+				 * Imm32 is sign extended to 64 bits!
+				 * Originally the op size was 64, but later was changed to reflect real size of imm.
+				 */
+				op->size = 32;
+				/* Use this as an indicator that it should be signed extended. */
 				di->flags |= FLAG_IMM_SIGNED;
 				if (!read_stream_safe_sint(ci, &di->imm.sqword, sizeof(int32_t))) return FALSE;
 			} else {
@@ -779,7 +783,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			if (ps->prefixExtType) {
 				/*
 				 * If REX prefix is valid then we will have to use low bytes.
-				 * This is a PASSIVE behaviour changer of REX prefix, it affects operands even if its value is 0x40 !
+				 * This is a PASSIVE behavior changer of REX prefix, it affects operands even if its value is 0x40 !
 				 */
 				ps->usedPrefixes |= INST_PRE_REX;
 				op->index = (uint8_t)operands_fix_8bit_rex_base(reg + ((vrex & PREFIX_EX_R) ? EX_GPR_BASE : 0));

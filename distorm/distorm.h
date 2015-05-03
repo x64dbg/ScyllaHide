@@ -91,10 +91,10 @@ typedef unsigned __int8		uint8_t;
 
 /*
  * Operand Size or Adderss size are stored inside the flags:
- * 0 - 16 bits
- * 1 - 32 bits
- * 2 - 64 bits
- * 3 - reserved
+ * 00 - 16 bits
+ * 01 - 32 bits
+ * 10 - 64 bits
+ * 11 - reserved
  *
  * If you call these set-macros more than once, you will have to clean the bits before doing so.
  */
@@ -104,6 +104,8 @@ typedef unsigned __int8		uint8_t;
 #define FLAG_GET_ADDRSIZE(flags) (((flags) >> 10) & 3)
 /* To get the LOCK/REPNZ/REP prefixes. */
 #define FLAG_GET_PREFIX(flags) ((flags) & 7)
+/* Indicates whether the instruction is privileged. */
+#define FLAG_GET_PRIVILEGED(flags) (((flags) & FLAG_PRIVILEGED_INSTRUCTION) != 0)
 
 /*
  * Macros to extract segment registers from 'segment':
@@ -179,7 +181,7 @@ typedef struct {
 	*/
 	uint8_t index;
 
-	/* Size of:
+	/* Size in bits of:
 		O_REG: register
 		O_IMM: instruction.imm
 		O_IMM1: instruction.imm.ex.i1
@@ -206,12 +208,17 @@ typedef struct {
 #define FLAG_HINT_TAKEN (1 << 3)
 /* Indicates there is a hint non-taken for Jcc instructions only. */
 #define FLAG_HINT_NOT_TAKEN (1 << 4)
-/* The Imm value is signed extended. */
+/* The Imm value is signed extended (E.G in 64 bit decoding mode, a 32 bit imm is usually sign extended into 64 bit imm). */
 #define FLAG_IMM_SIGNED (1 << 5)
 /* The destination operand is writable. */
 #define FLAG_DST_WR (1 << 6)
 /* The instruction uses RIP-relative indirection. */
 #define FLAG_RIP_RELATIVE (1 << 7)
+
+/* See flag FLAG_GET_XXX macros above. */
+
+/* The instruction is privileged and can only be used from Ring0. */
+#define FLAG_PRIVILEGED_INSTRUCTION (1 << 15)
 
 /* No register was defined. */
 #define R_NONE ((uint8_t)-1)
@@ -243,12 +250,12 @@ typedef struct {
 	/* Unused prefixes mask, for each bit that is set that prefix is not used (LSB is byte [addr + 0]). */
 	uint16_t unusedPrefixesMask;
 	/* Mask of registers that were used in the operands, only used for quick look up, in order to know *some* operand uses that register class. */
-	uint16_t usedRegistersMask;
+	uint32_t usedRegistersMask;
 	/* ID of opcode in the global opcode table. Use for mnemonic look up. */
 	uint16_t opcode;
 	/* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
 	_Operand ops[OPERANDS_NO];
-	/* Size of the whole instruction. */
+	/* Size of the whole instruction in bytes. */
 	uint8_t size;
 	/* Segment information of memory indirection, default segment, or overriden one, can be -1. Use SEGMENT macros. */
 	uint8_t segment;
@@ -258,7 +265,7 @@ typedef struct {
 	/* Meta defines the instruction set class, and the flow control flags. Use META macros. */
 	uint8_t meta;
 	/* The CPU flags that the instruction operates upon. */
-	uint8_t modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
+	uint16_t modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
 } _DInst;
 
 #ifndef DISTORM_LIGHT
@@ -279,7 +286,7 @@ typedef struct {
 	_WString mnemonic; /* Mnemonic of decoded instruction, prefixed if required by REP, LOCK etc. */
 	_WString operands; /* Operands of the decoded instruction, up to 3 operands, comma-seperated. */
 	_WString instructionHex; /* Hex dump - little endian, including prefixes. */
-	unsigned int size; /* Size of decoded instruction. */
+	unsigned int size; /* Size of decoded instruction in bytes. */
 	_OffsetType offset; /* Start offset of the decoded instruction. */
 } _DecodedInst;
 
@@ -300,20 +307,29 @@ typedef struct {
 #define RM_AVX 0x800 /* YMM0 - YMM15 */
 #define RM_CR 0x1000 /* CR0, CR2, CR3, CR4, CR8 */
 #define RM_DR 0x2000 /* DR0, DR1, DR2, DR3, DR6, DR7 */
+#define RM_R8 0x4000 /* R8B, R8W, R8D, R8 */
+#define RM_R9 0x8000 /* R9B, R9W, R9D, R9 */
+#define RM_R10 0x10000 /* R10B, R10W, R10D, R10 */
+#define RM_R11 0x20000 /* R11B, R11W, R11D, R11 */
+#define RM_R12 0x40000 /* R12B, R12W, R12D, R12 */
+#define RM_R13 0x80000 /* R13B, R13W, R13D, R13 */
+#define RM_R14 0x100000 /* R14B, R14W, R14D, R14 */
+#define RM_R15 0x200000 /* R15B, R15W, R15D, R15 */
+
 /* RIP should be checked using the 'flags' field and FLAG_RIP_RELATIVE.
  * Segments should be checked using the segment macros.
  * For now R8 - R15 are not supported and non general purpose registers map into same RM.
  */
 
-/* CPU Flags that instructions modify, test or undefine. */
-#define D_ZF 1 /* Zero */
-#define D_SF 2 /* Sign */
-#define D_CF 4 /* Carry */
-#define D_OF 8 /* Overflow */
-#define D_PF 0x10 /* Parity */
-#define D_AF 0x20 /* Auxilary */
-#define D_DF 0x40 /* Direction */
-#define D_IF 0x80 /* Interrupt */
+/* CPU flags that instructions modify, test or undefine (are EFLAGS compatible!). */
+#define D_CF 1		/* Carry */
+#define D_PF 4		/* Parity */
+#define D_AF 0x10	/* Auxiliary */
+#define D_ZF 0x40	/* Zero */
+#define D_SF 0x80	/* Sign */
+#define D_IF 0x200	/* Interrupt */
+#define D_DF 0x400	/* Direction */
+#define D_OF 0x800	/* Overflow */
 
 /*
  * Instructions Set classes:
@@ -426,6 +442,15 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
  *               array you passed, this function will try to use as much entries as possible!
  * Notes:  1)The minimal size of maxInstructions is 15.
  *         2)You will have to synchronize the offset,code and length by yourself if you pass code fragments and not a complete code block!
+ */
+ 
+/* distorm_decompose
+ * There is lots of documentation about diStorm at https://code.google.com/p/distorm/wiki
+ *
+ * Please read https://code.google.com/p/distorm/wiki/DecomposeInterface
+ *
+ * And also see https://code.google.com/p/distorm/wiki/TipsnTricks
+ *
  */
 #ifdef SUPPORT_64BIT_OFFSET
 

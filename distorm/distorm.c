@@ -64,9 +64,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #ifndef DISTORM_LIGHT
 
-/* Helper function to concat an explicit size when it's unknown from the operands. */
+/* Helper function to concatenate an explicit size when it's unknown from the operands. */
 static void distorm_format_size(_WString* str, const _DInst* di, int opNum)
 {
+	int isSizingRequired = 0;
 	/*
 	 * We only have to output the size explicitly if it's not clear from the operands.
 	 * For example:
@@ -75,13 +76,42 @@ static void distorm_format_size(_WString* str, const _DInst* di, int opNum)
 	 *
 	 * If given operand number is higher than 2, then output the size anyways.
 	 */
-	if (((opNum >= 2) || ((di->ops[0].type != O_REG) && (di->ops[1].type != O_REG))) ||
+	isSizingRequired = ((opNum >= 2) || ((di->ops[0].type != O_REG) && (di->ops[1].type != O_REG)));
+
+	/* Still not sure? Try some special instructions. */
+	if (!isSizingRequired) {
 		/*
 		 * INS/OUTS are exception, because DX is a port specifier and not a real src/dst register.
-		 * MOVZX is also an exception, because the source operand can be a memory indirection:
-		 * MOVZX EBX, [ECX], but which size from ECX was read?
+		 * A few exceptions that always requires sizing:
+		 * MOVZX, MOVSX, MOVSXD.
+		 * ROL, ROR, RCL, RCR, SHL, SHR, SAL, SAR.
+		 * SHLD, SHRD.
 		 */
-		((di->opcode == I_INS) || (di->opcode == I_OUTS) || (di->opcode == I_MOVZX))) {
+		switch (di->opcode)
+		{
+			case I_INS:
+			case I_OUTS:
+			case I_MOVZX:
+			case I_MOVSX:
+			case I_MOVSXD:
+			case I_ROL:
+			case I_ROR:
+			case I_RCL:
+			case I_RCR:
+			case I_SHL:
+			case I_SHR:
+			case I_SAL:
+			case I_SAR:
+			case I_SHLD:
+			case I_SHRD:
+				isSizingRequired = 1;
+			break;
+			default: /* Instruction doesn't require sizing. */ break;
+		}
+	}
+
+	if (isSizingRequired)
+	{
 		switch (di->ops[opNum].size)
 		{
 			case 0: break; /* OT_MEM's unknown size. */
@@ -129,10 +159,11 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 
 	/* Copy other fields. */
 	result->size = di->size;
-	result->offset = di->addr & addrMask;
+	result->offset = di->addr;
 
 	if (di->flags == FLAG_NOT_DECODABLE) {
 		str = &result->mnemonic;
+		result->offset &= addrMask;
 		strclear_WS(&result->operands);
 		strcpy_WSN(str, "DB ");
 		str_code_hb(str, di->imm.byte);
@@ -143,8 +174,12 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 
 	str = &result->instructionHex;
 	strclear_WS(str);
+	/* Gotta have full address for (di->addr - ci->codeOffset) to work in all modes. */
 	for (i = 0; i < di->size; i++)
 		str_hex_b(str, ci->code[(unsigned int)(di->addr - ci->codeOffset + i)]);
+
+	/* Truncate address now. */
+	result->offset &= addrMask;
 
 	str = &result->mnemonic;
 	switch (FLAG_GET_PREFIX(di->flags))
@@ -153,7 +188,9 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 			strcpy_WSN(str, "LOCK ");
 		break;
 		case FLAG_REP:
-			strcpy_WSN(str, "REP ");
+			/* REP prefix for CMPS and SCAS is really a REPZ. */
+			if ((di->opcode == I_CMPS) || (di->opcode == I_SCAS)) strcpy_WSN(str, "REPZ ");
+			else strcpy_WSN(str, "REP ");
 		break;
 		case FLAG_REPNZ:
 			strcpy_WSN(str, "REPNZ ");
@@ -207,7 +244,7 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 			break;
 			case O_IMM:
 				/* If the instruction is 'push', show explicit size (except byte imm). */
-				if (di->opcode == I_PUSH && di->ops[i].size != 8) distorm_format_size(str, di, i);
+				if ((di->opcode == I_PUSH) && (di->ops[i].size != 8)) distorm_format_size(str, di, i);
 				/* Special fix for negative sign extended immediates. */
 				if ((di->flags & FLAG_IMM_SIGNED) && (di->ops[i].size == 8)) {
 					if (di->imm.sbyte < 0) {

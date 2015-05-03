@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #ifndef DISTORM_LIGHT
 
-
 const unsigned char _MNEMONICS[] =
 "\x09" "UNDEFINED\0" "\x03" "ADD\0" "\x04" "PUSH\0" "\x03" "POP\0" "\x02" "OR\0" \
 "\x03" "ADC\0" "\x03" "SBB\0" "\x03" "AND\0" "\x03" "DAA\0" "\x03" "SUB\0" \
@@ -273,8 +272,8 @@ const unsigned char _MNEMONICS[] =
 "\x06" "PSLLDQ\0" "\x07" "VPSLLDQ\0" "\x06" "FXSAVE\0" "\x08" "FXSAVE64\0" \
 "\x08" "RDFSBASE\0" "\x07" "FXRSTOR\0" "\x09" "FXRSTOR64\0" "\x08" "RDGSBASE\0" \
 "\x07" "LDMXCSR\0" "\x08" "WRFSBASE\0" "\x08" "VLDMXCSR\0" "\x07" "STMXCSR\0" \
-"\x08" "WRGSBASE\0" "\x08" "VSTMXCSR\0" "\x06" "RDRAND\0" "\x07" "VMPTRLD\0" \
-"\x07" "VMCLEAR\0" "\x05" "VMXON\0" "\x06" "MOVSXD\0" "\x05" "PAUSE\0" "\x04" "WAIT\0" \
+"\x08" "WRGSBASE\0" "\x08" "VSTMXCSR\0" "\x07" "VMPTRLD\0" "\x07" "VMCLEAR\0" \
+"\x05" "VMXON\0" "\x06" "MOVSXD\0" "\x05" "PAUSE\0" "\x04" "WAIT\0" "\x06" "RDRAND\0" \
 "\x06" "_3DNOW\0";
 
 const _WRegister _REGISTERS[] = {

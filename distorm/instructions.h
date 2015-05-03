@@ -376,12 +376,29 @@ typedef enum OpType {
 /* Indicates that the instruction doesn't use the VVVV field of the VEX prefix, if it does then it's undecodable. */
 #define INST_VEX_V_UNUSED (1 << 6)
 
+/* Indication that the instruction is privileged (Ring 0), this should be checked on the opcodeId field. */
+#define OPCODE_ID_PRIVILEGED ((uint16_t)0x8000)
+
 /*
  * Indicates which operand is being decoded.
  * Destination (1st), Source (2nd), op3 (3rd), op4 (4th).
  * Used to set the operands' fields in the _DInst structure!
  */
 typedef enum {ONT_NONE = -1, ONT_1 = 0, ONT_2 = 1, ONT_3 = 2, ONT_4 = 3} _OperandNumberType;
+
+/* CPU Flags that instructions modify, test or undefine, in compacted form (CF,PF,AF,ZF,SF are 1:1 map to EFLAGS). */
+#define D_COMPACT_CF 1		/* Carry */
+#define D_COMPACT_PF 4		/* Parity */
+#define D_COMPACT_AF 0x10	/* Auxiliary */
+#define D_COMPACT_ZF 0x40	/* Zero */
+#define D_COMPACT_SF 0x80	/* Sign */
+/* The following flags have to be translated to EFLAGS. */
+#define D_COMPACT_IF 2		/* Interrupt */
+#define D_COMPACT_DF 8		/* Direction */
+#define D_COMPACT_OF 0x20	/* Overflow */
+
+/* The mask of flags that are already compatible with EFLAGS. */
+#define D_COMPACT_SAME_FLAGS (D_COMPACT_CF | D_COMPACT_PF | D_COMPACT_AF | D_COMPACT_ZF | D_COMPACT_SF)
 
 /*
  * In order to save more space for storing the DB statically,
@@ -395,19 +412,23 @@ typedef struct {
 	uint8_t flagsIndex; /* An index into FlagsTables */
 	uint8_t s, d; /* OpType. */
 	uint8_t meta; /* Hi 5 bits = Instruction set class | Lo 3 bits = flow control flags. */
-	/* The following are CPU flag masks that the instruction changes. */
-	uint8_t modifiedFlags;
-	uint8_t testedFlags;
-	uint8_t undefinedFlags;
+	/*
+	 * The following are CPU flag masks that the instruction changes.
+	 * The flags are compacted so 8 bits representation is enough.
+	 * They will be expanded in runtime to be compatible to EFLAGS.
+	 */
+	uint8_t modifiedFlagsMask;
+	uint8_t testedFlagsMask;
+	uint8_t undefinedFlagsMask;
 } _InstSharedInfo;
 
 /*
  * This structure is used for the instructions DB and NOT for the disassembled result code!
- * This is the BASE structure, there are extentions to this structure below.
+ * This is the BASE structure, there are extensions to this structure below.
  */
 typedef struct {
 	uint16_t sharedIndex; /* An index into the SharedInfoTable. */
-	uint16_t opcodeId; /* The opcodeId is really a byte-offset into the mnemonics table. */
+	uint16_t opcodeId; /* The opcodeId is really a byte-offset into the mnemonics table. MSB is a privileged indication. */
 } _InstInfo;
 
 /*
