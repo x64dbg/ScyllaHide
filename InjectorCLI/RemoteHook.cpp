@@ -119,7 +119,19 @@ DWORD GetSysCallIndex32(BYTE * data)
 			{
 				return decomposerResult[0].imm.dword;
 			}
+			else
+			{
+				MessageBoxA(0, "Distorm opcode no I_MOV", "Distorm ERROR", MB_ICONERROR);
+			}
 		}
+		else
+		{
+			MessageBoxA(0, "Distorm flags FLAG_NOT_DECODABLE", "Distorm ERROR", MB_ICONERROR);
+		}
+	}
+	else
+	{
+		MessageBoxA(0, "Distorm distorm_decompose error DECRES_INPUTERR", "Distorm ERROR", MB_ICONERROR);
 	}
 
 	return 0;
@@ -273,12 +285,16 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 	DWORD callSize = 0;
 	DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
 	sysWowSpecialJmpAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
+	MessageBoxA(0,"DetourCreateRemoteNativeSysWow64", "DetourCreateRemoteNativeSysWow64",0);
 
 	if (onceNativeCallContinue == false)
 	{
 		ReadProcessMemory(hProcess, (void*)sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0);
 		NativeCallContinue = VirtualAllocEx(hProcess, 0, sizeof(sysWowSpecialJmp), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-		WriteProcessMemory(hProcess, NativeCallContinue, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0);
+		if (!WriteProcessMemory(hProcess, NativeCallContinue, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0))
+		{
+			MessageBoxA(0, "Failed to write NativeCallContinue routine", "Error", MB_ICONERROR);
+		}
 	}
 
 	if (funcSize && createTramp)
@@ -302,10 +318,17 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 		{
 			ZeroMemory(tempSpace, sizeof(tempSpace));
 			WriteJumper((PBYTE)sysWowSpecialJmpAddress, (PBYTE)HookedNativeCallInternal, tempSpace);
-			WriteProcessMemory(hProcess, (void *)sysWowSpecialJmpAddress, tempSpace, minDetourLen, 0);
+			if (!WriteProcessMemory(hProcess, (void *)sysWowSpecialJmpAddress, tempSpace, minDetourLen, 0))
+			{
+				MessageBoxA(0, "Failed to write new WOW64 gateway", "Error", MB_ICONERROR);
+			}
 
 			VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, protect, &protect);
 			FlushInstructionCache(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen);
+		}
+		else
+		{
+			MessageBoxA(0, "Failed to unprotect WOW64 gateway", "Error", MB_ICONERROR);
 		}
 		onceNativeCallContinue = true;
 	}
@@ -395,13 +418,24 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
 	memset(originalBytes, 0x90, sizeof(originalBytes));
 	memset(tempSpace, 0x90, sizeof(tempSpace));
 
-	ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), 0);
+	if (!ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), 0))
+	{
+		MessageBoxA(0, "DetourCreateRemoteNative32->ReadProcessMemory failed", "ERROR", MB_ICONERROR);
+	}
 
 	memcpy(changedBytes, originalBytes, sizeof(originalBytes));
 
+	
+
+
 	DWORD sysCallIndex = GetSysCallIndex32(originalBytes);
 
+	char text[100];
+	wsprintfA(text, "bytes %X %X %X %X %X %X", originalBytes[0], originalBytes[1], originalBytes[2], originalBytes[3], originalBytes[4],originalBytes[5]);
+	MessageBoxA(0,text,text,0);
+
 	PVOID result = 0;
+
 
 	if (sysCallIndex)
 	{
@@ -418,6 +452,10 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
 			HookNative[countNativeHooks].ecxValue = GetEcxSysCallIndex32(originalBytes, sizeof(originalBytes));
 			result = DetourCreateRemoteNativeSysWow64(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
 		}
+	}
+	else
+	{
+		MessageBoxA(0, "sysCallIndex not found", "ERROR", MB_ICONERROR);
 	}
 
 	countNativeHooks++;
