@@ -4,8 +4,10 @@
 
 #ifndef _WIN64
 #pragma comment(lib, "ntdll_x86.lib")
+#pragma pack(push,16)
 #else
 #pragma comment(lib, "ntdll_x64.lib")
+#pragma pack(push,8)
 #endif
 
 #define NT_SUCCESS(Status)          ((NTSTATUS)(Status) >= 0)
@@ -2016,6 +2018,8 @@ RtlNtPathNameToDosPathName(
 	__out_opt PULONG Disposition,
 	__inout_opt PWSTR* FilePart
 );
+
+#pragma pack(pop)
 
 #ifdef __cplusplus
 };

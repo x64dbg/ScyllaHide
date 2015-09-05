@@ -17,21 +17,21 @@ static bool isAtleastVista()
 
 void* GetPEBLocation(HANDLE hProcess)
 {
+	NTSTATUS ntstat = 0;
     ULONG RequiredLen = 0;
     void * PebAddress = 0;
-    PROCESS_BASIC_INFORMATION myProcessBasicInformation[5] = { 0 };
+    PROCESS_BASIC_INFORMATION myProcessBasicInformation = { 0 };
 
-    if (NtQueryInformationProcess(hProcess, ProcessBasicInformation, myProcessBasicInformation, sizeof(PROCESS_BASIC_INFORMATION), &RequiredLen) == STATUS_SUCCESS)
+	ntstat = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &myProcessBasicInformation, sizeof(PROCESS_BASIC_INFORMATION), &RequiredLen);
+
+    if (ntstat == STATUS_SUCCESS)
     {
-        PebAddress = (void*)myProcessBasicInformation->PebBaseAddress;
+        PebAddress = (void*)myProcessBasicInformation.PebBaseAddress;
     }
-    else
-    {
-        if (NtQueryInformationProcess(hProcess, ProcessBasicInformation, myProcessBasicInformation, RequiredLen, &RequiredLen) == STATUS_SUCCESS)
-        {
-            PebAddress = (void*)myProcessBasicInformation->PebBaseAddress;
-        }
-    }
+	else
+	{
+		MessageBoxA(0, "NtQueryInformationProcess failed", "ERROR", 0);
+	}
 
     return PebAddress;
 }
