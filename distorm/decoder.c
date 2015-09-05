@@ -78,17 +78,8 @@ static _DecodeType decode_get_effective_op_size(_DecodeType dt, _iflags decodedP
 	return dt;
 }
 
-/* A helper macro to convert from diStorm's CPU flags to EFLAGS. */
-#define CONVERT_FLAGS_TO_EFLAGS(dst, src, field) dst->field = ((src->field & D_COMPACT_SAME_FLAGS) | \
-	((src->field & D_COMPACT_IF) ? D_IF : 0) | \
-	((src->field & D_COMPACT_DF) ? D_DF : 0) | \
-	((src->field & D_COMPACT_OF) ? D_OF : 0));
-
 static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 {
-	/* Remember whether the instruction is privileged. */
-	uint16_t privilegedFlag = 0;
-
 	/* The ModR/M byte of the current instruction. */
 	unsigned int modrm = 0;
 
@@ -115,7 +106,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	 */
 	int lockable = FALSE;
 
-	/* Calculate (and cache) effective-operand-size and effective-address-size only once. */
+	/* Calcualte (and cache) effective-operand-size and effective-address-size only once. */
 	_DecodeType effOpSz, effAdrSz;
 	_iflags instFlags;
 
@@ -123,10 +114,6 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	if (ii == NULL) goto _Undecodable;
 	isi = &InstSharedInfoTable[ii->sharedIndex];
 	instFlags = FlagsTable[isi->flagsIndex];
-
-	/* Copy the privileged bit and remove it from the opcodeId field ASAP. */
-	privilegedFlag = ii->opcodeId & OPCODE_ID_PRIVILEGED;
-	ii->opcodeId &= ~OPCODE_ID_PRIVILEGED;
 
 	/*
 	 * If both REX and OpSize are available we will have to disable the OpSize, because REX has precedence.
@@ -148,8 +135,8 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	 * Which practically means, don't allow 32 bits instructions in 16 bits decoding mode, but do allow
 	 * 16 bits instructions in 32 bits decoding mode, of course...
 
-	 * NOTE: Make sure the instruction set for 32 bits has explicitly this specific flag set.
-	 * NOTE2: Make sure the instruction set for 64 bits has explicitly this specific flag set.
+	 * NOTE: Make sure the instruction set for 32 bits has explicitly this specfic flag set.
+	 * NOTE2: Make sure the instruction set for 64 bits has explicitly this specfic flag set.
 
 	 * If this is the case, drop what we've got and restart all over after DB'ing that byte.
 
@@ -276,7 +263,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	else if ((instFlags & (INST_PRE_ADDR_SIZE | INST_NATIVE)) == (INST_PRE_ADDR_SIZE | INST_NATIVE)) {
 		di->opcode = ii->opcodeId;
 
-		/* If LOOPxx gets here from 64bits, it must be Decode32Bits because Address Size prefix is set. */
+		/* If LOOPxx gets here from 64bits, it must be Decode32Bits because Address Size perfix is set. */
 		ps->usedPrefixes |= INST_PRE_ADDR_SIZE;
 	}
 	/*
@@ -349,10 +336,10 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 		 * Therefore, we use another table to fix the offset.
 		 */
 		if (instFlags & INST_PRE_VEX) {
-			/* Use the AVX pseudo compare mnemonics table. */
+			/* Use the AVX pesudo compare mnemonics table. */
 			di->opcode = ii->opcodeId + VCmpMnemonicOffsets[cmpType];
 		} else {
-			/* Use the SSE pseudo compare mnemonics table. */
+			/* Use the SSE psuedo compare mnemonics table. */
 			di->opcode = ii->opcodeId + CmpMnemonicOffsets[cmpType];
 		}
 	}
@@ -369,9 +356,6 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	/* Set the unused prefixes mask. */
 	di->unusedPrefixesMask = prefixes_set_unused_mask(ps);
 
-	/* Fix privileged. Assumes the privilegedFlag is 0x8000 only. */
-	di->flags |= privilegedFlag;
-
 	/* Copy instruction meta. */
 	di->meta = isi->meta;
 	if (di->segment == 0) di->segment = R_NONE;
@@ -380,9 +364,9 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	if (di->base != R_NONE) di->usedRegistersMask |= _REGISTERTORCLASS[di->base];
 
 	/* Copy CPU affected flags. */
-	CONVERT_FLAGS_TO_EFLAGS(di, isi, modifiedFlagsMask);
-	CONVERT_FLAGS_TO_EFLAGS(di, isi, testedFlagsMask);
-	CONVERT_FLAGS_TO_EFLAGS(di, isi, undefinedFlagsMask);
+	di->modifiedFlagsMask = isi->modifiedFlags;
+	di->testedFlagsMask = isi->testedFlags;
+	di->undefinedFlagsMask = isi->undefinedFlags;
 
 	/* Calculate the size of the instruction we've just decoded. */
 	di->size = (uint8_t)((ci->code - startCode) & 0xff);
@@ -420,8 +404,6 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 	_PrefixState ps;
 	unsigned int prefixSize;
 	_CodeInfo ci;
-	unsigned int features;
-	unsigned int mfc;
 
 	_OffsetType codeOffset = _ci->codeOffset;
 	const uint8_t* code = _ci->code;
@@ -446,15 +428,10 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 
 #ifdef DISTORM_LIGHT
 	supportOldIntr; /* Unreferenced. */
+#endif
 
-	/*
-	 * Only truncate address if we are using the decompose interface.
-	 * Otherwise, we use the textual interface which needs full addresses for formatting bytes output.
-	 * So distorm_format will truncate later.
-	 */
 	if (_ci->features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
 	else if (_ci->features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
-#endif
 
 	/* No entries are used yet. */
 	*usedInstructionsCount = 0;
@@ -580,26 +557,13 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 		pdi->addr = startInstOffset & addrMask;
 		/* pdi->disp &= addrMask; */
 
-		if ((decodeResult == DECRES_INPUTERR) && (ps.decodedPrefixes & INST_PRE_VEX)) {
-			if (ps.prefixExtType == PET_VEX3BYTES) {
-				prefixSize -= 2;
-				codeLen += 2;
-			} else if (ps.prefixExtType == PET_VEX2BYTES) {
-				prefixSize -= 1;
-				codeLen += 1;
-			}
-			ps.last = ps.start + prefixSize - 1;
-			code = ps.last + 1;
-			codeOffset = startInstOffset + prefixSize;
-		} else {
-			/* Advance to next instruction. */
-			codeLen -= pdi->size;
-			codeOffset += pdi->size;
-			code += pdi->size;
+		/* Advance to next instruction. */
+		codeLen -= pdi->size;
+		codeOffset += pdi->size;
+		code += pdi->size;
 
-			/* Instruction's size should include prefixes. */
-			pdi->size += (uint8_t)prefixSize;
-		}
+		/* Instruction's size should include prefixes. */
+		pdi->size += (uint8_t)prefixSize;
 
 		/* Drop all prefixes and the instruction itself, because the instruction wasn't successfully decoded. */
 		if ((decodeResult == DECRES_INPUTERR) && (~_ci->features & DF_RETURN_FC_ONLY)) {
@@ -635,16 +599,14 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 		_ci->nextOffset = codeOffset;
 
 		/* Check whether we need to stop on any flow control instruction. */
-		features = _ci->features;
-		mfc = META_GET_FC(pdi->meta);
-		if ((decodeResult == DECRES_SUCCESS) && (features & DF_STOP_ON_FLOW_CONTROL)) {
-			if (((features & DF_STOP_ON_CALL) && (mfc == FC_CALL)) ||
-				((features & DF_STOP_ON_RET) && (mfc == FC_RET)) ||
-				((features & DF_STOP_ON_SYS) && (mfc == FC_SYS)) ||
-				((features & DF_STOP_ON_UNC_BRANCH) && (mfc == FC_UNC_BRANCH)) ||
-				((features & DF_STOP_ON_CND_BRANCH) && (mfc == FC_CND_BRANCH)) ||
-				((features & DF_STOP_ON_INT) && (mfc == FC_INT)) ||
-				((features & DF_STOP_ON_CMOV) && (mfc == FC_CMOV)))
+		if ((decodeResult == DECRES_SUCCESS) && (_ci->features & DF_STOP_ON_FLOW_CONTROL)) {
+			if (((_ci->features & DF_STOP_ON_CALL) && (META_GET_FC(pdi->meta) == FC_CALL)) ||
+				((_ci->features & DF_STOP_ON_RET) && (META_GET_FC(pdi->meta) == FC_RET)) ||
+				((_ci->features & DF_STOP_ON_SYS) && (META_GET_FC(pdi->meta) == FC_SYS)) ||
+				((_ci->features & DF_STOP_ON_UNC_BRANCH) && (META_GET_FC(pdi->meta) == FC_UNC_BRANCH)) ||
+				((_ci->features & DF_STOP_ON_CND_BRANCH) && (META_GET_FC(pdi->meta) == FC_CND_BRANCH)) ||
+				((_ci->features & DF_STOP_ON_INT) && (META_GET_FC(pdi->meta) == FC_INT)) ||
+				((_ci->features & DF_STOP_ON_CMOV) && (META_GET_FC(pdi->meta) == FC_CMOV)))
 				return DECRES_SUCCESS;
 		}
 	}
