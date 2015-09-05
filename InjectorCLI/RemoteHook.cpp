@@ -3,6 +3,7 @@
 #include "distorm.h"
 #include "mnemonics.h"
 #include "ApplyHooking.h"
+#include "OperatingSysInfo.h"
 
 #if !defined(_WIN64)
 _DecodeType DecodingType = Decode32Bits;
@@ -139,10 +140,6 @@ DWORD GetSysCallIndex32(BYTE * data)
 
 #ifndef _WIN64
 
-bool IsSysWow64()
-{
-	return ((DWORD)__readfsdword(0xC0) != 0);
-}
 
 DWORD GetCallDestination(HANDLE hProcess, BYTE * data, int dataSize)
 {
@@ -285,7 +282,6 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 	DWORD callSize = 0;
 	DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
 	sysWowSpecialJmpAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
-	MessageBoxA(0,"DetourCreateRemoteNativeSysWow64", "DetourCreateRemoteNativeSysWow64",0);
 
 	if (onceNativeCallContinue == false)
 	{
@@ -425,17 +421,9 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
 
 	memcpy(changedBytes, originalBytes, sizeof(originalBytes));
 
-	
-
-
 	DWORD sysCallIndex = GetSysCallIndex32(originalBytes);
 
-	char text[100];
-	wsprintfA(text, "bytes %X %X %X %X %X %X", originalBytes[0], originalBytes[1], originalBytes[2], originalBytes[3], originalBytes[4],originalBytes[5]);
-	MessageBoxA(0,text,text,0);
-
 	PVOID result = 0;
-
 
 	if (sysCallIndex)
 	{
@@ -455,7 +443,7 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
 	}
 	else
 	{
-		MessageBoxA(0, "sysCallIndex not found", "ERROR", MB_ICONERROR);
+		MessageBoxA(0, "GetSysCallIndex32 -> sysCallIndex not found", "ERROR", MB_ICONERROR);
 	}
 
 	countNativeHooks++;
