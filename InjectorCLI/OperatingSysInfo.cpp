@@ -1,4 +1,5 @@
 #include "OperatingSysInfo.h"
+#include "RemotePebHider.h"
 
 typedef void (WINAPI *tGetNativeSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
 typedef BOOL (WINAPI * tIsWow64Process)(HANDLE hProcess,PBOOL Wow64Process);
@@ -44,40 +45,36 @@ const char * GetWindowsVersionNameA()
 {
 	GetWindowsVersion();
 
-	if (currentOs == OS_UNKNOWN)
-	{
-		return "Unknown";
-	}
-	else if (currentOs == OS_WIN_XP)
+    if (currentOs == OS_WIN_XP)
 	{
 		return "Windows XP";
 	}
 	else if (currentOs == OS_WIN_XP64)
 	{
-		return "Windows XP 64";
+		return "Windows XP 64 / Server 2003";
 	}
 	else if (currentOs == OS_WIN_VISTA)
 	{
-		return "Windows Vista";
+		return "Windows Vista / Server 2008";
 	}
 	else if (currentOs == OS_WIN_7)
 	{
-		return "Windows 7";
+		return "Windows 7 / Server 2008 R2";
 	}
 	else if (currentOs == OS_WIN_8)
 	{
-		return "Windows 8";
+		return "Windows 8 / Server 2012";
 	}
 	else if (currentOs == OS_WIN_81)
 	{
-		return "Windows 8.1";
+		return "Windows 8.1 / Server 2012 R2";
 	}
 	else if (currentOs == OS_WIN_10)
 	{
-		return "Windows 10";
+		return "Windows 10 / Server 2016";
 	}
 
-	return "Invalid";
+	return "Invalid Windows";
 }
 
 eOperatingSystem GetWindowsVersion()
@@ -86,6 +83,8 @@ eOperatingSystem GetWindowsVersion()
 	{
 		return currentOs;
 	}
+
+	currentOs = OS_INVALID;
 
 	OSVERSIONINFOEXW osVersionInfo = {0};
 	osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
@@ -124,11 +123,15 @@ eOperatingSystem GetWindowsVersion()
 		{
 			//win 8.1 and win 10 are special...
 			//Applications not manifested for Windows 8.1 or Windows 10 will return the Windows 8 OS version value (6.2)
-			if (_IsWindows10OrGreater())
+
+			PEB_CURRENT * currentPeb = (PEB_CURRENT *)calloc(sizeof(PEB_CURRENT), 1); 
+			ReadPebToBuffer(GetCurrentProcess(), (unsigned char *)currentPeb, sizeof(PEB_CURRENT));
+
+			if (currentPeb->OSMajorVersion == 10 && currentPeb->OSMinorVersion == 0)
 			{
 				currentOs = OS_WIN_10;
 			}
-			else if (_IsWindows8Point1OrGreater())
+			else if (currentPeb->OSMajorVersion == 6 && currentPeb->OSMinorVersion == 3)
 			{
 				currentOs = OS_WIN_81;
 			}
@@ -136,15 +139,7 @@ eOperatingSystem GetWindowsVersion()
 			{
 				currentOs = OS_WIN_8;
 			}
-			else
-			{
-				currentOs = OS_INVALID;
-			}
 		}
-	}
-	else
-	{
-		currentOs = OS_INVALID;
 	}
 
 	return currentOs;

@@ -88,13 +88,13 @@ struct _PEB_T
     T ProcessHeaps;
 
     //FULL PEB not needed
-    /*    T GdiSharedHandleTable;
+    T GdiSharedHandleTable;
     T ProcessStarterHelper;
     T GdiDCAttributeList;
     T LoaderLock;
     DWORD OSMajorVersion;
     DWORD OSMinorVersion;
-    WORD OSBuildNumber;
+    /*WORD OSBuildNumber;
     WORD OSCSDVersion;
     DWORD OSPlatformId;
     DWORD ImageSubsystem;
@@ -182,3 +182,4 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS {
 
 void FixPebBeingDebugged(HANDLE hProcess, bool SetToNull);
 bool FixPebInProcess(HANDLE hProcess, DWORD EnableFlags);
+void ReadPebToBuffer(HANDLE hProcess, unsigned char * buffer, int bufferSize);

@@ -163,6 +163,12 @@ bool FixStartUpInfo( PEB_CURRENT* myPEB, HANDLE hProcess )
 	return retVal;
 }
 
+void ReadPebToBuffer(HANDLE hProcess, unsigned char * buffer, int bufferSize)
+{
+	void * AddressOfPEB = GetPEBLocation(hProcess);
+	ReadProcessMemory(hProcess, AddressOfPEB, (void*)buffer, bufferSize, 0);
+}
+
 void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase, bool isDefaultHeap)
 {
 	void * heapFlagsAddress = 0;
