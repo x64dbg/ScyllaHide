@@ -12,6 +12,7 @@
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
 #include "..\PluginGeneric\CustomExceptionHandler.h"
+#include "..\InjectorCLI\OperatingSysInfo.h"
 
 typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
@@ -64,8 +65,8 @@ void HandleDetachProcess();
 DEBUG_EVENT *currentDebugEvent;
 
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
-{
-	if (reason==DLL_PROCESS_ATTACH)
+{ 
+	if (reason == DLL_PROCESS_ATTACH)
 	{
 		_AttachProcess = AttachProcess;
 		LogWrap = LogWrapper;
@@ -110,6 +111,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
 	_Addtolist(0,0,"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A);
 	_Addtolist(0,-1,"  Copyright (C) 2014 Aguila / cypher");
+	_Addtolist(0,-1,"  Operating System: %s", GetWindowsVersionNameA());
 
 	//do some Olly fixes
 	if(pHideOptions.fixOllyBugs) {
@@ -148,6 +150,17 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 	}
 	return 0;
 };
+
+// OllyDbg calls this optional function when user wants to terminate OllyDbg.
+// All MDI windows created by plugins still exist. Function must return 0 if
+// it is safe to terminate. Any non-zero return will stop closing sequence. Do
+// not misuse this possibility! Always inform user about the reasons why
+// termination is not good and ask for his decision!
+extern "C" int __declspec(dllexport) _ODBG_Pluginclose(void)
+{
+	RestoreAllHooks();
+	return 0;
+}
 
 //add menu entries
 extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096],void *item)

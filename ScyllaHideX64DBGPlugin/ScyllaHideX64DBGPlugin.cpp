@@ -10,6 +10,7 @@
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
+#include "..\InjectorCLI\OperatingSysInfo.h"
 
 #define plugin_name "ScyllaHide"
 
@@ -138,6 +139,7 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
 
     _plugin_logprintf("ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_A"\n");
     _plugin_logprintf("  Copyright (C) 2014 Aguila / cypher\n");
+	_plugin_logprintf("  Operating System: %s\n", GetWindowsVersionNameA());
 
     _plugin_menuaddentry(hMenu, MENU_OPTIONS, "&Options");
     int hProfile = _plugin_menuadd(hMenu, "&Load Profile");

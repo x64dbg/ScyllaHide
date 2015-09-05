@@ -171,6 +171,7 @@
     <ClCompile Include="..\distorm\wstring.c" />
     <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp" />
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
+    <ClCompile Include="..\InjectorCLI\OperatingSysInfo.cpp" />
     <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp" />
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
@@ -195,6 +196,7 @@
     <ClInclude Include="..\distorm\x86defs.h" />
     <ClInclude Include="..\InjectorCLI\ApplyHooking.h" />
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
+    <ClInclude Include="..\InjectorCLI\OperatingSysInfo.h" />
     <ClInclude Include="..\InjectorCLI\ReadNtConfig.h" />
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />

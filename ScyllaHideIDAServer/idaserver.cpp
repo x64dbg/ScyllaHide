@@ -6,6 +6,7 @@
 
 #include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
+#include "..\InjectorCLI\OperatingSysInfo.h"
 
 WSADATA wsaData;
 
@@ -56,6 +57,7 @@ int main(int argc, char *argv[])
 	SetDebugPrivileges();
 
 	printf("Starting IDA Server v" SCYLLA_HIDE_VERSION_STRING_A "...\n");
+	printf("- Operating System: %s\n", GetWindowsVersionNameA());
 
 	checkPaths();
 
