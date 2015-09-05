@@ -40,7 +40,7 @@ Windows 2000	5.0
 
 eOperatingSystem currentOs = OS_UNKNOWN;
 
-char * GetWindowsVersionNameA()
+const char * GetWindowsVersionNameA()
 {
 	GetWindowsVersion();
 
@@ -120,13 +120,10 @@ eOperatingSystem GetWindowsVersion()
 		{
 			currentOs = OS_WIN_7;
 		}
-		else if (osVersionInfo.dwMinorVersion == 2)
-		{
-			currentOs = OS_WIN_8;
-		}
 		else
 		{
 			//win 8.1 and win 10 are special...
+			//Applications not manifested for Windows 8.1 or Windows 10 will return the Windows 8 OS version value (6.2)
 			if (_IsWindows10OrGreater())
 			{
 				currentOs = OS_WIN_10;
@@ -134,6 +131,10 @@ eOperatingSystem GetWindowsVersion()
 			else if (_IsWindows8Point1OrGreater())
 			{
 				currentOs = OS_WIN_81;
+			}
+			else if (osVersionInfo.dwMinorVersion == 2)
+			{
+				currentOs = OS_WIN_8;
 			}
 			else
 			{

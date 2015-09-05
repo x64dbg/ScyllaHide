@@ -20,4 +20,4 @@ enum eOperatingSystem {
 };
 
 eOperatingSystem GetWindowsVersion();
-char * GetWindowsVersionNameA();
+const char * GetWindowsVersionNameA();
