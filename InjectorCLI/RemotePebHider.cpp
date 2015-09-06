@@ -1,5 +1,7 @@
 #include "RemotePebHider.h"
 #include "..\ntdll\ntdll.h"
+#include "Logger.h"
+#include "OperatingSysInfo.h"
 
 static bool isAtleastVista()
 {
@@ -30,26 +32,24 @@ void* GetPEBLocation(HANDLE hProcess)
     }
 	else
 	{
-		MessageBoxA(0, "NtQueryInformationProcess failed", "ERROR", 0);
+		LogError("NtQueryInformationProcess failed with status %X", ntstat);
+	}
+
+	if (!PebAddress)
+	{
+		LogErrorBox("GetPEBLocation PEB Address is 0");
 	}
 
     return PebAddress;
 }
-#ifndef _WIN64
+
+
 bool IsThisProcessWow64()
 {
-    typedef BOOL(WINAPI * tIsWow64Process)(HANDLE hProcess, PBOOL Wow64Process);
-    BOOL bIsWow64 = FALSE;
-    tIsWow64Process fnIsWow64Process = (tIsWow64Process)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
-
-    if (fnIsWow64Process)
-    {
-        fnIsWow64Process(GetCurrentProcess(), &bIsWow64);
-    }
-
-    return (bIsWow64 != FALSE);
+    return IsProcessWOW64(GetCurrentProcess());
 }
-#endif
+
+
 void* GetPEBLocation64(HANDLE hProcess)
 {
 #ifndef _WIN64
@@ -62,31 +62,15 @@ void* GetPEBLocation64(HANDLE hProcess)
             peb32 += 0x1000; //PEB64 after PEB32
             return (void *)peb32;
         }
+		else
+		{
+			LogDebug("GetPEBLocation64->GetPEBLocation returns NULL");
+		}
     }
 #endif //_WIN64
     return 0;
 }
 
-
-
-//TODO: unclear behaviour, will return true when on wow64, but should not return true, because the system structures are x32 in that case
-static bool isWindows64()
-{
-    SYSTEM_INFO si = { 0 };
-    typedef void (WINAPI *tGetNativeSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
-    tGetNativeSystemInfo _GetNativeSystemInfo = (tGetNativeSystemInfo)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetNativeSystemInfo");
-
-    if (_GetNativeSystemInfo)
-    {
-        _GetNativeSystemInfo(&si);
-    }
-    else
-    {
-        GetSystemInfo(&si);
-    }
-
-    return (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
-}
 
 
 //Quote from The Ultimate Anti-Debugging Reference by Peter Ferrie
@@ -166,7 +150,17 @@ bool FixStartUpInfo( PEB_CURRENT* myPEB, HANDLE hProcess )
 void ReadPebToBuffer(HANDLE hProcess, unsigned char * buffer, int bufferSize)
 {
 	void * AddressOfPEB = GetPEBLocation(hProcess);
-	ReadProcessMemory(hProcess, AddressOfPEB, (void*)buffer, bufferSize, 0);
+	if (AddressOfPEB)
+	{
+		if (!ReadProcessMemory(hProcess, AddressOfPEB, (void*)buffer, bufferSize, 0))
+		{
+			LogError("ReadPebToBuffer->ReadProcessMemory failed");
+		}
+	}
+	else
+	{
+		LogErrorBox("ReadPebToBuffer->GetPEBLocation returns NULL");
+	}	
 }
 
 void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase, bool isDefaultHeap)

@@ -182,17 +182,17 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
 			}
 			else
 			{
-				_plugin_logprintf("Warning: Cannot lock ScyllaHide icon!\n");
+				_plugin_logprintf("Warning: Cannot lock ScyllaHide icon! LockResource, SizeofResource\n");
 			}
 		}
 		else
 		{
-			_plugin_logprintf("Warning: Cannot load ScyllaHide icon!\n");
+			_plugin_logprintf("Warning: Cannot load ScyllaHide icon! LoadResource\n");
 		}
 	}
 	else
 	{
-		_plugin_logprintf("Warning: Cannot find ScyllaHide icon!\n");
+		_plugin_logprintf("Warning: Cannot find ScyllaHide icon! FindResourceW\n");
 	}
 }
 

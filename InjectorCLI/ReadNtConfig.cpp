@@ -2,6 +2,8 @@
 #include "ReadNtConfig.h"
 #include "..\HookLibrary\HookMain.h"
 #include <windows.h>
+#include "OperatingSysInfo.h"
+#include "Logger.h"
 
 OSVERSIONINFOEXW osver = { 0 };
 SYSTEM_INFO si = { 0 };
@@ -23,7 +25,15 @@ void QueryOsInfo()
     }
 
     osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    GetVersionEx((LPOSVERSIONINFO)&osver);
+
+	GetVersionEx((LPOSVERSIONINFO)&osver);
+
+	if (_IsWindows8Point1OrGreater())
+	{
+		//adjust real major minor version
+		GetPEBWindowsMajorMinorVersion(&osver.dwMajorVersion, &osver.dwMinorVersion);
+	}
+    
 }
 
 DWORD ReadApiFromIni(const WCHAR * name, const WCHAR * section) //rva
@@ -61,6 +71,8 @@ void ReadNtApiInformation()
     wsprintfW(temp, L"%08X", pNtUser->OptionalHeader.AddressOfEntryPoint);
     wcscat(OsId, L"_");
     wcscat(OsId, temp);
+
+	LogDebug("ReadNtApiInformation -> Requesting OS-ID %S", OsId);
 
     DllExchangeLoader.NtUserBuildHwndListRVA = ReadApiFromIni(L"NtUserBuildHwndList", OsId);
     DllExchangeLoader.NtUserFindWindowExRVA = ReadApiFromIni(L"NtUserFindWindowEx", OsId);

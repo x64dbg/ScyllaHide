@@ -166,6 +166,8 @@
     <ClCompile Include="ApplyHooking.cpp" />
     <ClCompile Include="DynamicMapping.cpp" />
     <ClCompile Include="CliMain.cpp" />
+    <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="OperatingSysInfo.cpp" />
     <ClCompile Include="ReadNtConfig.cpp" />
     <ClCompile Include="RemoteHook.cpp" />
     <ClCompile Include="RemotePebHider.cpp" />
@@ -185,7 +187,9 @@
     <ClInclude Include="ApplyHooking.h" />
     <ClInclude Include="distorm.h" />
     <ClInclude Include="DynamicMapping.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="mnemonics.h" />
+    <ClInclude Include="OperatingSysInfo.h" />
     <ClInclude Include="ReadNtConfig.h" />
     <ClInclude Include="RemoteHook.h" />
     <ClInclude Include="RemotePebHider.h" />

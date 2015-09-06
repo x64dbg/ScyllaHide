@@ -21,3 +21,8 @@ enum eOperatingSystem {
 
 eOperatingSystem GetWindowsVersion();
 const char * GetWindowsVersionNameA();
+
+void GetPEBWindowsMajorMinorVersion(DWORD * major, DWORD * minor);
+bool _IsWindows8Point1OrGreater();
+bool _IsWindows10OrGreater();
+

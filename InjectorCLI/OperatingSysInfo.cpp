@@ -1,5 +1,6 @@
 #include "OperatingSysInfo.h"
 #include "RemotePebHider.h"
+#include "Logger.h"
 
 typedef void (WINAPI *tGetNativeSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
 typedef BOOL (WINAPI * tIsWow64Process)(HANDLE hProcess,PBOOL Wow64Process);
@@ -15,9 +16,7 @@ tIsWow64Process fnIsWow64Process = 0;
 #define _WIN32_WINNT_WIN10 0x0A00
 #endif
 
-bool _IsWindows8Point1OrGreater();
-bool _IsWindows10OrGreater();
-bool _IsWindowsVersionOrGreater(WORD wMajorVersion, WORD wMinorVersion, WORD wServicePackMajor);
+
 
 /*
 
@@ -77,6 +76,24 @@ const char * GetWindowsVersionNameA()
 	return "Invalid Windows";
 }
 
+void GetPEBWindowsMajorMinorVersion(DWORD * major, DWORD * minor)
+{
+	PEB_CURRENT * currentPeb = (PEB_CURRENT *)calloc(sizeof(PEB_CURRENT), 1); 
+	if (currentPeb)
+	{
+		ReadPebToBuffer(GetCurrentProcess(), (unsigned char *)currentPeb, sizeof(PEB_CURRENT));
+
+		*major = currentPeb->OSMajorVersion;
+		*minor = currentPeb->OSMinorVersion;
+
+		free(currentPeb);
+	}
+	else
+	{
+		LogErrorBox("GetPEBWindowsMajorMinorVersion -> Failed to calloc");
+	}
+}
+
 eOperatingSystem GetWindowsVersion()
 {
 	if (currentOs != OS_UNKNOWN)
@@ -127,11 +144,15 @@ eOperatingSystem GetWindowsVersion()
 			PEB_CURRENT * currentPeb = (PEB_CURRENT *)calloc(sizeof(PEB_CURRENT), 1); 
 			ReadPebToBuffer(GetCurrentProcess(), (unsigned char *)currentPeb, sizeof(PEB_CURRENT));
 
-			if (currentPeb->OSMajorVersion == 10 && currentPeb->OSMinorVersion == 0)
+			DWORD OSMajorVersion = 0;
+			DWORD OSMinorVersion = 0;
+			GetPEBWindowsMajorMinorVersion(&OSMajorVersion, &OSMinorVersion);
+
+			if (OSMajorVersion == 10 && OSMinorVersion == 0)
 			{
 				currentOs = OS_WIN_10;
 			}
-			else if (currentPeb->OSMajorVersion == 6 && currentPeb->OSMinorVersion == 3)
+			else if (OSMajorVersion == 6 && OSMinorVersion == 3)
 			{
 				currentOs = OS_WIN_81;
 			}
@@ -139,6 +160,8 @@ eOperatingSystem GetWindowsVersion()
 			{
 				currentOs = OS_WIN_8;
 			}
+
+			free(currentPeb);
 		}
 	}
 
@@ -185,38 +208,36 @@ bool IsProcessWOW64(HANDLE hProcess)
 		fnIsWow64Process = (tIsWow64Process)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
 	}
 
-
 	if (fnIsWow64Process)
 	{
 		fnIsWow64Process(hProcess, &bIsWow64);
+	}
+	else
+	{
+		LogError("IsWow64Process not found");
 	}
 
 	return (bIsWow64 != FALSE);
 }
 
-bool _IsWindowsVersionOrGreater(WORD wMajorVersion, WORD wMinorVersion, WORD wServicePackMajor)
-{
-	OSVERSIONINFOEXW osvi = { sizeof(osvi), 0, 0, 0, 0, {0}, 0, 0 };
-	DWORDLONG        const dwlConditionMask = VerSetConditionMask(
-		VerSetConditionMask(
-		VerSetConditionMask(
-		0, VER_MAJORVERSION, VER_GREATER_EQUAL),
-		VER_MINORVERSION, VER_GREATER_EQUAL),
-		VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
-
-	osvi.dwMajorVersion = wMajorVersion;
-	osvi.dwMinorVersion = wMinorVersion;
-	osvi.wServicePackMajor = wServicePackMajor;
-
-	return VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) != FALSE;
-}
 
 bool _IsWindows8Point1OrGreater()
 {
-	return _IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WINBLUE), LOBYTE(_WIN32_WINNT_WINBLUE), 0);
+	if (GetWindowsVersion() == OS_WIN_81 || 
+		GetWindowsVersion() == OS_WIN_10)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 bool _IsWindows10OrGreater()
 {
-	return _IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN10), LOBYTE(_WIN32_WINNT_WIN10), 0);
+	if (GetWindowsVersion() == OS_WIN_10)
+	{
+		return true;
+	}
+
+	return false;
 }
