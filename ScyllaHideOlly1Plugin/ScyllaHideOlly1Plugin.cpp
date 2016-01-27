@@ -158,7 +158,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 // termination is not good and ask for his decision!
 extern "C" int __declspec(dllexport) _ODBG_Pluginclose(void)
 {
-	RestoreAllHooks();
+	//RestoreAllHooks();
 	return 0;
 }
 

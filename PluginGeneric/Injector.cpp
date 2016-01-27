@@ -454,10 +454,10 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
 typedef void (WINAPI *tGetNativeSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
 typedef BOOL (WINAPI * tIsWow64Process)(HANDLE hProcess,PBOOL Wow64Process);
 
-tGetNativeSystemInfo _GetNativeSystemInfo = 0;
-tIsWow64Process fnIsWow64Process = 0;
+static tGetNativeSystemInfo _GetNativeSystemInfo = 0;
+static tIsWow64Process fnIsWow64Process = 0;
 
-bool isWindows64()
+/*bool isWindows64()
 {
     SYSTEM_INFO si = {0};
 
@@ -493,7 +493,7 @@ bool IsProcessWOW64(HANDLE hProcess)
     }
 
     return (bIsWow64 != FALSE);
-}
+}*/
 
 bool RemoveDebugPrivileges(HANDLE hProcess)
 {

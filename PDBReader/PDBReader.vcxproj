@@ -19,21 +19,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{92C90AAD-036E-474D-902C-CFD1E7422899}</ProjectGuid>
+    <ProjectGuid>{B7D25F78-47EE-4881-AB78-9543CCC3FD52}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>InjectorCLI</RootNamespace>
+    <RootNamespace>PDBReader</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120_xp</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120_xp</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -68,18 +68,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\NtApiTool\x86\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\NtApiTool\x64\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <GenerateManifest>false</GenerateManifest>
     <TargetName>$(ProjectName)x86</TargetName>
+    <OutDir>$(SolutionDir)$(Configuration)\NtApiTool\x86\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <GenerateManifest>false</GenerateManifest>
     <TargetName>$(ProjectName)x64</TargetName>
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)$(Configuration)\NtApiTool\x64\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -88,7 +93,6 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -103,7 +107,6 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -121,14 +124,12 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalLibraryDirectories>$(SolutionDir)ntdll;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -142,7 +143,6 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -153,53 +153,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\distorm\decoder.c" />
-    <ClCompile Include="..\distorm\distorm.c" />
-    <ClCompile Include="..\distorm\instructions.c" />
-    <ClCompile Include="..\distorm\insts.c" />
-    <ClCompile Include="..\distorm\mnemonics.c" />
-    <ClCompile Include="..\distorm\operands.c" />
-    <ClCompile Include="..\distorm\prefix.c" />
-    <ClCompile Include="..\distorm\textdefs.c" />
-    <ClCompile Include="..\distorm\wstring.c" />
-    <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp" />
-    <ClCompile Include="ApplyHooking.cpp" />
-    <ClCompile Include="DynamicMapping.cpp" />
-    <ClCompile Include="CliMain.cpp" />
-    <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="OperatingSysInfo.cpp" />
-    <ClCompile Include="ReadNtConfig.cpp" />
-    <ClCompile Include="RemoteHook.cpp" />
-    <ClCompile Include="RemotePebHider.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\distorm\config.h" />
-    <ClInclude Include="..\distorm\decoder.h" />
-    <ClInclude Include="..\distorm\distorm.h" />
-    <ClInclude Include="..\distorm\instructions.h" />
-    <ClInclude Include="..\distorm\insts.h" />
-    <ClInclude Include="..\distorm\mnemonics.h" />
-    <ClInclude Include="..\distorm\operands.h" />
-    <ClInclude Include="..\distorm\prefix.h" />
-    <ClInclude Include="..\distorm\textdefs.h" />
-    <ClInclude Include="..\distorm\wstring.h" />
-    <ClInclude Include="..\distorm\x86defs.h" />
-    <ClInclude Include="ApplyHooking.h" />
-    <ClInclude Include="distorm.h" />
-    <ClInclude Include="DynamicMapping.h" />
-    <ClInclude Include="Logger.h" />
-    <ClInclude Include="mnemonics.h" />
-    <ClInclude Include="OperatingSysInfo.h" />
-    <ClInclude Include="ReadNtConfig.h" />
-    <ClInclude Include="RemoteHook.h" />
-    <ClInclude Include="RemotePebHider.h" />
-    <ClInclude Include="resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Icon.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\PluginGeneric\ghost.ico" />
+    <ClCompile Include="..\InjectorCLI\Logger.cpp" />
+    <ClCompile Include="..\InjectorCLI\OperatingSysInfo.cpp" />
+    <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
+    <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

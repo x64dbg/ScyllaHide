@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2010
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InjectorCLI", "InjectorCLI\InjectorCLI.vcxproj", "{92C90AAD-036E-474D-902C-CFD1E7422899}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HookLibrary", "HookLibrary\HookLibrary.vcxproj", "{C36C2313-72A8-4583-B7D8-28E193D5287F}"
@@ -16,6 +18,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideIDAServer", "ScyllaHideIDAServer\ScyllaHideIDAServer.vcxproj", "{4506D672-19C3-439B-8E1B-F1BA8BE28844}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideX64DBGPlugin", "ScyllaHideX64DBGPlugin\ScyllaHideX64DBGPlugin.vcxproj", "{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PDBReader", "PDBReader\PDBReader.vcxproj", "{B7D25F78-47EE-4881-AB78-9543CCC3FD52}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -82,6 +86,14 @@ Global
 		{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}.Release|Win32.Build.0 = Release|Win32
 		{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}.Release|x64.ActiveCfg = Release|x64
 		{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}.Release|x64.Build.0 = Release|x64
+		{B7D25F78-47EE-4881-AB78-9543CCC3FD52}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B7D25F78-47EE-4881-AB78-9543CCC3FD52}.Debug|Win32.Build.0 = Debug|Win32
+		{B7D25F78-47EE-4881-AB78-9543CCC3FD52}.Debug|x64.ActiveCfg = Debug|x64
+		{B7D25F78-47EE-4881-AB78-9543CCC3FD52}.Debug|x64.Build.0 = Debug|x64
+		{B7D25F78-47EE-4881-AB78-9543CCC3FD52}.Release|Win32.ActiveCfg = Release|Win32
+		{B7D25F78-47EE-4881-AB78-9543CCC3FD52}.Release|Win32.Build.0 = Release|Win32
+		{B7D25F78-47EE-4881-AB78-9543CCC3FD52}.Release|x64.ActiveCfg = Release|x64
+		{B7D25F78-47EE-4881-AB78-9543CCC3FD52}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

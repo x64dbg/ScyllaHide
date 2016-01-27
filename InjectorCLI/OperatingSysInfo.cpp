@@ -5,8 +5,8 @@
 typedef void (WINAPI *tGetNativeSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
 typedef BOOL (WINAPI * tIsWow64Process)(HANDLE hProcess,PBOOL Wow64Process);
 
-tGetNativeSystemInfo _GetNativeSystemInfo = 0;
-tIsWow64Process fnIsWow64Process = 0;
+static tGetNativeSystemInfo _GetNativeSystemInfo = 0;
+static tIsWow64Process fnIsWow64Process = 0;
 
 #ifndef _WIN32_WINNT_WINBLUE
 #define _WIN32_WINNT_WINBLUE 0x0603

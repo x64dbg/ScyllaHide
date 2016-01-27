@@ -81,6 +81,12 @@
     <ClCompile Include="..\PluginGeneric\AttachDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\InjectorCLI\Logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\InjectorCLI\OperatingSysInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ScyllaHideX64DBGPlugin.h">
@@ -158,6 +164,12 @@
     <ClInclude Include="..\PluginGeneric\AttachDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\InjectorCLI\Logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InjectorCLI\OperatingSysInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScyllaHideX64DBGPlugin.rc">
@@ -172,6 +184,9 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="..\PluginGeneric\searchwindow.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Ghost-icon.png">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

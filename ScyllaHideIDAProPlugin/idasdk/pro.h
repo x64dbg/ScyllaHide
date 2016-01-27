@@ -414,7 +414,7 @@ idaman THREAD_SAFE bool ida_export gen_rand_buf(void *buffer, size_t bufsz);
 
 // non standard functions are missing:
 #ifdef _MSC_VER
-AS_SCANF(2, 0) int idaapi vsscanf(const char *input, const char *format, va_list va);
+//AS_SCANF(2, 0) int idaapi vsscanf(const char *input, const char *format, va_list va);
 #if _MSC_VER <= 1200
 #define for if(0) ; else for  // MSVC is not compliant to the ANSI standard :(
 #else
