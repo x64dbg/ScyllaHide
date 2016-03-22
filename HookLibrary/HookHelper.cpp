@@ -16,7 +16,8 @@ const WCHAR * BadProcessnameList[] =
 	L"scylla_x64.exe",
 	L"scylla_x86.exe",
 	L"protection_id.exe",
-	L"x64_dbg.exe",
+	L"x64dbg.exe",
+    L"x32dbg.exe",
 	L"windbg.exe",
 	L"reshacker.exe",
 	L"ImportREC.exe",
@@ -33,8 +34,8 @@ const WCHAR * BadWindowTextList[] =
 	L"[CPU",
 	L"Immunity",
 	L"Windbg",
-	L"x32_dbg",
-	L"x64_dbg",
+	L"x32dbg",
+	L"x64dbg",
 	L"Windbg",
 	L"Import reconstructor"
 };
