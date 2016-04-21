@@ -144,6 +144,14 @@ DWORD GetSysCallIndex32(BYTE * data)
 DWORD GetCallDestination(HANDLE hProcess, BYTE * data, int dataSize)
 {
 	DWORD SysWow64 = (DWORD)__readfsdword(0xC0);
+	bool bIsWindows10NtQueryInformationProcess = false;
+
+	// Colin Edit, hacky
+	if (_IsWindows10OrGreater())
+	{
+		SysWow64 = 0;
+	}
+	
 	if (SysWow64)
 	{
 		return SysWow64;
@@ -163,6 +171,23 @@ DWORD GetCallDestination(HANDLE hProcess, BYTE * data, int dataSize)
 		{
 			if (DecodedInstructionsCount > 2)
 			{
+				// Windows 10 NtQueryInformationProcess specific
+				/*
+				CPU Disasm
+				Address                                      Hex dump                                   Command                                                                        Comments
+				77C86C60 NtQueryInformationProcess               B8 19000000                            MOV EAX,19                                                                     ; NTSTATUS ntdll.NtQueryInformationProcess(ProcessHandle,ProcessInfoClass,Buffer,Bufsize,pLength)
+				77C86C65                                         E8 04000000                            CALL 77C86C6E
+				77C86C6A                                         0000                                   ADD [EAX],AL
+				77C86C6C                                         C177 5A 80                             SAL DWORD PTR [EDI+5A],80                                                      ; Shift out of range
+				77C86C70                                         7A 03                                  JPE SHORT 77C86C75
+				77C86C72                                         4B                                     DEC EBX
+				77C86C73                                         75 0A                                  JNE SHORT 77C86C7F
+				77C86C75                                         64:FF15 C0000000                       CALL FS:[0C0]
+				77C86C7C                                         C2 1400                                RETN 14						    <<<< thinks this is the end of the function
+				77C86C7F                                         BA C0B4C977                            MOV EDX,gateway					<<<< Expecting this, finding nothing
+				77C86C84                                         FFD2                                   CALL EDX
+				77C86C86                                         C2 1400                                RETN 14
+				*/
 
 				//B8 EA000000      MOV EAX,0EA
 				//BA 0003FE7F      MOV EDX,7FFE0300
@@ -277,11 +302,77 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 	PBYTE trampoline = 0;
 	DWORD protect;
 
-	DWORD funcSize = GetFunctionSizeRETN(originalBytes, sizeof(originalBytes));
+	// NtQueryInformationProcess on Windows 10 under sysWow64 has an irregular structure, this is a call at +4 bytes from itself
+	bool bSpecialSyscallStructure = (originalBytes[5] == 0xE8 && originalBytes[6] == 0x04);		
 
+	// We're "borrowing" another api's code as a template, the ret must match
+	if (bSpecialSyscallStructure)
+	{
+		//LogDebug("[ScyllaHide 0x33] NtQueryInformationProcess Windows 10 detected");
+
+		BYTE syscallAddressBytes[5];	// save syscall id eg. Mov eax, 0x19
+		
+		memcpy(syscallAddressBytes, originalBytes, sizeof(syscallAddressBytes));			// Copy the syscall id bytes
+		
+		//LogDebug(L"syscallAddressBytes: %x", syscallAddressBytes);
+
+		// This is a "normal" function and both have a ret 14
+		DWORD ntQueryKey = (DWORD)GetProcAddress(GetModuleHandleA("ntdll"), "NtQueryKey");
+
+		//LogDebug(L"NtQueryKey address: %x", ntQueryKey);
+
+		ReadProcessMemory(hProcess, (LPCVOID)ntQueryKey, &originalBytes, sizeof(originalBytes), 0);
+		ReadProcessMemory(hProcess, (LPCVOID)ntQueryKey, &changedBytes, sizeof(originalBytes), 0);
+
+		memcpy(originalBytes, syscallAddressBytes, sizeof(syscallAddressBytes));
+		memcpy(changedBytes, syscallAddressBytes, sizeof(syscallAddressBytes));
+	}
+
+	DWORD funcSize = GetFunctionSizeRETN(originalBytes, sizeof(originalBytes));
 	DWORD callSize = 0;
 	DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
+	
+	// if the bytes at sysWowSpecialJmpAddress != 0xEA then take our new code path
+	// Plugin is expecting something like this at sysWowSpecialJmpAddress: JMP FAR 0033:74E5271E ; Far jump
+	// But on Windows 10, we have this at that address
+	/*
+	CPU Disasm
+	77C9B4C0 syscalledx                          |.  64:8B15 30000000                       MOV EDX,FS:[30]						<<<< sysWowSpecialJmpAddress
+	77C9B4C7                                     |.  8B92 64040000                          MOV EDX,[EDX+464]
+	77C9B4CD                                     |.  F7C2 02000000                          TEST EDX,00000002
+	77C9B4D3                                     |.- 74 03                                  JZ SHORT 77C9B4D8
+	77C9B4D5                                     |.  CD 2E                                  INT 2E
+	77C9B4D7                                     |.  C3                                     RETN
+	77C9B4D8                                     \>  EA DFB4C977 3300                       JMP FAR 0033:77C9B4DF               <<<< Expects this
+	77C9B4DF                                     /.  41                                     INC ECX
+	77C9B4E0                                     \.  FFA7 F8000000                          JMP [EDI+0F8]
+	*/
+
 	sysWowSpecialJmpAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
+
+	// Windows 8.1 Gateway is just a JMP FAR 0033:77C9B4DF
+	// Windows 10 Gateway has extra code before the JMP FAR
+	// The code below adjusts the sysWowSpecialJmpAddress for windows 10
+	if (*(BYTE*)sysWowSpecialJmpAddress != 0xEA)
+	{
+		//LogDebug("[ScyllaHide 0x33] Adjusting address for Windows 10 gateway ");
+
+		// Windows 10 specific
+		BYTE sysWowGatewayOriginalBytes[100] = { 0 };
+
+		ReadProcessMemory(hProcess, (LPCVOID)sysWowSpecialJmpAddress, &sysWowGatewayOriginalBytes, sizeof(sysWowGatewayOriginalBytes), 0);
+
+		DWORD sysWowGatewayFuncSize = GetFunctionSizeRETN(sysWowGatewayOriginalBytes, sizeof(sysWowGatewayOriginalBytes));
+		DWORD pActualSysWowSpecialJmpAddress = (sysWowSpecialJmpAddress + sysWowGatewayFuncSize);
+		
+		if (*(BYTE*)pActualSysWowSpecialJmpAddress != 0xEA)
+		{
+			// 0xEA == JMP FAR 0033:XXXXXXXXXX
+			MessageBoxA(0, "Windows 10 SysWowSpecialJmpAddress was not found!", "Error", MB_OK);
+		}
+		
+		sysWowSpecialJmpAddress = pActualSysWowSpecialJmpAddress;
+	}
 
 	if (onceNativeCallContinue == false)
 	{
