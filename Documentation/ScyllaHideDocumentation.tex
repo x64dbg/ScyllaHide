@@ -37,7 +37,7 @@
 
 \title{ScyllaHide v1.4 - Documentation}
 \author{}
-\date{2015-04-19}
+\date{2016-10-02}
 
 \begin{document}
 
@@ -60,7 +60,7 @@ ScyllaHide supports various debuggers with plugins:
 \begin{itemize}
 \item OllyDbg v1 and v2 \url{http://www.ollydbg.de}
 \item x64dbg \url{http://x64dbg.com} or \url{https://github.com/x64dbg/x64dbg}
-\item Hex-Rays IDA v6+ \url{https://www.hex-rays.com/products/ida/}
+\item Hex-Rays IDA v6+ \url{https://www.hex-rays.com/products/ida}
 \item TitanEngine v2 \url{https://bitbucket.org/mrexodia/titanengine-update} and \url{http://www.reversinglabs.com/open-source/titanengine.html}
 \end{itemize}
 
@@ -69,6 +69,9 @@ PE x64 debugging is fully supported with plugins for x64dbg and IDA.
 Please note: ScyllaHide is not limited to these debuggers. You can use the standalone commandline version of ScyllaHide. You can inject ScyllaHide in any process debugged by any debugger.
 
 \section{Usage Information}
+\subsubsection{NtApiTool}
+The NtApiCollection.ini can be generated for your operating system by using the appropriate NtApiTool.exe in the release folder. Copy the generated NtApiCollection.ini to your plugin directory.
+
 \subsubsection{Standalone (debugger-independent)}
 InjectorCLI.exe "process name" "HookLibrary.dll path"
 
@@ -437,7 +440,7 @@ But this code is correct and very important. This nice trick removes heap artifa
 The error "NT APIs missing" appears, how to solve it?
 \begin{itemize}
 \item You need to put NtApiCollection.ini in the same directory as ScyllaHide.dll or the following hooks will not work: NtUserQueryWindow, NtUserBuildHwndList, NtUserFindWindowEx
-\item Some Nt* WINAPI functions are not exported by a DLL, so it is necessary to get the function addresses from another source. The other source is the PDB file. The adresses can be resolved with this tool: \url{https://bitbucket.org/NtQuery/pdb-getprocaddress} It will download the PDB file from the Microsoft server to resolve the missing function addresses. Binaries available here \url{https://bitbucket.org/NtQuery/scyllahide/downloads/NtApiTool.rar}
+\item Some Nt* WINAPI functions are not exported by a DLL, so it is necessary to get the function addresses from another source. The other source is the PDB file. The adresses can be resolved with the NtApiTool packaged in the release. It will download the PDB file from the Microsoft server to resolve the missing function addresses.
 \end{itemize}
 
 \section{Developer Contact Information}
