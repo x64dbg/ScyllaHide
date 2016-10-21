@@ -200,8 +200,9 @@ bool HasDebugPrivileges(HANDLE hProcess)
 				LUID_AND_ATTRIBUTES luidAndAttributes = tokenPrivileges->Privileges[i];
 				if (luidAndAttributes.Luid.LowPart == luid.LowPart && luidAndAttributes.Luid.HighPart == luid.HighPart)
 				{
-					hasDebugPrivileges = (luidAndAttributes.Attributes & SE_PRIVILEGE_ENABLED) != 0 ||
-						(luidAndAttributes.Attributes & SE_PRIVILEGE_ENABLED_BY_DEFAULT) != 0;
+					hasDebugPrivileges = ((luidAndAttributes.Attributes & SE_PRIVILEGE_ENABLED) != 0) ||
+										((luidAndAttributes.Attributes & SE_PRIVILEGE_ENABLED_BY_DEFAULT) != 0 &&
+										(luidAndAttributes.Attributes & SE_PRIVILEGE_REMOVED) == 0);
 				}
 			}
 		}
