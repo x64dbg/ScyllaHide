@@ -176,6 +176,42 @@ bool IsValidThreadHandle(HANDLE hThread)
 	}
 }
 
+bool HasDebugPrivileges(HANDLE hProcess)
+{
+	HANDLE hToken;
+	LUID luid;
+	if (!OpenProcessToken(hProcess, TOKEN_QUERY, &hToken))
+		return false;
+	if (!LookupPrivilegeValue(nullptr, SE_DEBUG_NAME, &luid))
+		return false;
+
+	DWORD size = 0;
+	bool hasDebugPrivileges = false;
+	void* wheresMalloc = NULL;
+	GetTokenInformation(hToken, TokenPrivileges, NULL, 0, &size);
+
+	if (size > 0 && (wheresMalloc = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE)) != NULL)
+	{
+		TOKEN_PRIVILEGES* tokenPrivileges = (TOKEN_PRIVILEGES*)wheresMalloc;
+		if (GetTokenInformation(hToken, TokenPrivileges, tokenPrivileges, size, &size))
+		{
+			for (unsigned int i = 0; i < tokenPrivileges->PrivilegeCount; ++i)
+			{
+				LUID_AND_ATTRIBUTES luidAndAttributes = tokenPrivileges->Privileges[i];
+				if (luidAndAttributes.Luid.LowPart == luid.LowPart && luidAndAttributes.Luid.HighPart == luid.HighPart)
+				{
+					hasDebugPrivileges = (luidAndAttributes.Attributes & SE_PRIVILEGE_ENABLED) != 0 ||
+						(luidAndAttributes.Attributes & SE_PRIVILEGE_ENABLED_BY_DEFAULT) != 0;
+				}
+			}
+		}
+		VirtualFree(tokenPrivileges, size, MEM_RELEASE);
+	}
+
+	CloseHandle(hToken);
+	return hasDebugPrivileges;
+}
+
 OSVERSIONINFO versionInfo = { 0 };
 
 bool IsAtleastVista()

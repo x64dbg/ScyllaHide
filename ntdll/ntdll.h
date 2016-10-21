@@ -522,6 +522,12 @@ typedef struct _PS_ATTRIBUTE_LIST
     PS_ATTRIBUTE Attributes[1];
 } PS_ATTRIBUTE_LIST, *PPS_ATTRIBUTE_LIST;
 
+typedef struct _PROCESS_HANDLE_TRACING_ENABLE_EX // PROCESS_HANDLE_TRACING_ENABLE is simply this struct with only the first field
+{
+	ULONG Flags;
+	ULONG TotalSlots;
+} PROCESS_HANDLE_TRACING_ENABLE_EX, *PPROCESS_HANDLE_TRACING_ENABLE_EX;
+
 //Source: http://processhacker.sourceforge.net
 typedef enum _PROCESSINFOCLASS
 {

@@ -123,21 +123,54 @@ NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCL
 {
     if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
     {
-        if (ProcessInformationClass == ProcessBreakOnTermination && ProcessInformation != 0 && sizeof(ULONG) == ProcessInformationLength)
+        if (ProcessInformationClass == ProcessBreakOnTermination)
         {
+			if (ProcessInformationLength != sizeof(ULONG))
+			{
+				return STATUS_INFO_LENGTH_MISMATCH;
+			}
+
+			// NtSetInformationProcess will happily dereference this pointer
+			if (ProcessInformation == NULL)
+			{
+				return STATUS_ACCESS_VIOLATION;
+			}
+
+			// A process must have debug privileges enabled to set the ProcessBreakOnTermination flag
+			if (!HasDebugPrivileges(NtCurrentProcess))
+			{
+				return STATUS_PRIVILEGE_NOT_HELD;
+			}
+
             ValueProcessBreakOnTermination = *((ULONG *)ProcessInformation);
             return STATUS_SUCCESS;
         }
 
 		//PROCESS_HANDLE_TRACING_ENABLE -> ULONG, PROCESS_HANDLE_TRACING_ENABLE_EX -> ULONG,ULONG
-		if (ProcessInformationClass == ProcessHandleTracing && ProcessInformation != 0)
+		if (ProcessInformationClass == ProcessHandleTracing)
 		{
-			if (ProcessInformationLength != sizeof(ULONG) && ProcessInformationLength != (sizeof(ULONG)*2))
+			bool enable = ProcessInformationLength != 0; // A length of 0 is valid and indicates we should disable tracing
+			if (enable)
 			{
-				return STATUS_INFO_LENGTH_MISMATCH;
+				if (ProcessInformationLength != sizeof(ULONG) && ProcessInformationLength != (sizeof(ULONG) * 2))
+				{
+					return STATUS_INFO_LENGTH_MISMATCH;
+				}
+				
+				// NtSetInformationProcess will happily dereference this pointer
+				if (ProcessInformation == NULL)
+				{
+					return STATUS_ACCESS_VIOLATION;
+				}
+
+				PPROCESS_HANDLE_TRACING_ENABLE_EX phtEx = (PPROCESS_HANDLE_TRACING_ENABLE_EX)ProcessInformation;
+				if (phtEx->Flags != 0)
+				{
+					return STATUS_INVALID_PARAMETER;
+				}
 			}
 
-			IsProcessHandleTracingEnabled = true;
+			IsProcessHandleTracingEnabled = enable;
 			return STATUS_SUCCESS;
 		}
     }
