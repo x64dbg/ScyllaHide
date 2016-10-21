@@ -5,6 +5,7 @@
 bool IsValidHandle(HANDLE hHandle);
 bool IsValidThreadHandle(HANDLE hThread);
 bool IsValidProcessHandle(HANDLE hProcess);
+bool HasDebugPrivileges(HANDLE hProcess);
 DWORD GetExplorerProcessId();
 DWORD GetCsrssProcessId();
 DWORD GetProcessIdByName(const WCHAR * processName);
