@@ -66,6 +66,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
 }
 
 static ULONG ValueProcessBreakOnTermination = FALSE;
+static ULONG ValueProcessDebugFlags = PROCESS_DEBUG_INHERIT; // actual value is no inherit
 static bool IsProcessHandleTracingEnabled = false;
 
 #ifndef STATUS_INVALID_PARAMETER
@@ -82,7 +83,7 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
         {
             if (ProcessInformationClass == ProcessDebugFlags)
             {
-                *((ULONG *)ProcessInformation) = 1;
+                *((ULONG *)ProcessInformation) = ((ValueProcessDebugFlags & PROCESS_NO_DEBUG_INHERIT) != 0) ? 0 : PROCESS_DEBUG_INHERIT;
             }
             else if (ProcessInformationClass == ProcessDebugObjectHandle)
             {
@@ -145,6 +146,36 @@ NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCL
             ValueProcessBreakOnTermination = *((ULONG *)ProcessInformation);
             return STATUS_SUCCESS;
         }
+
+		// Don't allow changing the debug inherit flag, and keep track of the new value to report in NtQIP
+		if (ProcessInformationClass == ProcessDebugFlags)
+		{
+			if (ProcessInformationLength != sizeof(ULONG))
+			{
+				return STATUS_INFO_LENGTH_MISMATCH;
+			}
+
+			if (ProcessInformation == NULL)
+			{
+				return STATUS_ACCESS_VIOLATION;
+			}
+
+			ULONG Flags = *(ULONG*)ProcessInformation;
+			if ((Flags & ~PROCESS_DEBUG_INHERIT) != 0)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			if ((Flags & PROCESS_DEBUG_INHERIT) != 0)
+			{
+				ValueProcessDebugFlags &= ~PROCESS_NO_DEBUG_INHERIT;
+			}
+			else
+			{
+				ValueProcessDebugFlags |= PROCESS_NO_DEBUG_INHERIT;
+			}
+			return STATUS_SUCCESS;
+		}
 
 		//PROCESS_HANDLE_TRACING_ENABLE -> ULONG, PROCESS_HANDLE_TRACING_ENABLE_EX -> ULONG,ULONG
 		if (ProcessInformationClass == ProcessHandleTracing)
