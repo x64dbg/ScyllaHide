@@ -49,7 +49,7 @@ void HandleGuiException(HWND hwnd);
 void ShowAbout(HWND hWnd)
 {
     MessageBoxA(hWnd,
-                "ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_A" ("__DATE__")\n\n"
+                "ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A " (" __DATE__ ")\n\n"
                 "Copyright (C) 2014 Aguila / cypher\n\n"
                 "Special thanks to:\n"
                 "- What for his POISON assembler source code\n"

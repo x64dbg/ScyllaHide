@@ -254,7 +254,7 @@ extc int __cdecl ODBG2_Plugininit(void)
     ReadCurrentProfile();
     ReadSettings();
 
-    Addtolist(0,0,L"ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_W);
+    Addtolist(0,0,L"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_W);
     Addtolist(0,2,L"  Copyright (C) 2014 Aguila / cypher");
     Addtolist(0,2,L"  Operating System: %S", GetWindowsVersionNameA());
 

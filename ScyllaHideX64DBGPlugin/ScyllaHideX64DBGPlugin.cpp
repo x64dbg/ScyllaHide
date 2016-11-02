@@ -137,7 +137,7 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
     ReadCurrentProfile();
     ReadSettings();
 
-    _plugin_logprintf("ScyllaHide Plugin v"SCYLLA_HIDE_VERSION_STRING_A"\n");
+    _plugin_logprintf("ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A "\n");
     _plugin_logprintf("  Copyright (C) 2014 Aguila / cypher\n");
 	_plugin_logprintf("  Operating System: %s\n", GetWindowsVersionNameA());
 
