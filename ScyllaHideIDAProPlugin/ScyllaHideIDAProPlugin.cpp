@@ -120,7 +120,7 @@ int IDAP_init(void)
     }
 
     msg("##################################################\n");
-    msg("# ScyllaHide v"SCYLLA_HIDE_VERSION_STRING_A" Copyright 2014 Aguila / cypher #\n");
+    msg("# ScyllaHide v" SCYLLA_HIDE_VERSION_STRING_A " Copyright 2014 Aguila / cypher #\n");
     msg("##################################################\n");
 
     bHooked = false;
