@@ -598,36 +598,3 @@ bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize,
 
 	return ret;
 }
-
-typedef int (WINAPI *t_MessageBoxA)(HWND hWnd,LPCSTR lpText,LPCSTR lpCaption,UINT uType);
-typedef int (__cdecl *t_wsprintfA)(LPSTR lpOut, LPCSTR lpFmt, ...);
-
-t_MessageBoxA _MessageBoxA = 0;
-t_wsprintfA _wsprintfA = 0;
-
-void checkStructAlignment()
-{
-	char text[600] = {0};
-
-#ifdef _WIN64
-	if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_64)
-	{
-		HMODULE hUser = LoadLibraryA("user32.dll");
-
-		_MessageBoxA = (t_MessageBoxA)GetProcAddress(hUser, "MessageBoxA");
-		_wsprintfA = (t_wsprintfA)GetProcAddress(hUser, "wsprintfA");
-		_wsprintfA(text,"Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE), HOOK_DLL_EXCHANGE_SIZE_64);
-		_MessageBoxA(0, text, "Error", 0);
-	}
-#else
-	if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_32)
-	{
-		HMODULE hUser = LoadLibraryA("user32.dll");
-
-		_MessageBoxA = (t_MessageBoxA)GetProcAddress(hUser, "MessageBoxA");
-		_wsprintfA = (t_wsprintfA)GetProcAddress(hUser, "wsprintfA");
-		_wsprintfA(text, "Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE), HOOK_DLL_EXCHANGE_SIZE_32);
-		_MessageBoxA(0, text, "Error", 0);
-	}
-#endif
-}

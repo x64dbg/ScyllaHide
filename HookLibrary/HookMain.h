@@ -20,9 +20,6 @@ typedef DWORD(WINAPI * t_OutputDebugStringW)(LPCWSTR lpOutputString); //Kernel32
 
 #define MAX_NATIVE_HOOKS 20
 
-#define HOOK_DLL_EXCHANGE_SIZE_64 410
-#define HOOK_DLL_EXCHANGE_SIZE_32 526
-
 #pragma pack(push, 1)
 typedef struct _HOOK_NATIVE_CALL32 {
     DWORD eaxValue;
