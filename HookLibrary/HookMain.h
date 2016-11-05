@@ -136,6 +136,8 @@ typedef struct _HOOK_DLL_EXCHANGE {
     t_BlockInput dBlockInput;
     DWORD BlockInputBackupSize;
 
+    t_NtUserBlockInput dNtUserBlockInput;
+    DWORD NtUserBlockInputBackupSize;
     t_NtUserFindWindowEx dNtUserFindWindowEx;
     DWORD NtUserFindWindowExBackupSize;
     t_NtUserBuildHwndList dNtUserBuildHwndList;
@@ -154,6 +156,7 @@ typedef struct _HOOK_DLL_EXCHANGE {
     BOOLEAN isNtdllHooked;
     BOOLEAN isKernel32Hooked;
     BOOLEAN isUser32Hooked;
+    BOOLEAN isWin32uHooked;
 
 #ifndef _WIN64
     HOOK_NATIVE_CALL32 HookNative[MAX_NATIVE_HOOKS];

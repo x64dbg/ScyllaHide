@@ -73,7 +73,7 @@ void * FixWindowsRedirects(void * address)
     return address;
 }
 
-DWORD GetEcxSysCallIndex32(BYTE * data, int dataSize)
+DWORD GetEcxSysCallIndex32(const BYTE * data, int dataSize)
 {
 	unsigned int DecodedInstructionsCount = 0;
 	_CodeInfo decomposerCi = {0};
@@ -101,7 +101,7 @@ DWORD GetEcxSysCallIndex32(BYTE * data, int dataSize)
 	return 0;
 }
 
-DWORD GetSysCallIndex32(BYTE * data)
+DWORD GetSysCallIndex32(const BYTE * data)
 {
 	unsigned int DecodedInstructionsCount = 0;
 	_CodeInfo decomposerCi = {0};
@@ -141,94 +141,86 @@ DWORD GetSysCallIndex32(BYTE * data)
 #ifndef _WIN64
 
 
-DWORD GetCallDestination(HANDLE hProcess, BYTE * data, int dataSize)
+DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
 {
-	DWORD SysWow64 = (DWORD)__readfsdword(0xC0);
-	bool bIsWindows10NtQueryInformationProcess = false;
+    // Colin Edit, hacky
+    if (!_IsWindows10OrGreater()) {
+        DWORD SysWow64 = (DWORD)__readfsdword(0xC0);
+        if (SysWow64) {
+            return SysWow64;
+        }
+    }
 
-	// Colin Edit, hacky
-	if (_IsWindows10OrGreater())
-	{
-		SysWow64 = 0;
-	}
-	
-	if (SysWow64)
-	{
-		return SysWow64;
-	}
-	else
-	{
-		unsigned int DecodedInstructionsCount = 0;
-		_CodeInfo decomposerCi = {0};
-		_DInst decomposerResult[100] = {0};
+    unsigned int DecodedInstructionsCount = 0;
+    _CodeInfo decomposerCi = { 0 };
+    _DInst decomposerResult[100] = { 0 };
 
-		decomposerCi.code = data;
-		decomposerCi.codeLen = dataSize;
-		decomposerCi.dt = DecodingType;
-		decomposerCi.codeOffset = (LONG_PTR)data;
+    decomposerCi.code = data;
+    decomposerCi.codeLen = dataSize;
+    decomposerCi.dt = DecodingType;
+    decomposerCi.codeOffset = (LONG_PTR)data;
 
-		if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
-		{
-			if (DecodedInstructionsCount > 2)
-			{
-				// Windows 10 NtQueryInformationProcess specific
-				/*
-				CPU Disasm
-				Address                                      Hex dump                                   Command                                                                        Comments
-				77C86C60 NtQueryInformationProcess               B8 19000000                            MOV EAX,19                                                                     ; NTSTATUS ntdll.NtQueryInformationProcess(ProcessHandle,ProcessInfoClass,Buffer,Bufsize,pLength)
-				77C86C65                                         E8 04000000                            CALL 77C86C6E
-				77C86C6A                                         0000                                   ADD [EAX],AL
-				77C86C6C                                         C177 5A 80                             SAL DWORD PTR [EDI+5A],80                                                      ; Shift out of range
-				77C86C70                                         7A 03                                  JPE SHORT 77C86C75
-				77C86C72                                         4B                                     DEC EBX
-				77C86C73                                         75 0A                                  JNE SHORT 77C86C7F
-				77C86C75                                         64:FF15 C0000000                       CALL FS:[0C0]
-				77C86C7C                                         C2 1400                                RETN 14						    <<<< thinks this is the end of the function
-				77C86C7F                                         BA C0B4C977                            MOV EDX,gateway					<<<< Expecting this, finding nothing
-				77C86C84                                         FFD2                                   CALL EDX
-				77C86C86                                         C2 1400                                RETN 14
-				*/
+    if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
+    {
+        if (DecodedInstructionsCount > 2)
+        {
+            // Windows 10 NtQueryInformationProcess specific
+            /*
+            CPU Disasm
+            Address                                      Hex dump                                   Command                                                                        Comments
+            77C86C60 NtQueryInformationProcess               B8 19000000                            MOV EAX,19                                                                     ; NTSTATUS ntdll.NtQueryInformationProcess(ProcessHandle,ProcessInfoClass,Buffer,Bufsize,pLength)
+            77C86C65                                         E8 04000000                            CALL 77C86C6E
+            77C86C6A                                         0000                                   ADD [EAX],AL
+            77C86C6C                                         C177 5A 80                             SAL DWORD PTR [EDI+5A],80                                                      ; Shift out of range
+            77C86C70                                         7A 03                                  JPE SHORT 77C86C75
+            77C86C72                                         4B                                     DEC EBX
+            77C86C73                                         75 0A                                  JNE SHORT 77C86C7F
+            77C86C75                                         64:FF15 C0000000                       CALL FS:[0C0]
+            77C86C7C                                         C2 1400                                RETN 14						    <<<< thinks this is the end of the function
+            77C86C7F                                         BA C0B4C977                            MOV EDX,gateway					<<<< Expecting this, finding nothing
+            77C86C84                                         FFD2                                   CALL EDX
+            77C86C86                                         C2 1400                                RETN 14
+            */
 
-				//B8 EA000000      MOV EAX,0EA
-				//BA 0003FE7F      MOV EDX,7FFE0300
-				//FF12             CALL DWORD PTR DS:[EDX]
-				//C2 1400          RETN 14
-				//0xB8,0xEA,0x00,0x00,0x00,0xBA,0x00,0x03,0xFE,0x7F,0xFF,0x12,0xC2,0x14,0x00
+            //B8 EA000000      MOV EAX,0EA
+            //BA 0003FE7F      MOV EDX,7FFE0300
+            //FF12             CALL DWORD PTR DS:[EDX]
+            //C2 1400          RETN 14
+            //0xB8,0xEA,0x00,0x00,0x00,0xBA,0x00,0x03,0xFE,0x7F,0xFF,0x12,0xC2,0x14,0x00
 
-				//MOV EAX,0EA
-				//MOV EDX, 7FFE0300h ; EDX = 7FFE0300h
-				//	CALL EDX ; call 7FFE0300h
-				//	RETN 14
-				//0xB8,0xEA,0x00,0x00,0x00,0xBA,0x00,0x03,0xFE,0x7F,0xFF,0xD2,0xC2,0x14,0x00
+            //MOV EAX,0EA
+            //MOV EDX, 7FFE0300h ; EDX = 7FFE0300h
+            //	CALL EDX ; call 7FFE0300h
+            //	RETN 14
+            //0xB8,0xEA,0x00,0x00,0x00,0xBA,0x00,0x03,0xFE,0x7F,0xFF,0xD2,0xC2,0x14,0x00
 
-				if (decomposerResult[0].flags != FLAG_NOT_DECODABLE && decomposerResult[1].flags != FLAG_NOT_DECODABLE)
-				{
-					if (decomposerResult[0].opcode == I_MOV && decomposerResult[1].opcode == I_MOV && decomposerResult[2].opcode == I_CALL)
-					{
-						if (decomposerResult[2].ops[0].type == O_SMEM) //CALL DWORD PTR DS:[EDX]
-						{
-							DWORD pKUSER_SHARED_DATASysCall = decomposerResult[1].imm.dword;
-							if (pKUSER_SHARED_DATASysCall)
-							{
-								DWORD callDestination = 0;
-								ReadProcessMemory(hProcess, (void*)pKUSER_SHARED_DATASysCall, &callDestination, sizeof(DWORD), 0);
-								return callDestination;
-							}
-						}
-						else if (decomposerResult[2].ops[0].type == O_REG) //CALL EDX 
-						{
-							return decomposerResult[1].imm.dword;
-						}
-					}
-				}
+            if (decomposerResult[0].flags != FLAG_NOT_DECODABLE && decomposerResult[1].flags != FLAG_NOT_DECODABLE)
+            {
+                if (decomposerResult[0].opcode == I_MOV && decomposerResult[1].opcode == I_MOV && decomposerResult[2].opcode == I_CALL)
+                {
+                    if (decomposerResult[2].ops[0].type == O_SMEM) //CALL DWORD PTR DS:[EDX]
+                    {
+                        DWORD pKUSER_SHARED_DATASysCall = decomposerResult[1].imm.dword;
+                        if (pKUSER_SHARED_DATASysCall)
+                        {
+                            DWORD callDestination = 0;
+                            ReadProcessMemory(hProcess, (void*)pKUSER_SHARED_DATASysCall, &callDestination, sizeof(DWORD), 0);
+                            return callDestination;
+                        }
+                    }
+                    else if (decomposerResult[2].ops[0].type == O_REG) //CALL EDX 
+                    {
+                        return decomposerResult[1].imm.dword;
+                    }
+                }
+            }
 
 
-				MessageBoxA(0, "Unknown syscall structure!", "ERROR", 0);
-			}
-		}
-	}
+            MessageBoxA(0, "Unknown syscall structure!", "ERROR", 0);
+        }
+    }
 
-	return 0;
+    return NULL;
 }
 
 #endif
@@ -262,7 +254,7 @@ DWORD GetFunctionSizeRETN( BYTE * data, int dataSize )
 	return 0;
 }
 
-DWORD GetCallOffset( BYTE * data, int dataSize, DWORD * callSize )
+DWORD GetCallOffset(const BYTE * data, int dataSize, DWORD * callSize )
 {
 	unsigned int DecodedInstructionsCount = 0;
 	_CodeInfo decomposerCi = {0};
@@ -294,7 +286,9 @@ DWORD GetCallOffset( BYTE * data, int dataSize, DWORD * callSize )
 
 #ifndef _WIN64
 
-BYTE sysWowSpecialJmp[7] = { 0 };//EA 1E27E574 3300              JMP FAR 0033:74E5271E ; Far jump
+// EA 1E 27 E5 74 33 00              JMP FAR 0033:74E5271E ; Far jump
+// FF 25 18 12 39 4B                 jmp     ds:_Wow64Transition
+BYTE sysWowSpecialJmp[7] = { 0 };
 DWORD sysWowSpecialJmpAddress = 0;
 
 void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp,unsigned long * backupSize)
@@ -302,8 +296,9 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 	PBYTE trampoline = 0;
 	DWORD protect;
 
-	// NtQueryInformationProcess on Windows 10 under sysWow64 has an irregular structure, this is a call at +4 bytes from itself
-	bool bSpecialSyscallStructure = (originalBytes[5] == 0xE8 && originalBytes[6] == 0x04);		
+    // NtQueryInformationProcess on Windows 10 under sysWow64 has an irregular structure, this is a call at +4 or bytes from itself
+    // Another case for Windows 10 is 'call $+5'
+    bool bSpecialSyscallStructure = (originalBytes[5] == 0xE8 && (originalBytes[6] == 0x04 || originalBytes[6] == 0x00));
 
 	// We're "borrowing" another api's code as a template, the ret must match
 	if (bSpecialSyscallStructure)
@@ -352,8 +347,9 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 
 	// Windows 8.1 Gateway is just a JMP FAR 0033:77C9B4DF
 	// Windows 10 Gateway has extra code before the JMP FAR
+    // And some Windows 10 has JMP DS:_Wow64Transition
 	// The code below adjusts the sysWowSpecialJmpAddress for windows 10
-	if (*(BYTE*)sysWowSpecialJmpAddress != 0xEA)
+    if ((*(BYTE*)sysWowSpecialJmpAddress != 0xEA) && (*(BYTE*)sysWowSpecialJmpAddress != 0xFF))
 	{
 		//LogDebug("[ScyllaHide 0x33] Adjusting address for Windows 10 gateway ");
 
@@ -508,6 +504,7 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
 	if (!ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), 0))
 	{
 		MessageBoxA(0, "DetourCreateRemoteNative32->ReadProcessMemory failed", "ERROR", MB_ICONERROR);
+        return NULL;
 	}
 
 	memcpy(changedBytes, originalBytes, sizeof(originalBytes));
@@ -516,30 +513,28 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
 
 	PVOID result = 0;
 
-	if (sysCallIndex)
-	{
-		HookNative[countNativeHooks].eaxValue = sysCallIndex;
-		HookNative[countNativeHooks].ecxValue = 0;
-		HookNative[countNativeHooks].hookedFunction = lpFuncDetour;
+    if (!sysCallIndex)
+    {
+        MessageBoxA(0, "GetSysCallIndex32 -> sysCallIndex not found", "ERROR", MB_ICONERROR);
+        return NULL;
+    }
+		
+    HookNative[countNativeHooks].eaxValue = sysCallIndex;
+    HookNative[countNativeHooks].ecxValue = 0;
+    HookNative[countNativeHooks].hookedFunction = lpFuncDetour;
 
-		if (IsSysWow64() == false)
-		{
-			result = DetourCreateRemoteNative32Normal(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
-		}
-		else
-		{
-			HookNative[countNativeHooks].ecxValue = GetEcxSysCallIndex32(originalBytes, sizeof(originalBytes));
-			result = DetourCreateRemoteNativeSysWow64(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
-		}
-	}
-	else
-	{
-		MessageBoxA(0, "GetSysCallIndex32 -> sysCallIndex not found", "ERROR", MB_ICONERROR);
-	}
+    if (IsSysWow64() == false)
+    {
+        result = DetourCreateRemoteNative32Normal(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
+    } else
+    {
+        HookNative[countNativeHooks].ecxValue = GetEcxSysCallIndex32(originalBytes, sizeof(originalBytes));
+        result = DetourCreateRemoteNativeSysWow64(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
+    }
 
-	countNativeHooks++;
+    countNativeHooks++;
 
-	return result;
+    return result;
 }
 #endif
 

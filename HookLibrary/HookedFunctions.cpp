@@ -595,6 +595,11 @@ BOOL WINAPI HookedBlockInput(BOOL fBlockIt)
     return FALSE;
 }
 
+NTSTATUS NTAPI HookedNtBlockInput(BOOL fBlockIt)
+{
+    return (NTSTATUS)HookedBlockInput(fBlockIt);
+}
+
 //GetLastError() function might not change if a  debugger is present (it has never been the case that it is always set to zero).
 DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString) //Worst anti-debug ever
 {
