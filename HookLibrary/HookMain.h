@@ -20,9 +20,6 @@ typedef DWORD(WINAPI * t_OutputDebugStringW)(LPCWSTR lpOutputString); //Kernel32
 
 #define MAX_NATIVE_HOOKS 20
 
-#define HOOK_DLL_EXCHANGE_SIZE_64 410
-#define HOOK_DLL_EXCHANGE_SIZE_32 526
-
 #pragma pack(push, 1)
 typedef struct _HOOK_NATIVE_CALL32 {
     DWORD eaxValue;
@@ -139,6 +136,8 @@ typedef struct _HOOK_DLL_EXCHANGE {
     t_BlockInput dBlockInput;
     DWORD BlockInputBackupSize;
 
+    t_NtUserBlockInput dNtUserBlockInput;
+    DWORD NtUserBlockInputBackupSize;
     t_NtUserFindWindowEx dNtUserFindWindowEx;
     DWORD NtUserFindWindowExBackupSize;
     t_NtUserBuildHwndList dNtUserBuildHwndList;
@@ -157,6 +156,7 @@ typedef struct _HOOK_DLL_EXCHANGE {
     BOOLEAN isNtdllHooked;
     BOOLEAN isKernel32Hooked;
     BOOLEAN isUser32Hooked;
+    BOOLEAN isWin32uHooked;
 
 #ifndef _WIN64
     HOOK_NATIVE_CALL32 HookNative[MAX_NATIVE_HOOKS];

@@ -1071,6 +1071,9 @@ typedef NTSTATUS (NTAPI * t_NtReadVirtualMemory)(HANDLE ProcessHandle,PVOID Base
 typedef NTSTATUS (NTAPI * t_NtWriteVirtualMemory)(HANDLE ProcessHandle,PVOID BaseAddress,CONST VOID *Buffer,SIZE_T BufferSize,PSIZE_T NumberOfBytesWritten);
 
 //user32.dll native calls
+//BlockInput
+typedef NTSTATUS(NTAPI * t_NtUserBlockInput)(BOOL fBlockIt);
+
 //FindWindow
 #define NtUserFindWindowEx_FW_BOTH 0
 #define NtUserFindWindowEx_FW_16BIT 1

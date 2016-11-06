@@ -42,7 +42,6 @@ NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS
 
 NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
 {
-	//checkStructAlignment();
     if (SystemInformationClass == SystemKernelDebuggerInformation || SystemInformationClass == SystemProcessInformation)
     {
         NTSTATUS ntStat = DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
@@ -594,6 +593,11 @@ BOOL WINAPI HookedBlockInput(BOOL fBlockIt)
     }
 
     return FALSE;
+}
+
+NTSTATUS NTAPI HookedNtBlockInput(BOOL fBlockIt)
+{
+    return (NTSTATUS)HookedBlockInput(fBlockIt);
 }
 
 //GetLastError() function might not change if a  debugger is present (it has never been the case that it is always set to zero).

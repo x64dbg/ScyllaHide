@@ -43,23 +43,6 @@ int wmain(int argc, wchar_t* argv[])
     DWORD targetPid = 0;
     WCHAR * dllPath = 0;
 
-
-#ifdef _WIN64
-	if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_64)
-	{
-		printf("Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE),HOOK_DLL_EXCHANGE_SIZE_64);
-		getchar();
-		return 0;
-	}
-#else
-	if (sizeof(HOOK_DLL_EXCHANGE) != HOOK_DLL_EXCHANGE_SIZE_32)
-	{
-		printf("Warning wrong struct size %d != %d\n", sizeof(HOOK_DLL_EXCHANGE),HOOK_DLL_EXCHANGE_SIZE_32);
-		getchar();
-		return 0;
-	}
-#endif
-
 	//isNewVersionAvailable();
 
     GetModuleFileNameW(0, NtApiIniPath, _countof(NtApiIniPath));
