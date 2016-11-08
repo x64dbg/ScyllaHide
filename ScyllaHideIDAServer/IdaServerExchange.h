@@ -86,8 +86,6 @@ enum server_dbg_notification_t
 #define RESULT_SUCCESS 1
 #define RESULT_FAILED 0
 
-#define IDA_SERVER_EXCHANGE_STRUCT_SIZE 645
-
 typedef struct _IDA_SERVER_EXCHANGE
 {
 	unsigned long result;

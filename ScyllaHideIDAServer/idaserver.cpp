@@ -47,13 +47,6 @@ int main(int argc, char *argv[])
 	LogWrap = LogWrapper;
 	LogErrorWrap = LogWrapper;
 
-	if (sizeof(IDA_SERVER_EXCHANGE) != IDA_SERVER_EXCHANGE_STRUCT_SIZE)
-	{
-		printf("WRONG!!! Size of IDA_SERVER_EXCHANGE %d == %d?\n\n", sizeof(IDA_SERVER_EXCHANGE), IDA_SERVER_EXCHANGE_STRUCT_SIZE);
-		getchar();
-		return 0;
-	}
-
 	SetDebugPrivileges();
 
 	printf("Starting IDA Server v" SCYLLA_HIDE_VERSION_STRING_A "...\n");
