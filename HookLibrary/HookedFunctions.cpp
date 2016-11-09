@@ -595,7 +595,7 @@ BOOL WINAPI HookedBlockInput(BOOL fBlockIt)
     return FALSE;
 }
 
-NTSTATUS NTAPI HookedNtBlockInput(BOOL fBlockIt)
+NTSTATUS NTAPI HookedNtUserBlockInput(BOOL fBlockIt)
 {
     return (NTSTATUS)HookedBlockInput(fBlockIt);
 }
