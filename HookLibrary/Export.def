@@ -22,6 +22,7 @@ HookedNtSetContextThread
 HookedNtSetDebugFilterState
 HookedNtSetInformationProcess
 HookedNtSetInformationThread
+HookedNtUserBlockInput
 HookedNtUserBuildHwndList
 HookedNtUserFindWindowEx
 HookedNtUserQueryWindow
