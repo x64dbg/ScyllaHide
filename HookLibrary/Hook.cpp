@@ -2,12 +2,12 @@
 
 #ifdef _WIN64
 #pragma comment(lib, "LDE64x64")
-unsigned __fastcall LDE(LPCBYTE lpData, unsigned uArch);
+extern "C" unsigned __fastcall LDE(LPCBYTE lpData, unsigned uArch);
 #define SCYLLA_LDE_ARCH     64
 #define SCYLLA_DETOUR_SIZE  (2 + sizeof(DWORD) + sizeof(DWORD_PTR)) // 2 + 4 + 8 = 14
 #else
 #pragma comment(lib, "LDE64")
-unsigned __stdcall LDE(LPCBYTE lpData, unsigned uArch);
+extern "C" unsigned __stdcall LDE(LPCBYTE lpData, unsigned uArch);
 #define SCYLLA_LDE_ARCH 0
 #define SCYLLA_DETOUR_SIZE  (1 + sizeof(DWORD)) // 1 + 4 = 5
 #endif
@@ -33,7 +33,7 @@ LPBYTE DetourCreate(LPBYTE lpbFuncOrig, LPCBYTE lpcbFuncDetour, BOOL fCreateTram
     unsigned uDetourLen = GetDetourLen(lpbFuncOrig, SCYLLA_DETOUR_SIZE);
 
     if (fCreateTramp) {
-        lpbTrampoline = VirtualAlloc(0, uDetourLen + SCYLLA_DETOUR_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+        lpbTrampoline = (LPBYTE)VirtualAlloc(0, uDetourLen + SCYLLA_DETOUR_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
         if (!lpbTrampoline)
             return NULL;
 
