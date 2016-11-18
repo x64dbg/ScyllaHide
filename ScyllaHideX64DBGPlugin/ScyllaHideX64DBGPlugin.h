@@ -1,7 +1,7 @@
 #pragma once
 
 #include <windows.h>
-#include "_plugins.h"
+#include <x64dbg/_plugins.h>
 
 #ifndef DLL_EXPORT
 #define DLL_EXPORT __declspec(dllexport)

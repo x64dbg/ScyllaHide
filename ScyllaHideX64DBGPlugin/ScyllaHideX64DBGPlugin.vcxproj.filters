@@ -5,15 +5,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Header Files\distorm">
-      <UniqueIdentifier>{d8940fb9-324e-4e77-8309-f060bf1853c5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Source Files\distorm">
-      <UniqueIdentifier>{25f74978-c2dd-4797-af79-cca20a9f807b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
@@ -51,33 +45,6 @@
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\distorm\decoder.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\distorm.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\instructions.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\insts.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\mnemonics.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\operands.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\prefix.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\textdefs.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\wstring.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
     <ClCompile Include="..\PluginGeneric\AttachDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -90,9 +57,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ScyllaHideX64DBGPlugin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="_plugins.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h">
@@ -127,39 +91,6 @@
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\config.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\decoder.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\distorm.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\instructions.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\insts.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\mnemonics.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\operands.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\prefix.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\textdefs.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\wstring.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\x86defs.h">
-      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\AttachDialog.h">
       <Filter>Header Files</Filter>

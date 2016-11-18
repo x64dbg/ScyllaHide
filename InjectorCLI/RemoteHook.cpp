@@ -1,9 +1,11 @@
 #include "RemoteHook.h"
 #include <windows.h>
-#include "distorm.h"
-#include "mnemonics.h"
+#include <distorm/distorm.h>
+#include <distorm/mnemonics.h>
 #include "ApplyHooking.h"
 #include "OperatingSysInfo.h"
+
+#pragma comment(lib, "distorm.lib")
 
 #if !defined(_WIN64)
 _DecodeType DecodingType = Decode32Bits;

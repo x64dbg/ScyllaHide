@@ -1,8 +1,10 @@
 #include "HookHelper.h"
+
+#include <tlhelp32.h>
+#include <ntdllext/ntdllext.h>
+
 #include "HookedFunctions.h"
 #include "HookMain.h"
-#include <tlhelp32.h>
-#include "ntdllext.h"
 #include "PebHider.h"
 
 const WCHAR * BadProcessnameList[] =

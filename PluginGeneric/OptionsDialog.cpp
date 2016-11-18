@@ -6,22 +6,22 @@
 
 #ifdef OLLY1
 #include "..\ScyllaHideOlly1Plugin\resource.h"
-#include "..\ScyllaHideOlly1Plugin\ollyplugindefinitions.h"
+#include <ollydbg1/ollyplugindefinitions.h>
 #elif OLLY2
 #include "..\ScyllaHideOlly2Plugin\resource.h"
-#include "..\ScyllaHideOlly2Plugin\plugin.h"
+#include <ollydbg2/plugin.h>
 #elif __IDP__
 //#define BUILD_IDA_64BIT 1
 #include "..\ScyllaHideIDAProPlugin\resource.h"
-#include "..\ScyllaHideIDAProPlugin\idasdk\ida.hpp"
-#include "..\ScyllaHideIDAProPlugin\idasdk\idp.hpp"
-#include "..\ScyllaHideIDAProPlugin\idasdk\dbg.hpp"
+#include <idasdk/ida.hpp>
+#include <idasdk/idp.hpp>
+#include <idasdk/dbg.hpp>
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\ScyllaHideIDAProPlugin\IdaServerClient.h"
 #include "..\PluginGeneric\AttachDialog.h"
 
 #elif X64DBG
-#include "..\ScyllaHideX64DBGPlugin\bridgemain.h"
+#include <x64dbg/bridgemain.h>
 #include "..\ScyllaHideX64DBGPlugin\resource.h"
 #define IDC_EXCEPTION_ALL 123432
 #define IDC_SELECT_EXCEPTIONS 23949

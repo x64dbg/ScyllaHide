@@ -4,24 +4,56 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InjectorCLI", "InjectorCLI\InjectorCLI.vcxproj", "{92C90AAD-036E-474D-902C-CFD1E7422899}"
+	ProjectSection(ProjectDependencies) = postProject
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HookLibrary", "HookLibrary\HookLibrary.vcxproj", "{C36C2313-72A8-4583-B7D8-28E193D5287F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideTEPlugin", "ScyllaHideTEPlugin\ScyllaHideTEPlugin.vcxproj", "{0520906F-4296-4BEC-BD5F-B370E1F7800A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideOlly1Plugin", "ScyllaHideOlly1Plugin\ScyllaHideOlly1Plugin.vcxproj", "{79774D44-ED2A-4FD2-9224-40AF0A590410}"
+	ProjectSection(ProjectDependencies) = postProject
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideOlly2Plugin", "ScyllaHideOlly2Plugin\ScyllaHideOlly2Plugin.vcxproj", "{9EEA6D78-4E74-47B9-8746-B8754B15525D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideIDAProPlugin", "ScyllaHideIDAProPlugin\ScyllaHideIDAProPlugin.vcxproj", "{A94B6222-ABEF-41A0-BE48-06801157AAA5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideIDAServer", "ScyllaHideIDAServer\ScyllaHideIDAServer.vcxproj", "{4506D672-19C3-439B-8E1B-F1BA8BE28844}"
+	ProjectSection(ProjectDependencies) = postProject
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideX64DBGPlugin", "ScyllaHideX64DBGPlugin\ScyllaHideX64DBGPlugin.vcxproj", "{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PDBReader", "PDBReader\PDBReader.vcxproj", "{B7D25F78-47EE-4881-AB78-9543CCC3FD52}"
+	ProjectSection(ProjectDependencies) = postProject
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideGenericPlugin", "ScyllaHideGenericPlugin\ScyllaHideGenericPlugin.vcxproj", "{C2B5EC30-CF03-4963-B963-7576E9F1D01E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "distorm", "3rdparty\distorm\distorm.vcxproj", "{920BBB4D-C715-4CD4-9129-FF2CF941495D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -104,6 +136,14 @@ Global
 		{C2B5EC30-CF03-4963-B963-7576E9F1D01E}.Release|Win32.Build.0 = Release|Win32
 		{C2B5EC30-CF03-4963-B963-7576E9F1D01E}.Release|x64.ActiveCfg = Release|x64
 		{C2B5EC30-CF03-4963-B963-7576E9F1D01E}.Release|x64.Build.0 = Release|x64
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D}.Debug|Win32.Build.0 = Debug|Win32
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D}.Debug|x64.ActiveCfg = Debug|x64
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D}.Debug|x64.Build.0 = Debug|x64
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D}.Release|Win32.ActiveCfg = Release|Win32
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D}.Release|Win32.Build.0 = Release|Win32
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D}.Release|x64.ActiveCfg = Release|x64
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

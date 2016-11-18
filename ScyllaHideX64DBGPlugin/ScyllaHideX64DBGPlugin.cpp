@@ -12,6 +12,14 @@
 #include "..\PluginGeneric\AttachDialog.h"
 #include "..\InjectorCLI\OperatingSysInfo.h"
 
+#ifdef _WIN64
+#pragma comment(lib, "x64dbg\\x64dbg.lib")
+#pragma comment(lib, "x64dbg\\x64bridge.lib")
+#else
+#pragma comment(lib, "x64dbg\\x32dbg.lib")
+#pragma comment(lib, "x64dbg\\x32bridge.lib")
+#endif
+
 #define plugin_name "ScyllaHide"
 
 //scyllaHide definitions

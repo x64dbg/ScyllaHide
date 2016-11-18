@@ -34,80 +34,43 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(SolutionDir)common\common.props" />
+    <Import Project="$(SolutionDir)common\common.debug.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(SolutionDir)common\common.props" />
+    <Import Project="$(SolutionDir)common\common.release.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.plw</TargetExt>
-    <TargetName>ScyllaHideIDA</TargetName>
-    <OutDir>$(SolutionDir)$(Configuration)\plugins\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.plw</TargetExt>
-    <TargetName>ScyllaHideIDA</TargetName>
-    <OutDir>$(SolutionDir)$(Configuration)\plugins\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;__NT__;__IDP__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BufferSecurityCheck>true</BufferSecurityCheck>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <CallingConvention>StdCall</CallingConvention>
-      <AdditionalIncludeDirectories>./idasdk</AdditionalIncludeDirectories>
-      <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)ntdll;./idasdk/x86_win_vc_32</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ida.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/EXPORT:PLUGIN %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;__NT__;__IDP__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BufferSecurityCheck>true</BufferSecurityCheck>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <CallingConvention>StdCall</CallingConvention>
-      <AdditionalIncludeDirectories>./idasdk/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)ntdll</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/EXPORT:PLUGIN %(AdditionalOptions)</AdditionalOptions>
-      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\distorm\decoder.c" />
-    <ClCompile Include="..\distorm\distorm.c" />
-    <ClCompile Include="..\distorm\instructions.c" />
-    <ClCompile Include="..\distorm\insts.c" />
-    <ClCompile Include="..\distorm\mnemonics.c" />
-    <ClCompile Include="..\distorm\operands.c" />
-    <ClCompile Include="..\distorm\prefix.c" />
-    <ClCompile Include="..\distorm\textdefs.c" />
-    <ClCompile Include="..\distorm\wstring.c" />
     <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp" />
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
     <ClCompile Include="..\InjectorCLI\Logger.cpp" />
@@ -127,17 +90,6 @@
     <ResourceCompile Include="ScyllaHideIDAProPlugin.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\distorm\config.h" />
-    <ClInclude Include="..\distorm\decoder.h" />
-    <ClInclude Include="..\distorm\distorm.h" />
-    <ClInclude Include="..\distorm\instructions.h" />
-    <ClInclude Include="..\distorm\insts.h" />
-    <ClInclude Include="..\distorm\mnemonics.h" />
-    <ClInclude Include="..\distorm\operands.h" />
-    <ClInclude Include="..\distorm\prefix.h" />
-    <ClInclude Include="..\distorm\textdefs.h" />
-    <ClInclude Include="..\distorm\wstring.h" />
-    <ClInclude Include="..\distorm\x86defs.h" />
     <ClInclude Include="..\InjectorCLI\ApplyHooking.h" />
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
     <ClInclude Include="..\InjectorCLI\ReadNtConfig.h" />
@@ -149,12 +101,6 @@
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
     <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
     <ClInclude Include="..\PluginGeneric\UpdateCheck.h" />
-    <ClInclude Include="idasdk\dbg.hpp" />
-    <ClInclude Include="idasdk\ida.hpp" />
-    <ClInclude Include="idasdk\idp.hpp" />
-    <ClInclude Include="idasdk\kernwin.hpp" />
-    <ClInclude Include="idasdk\loader.hpp" />
-    <ClInclude Include="idasdk\pro.h" />
     <ClInclude Include="IdaServerClient.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
