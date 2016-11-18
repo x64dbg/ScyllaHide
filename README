@@ -1,11 +1,11 @@
-ScyllaHide is an advanced open-source x64/x86 usermode Anti-Anti-Debug library. It hooks various functions in usermode to hide debugging. This tool is intended to stay in usermode (ring3). If you need kernelmode (ring0) Anti-Anti-Debug please see TitanHide https://bitbucket.org/mrexodia/titanhide.
+ScyllaHide is an advanced open-source x64/x86 usermode Anti-Anti-Debug library. It hooks various functions in usermode to hide debugging. This tool is intended to stay in usermode (ring3). If you need kernelmode (ring0) Anti-Anti-Debug please see TitanHide https://github.com/mrexodia/titanhide.
 
 ScyllaHide supports various debuggers with plugins:
 
 - OllyDbg v1 and v2 http://www.ollydbg.de
-- x64_dbg http://x64dbg.com or https://github.com/x64dbg/x64dbg
-- Hex-Rays IDA v6+ https://www.hex-rays.com/products/ida/
-- TitanEngine v2 https://bitbucket.org/mrexodia/titanengine-update and http://www.reversinglabs.com/open-source/titanengine.html
+- x64dbg http://x64dbg.com or https://github.com/x64dbg/x64dbg
+- Hex-Rays IDA v6+ https://www.hex-rays.com/products/ida
+- TitanEngine v2 https://bitbucket.org/titanengineupdate/titanengine-update and http://www.reversinglabs.com/open-source/titanengine.html
 
 PE x64 debugging is fully supported with plugins for x64_dbg and IDA.
 
