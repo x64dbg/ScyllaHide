@@ -6,6 +6,6 @@ root = true
 end_of_line = CRLF
 
 ; Tab indentation
-[*.{cpp,h}]
-indent_style = tab
+[*.{c,cpp,h,hpp}]
+indent_style = space
 tab_width = 4
