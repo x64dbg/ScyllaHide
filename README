@@ -7,7 +7,7 @@ ScyllaHide supports various debuggers with plugins:
 - Hex-Rays IDA v6+ https://www.hex-rays.com/products/ida
 - TitanEngine v2 https://bitbucket.org/titanengineupdate/titanengine-update and http://www.reversinglabs.com/open-source/titanengine.html
 
-PE x64 debugging is fully supported with plugins for x64_dbg and IDA.
+PE x64 debugging is fully supported with plugins for x64dbg and IDA.
 
 Please note: ScyllaHide is not limited to these debuggers. You can use the standalone commandline version of ScyllaHide. You can inject ScyllaHide in any process debugged by any debugger.
 
