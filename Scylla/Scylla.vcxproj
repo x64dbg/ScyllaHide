@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{920bbb4d-c715-4cd4-9129-ff2cf941495d}</ProjectGuid>
+    <ProjectGuid>{E468DA07-48EA-40EB-A845-FA69C39D3396}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>distorm</RootNamespace>
+    <RootNamespace>Scylla</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -132,30 +132,6 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Lib>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="decoder.c" />
-    <ClCompile Include="distorm.c" />
-    <ClCompile Include="instructions.c" />
-    <ClCompile Include="insts.c" />
-    <ClCompile Include="mnemonics.c" />
-    <ClCompile Include="operands.c" />
-    <ClCompile Include="prefix.c" />
-    <ClCompile Include="textdefs.c" />
-    <ClCompile Include="wstring.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="config.h" />
-    <ClInclude Include="decoder.h" />
-    <ClInclude Include="distorm.h" />
-    <ClInclude Include="instructions.h" />
-    <ClInclude Include="insts.h" />
-    <ClInclude Include="mnemonics.h" />
-    <ClInclude Include="operands.h" />
-    <ClInclude Include="prefix.h" />
-    <ClInclude Include="textdefs.h" />
-    <ClInclude Include="wstring.h" />
-    <ClInclude Include="x86defs.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -9,7 +9,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(SolutionDir)common;$(SolutionDir)3rdparty;$(SolutionDir)3rdparty\idasdk;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Scylla\include;$(SolutionDir)3rdparty;$(SolutionDir)3rdparty\idasdk;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)3rdparty;$(OutDir)</AdditionalLibraryDirectories>
