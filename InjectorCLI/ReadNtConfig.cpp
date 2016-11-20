@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "ReadNtConfig.h"
 #include "..\HookLibrary\HookMain.h"
 #include <windows.h>

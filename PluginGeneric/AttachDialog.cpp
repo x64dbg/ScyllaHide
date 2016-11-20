@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "AttachDialog.h"
 #include <Psapi.h>
 #include <string>
