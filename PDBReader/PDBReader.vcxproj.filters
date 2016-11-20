@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp">
+    <ClCompile Include="PdbReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\InjectorCLI\OperatingSysInfo.cpp">

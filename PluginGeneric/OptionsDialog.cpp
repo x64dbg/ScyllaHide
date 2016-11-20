@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "OptionsDialog.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\Injector.h"

@@ -18,6 +18,13 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Util.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="dbghelp.h" />
+    <ClInclude Include="Util.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E468DA07-48EA-40EB-A845-FA69C39D3396}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

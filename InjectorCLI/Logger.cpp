@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "Logger.h"
 #include <windows.h>
 #include <string>

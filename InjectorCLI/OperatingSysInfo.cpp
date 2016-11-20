@@ -76,22 +76,17 @@ const char * GetWindowsVersionNameA()
 	return "Invalid Windows";
 }
 
-void GetPEBWindowsMajorMinorVersion(DWORD * major, DWORD * minor)
+bool GetPEBWindowsMajorMinorVersion(DWORD *dwMajor, DWORD *dwMinor)
 {
-	PEB_CURRENT * currentPeb = (PEB_CURRENT *)calloc(sizeof(PEB_CURRENT), 1); 
-	if (currentPeb)
-	{
-		ReadPebToBuffer(GetCurrentProcess(), (unsigned char *)currentPeb, sizeof(PEB_CURRENT));
+	auto currentPeb = (PEB_CURRENT *)calloc(sizeof(PEB_CURRENT), 1); 
+	if (!currentPeb)
+        return false;
 
-		*major = currentPeb->OSMajorVersion;
-		*minor = currentPeb->OSMinorVersion;
-
-		free(currentPeb);
-	}
-	else
-	{
-		LogErrorBox("GetPEBWindowsMajorMinorVersion -> Failed to calloc");
-	}
+    ReadPebToBuffer(GetCurrentProcess(), (unsigned char *)currentPeb, sizeof(PEB_CURRENT));
+	*dwMajor = currentPeb->OSMajorVersion;
+	*dwMinor = currentPeb->OSMinorVersion;
+	free(currentPeb);
+    return true;
 }
 
 eOperatingSystem GetWindowsVersion()
