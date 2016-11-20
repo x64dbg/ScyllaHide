@@ -1,5 +1,5 @@
 #include "RemotePebHider.h"
-#include "..\ntdll\ntdll.h"
+#include <ntdll/ntdll.h>
 #include "Logger.h"
 #include "OperatingSysInfo.h"
 

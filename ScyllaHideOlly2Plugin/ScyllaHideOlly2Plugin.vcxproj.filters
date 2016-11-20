@@ -13,12 +13,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Source Files\distorm">
-      <UniqueIdentifier>{814b7e35-5bf6-43a2-b2a8-1b797ff015e8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\distorm">
-      <UniqueIdentifier>{a5ba4f8b-3396-45a4-8507-fde6ea57ffe1}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScyllaHideOlly2Plugin.cpp">
@@ -38,33 +32,6 @@
     </ClCompile>
     <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\decoder.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\distorm.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\instructions.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\insts.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\mnemonics.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\operands.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\prefix.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\textdefs.c">
-      <Filter>Source Files\distorm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\distorm\wstring.c">
-      <Filter>Source Files\distorm</Filter>
     </ClCompile>
     <ClCompile Include="..\PluginGeneric\IniSettings.cpp">
       <Filter>Source Files</Filter>
@@ -106,39 +73,6 @@
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\ApplyHooking.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\config.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\decoder.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\distorm.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\instructions.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\insts.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\mnemonics.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\operands.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\prefix.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\textdefs.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\wstring.h">
-      <Filter>Header Files\distorm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\distorm\x86defs.h">
-      <Filter>Header Files\distorm</Filter>
     </ClInclude>
     <ClInclude Include="ScyllaHideOlly2Plugin.h">
       <Filter>Header Files</Filter>

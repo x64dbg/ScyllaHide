@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
-#include "TitanEngine.h"
+#include <titan/TitanEngine.h>
 #include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\ScyllaHideVersion.h"

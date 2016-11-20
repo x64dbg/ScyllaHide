@@ -7,18 +7,18 @@
 //for 64bit - p64
 #ifdef BUILD_IDA_64BIT
 #define __EA64__
-#pragma comment(lib, "./idasdk/x86_win_vc_64/ida.lib")
+#pragma comment(lib, "idasdk/x86_win_vc_64/ida.lib")
 #else
 //for 32bit - plw
-#pragma comment(lib, "./idasdk/x86_win_vc_32/ida.lib")
+#pragma comment(lib, "idasdk/x86_win_vc_32/ida.lib")
 #endif
 
 #include <Windows.h>
-#include "idasdk/ida.hpp"
-#include "idasdk/idp.hpp"
-#include "idasdk/dbg.hpp"
-#include "idasdk/loader.hpp"
-#include "idasdk/kernwin.hpp"
+#include <idasdk/ida.hpp>
+#include <idasdk/idp.hpp>
+#include <idasdk/dbg.hpp>
+#include <idasdk/loader.hpp>
+#include <idasdk/kernwin.hpp>
 #include "resource.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\Injector.h"
@@ -107,7 +107,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 };
 
 //init the plugin
-int IDAP_init(void)
+int idaapi IDAP_init(void)
 {
     //ensure target is PE executable
     if (inf.filetype != f_PE) return PLUGIN_SKIP;
@@ -135,7 +135,7 @@ int IDAP_init(void)
 }
 
 //cleanup on plugin unload
-void IDAP_term(void)
+void idaapi IDAP_term(void)
 {
     unhook_from_notification_point(HT_DBG, debug_mainloop, NULL);
 
@@ -143,7 +143,7 @@ void IDAP_term(void)
 }
 
 //called when user clicks in plugin menu or presses hotkey
-void IDAP_run(int arg)
+void idaapi IDAP_run(int arg)
 {
     DialogBox(hinst, MAKEINTRESOURCE(IDD_OPTIONS), (HWND)callui(ui_get_hwnd).vptr, &OptionsProc);
 
@@ -374,7 +374,7 @@ void LogWrapper(const WCHAR * format, ...)
     msg("\n");
 }
 
-void __cdecl AttachProcess(DWORD dwPID)
+void AttachProcess(DWORD dwPID)
 {
     int res = attach_process((pid_t)dwPID);
 
@@ -397,17 +397,17 @@ void __cdecl AttachProcess(DWORD dwPID)
 }
 
 // There isn't much use for these yet, but I set them anyway.
-char IDAP_comment[] 	= "ScyllaHide usermode Anti-Anti-Debug Plugin";
-char IDAP_help[] 		= "ScyllaHide";
+static char IDAP_comment[] 	= "ScyllaHide usermode Anti-Anti-Debug Plugin";
+static char IDAP_help[] 		= "ScyllaHide";
 
 // The name of the plug-in displayed in the Edit->Plugins menu
-char IDAP_name[] 		= "ScyllaHide";
+static char IDAP_name[] 		= "ScyllaHide";
 
 // The hot-key the user can use to run your plug-in.
-char IDAP_hotkey[] 	= "Alt-X";
+static char IDAP_hotkey[] 	= "Alt-X";
 
 // The all-important exported PLUGIN object
-plugin_t PLUGIN =
+idaman ida_module_data plugin_t PLUGIN =
 {
     IDP_INTERFACE_VERSION,
     0,

@@ -3,10 +3,10 @@
 #include <windows.h>
 
 #ifndef _WIN64
-#pragma comment(lib, "ntdll_x86.lib")
+#pragma comment(lib, "ntdll\\ntdll_x86.lib")
 #pragma pack(push,8)
 #else
-#pragma comment(lib, "ntdll_x64.lib")
+#pragma comment(lib, "ntdll\\ntdll_x64.lib")
 #pragma pack(push,16)
 #endif
 

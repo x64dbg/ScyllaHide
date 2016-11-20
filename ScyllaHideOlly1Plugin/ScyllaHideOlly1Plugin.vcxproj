@@ -34,72 +34,39 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(SolutionDir)common\common.props" />
+    <Import Project="$(SolutionDir)common\common.debug.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(SolutionDir)common\common.props" />
+    <Import Project="$(SolutionDir)common\common.release.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>ScyllaHideOlly1</TargetName>
-    <OutDir>$(SolutionDir)$(Configuration)\plugins\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>ScyllaHideOlly1</TargetName>
-    <OutDir>$(SolutionDir)$(Configuration)\plugins\</OutDir>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEOLLY1PLUGIN_EXPORTS;OLLY1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <StructMemberAlignment>Default</StructMemberAlignment>
-      <AdditionalOptions>/J %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ollydbg.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)ntdll;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEOLLY1PLUGIN_EXPORTS;OLLY1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <StructMemberAlignment>Default</StructMemberAlignment>
-      <AdditionalOptions>/J %(AdditionalOptions)</AdditionalOptions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>ollydbg.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)ntdll;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateMapFile>true</GenerateMapFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\distorm\decoder.c" />
-    <ClCompile Include="..\distorm\distorm.c" />
-    <ClCompile Include="..\distorm\instructions.c" />
-    <ClCompile Include="..\distorm\insts.c" />
-    <ClCompile Include="..\distorm\mnemonics.c" />
-    <ClCompile Include="..\distorm\operands.c" />
-    <ClCompile Include="..\distorm\prefix.c" />
-    <ClCompile Include="..\distorm\textdefs.c" />
-    <ClCompile Include="..\distorm\wstring.c" />
     <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp" />
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
     <ClCompile Include="..\InjectorCLI\Logger.cpp" />
@@ -117,17 +84,6 @@
     <ClCompile Include="ScyllaHideOlly1Plugin.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\distorm\config.h" />
-    <ClInclude Include="..\distorm\decoder.h" />
-    <ClInclude Include="..\distorm\distorm.h" />
-    <ClInclude Include="..\distorm\instructions.h" />
-    <ClInclude Include="..\distorm\insts.h" />
-    <ClInclude Include="..\distorm\mnemonics.h" />
-    <ClInclude Include="..\distorm\operands.h" />
-    <ClInclude Include="..\distorm\prefix.h" />
-    <ClInclude Include="..\distorm\textdefs.h" />
-    <ClInclude Include="..\distorm\wstring.h" />
-    <ClInclude Include="..\distorm\x86defs.h" />
     <ClInclude Include="..\InjectorCLI\ApplyHooking.h" />
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
     <ClInclude Include="..\InjectorCLI\Logger.h" />

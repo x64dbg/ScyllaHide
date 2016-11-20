@@ -1,7 +1,7 @@
 #pragma once
 
 #include <windows.h>
-#include "..\ntdll\ntdll.h"
+#include <ntdll/ntdll.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //Evolution of Process Environment Block (PEB) http://blog.rewolf.pl/blog/?p=573

@@ -1,5 +1,5 @@
 #pragma once
-#include "plugin.h"
+#include <ollydbg2/plugin.h>
 #include "..\PluginGeneric\ScyllaHideVersion.h"
 
 #define PLUGINNAME     L"ScyllaHide"

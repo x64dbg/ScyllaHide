@@ -19,36 +19,36 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B00C9DA1-867E-4438-9C6E-1B53AE0506B7}</ProjectGuid>
+    <ProjectGuid>{920bbb4d-c715-4cd4-9129-ff2cf941495d}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>ScyllaHideX64DBGPlugin</RootNamespace>
+    <RootNamespace>distorm</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v120_xp</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v120_xp</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v120_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v120_xp</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -76,92 +76,85 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetExt>.dp32</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetExt>.dp64</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetExt>.dp32</TargetExt>
+    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetExt>.dp64</TargetExt>
+    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>X64DBG;WIN32;_DEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEX64DBGPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <Lib>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>X64DBG;_DEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEX64DBGPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <Lib>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>X64DBG;WIN32;NDEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEX64DBGPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <Lib>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>X64DBG;NDEBUG;_WINDOWS;_USRDLL;SCYLLAHIDEX64DBGPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <Lib>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp" />
-    <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
-    <ClCompile Include="..\InjectorCLI\Logger.cpp" />
-    <ClCompile Include="..\InjectorCLI\OperatingSysInfo.cpp" />
-    <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp" />
-    <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
-    <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
-    <ClCompile Include="..\PluginGeneric\AttachDialog.cpp" />
-    <ClCompile Include="..\PluginGeneric\IniSettings.cpp" />
-    <ClCompile Include="..\PluginGeneric\Injector.cpp" />
-    <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp" />
-    <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp" />
-    <ClCompile Include="ScyllaHideX64DBGPlugin.cpp" />
+    <ClCompile Include="decoder.c" />
+    <ClCompile Include="distorm.c" />
+    <ClCompile Include="instructions.c" />
+    <ClCompile Include="insts.c" />
+    <ClCompile Include="mnemonics.c" />
+    <ClCompile Include="operands.c" />
+    <ClCompile Include="prefix.c" />
+    <ClCompile Include="textdefs.c" />
+    <ClCompile Include="wstring.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\InjectorCLI\ApplyHooking.h" />
-    <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
-    <ClInclude Include="..\InjectorCLI\Logger.h" />
-    <ClInclude Include="..\InjectorCLI\OperatingSysInfo.h" />
-    <ClInclude Include="..\InjectorCLI\ReadNtConfig.h" />
-    <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
-    <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
-    <ClInclude Include="..\PluginGeneric\AttachDialog.h" />
-    <ClInclude Include="..\PluginGeneric\IniSettings.h" />
-    <ClInclude Include="..\PluginGeneric\Injector.h" />
-    <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
-    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
-    <ClInclude Include="..\PluginGeneric\UpdateCheck.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="ScyllaHideX64DBGPlugin.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="ScyllaHideX64DBGPlugin.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\PluginGeneric\findere.bmp" />
-    <None Include="..\PluginGeneric\finderf.bmp" />
-    <None Include="..\PluginGeneric\searchwindow.cur" />
-    <None Include="Ghost-icon.png" />
+    <ClInclude Include="config.h" />
+    <ClInclude Include="decoder.h" />
+    <ClInclude Include="distorm.h" />
+    <ClInclude Include="instructions.h" />
+    <ClInclude Include="insts.h" />
+    <ClInclude Include="mnemonics.h" />
+    <ClInclude Include="operands.h" />
+    <ClInclude Include="prefix.h" />
+    <ClInclude Include="textdefs.h" />
+    <ClInclude Include="wstring.h" />
+    <ClInclude Include="x86defs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

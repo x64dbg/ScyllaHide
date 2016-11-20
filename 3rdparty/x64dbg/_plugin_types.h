@@ -10,7 +10,7 @@
 #ifdef __GNUC__
 #include "dbghelp\dbghelp.h"
 #else
-#include <dbghelp.h>
+#include <dbghelp_wrapper.h>
 #endif // __GNUC__
 
 #ifndef deflen

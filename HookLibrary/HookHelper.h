@@ -1,6 +1,6 @@
 #pragma once
 
-#include "..\ntdll\ntdll.h"
+#include <ntdll/ntdll.h>
 
 bool IsValidHandle(HANDLE hHandle);
 bool IsValidThreadHandle(HANDLE hThread);

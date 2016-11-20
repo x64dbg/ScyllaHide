@@ -3,7 +3,7 @@
 #include "resource.h"
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\ScyllaHideVersion.h"
-#include "ollyplugindefinitions.h"
+#include <ollydbg1/ollyplugindefinitions.h>
 #include "olly1patches.h"
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
@@ -13,6 +13,8 @@
 #include "..\PluginGeneric\AttachDialog.h"
 #include "..\PluginGeneric\CustomExceptionHandler.h"
 #include "..\InjectorCLI\OperatingSysInfo.h"
+
+#pragma comment(lib, "ollydbg1\\ollydbg.lib")
 
 typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);

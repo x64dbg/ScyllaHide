@@ -13,6 +13,8 @@
 #include "..\PluginGeneric\AttachDialog.h"
 #include "..\InjectorCLI\OperatingSysInfo.h"
 
+#pragma comment(lib, "ollydbg2\\ollydbg.lib")
+
 //scyllaHide definitions
 struct HideOptions pHideOptions = {0};
 

@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
-#include <Dbghelp.h>
+#include <dbghelp_wrapper.h>
 #include <stdio.h>
 #include "..\InjectorCLI\OperatingSysInfo.h"
 
