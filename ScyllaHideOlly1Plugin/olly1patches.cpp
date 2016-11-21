@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "olly1patches.h"
 #include <Windows.h>
 #include <TlHelp32.h>

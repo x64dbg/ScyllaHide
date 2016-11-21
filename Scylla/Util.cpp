@@ -2,7 +2,8 @@
 #include <cstdio>
 #include <memory>
 
-std::wstring Scylla::format_wstring(const wchar_t *fmt, ...) {
+std::wstring Scylla::format_wstring(const wchar_t *fmt, ...)
+{
     va_list ap;
 
     va_start(ap, fmt);
@@ -12,7 +13,8 @@ std::wstring Scylla::format_wstring(const wchar_t *fmt, ...) {
     return str;
 }
 
-std::wstring Scylla::vformat_wstring(const wchar_t *fmt, va_list ap) {
+std::wstring Scylla::vformat_wstring(const wchar_t *fmt, va_list ap)
+{
     va_list vap;
 
     va_copy(vap, ap);
