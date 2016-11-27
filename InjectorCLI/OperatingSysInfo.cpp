@@ -1,6 +1,7 @@
 #include "OperatingSysInfo.h"
 #include "RemotePebHider.h"
 #include "Logger.h"
+#include "Scylla/Peb.h"
 
 typedef void (WINAPI *tGetNativeSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
 typedef BOOL (WINAPI * tIsWow64Process)(HANDLE hProcess,PBOOL Wow64Process);
@@ -78,14 +79,12 @@ const char * GetWindowsVersionNameA()
 
 bool GetPEBWindowsMajorMinorVersion(DWORD *dwMajor, DWORD *dwMinor)
 {
-	auto currentPeb = (PEB_CURRENT *)calloc(sizeof(PEB_CURRENT), 1); 
-	if (!currentPeb)
+    const auto peb = Scylla::GetPebAddress(GetCurrentProcess());
+    if (!peb)
         return false;
 
-    ReadPebToBuffer(GetCurrentProcess(), (unsigned char *)currentPeb, sizeof(PEB_CURRENT));
-	*dwMajor = currentPeb->OSMajorVersion;
-	*dwMinor = currentPeb->OSMinorVersion;
-	free(currentPeb);
+    *dwMajor = peb->OsMajorVersion;
+    *dwMinor = peb->OsMinorVersion;
     return true;
 }
 
@@ -136,9 +135,6 @@ eOperatingSystem GetWindowsVersion()
 			//win 8.1 and win 10 are special...
 			//Applications not manifested for Windows 8.1 or Windows 10 will return the Windows 8 OS version value (6.2)
 
-			PEB_CURRENT * currentPeb = (PEB_CURRENT *)calloc(sizeof(PEB_CURRENT), 1); 
-			ReadPebToBuffer(GetCurrentProcess(), (unsigned char *)currentPeb, sizeof(PEB_CURRENT));
-
 			DWORD OSMajorVersion = 0;
 			DWORD OSMinorVersion = 0;
 			GetPEBWindowsMajorMinorVersion(&OSMajorVersion, &OSMinorVersion);
@@ -155,8 +151,6 @@ eOperatingSystem GetWindowsVersion()
 			{
 				currentOs = OS_WIN_8;
 			}
-
-			free(currentPeb);
 		}
 	}
 
