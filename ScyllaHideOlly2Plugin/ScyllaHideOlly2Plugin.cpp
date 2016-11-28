@@ -1,16 +1,16 @@
-#include <windows.h>
-#include "resource.h"
-#include <stdio.h>
-#include <string.h>
-#include <winnt.h>
+#include <cstdio>
+#include <cstring>
+#include <Scylla/OsInfo.h>
+
 #include "..\PluginGeneric\Injector.h"
-#include "ScyllaHideOlly2Plugin.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
-#include "..\InjectorCLI\OperatingSysInfo.h"
+
+#include "resource.h"
+#include "ScyllaHideOlly2Plugin.h"
 
 #pragma comment(lib, "ollydbg2\\ollydbg.lib")
 
@@ -257,7 +257,7 @@ extc int __cdecl ODBG2_Plugininit(void)
 
     Addtolist(0,0,L"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_W);
     Addtolist(0,2,L"  Copyright (C) 2014 Aguila / cypher");
-    Addtolist(0,2,L"  Operating System: %S", GetWindowsVersionNameA());
+    Addtolist(0,2,L"  Operating System: %S", Scylla::GetWindowsVersionNameA());
 
     //change olly caption
     SetWindowTextW(hwollymain, pHideOptions.ollyTitle);

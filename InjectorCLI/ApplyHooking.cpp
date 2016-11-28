@@ -1,8 +1,9 @@
+#include <Scylla/OsInfo.h>
+
 #include "ApplyHooking.h"
 #include "DynamicMapping.h"
 #include "RemotePebHider.h"
 #include "RemoteHook.h"
-#include "OperatingSysInfo.h"
 #include "Logger.h"
 
 #define HOOK(name) dllexchange->d##name = (t_##name)DetourCreateRemote(hProcess,_##name, Hooked##name, true, &dllexchange->##name##BackupSize)
@@ -463,7 +464,7 @@ void FreeMemory(HANDLE hProcess, void * buffer)
 void RestoreNtdllHooks( HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess )
 {
 #ifndef _WIN64
-    if (IsSysWow64())
+    if (Scylla::IsWow64Process(hProcess))
     {
         RestoreMemory(hProcess, sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp));
     }

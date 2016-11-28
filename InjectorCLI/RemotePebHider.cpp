@@ -1,22 +1,6 @@
 #include "RemotePebHider.h"
-#include <ntdll/ntdll.h>
-#include "Logger.h"
-#include "OperatingSysInfo.h"
-#include "Scylla/Peb.h"
-
-static bool isAtleastVista()
-{
-    static bool isAtleastVista = false;
-    static bool isSet = false;
-    if (isSet)
-        return isAtleastVista;
-    OSVERSIONINFO versionInfo = { 0 };
-    versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-    GetVersionEx(&versionInfo);
-    isAtleastVista = versionInfo.dwMajorVersion >= 6;
-    isSet = true;
-    return isAtleastVista;
-}
+#include <Scylla/Peb.h>
+#include <Scylla/OsInfo.h>
 
 //Quote from The Ultimate Anti-Debugging Reference by Peter Ferrie
 //Flags field exists at offset 0x0C in the heap on the 32-bit versions of Windows NT, Windows 2000, and Windows XP; and at offset 0x40 on the 32-bit versions of Windows Vista and later.
@@ -28,25 +12,17 @@ static int getHeapFlagsOffset(bool x64)
 {
     if (x64) //x64 offsets
     {
-        if (isAtleastVista())
-        {
+        if (Scylla::GetWindowsVersion() >= Scylla::OS_WIN_VISTA)
             return 0x70;
-        }
         else
-        {
             return 0x14;
-        }
     }
     else //x86 offsets
     {
-        if (isAtleastVista())
-        {
+        if (Scylla::GetWindowsVersion() >= Scylla::OS_WIN_VISTA)
             return 0x40;
-        }
         else
-        {
             return 0x0C;
-        }
     }
 }
 
@@ -54,25 +30,17 @@ static int getHeapForceFlagsOffset(bool x64)
 {
     if (x64) //x64 offsets
     {
-        if (isAtleastVista())
-        {
+        if (Scylla::GetWindowsVersion() >= Scylla::OS_WIN_VISTA)
             return 0x74;
-        }
         else
-        {
             return 0x18;
-        }
     }
     else //x86 offsets
     {
-        if (isAtleastVista())
-        {
+        if (Scylla::GetWindowsVersion() >= Scylla::OS_WIN_VISTA)
             return 0x44;
-        }
         else
-        {
             return 0x10;
-        }
     }
 }
 
@@ -130,7 +98,6 @@ void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase, bool isDefaultHeap)
 bool FixPebBeingDebugged(HANDLE hProcess, bool SetToNull)
 {
     auto peb = Scylla::GetPeb(hProcess);
-
     if (!peb)
         return false;
 
@@ -140,9 +107,7 @@ bool FixPebBeingDebugged(HANDLE hProcess, bool SetToNull)
 
 #ifndef _WIN64
     auto peb64 = Scylla::GetPeb64(hProcess);
-
-    auto fIsWow64 = FALSE;
-    if (!peb64 && (::IsWow64Process(hProcess, &fIsWow64) && fIsWow64))
+    if (!peb64 && Scylla::IsWow64Process(hProcess))
         return false;
 
     if (peb64)
@@ -158,15 +123,12 @@ bool FixPebBeingDebugged(HANDLE hProcess, bool SetToNull)
 bool FixPebInProcess(HANDLE hProcess, DWORD EnableFlags)
 {
     auto peb = Scylla::GetPeb(hProcess);
-
     if (!peb)
         return false;
 
 #ifndef _WIN64
     auto peb64 = Scylla::GetPeb64(hProcess);
-
-    auto fIsWow64 = FALSE;
-    if (!peb64 && (::IsWow64Process(hProcess, &fIsWow64) && fIsWow64))
+    if (!peb64 && Scylla::IsWow64Process(hProcess))
         return false;
 #endif
 

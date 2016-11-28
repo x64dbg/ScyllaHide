@@ -1,5 +1,12 @@
 #include "Peb.h"
 #include <Winternl.h>
+#include <Scylla/OsInfo.h>
+
+#ifdef _WIN64
+#pragma comment(lib, "ntdll\\ntdll_x64.lib")
+#else
+#pragma comment(lib, "ntdll\\ntdll_x86.lib")
+#endif
 
 Scylla::PEB *Scylla::GetPebAddress(HANDLE hProcess)
 {
@@ -13,8 +20,7 @@ Scylla::PEB *Scylla::GetPebAddress(HANDLE hProcess)
 Scylla::PEB64* Scylla::GetPeb64Address(HANDLE hProcess)
 {
 #ifndef _WIN64
-    auto fIsWow64 = FALSE;
-    if (::IsWow64Process(hProcess, &fIsWow64) && fIsWow64)
+    if (IsWow64Process(hProcess))
     {
         auto peb32 = GetPebAddress(hProcess);
         if (!peb32)
@@ -23,6 +29,7 @@ Scylla::PEB64* Scylla::GetPeb64Address(HANDLE hProcess)
         return (PEB64 *)((BYTE*)peb32 + 0x1000);
     }
 #endif
+
     return nullptr;
 }
 

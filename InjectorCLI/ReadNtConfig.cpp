@@ -1,39 +1,11 @@
 #include "ReadNtConfig.h"
+#include <Scylla/OsInfo.h>
+#include <Scylla/Util.h>
 #include "..\HookLibrary\HookMain.h"
-#include <windows.h>
-#include "OperatingSysInfo.h"
 #include "Logger.h"
-
-OSVERSIONINFOEXW osver = { 0 };
-SYSTEM_INFO si = { 0 };
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern WCHAR NtApiIniPath[MAX_PATH];
-
-void QueryOsInfo()
-{
-    typedef void (WINAPI *t_GetNativeSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
-    t_GetNativeSystemInfo _GetNativeSystemInfo = (t_GetNativeSystemInfo)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetNativeSystemInfo");
-    if (_GetNativeSystemInfo)
-    {
-        _GetNativeSystemInfo(&si);
-    }
-    else
-    {
-        GetSystemInfo(&si);
-    }
-
-    osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-
-	GetVersionEx((LPOSVERSIONINFO)&osver);
-
-	if (_IsWindows8Point1OrGreater())
-	{
-		//adjust real major minor version
-		GetPEBWindowsMajorMinorVersion(&osver.dwMajorVersion, &osver.dwMinorVersion);
-	}
-    
-}
 
 DWORD ReadApiFromIni(const WCHAR * name, const WCHAR * section) //rva
 {
@@ -52,12 +24,21 @@ void ReadNtApiInformation()
 {
     WCHAR OsId[300] = { 0 };
     WCHAR temp[50] = { 0 };
-    QueryOsInfo();
+
+    const auto osVerInfo = Scylla::GetVersionExW();
+    const auto osSysInfo = Scylla::GetNativeSystemInfo();
+
 #ifdef _WIN64
-    wsprintfW(OsId, L"%02X%02X%02X%02X%02X%02X_x64", (DWORD)osver.dwMajorVersion, (DWORD)osver.dwMinorVersion, (DWORD)osver.wServicePackMajor, (DWORD)osver.wServicePackMinor, (DWORD)osver.wProductType, (DWORD)si.wProcessorArchitecture);
+    const wchar_t wszArch[] = L"x64";
 #else
-    wsprintfW(OsId, L"%02X%02X%02X%02X%02X%02X_x86", (DWORD)osver.dwMajorVersion, (DWORD)osver.dwMinorVersion, (DWORD)osver.wServicePackMajor, (DWORD)osver.wServicePackMinor, (DWORD)osver.wProductType, (DWORD)si.wProcessorArchitecture);
+    const wchar_t wszArch[] = L"x86";
 #endif
+
+    auto wstrOsId = Scylla::format_wstring(L"%02X%02X%02X%02X%02X%02X_%s",
+        osVerInfo->dwMajorVersion, osVerInfo->dwMinorVersion,
+        osVerInfo->wServicePackMajor, osVerInfo->wServicePackMinor,
+        osVerInfo->wProductType, osSysInfo->wProcessorArchitecture, wszArch);
+
     HMODULE hUser = GetModuleHandleW(L"user32.dll");
     PIMAGE_DOS_HEADER pDosUser = (PIMAGE_DOS_HEADER)hUser;
     PIMAGE_NT_HEADERS pNtUser = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosUser + pDosUser->e_lfanew);

@@ -1,14 +1,12 @@
+#include <WinSock2.h>
+#include <Scylla/OsInfo.h>
+
 #include "idaserver.h"
 #include "IdaServerExchange.h"
-
 #include "..\PluginGeneric\ScyllaHideVersion.h"
-
 #include "..\PluginGeneric\Injector.h"
-#include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\InjectorCLI\OperatingSysInfo.h"
 
 WSADATA wsaData;
-
 
 char * ListenPortString = IDA_SERVER_DEFAULT_PORT_TEXT;
 unsigned short ListenPort = IDA_SERVER_DEFAULT_PORT;
@@ -49,7 +47,7 @@ int main(int argc, char *argv[])
 	SetDebugPrivileges();
 
 	printf("Starting IDA Server v" SCYLLA_HIDE_VERSION_STRING_A "...\n");
-	printf("- Operating System: %s\n", GetWindowsVersionNameA());
+	printf("- Operating System: %s\n", Scylla::GetWindowsVersionNameA());
 
 	checkPaths();
 
@@ -241,22 +239,21 @@ void MapSettings()
 
 void DoSomeBitCheck()
 {
-	if (isWindows64())
+	if (Scylla::IsWindows64())
 	{
 		HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, 0, ProcessId);
 		if (hProcess)
 		{
-			bool wow64 = IsProcessWOW64(hProcess);
 
 #ifdef _WIN64
-			if (wow64)
+            if (Scylla::IsWow64Process(hProcess))
 			{
 				printf("WARNING: This is a 32bit process and I am 64bit!");
 				getchar();
 				ExitProcess(0);
 			}
 #else
-			if (!wow64)
+            if (!Scylla::IsWow64Process(hProcess))
 			{
 				printf("WARNING: This is a 64bit process and I am 32bit!");
 				getchar();

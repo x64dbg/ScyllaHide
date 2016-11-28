@@ -1,9 +1,8 @@
 #include <Windows.h>
 #include <cstdio>
-#include <string>
 #include <Scylla/DbgHelp.h>
 #include <Scylla/Util.h>
-#include "../InjectorCLI/OperatingSysInfo.h"
+#include <Scylla/OsInfo.h>
 
 static const wchar_t *wszFunctionNames[] = {
     L"NtUserQueryWindow",
@@ -28,25 +27,6 @@ static ULONG64 GetFunctionAddressPDB(HMODULE hModule, const wchar_t *wszSymbolNa
     }
 
     return pSymbol->Address;
-}
-
-static bool LoadOsInfo(SYSTEM_INFO *si, OSVERSIONINFOEXW *osVer)
-{
-    GetNativeSystemInfo(si);
-
-    ZeroMemory(osVer, sizeof(*osVer));
-    osVer->dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
-    if (!GetVersionExW((LPOSVERSIONINFOW)osVer))
-        return false;
-
-    if (_IsWindows8Point1OrGreater())
-    {
-        // Applications not manifested for Windows 8.1 or Windows 10 will return the Windows 8 OS version value (6.2)
-        if (!GetPEBWindowsMajorMinorVersion(&osVer->dwMajorVersion, &osVer->dwMinorVersion))
-            return false;
-    }
-
-    return true;
 }
 
 static BOOL CALLBACK SymServCallbackLogger(HANDLE hProcess, ULONG uActionCode, ULONG64 pCallbackData, ULONG64 pUserContext)
@@ -79,8 +59,8 @@ static bool InitSymServ(const wchar_t *wszSymbolPath)
 
 int wmain(int argc, wchar_t* argv[])
 {
-    SYSTEM_INFO si;
-    OSVERSIONINFOEXW osVer;
+    const auto osVerInfo = Scylla::GetVersionExW();
+    const auto osSysInfo = Scylla::GetNativeSystemInfo();
 
     auto wstrPath = Scylla::GetModuleFileNameW();
     wstrPath.resize(wstrPath.find_last_of(L"\\"));
@@ -88,9 +68,11 @@ int wmain(int argc, wchar_t* argv[])
     auto wstrIniFile = wstrPath + L"\\NtApiCollection.ini";
     auto wstrSymbolPath = Scylla::format_wstring(L"srv*%s*http://msdl.microsoft.com/download/symbols", wstrPath.c_str());
 
-    if (!LoadOsInfo(&si, &osVer))
+    // Must be called before InitSymServ()
+    auto hUser32 = LoadLibraryW(L"user32.dll");
+    if (!hUser32)
     {
-        fwprintf(stderr, L"Failed to gather OS information\n");
+        fwprintf(stderr, L"Failed to get user32.dll module handle: %s\n", Scylla::FormatMessageW(GetLastError()).c_str());
         return EXIT_FAILURE;
     }
 
@@ -107,18 +89,12 @@ int wmain(int argc, wchar_t* argv[])
 #endif
 
     auto wstrOsId = Scylla::format_wstring(L"%02X%02X%02X%02X%02X%02X_%s",
-        osVer.dwMajorVersion, osVer.dwMinorVersion, osVer.wServicePackMajor, osVer.wServicePackMinor, osVer.wProductType,
-        si.wProcessorArchitecture, wszArch);
+        osVerInfo->dwMajorVersion, osVerInfo->dwMinorVersion,
+        osVerInfo->wServicePackMajor, osVerInfo->wServicePackMinor,
+        osVerInfo->wProductType, osSysInfo->wProcessorArchitecture, wszArch);
 
-    wprintf(L"OS MajorVersion %u MinorVersion %u\n", osVer.dwMajorVersion, osVer.dwMinorVersion);
+    wprintf(L"OS MajorVersion %u MinorVersion %u\n", osVerInfo->dwMajorVersion, osVerInfo->dwMinorVersion);
     wprintf(L"OS ID: %s\n", wstrOsId.c_str());
-
-    auto hUser32 = GetModuleHandleW(L"user32.dll");
-    if (!hUser32)
-    {
-        fwprintf(stderr, L"Failed to get user32.dll module handle: %s\n", Scylla::FormatMessageW(GetLastError()).c_str());
-        return EXIT_FAILURE;
-    }
 
     auto pDosUser = (PIMAGE_DOS_HEADER)hUser32;
     auto pNtUser = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosUser + pDosUser->e_lfanew);
@@ -130,7 +106,7 @@ int wmain(int argc, wchar_t* argv[])
 
     wprintf(L"User32 Base 0x%p\nFetching symbols...\n", hUser32);
 
-    auto wstrIniSection = Scylla::format_wstring(L"%s_%0X", wstrOsId.c_str(), pNtUser->OptionalHeader.AddressOfEntryPoint);
+    auto wstrIniSection = Scylla::format_wstring(L"%s_%08X", wstrOsId.c_str(), pNtUser->OptionalHeader.AddressOfEntryPoint);
     for (size_t i = 0; i < _countof(wszFunctionNames); i++)
     {
         auto ulFunctionVA = GetFunctionAddressPDB(hUser32, wszFunctionNames[i]);
@@ -142,7 +118,7 @@ int wmain(int argc, wchar_t* argv[])
 
         auto ulFunctionRVA = ulFunctionVA - (ULONG64)hUser32;
         auto wstrFunctionRva = Scylla::format_wstring(L"%08llX", ulFunctionRVA);
-        wprintf(L"Name %s VA 0x%0llX RVA 0x%0llX\n", wszFunctionNames[i], ulFunctionVA, ulFunctionRVA);
+        wprintf(L"Name %s VA 0x%p RVA 0x%08llX\n", wszFunctionNames[i], (void *)ulFunctionVA, ulFunctionRVA);
         WritePrivateProfileStringW(wstrIniSection.c_str(), wszFunctionNames[i], wstrFunctionRva.c_str(), wstrIniFile.c_str());
     }
 

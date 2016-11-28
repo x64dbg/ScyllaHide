@@ -1,15 +1,17 @@
-#include <windows.h>
 #include <string>
-#include "resource.h"
+#include <Scylla/OsInfo.h>
+
 #include "..\PluginGeneric\ScyllaHideVersion.h"
-#include "ScyllaHideX64DBGPlugin.h"
+
 #include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
-#include "..\InjectorCLI\OperatingSysInfo.h"
+
+#include "resource.h"
+#include "ScyllaHideX64DBGPlugin.h"
 
 #ifdef _WIN64
 #pragma comment(lib, "x64dbg\\x64dbg.lib")
@@ -146,7 +148,7 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
 
     _plugin_logprintf("ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A "\n");
     _plugin_logprintf("  Copyright (C) 2014 Aguila / cypher\n");
-	_plugin_logprintf("  Operating System: %s\n", GetWindowsVersionNameA());
+	_plugin_logprintf("  Operating System: %s\n", Scylla::GetWindowsVersionNameA());
 
     _plugin_menuaddentry(hMenu, MENU_OPTIONS, "&Options");
     int hProfile = _plugin_menuadd(hMenu, "&Load Profile");

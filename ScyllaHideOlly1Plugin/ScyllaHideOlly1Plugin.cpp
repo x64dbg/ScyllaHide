@@ -1,17 +1,17 @@
-#include <windows.h>
-#include "resource.h"
+#include <Scylla/OsInfo.h>
+#include <ollydbg1/ollyplugindefinitions.h>
+
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\ScyllaHideVersion.h"
-#include <ollydbg1/ollyplugindefinitions.h>
-#include "olly1patches.h"
-#include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
 #include "..\PluginGeneric\CustomExceptionHandler.h"
-#include "..\InjectorCLI\OperatingSysInfo.h"
+
+#include "resource.h"
+#include "olly1patches.h"
 
 #pragma comment(lib, "ollydbg1\\ollydbg.lib")
 
@@ -112,7 +112,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
 	_Addtolist(0,0,"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A);
 	_Addtolist(0,-1,"  Copyright (C) 2014 Aguila / cypher");
-	_Addtolist(0,-1,"  Operating System: %s", GetWindowsVersionNameA());
+	_Addtolist(0,-1,"  Operating System: %s", Scylla::GetWindowsVersionNameA());
 
 	//do some Olly fixes
 	if(pHideOptions.fixOllyBugs) {
@@ -123,7 +123,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 		fixNTSymbols();
 		fixFaultyHandleOnExit();
 	}
-	if(pHideOptions.x64Fix && isWindows64()) {
+	if(pHideOptions.x64Fix && Scylla::IsWindows64()) {
 		fixX64Bug();
 	}
 	if(pHideOptions.skipEPOutsideCode) {
@@ -379,7 +379,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 		{
 			if (bHooked)
 			{
-				if(pHideOptions.fixOllyBugs && isWindows64()) {
+				if(pHideOptions.fixOllyBugs && Scylla::IsWindows64()) {
 					MarkSystemDllsOnx64();
 				}
 

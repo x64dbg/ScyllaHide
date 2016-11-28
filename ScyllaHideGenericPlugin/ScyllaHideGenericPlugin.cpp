@@ -1,7 +1,6 @@
-#include <windows.h>
 #include <string>
 #include <unordered_map>
-#include "ScyllaHideGenericPlugin.h"
+
 #include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
@@ -9,7 +8,8 @@
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
-#include "..\InjectorCLI\OperatingSysInfo.h"
+
+#include "ScyllaHideGenericPlugin.h"
 
 typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);

@@ -19,11 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="OsInfo.cpp" />
     <ClCompile Include="Peb.cpp" />
     <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dbghelp.h" />
+    <ClInclude Include="OsInfo.h" />
     <ClInclude Include="Peb.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>

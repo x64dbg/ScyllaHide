@@ -1,4 +1,6 @@
 #include "OptionsDialog.h"
+#include <Scylla/OsInfo.h>
+
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\ScyllaHideVersion.h"
@@ -18,7 +20,6 @@
 #include "..\PluginGeneric\UpdateCheck.h"
 #include "..\ScyllaHideIDAProPlugin\IdaServerClient.h"
 #include "..\PluginGeneric\AttachDialog.h"
-
 #elif X64DBG
 #include <x64dbg/bridgemain.h>
 #include "..\ScyllaHideX64DBGPlugin\resource.h"
@@ -674,7 +675,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         UpdateOptions(hWnd);
 
 #ifdef OLLY1
-        if (!isWindows64())
+        if (Scylla::IsWindows64())
         {
             EnableWindow(GetDlgItem(hWnd, IDC_X64FIX), FALSE);
         }

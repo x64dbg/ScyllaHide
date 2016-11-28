@@ -430,50 +430,6 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->isUser32Hooked = FALSE;
 }
 
-typedef void (WINAPI *tGetNativeSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
-typedef BOOL (WINAPI * tIsWow64Process)(HANDLE hProcess,PBOOL Wow64Process);
-
-static tGetNativeSystemInfo _GetNativeSystemInfo = 0;
-static tIsWow64Process fnIsWow64Process = 0;
-
-/*bool isWindows64()
-{
-    SYSTEM_INFO si = {0};
-
-    if (!_GetNativeSystemInfo)
-    {
-        _GetNativeSystemInfo = (tGetNativeSystemInfo)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetNativeSystemInfo");
-    }
-
-    if (_GetNativeSystemInfo)
-    {
-        _GetNativeSystemInfo(&si);
-    }
-    else
-    {
-        GetSystemInfo(&si);
-    }
-
-    return (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
-}
-
-bool IsProcessWOW64(HANDLE hProcess)
-{
-    BOOL bIsWow64 = FALSE;
-    if (!fnIsWow64Process)
-    {
-        fnIsWow64Process = (tIsWow64Process)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
-    }
-
-
-    if (fnIsWow64Process)
-    {
-        fnIsWow64Process(hProcess, &bIsWow64);
-    }
-
-    return (bIsWow64 != FALSE);
-}*/
-
 bool RemoveDebugPrivileges(HANDLE hProcess)
 {
     TOKEN_PRIVILEGES Debug_Privileges;

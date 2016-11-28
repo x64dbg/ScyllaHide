@@ -1,9 +1,8 @@
 #include "RemoteHook.h"
-#include <windows.h>
 #include <distorm/distorm.h>
 #include <distorm/mnemonics.h>
+#include <Scylla/OsInfo.h>
 #include "ApplyHooking.h"
-#include "OperatingSysInfo.h"
 
 #pragma comment(lib, "distorm.lib")
 
@@ -146,7 +145,7 @@ DWORD GetSysCallIndex32(const BYTE * data)
 DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
 {
     // Colin Edit, hacky
-    if (!_IsWindows10OrGreater()) {
+    if (Scylla::GetWindowsVersion() < Scylla::OS_WIN_10) {
         DWORD SysWow64 = (DWORD)__readfsdword(0xC0);
         if (SysWow64) {
             return SysWow64;
@@ -525,7 +524,7 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
     HookNative[countNativeHooks].ecxValue = 0;
     HookNative[countNativeHooks].hookedFunction = lpFuncDetour;
 
-    if (IsSysWow64() == false)
+    if (!Scylla::IsWow64Process(hProcess))
     {
         result = DetourCreateRemoteNative32Normal(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
     } else

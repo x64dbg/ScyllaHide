@@ -125,9 +125,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\InjectorCLI\Logger.cpp" />
-    <ClCompile Include="..\InjectorCLI\OperatingSysInfo.cpp" />
-    <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
     <ClCompile Include="PdbReader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
