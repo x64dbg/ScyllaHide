@@ -1,14 +1,13 @@
+#include <cstdio>
 #include <windows.h>
-#include <stdio.h>
-#include <string.h>
-#include <tlhelp32.h>
-#include "DynamicMapping.h"
+#include <TlHelp32.h>
 #include <Shlwapi.h>
+
+#include "DynamicMapping.h"
 #include "..\HookLibrary\HookMain.h"
 #include "RemoteHook.h"
 #include "RemotePebHider.h"
 #include "ApplyHooking.h"
-#include "..\PluginGeneric\UpdateCheck.h"
 
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
@@ -41,8 +40,6 @@ int wmain(int argc, wchar_t* argv[])
 {
     DWORD targetPid = 0;
     WCHAR * dllPath = 0;
-
-	//isNewVersionAvailable();
 
     GetModuleFileNameW(0, NtApiIniPath, _countof(NtApiIniPath));
 

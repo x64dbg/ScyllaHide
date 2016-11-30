@@ -80,7 +80,6 @@
     <ClCompile Include="..\PluginGeneric\IniSettings.cpp" />
     <ClCompile Include="..\PluginGeneric\Injector.cpp" />
     <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp" />
-    <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp" />
     <ClCompile Include="ScyllaHideOlly2Plugin.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -94,7 +93,6 @@
     <ClInclude Include="..\PluginGeneric\Injector.h" />
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
     <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
-    <ClInclude Include="..\PluginGeneric\UpdateCheck.h" />
     <ClInclude Include="olly2patches.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ScyllaHideOlly2Plugin.h" />

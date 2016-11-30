@@ -4,7 +4,6 @@
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
@@ -174,7 +173,7 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
 			GetProfileNames(sectionNamesA);
 			strcpy(data, "0 &Options, 4 &Load Profile");
 			strcat(data, sectionNamesA);
-			strcat(data, ",|2 &Inject DLL|5 &Attach process, 6 &Detach process|3 &Update-Check, 1 &About");
+			strcat(data, ",|2 &Inject DLL|5 &Attach process, 6 &Detach process|1 &About");
 
 			//also patch olly title
 			SetWindowTextW(hwmain, pHideOptions.ollyTitle);
@@ -218,23 +217,6 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 					if(GetFileDialog(dllPath))
 						injectDll(ProcessId, dllPath);
 				}
-				break;
-			}
-		case 3:
-			{
-				if(isNewVersionAvailable()) {
-					MessageBoxA(hwmain,
-						"There is a new version of ScyllaHide available !\n\n"
-						"Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
-						"or some RCE forums !",
-						"ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
-				}
-				else {
-					MessageBoxA(hwmain,
-						"You already have the latest version of ScyllaHide !",
-						"ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
-				}
-
 				break;
 			}
 		case 5:

@@ -24,7 +24,6 @@
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "IdaServerClient.h"
-#include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
 

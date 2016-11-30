@@ -5,7 +5,6 @@
 
 #include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
@@ -96,22 +95,6 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
         DialogBox(hinst, MAKEINTRESOURCE(IDD_ATTACH), hwndDlg, &AttachProc);
         break;
     }
-    case MENU_UPDATECHECK:
-    {
-        if(isNewVersionAvailable()) {
-            MessageBoxA(hwndDlg,
-                        "There is a new version of ScyllaHide available !\n\n"
-                        "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
-                        "or some RCE forums !",
-                        "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
-        }
-        else {
-            MessageBoxA(hwndDlg,
-                        "You already have the latest version of ScyllaHide !",
-                        "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
-        }
-        break;
-    }
     case MENU_ABOUT:
     {
         ShowAbout(hwndDlg);
@@ -171,7 +154,6 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
     _plugin_menuaddseparator(hMenu);
     _plugin_menuaddentry(hMenu, MENU_ATTACH, "&Attach process");
     _plugin_menuaddseparator(hMenu);
-    _plugin_menuaddentry(hMenu, MENU_UPDATECHECK, "&Update-Check");
     _plugin_menuaddentry(hMenu, MENU_ABOUT, "&About");
 
 	//load png

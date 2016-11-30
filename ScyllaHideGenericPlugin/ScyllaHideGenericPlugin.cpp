@@ -4,7 +4,6 @@
 #include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"

@@ -17,7 +17,6 @@
 #include <idasdk/ida.hpp>
 #include <idasdk/idp.hpp>
 #include <idasdk/dbg.hpp>
-#include "..\PluginGeneric\UpdateCheck.h"
 #include "..\ScyllaHideIDAProPlugin\IdaServerClient.h"
 #include "..\PluginGeneric\AttachDialog.h"
 #elif X64DBG
@@ -936,21 +935,6 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         {
             EndDialog(hWnd, NULL);
             DialogBox(hinst, MAKEINTRESOURCE(IDD_ATTACH), (HWND)callui(ui_get_hwnd).vptr, &AttachProc);
-            break;
-        }
-        case IDC_UPDATE:
-        {
-            if(isNewVersionAvailable()) {
-                MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
-                            "There is a new version of ScyllaHide available !\n\n"
-                            "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
-                            "or some RCE forums !",
-                            "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
-            } else {
-                MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
-                            "You already have the latest version of ScyllaHide !",
-                            "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
-            }
             break;
         }
         case IDC_ABOUT:

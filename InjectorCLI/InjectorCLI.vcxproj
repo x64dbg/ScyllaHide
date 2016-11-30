@@ -123,7 +123,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\PluginGeneric\UpdateCheck.cpp" />
     <ClCompile Include="ApplyHooking.cpp" />
     <ClCompile Include="DynamicMapping.cpp" />
     <ClCompile Include="CliMain.cpp" />

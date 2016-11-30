@@ -30,7 +30,6 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct);
 #define MENU_PROFILES 1
 #define MENU_INJECTDLL 2
 #define MENU_ATTACH 5
-#define MENU_UPDATECHECK 3
 #define MENU_ABOUT 4
 
 #define MAX_PROFILES 128

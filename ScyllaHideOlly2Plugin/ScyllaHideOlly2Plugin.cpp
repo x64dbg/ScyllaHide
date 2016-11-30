@@ -4,7 +4,6 @@
 
 #include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\PluginGeneric\UpdateCheck.h"
 #include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
@@ -160,29 +159,6 @@ static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode)
             }
             break;
         }
-        }
-        return MENU_REDRAW;
-    };
-    return MENU_ABSENT;
-}
-
-//Menu->Update-Check
-static int Mupdate(t_table *pt,wchar_t *name,ulong index,int mode)
-{
-    if (mode==MENU_VERIFY)
-        return MENU_NORMAL;
-    else if (mode==MENU_EXECUTE)
-    {
-        if(isNewVersionAvailable()) {
-            MessageBoxA(hwollymain,
-                        "There is a new version of ScyllaHide available !\n\n"
-                        "Check out https://bitbucket.org/NtQuery/scyllahide/downloads \n"
-                        "or some RCE forums !",
-                        "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
-        } else {
-            MessageBoxA(hwollymain,
-                        "You already have the latest version of ScyllaHide !",
-                        "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
         }
         return MENU_REDRAW;
     };
