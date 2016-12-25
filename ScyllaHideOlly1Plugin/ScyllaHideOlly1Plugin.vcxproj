@@ -75,7 +75,6 @@
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
     <ClCompile Include="..\PluginGeneric\AttachDialog.cpp" />
     <ClCompile Include="..\PluginGeneric\CustomExceptionHandler.cpp" />
-    <ClCompile Include="..\PluginGeneric\IniSettings.cpp" />
     <ClCompile Include="..\PluginGeneric\Injector.cpp" />
     <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp" />
     <ClCompile Include="olly1patches.cpp" />
@@ -90,11 +89,9 @@
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
     <ClInclude Include="..\PluginGeneric\AttachDialog.h" />
     <ClInclude Include="..\PluginGeneric\CustomExceptionHandler.h" />
-    <ClInclude Include="..\PluginGeneric\IniSettings.h" />
     <ClInclude Include="..\PluginGeneric\Injector.h" />
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
     <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
-    <ClInclude Include="ollyplugindefinitions.h" />
     <ClInclude Include="olly1patches.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

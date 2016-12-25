@@ -19,13 +19,13 @@
 #include <idasdk/dbg.hpp>
 #include <idasdk/loader.hpp>
 #include <idasdk/kernwin.hpp>
-#include "resource.h"
-#include "..\PluginGeneric\IniSettings.h"
+#include <Scylla/Settings.h>
+
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\ScyllaHideVersion.h"
-#include "IdaServerClient.h"
 #include "..\PluginGeneric\OptionsDialog.h"
-#include "..\PluginGeneric\AttachDialog.h"
+#include "IdaServerClient.h"
+#include "resource.h"
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
@@ -35,8 +35,9 @@ void __cdecl AttachProcess(DWORD dwPID);
 int idaapi debug_mainloop(void *user_data, int notif_code, va_list va);
 bool SetDebugPrivileges();
 
-//scyllaHide definitions
-struct HideOptions pHideOptions = {0};
+std::vector<std::wstring> g_hideProfileNames;
+std::wstring g_hideProfileName;
+Scylla::HideSettings g_hideSettings;
 
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
@@ -48,8 +49,6 @@ WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 WCHAR ScyllaHidex64ServerPath[MAX_PATH] = {0};
 
-extern WCHAR CurrentProfile[MAX_SECTION_NAME];
-extern WCHAR ProfileNames[2048];
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
@@ -91,8 +90,8 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 
         SetDebugPrivileges();
 
-        ReadCurrentProfile();
-        ReadSettings();
+        g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
+        Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 
         if (!StartWinsock())
         {
@@ -128,7 +127,7 @@ int idaapi IDAP_init(void)
     ZeroMemory(&ServerProcessInfo, sizeof(ServerProcessInfo));
 
     //read profile names
-    GetPrivateProfileSectionNamesWithFilter();
+    g_hideProfileNames = Scylla::LoadHideProfileNames(ScyllaHideIniPath);
 
     return PLUGIN_KEEP;
 }
@@ -184,7 +183,7 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                 qstring hoststring;
                 char host[200] = {0};
                 char port[6] = {0};
-                wcstombs(port, pHideOptions.serverPort, _countof(port));
+                wcstombs(port, g_hideSettings.serverPort.c_str(), _countof(port));
 
                 get_process_options(NULL, NULL, NULL, &hoststring, NULL, NULL);
                 GetHost((char*)hoststring.c_str(), host);

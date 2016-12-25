@@ -1,10 +1,11 @@
 #include "Injector.h"
-#include "..\InjectorCLI\RemoteHook.h"
+#include <Psapi.h>
+#include <Scylla/Settings.h>
+
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\\ApplyHooking.h"
-#include <Psapi.h>
 
-extern struct HideOptions pHideOptions;
+extern Scylla::HideSettings g_hideSettings;
 
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
@@ -102,10 +103,10 @@ bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     DllExchangeLoader.EnableProtectProcessId = TRUE;
 
     DWORD enableFlags = 0x0;
-    if(pHideOptions.PEBBeingDebugged) enableFlags |= PEB_PATCH_BeingDebugged;
-    if(pHideOptions.PEBHeapFlags) enableFlags |= PEB_PATCH_HeapFlags;
-    if(pHideOptions.PEBNtGlobalFlag) enableFlags |= PEB_PATCH_NtGlobalFlag;
-    if(pHideOptions.PEBStartupInfo) enableFlags |= PEB_PATCH_StartUpInfo;
+    if (g_hideSettings.PEBBeingDebugged) enableFlags |= PEB_PATCH_BeingDebugged;
+    if (g_hideSettings.PEBHeapFlags) enableFlags |= PEB_PATCH_HeapFlags;
+    if (g_hideSettings.PEBNtGlobalFlag) enableFlags |= PEB_PATCH_NtGlobalFlag;
+    if (g_hideSettings.PEBStartupInfo) enableFlags |= PEB_PATCH_StartUpInfo;
 
     ApplyPEBPatch(&DllExchangeLoader, hProcess, enableFlags);
 
@@ -127,7 +128,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
     }
     else
     {
-        if (pHideOptions.removeDebugPrivileges)
+        if (g_hideSettings.removeDebugPrivileges)
         {
             RemoveDebugPrivileges(hProcess);
         }
@@ -297,12 +298,12 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
 
 		if (entryPoint) LogWrap(L"[ScyllaHide] DLL entry point (DllMain) RVA %X!", entryPoint);
 
-        if (pHideOptions.DLLStealth)
+        if (g_hideSettings.DLLStealth)
         {
             LogWrap(L"[ScyllaHide] Starting Stealth DLL Injection!");
             remoteImage = StealthDllInjection(hProcess, dllPath, dllMemory);
         }
-        else if (pHideOptions.DLLNormal)
+        else if (g_hideSettings.DLLNormal)
         {
             LogWrap(L"[ScyllaHide] Starting Normal DLL Injection!");
             remoteImage = NormalDllInjection(hProcess, dllPath);
@@ -316,11 +317,11 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
         {
             LogWrap(L"[ScyllaHide] DLL INJECTION: Injection of %s successful, Imagebase %p", dllPath, remoteImage);
 
-            if (pHideOptions.DLLUnload)
+            if (g_hideSettings.DLLUnload)
             {
                 LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p", remoteImage);
 
-                if (pHideOptions.DLLNormal)
+                if (g_hideSettings.DLLNormal)
                 {
                     HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)FreeLibrary,remoteImage, CREATE_SUSPENDED, 0);
                     if (hThread)
@@ -334,7 +335,7 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
                         LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p FAILED", remoteImage);
                     }
                 }
-                else if (pHideOptions.DLLStealth)
+                else if (g_hideSettings.DLLStealth)
                 {
                     VirtualFreeEx(hProcess, remoteImage, 0, MEM_RELEASE);
                     LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
@@ -393,37 +394,37 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
     data->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
 
-    data->EnablePebBeingDebugged = pHideOptions.PEBBeingDebugged;
-    data->EnablePebHeapFlags = pHideOptions.PEBHeapFlags;
-    data->EnablePebNtGlobalFlag = pHideOptions.PEBNtGlobalFlag;
-    data->EnablePebStartupInfo = pHideOptions.PEBStartupInfo;
-    data->EnableBlockInputHook = pHideOptions.BlockInput;
-    data->EnableOutputDebugStringHook = pHideOptions.OutputDebugStringA;
-    data->EnableNtSetInformationThreadHook = pHideOptions.NtSetInformationThread;
-    data->EnableNtQueryInformationProcessHook = pHideOptions.NtQueryInformationProcess;
-    data->EnableNtQuerySystemInformationHook = pHideOptions.NtQuerySystemInformation;
-    data->EnableNtQueryObjectHook = pHideOptions.NtQueryObject;
-    data->EnableNtYieldExecutionHook = pHideOptions.NtYieldExecution;
-    data->EnableNtCloseHook = pHideOptions.NtClose;
-    data->EnableNtCreateThreadExHook = pHideOptions.NtCreateThreadEx;
-    data->EnablePreventThreadCreation = pHideOptions.preventThreadCreation;
-    data->EnableNtUserFindWindowExHook = pHideOptions.NtUserFindWindowEx;
-    data->EnableNtUserBuildHwndListHook = pHideOptions.NtUserBuildHwndList;
-    data->EnableNtUserQueryWindowHook = pHideOptions.NtUserQueryWindow;
-    data->EnableNtSetDebugFilterStateHook = pHideOptions.NtSetDebugFilterState;
-    data->EnableGetTickCountHook = pHideOptions.GetTickCount;
-    data->EnableGetTickCount64Hook = pHideOptions.GetTickCount64;
-    data->EnableGetLocalTimeHook = pHideOptions.GetLocalTime;
-    data->EnableGetSystemTimeHook = pHideOptions.GetSystemTime;
-    data->EnableNtQuerySystemTimeHook = pHideOptions.NtQuerySystemTime;
-    data->EnableNtQueryPerformanceCounterHook = pHideOptions.NtQueryPerformanceCounter;
-    data->EnableNtSetInformationProcessHook = pHideOptions.NtSetInformationProcess;
+    data->EnablePebBeingDebugged = g_hideSettings.PEBBeingDebugged;
+    data->EnablePebHeapFlags = g_hideSettings.PEBHeapFlags;
+    data->EnablePebNtGlobalFlag = g_hideSettings.PEBNtGlobalFlag;
+    data->EnablePebStartupInfo = g_hideSettings.PEBStartupInfo;
+    data->EnableBlockInputHook = g_hideSettings.BlockInput;
+    data->EnableOutputDebugStringHook = g_hideSettings.OutputDebugStringA;
+    data->EnableNtSetInformationThreadHook = g_hideSettings.NtSetInformationThread;
+    data->EnableNtQueryInformationProcessHook = g_hideSettings.NtQueryInformationProcess;
+    data->EnableNtQuerySystemInformationHook = g_hideSettings.NtQuerySystemInformation;
+    data->EnableNtQueryObjectHook = g_hideSettings.NtQueryObject;
+    data->EnableNtYieldExecutionHook = g_hideSettings.NtYieldExecution;
+    data->EnableNtCloseHook = g_hideSettings.NtClose;
+    data->EnableNtCreateThreadExHook = g_hideSettings.NtCreateThreadEx;
+    data->EnablePreventThreadCreation = g_hideSettings.preventThreadCreation;
+    data->EnableNtUserFindWindowExHook = g_hideSettings.NtUserFindWindowEx;
+    data->EnableNtUserBuildHwndListHook = g_hideSettings.NtUserBuildHwndList;
+    data->EnableNtUserQueryWindowHook = g_hideSettings.NtUserQueryWindow;
+    data->EnableNtSetDebugFilterStateHook = g_hideSettings.NtSetDebugFilterState;
+    data->EnableGetTickCountHook = g_hideSettings.GetTickCount;
+    data->EnableGetTickCount64Hook = g_hideSettings.GetTickCount64;
+    data->EnableGetLocalTimeHook = g_hideSettings.GetLocalTime;
+    data->EnableGetSystemTimeHook = g_hideSettings.GetSystemTime;
+    data->EnableNtQuerySystemTimeHook = g_hideSettings.NtQuerySystemTime;
+    data->EnableNtQueryPerformanceCounterHook = g_hideSettings.NtQueryPerformanceCounter;
+    data->EnableNtSetInformationProcessHook = g_hideSettings.NtSetInformationProcess;
 
-    data->EnableNtGetContextThreadHook = pHideOptions.NtGetContextThread;
-    data->EnableNtSetContextThreadHook = pHideOptions.NtSetContextThread;
-    data->EnableNtContinueHook = pHideOptions.NtContinue | pHideOptions.killAntiAttach;
-    data->EnableKiUserExceptionDispatcherHook = pHideOptions.KiUserExceptionDispatcher;
-    data->EnableMalwareRunPeUnpacker = pHideOptions.malwareRunpeUnpacker;
+    data->EnableNtGetContextThreadHook = g_hideSettings.NtGetContextThread;
+    data->EnableNtSetContextThreadHook = g_hideSettings.NtSetContextThread;
+    data->EnableNtContinueHook = g_hideSettings.NtContinue | g_hideSettings.killAntiAttach;
+    data->EnableKiUserExceptionDispatcherHook = g_hideSettings.KiUserExceptionDispatcher;
+    data->EnableMalwareRunPeUnpacker = g_hideSettings.malwareRunpeUnpacker;
 
     data->isKernel32Hooked = FALSE;
     data->isNtdllHooked = FALSE;

@@ -24,16 +24,6 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct);
 }
 #endif
 
-//scyllahide definitions
-
-#define MENU_OPTIONS 0
-#define MENU_PROFILES 1
-#define MENU_INJECTDLL 2
-#define MENU_ATTACH 5
-#define MENU_ABOUT 4
-
-#define MAX_PROFILES 128
-
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
 

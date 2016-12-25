@@ -10,8 +10,7 @@
 
 namespace Scylla {
 
-#pragma pack(push)
-#pragma pack(1)
+#pragma pack(push, 1)
     template <typename T>
     struct LIST_ENTRY
     {
@@ -135,11 +134,11 @@ namespace Scylla {
 #endif
 
     PEB *GetPebAddress(HANDLE hProcess);
-	PEB64 *GetPeb64Address(HANDLE hProcess);
+    PEB64 *GetPeb64Address(HANDLE hProcess);
 
     std::shared_ptr<PEB> GetPeb(HANDLE hProcess);
     std::shared_ptr<PEB64> GetPeb64(HANDLE hProcess);
 
-	bool SetPeb(HANDLE hProcess, const PEB *pPeb);
+    bool SetPeb(HANDLE hProcess, const PEB *pPeb);
     bool SetPeb64(HANDLE hProcess, const PEB64 *pPeb64);
 }

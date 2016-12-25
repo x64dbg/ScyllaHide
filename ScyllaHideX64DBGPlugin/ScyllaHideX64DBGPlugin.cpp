@@ -1,16 +1,15 @@
-#include <string>
+#include "ScyllaHideX64DBGPlugin.h"
+#include <codecvt>
 #include <Scylla/OsInfo.h>
+#include <Scylla/Settings.h>
 
 #include "..\PluginGeneric\ScyllaHideVersion.h"
-
 #include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
 
 #include "resource.h"
-#include "ScyllaHideX64DBGPlugin.h"
 
 #ifdef _WIN64
 #pragma comment(lib, "x64dbg\\x64dbg.lib")
@@ -22,8 +21,18 @@
 
 #define plugin_name "ScyllaHide"
 
-//scyllaHide definitions
-struct HideOptions pHideOptions = {0};
+enum ScyllaMenuItems : int {
+    MENU_OPTIONS = 0,
+    MENU_PROFILES,
+    MENU_INJECTDLL,
+    MENU_ATTACH,
+    MENU_ABOUT,
+    MENU_MAX
+};
+
+std::vector<std::wstring> g_hideProfileNames;
+std::wstring g_hideProfileName;
+Scylla::HideSettings g_hideSettings;
 
 #ifdef _WIN64
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -38,14 +47,11 @@ WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 WCHAR ScyllaHideIniPath[MAX_PATH] = {0};
 
-extern WCHAR CurrentProfile[MAX_SECTION_NAME];
-extern WCHAR ProfileNames[2048];
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
 extern t_AttachProcess _AttachProcess;
 
-//globals
 HINSTANCE hinst;
 HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
@@ -77,7 +83,7 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
     {
     case MENU_OPTIONS:
     {
-        GetPrivateProfileSectionNamesWithFilter();
+        g_hideProfileNames = Scylla::LoadHideProfileNames(ScyllaHideIniPath);
         DialogBox(hinst, MAKEINTRESOURCE(IDD_OPTIONS), hwndDlg, &OptionsProc);
         break;
     }
@@ -101,10 +107,10 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
 
         break;
     }
-    //profile names/count is dynamic so we catch loading them with default case
     default: {
-        SetCurrentProfile(info->hEntry);
-        ReadSettings();
+        // Set hide profile.
+        g_hideProfileName = g_hideProfileNames[info->hEntry - MENU_MAX];
+        Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 
         if (ProcessId)
         {
@@ -126,8 +132,8 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
     hwndDlg=setupStruct->hwndDlg;
     hMenu=setupStruct->hMenu;
 
-    ReadCurrentProfile();
-    ReadSettings();
+    g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
+    Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 
     _plugin_logprintf("ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A "\n");
     _plugin_logprintf("  Copyright (C) 2014 Aguila / cypher\n");
@@ -137,16 +143,12 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
     int hProfile = _plugin_menuadd(hMenu, "&Load Profile");
 
     //add profiles to menu
-    GetPrivateProfileSectionNamesWithFilter();
-
-    WCHAR* profile = ProfileNames;
-    char buf[MAX_SECTION_NAME+1];
-    int i=10;
-    while(*profile != 0x00 && i<MAX_PROFILES-1) {
-        wcstombs(buf, profile, MAX_SECTION_NAME);
-        _plugin_menuaddentry(hProfile, i,buf);
-        i++;
-        profile = profile + wcslen(profile) + 1;
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> wstr2str;
+    g_hideProfileNames = Scylla::LoadHideProfileNames(ScyllaHideIniPath);
+    for (size_t i = 0; i < g_hideProfileNames.size(); i++)
+    {
+        auto mbstrName = wstr2str.to_bytes(g_hideProfileNames[i].c_str());
+        _plugin_menuaddentry(hProfile, (int)i + MENU_MAX, mbstrName.c_str());
     }
 
     _plugin_menuaddseparator(hMenu);
@@ -191,7 +193,7 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
 {
     PLUG_CB_DEBUGEVENT* d = (PLUG_CB_DEBUGEVENT*)callbackInfo;
 
-    if (pHideOptions.PEBHeapFlags)
+    if (g_hideSettings.PEBHeapFlags)
     {
         if (specialPebFix)
         {
@@ -221,7 +223,7 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
 		if (d->DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
 		{
 			//ATTACH
-			if(pHideOptions.killAntiAttach)
+            if (g_hideSettings.killAntiAttach)
 			{
 				if (!ApplyAntiAntiAttach(ProcessId))
 				{
@@ -249,7 +251,7 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
             if (!bHooked)
             {
                 _plugin_logprintf("[ScyllaHide] Reading NT API Information %S\n", NtApiIniPath);
-                ReadNtApiInformation();
+                ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
 
                 bHooked = true;
                 startInjection(ProcessId, ScyllaHideDllPath, true);

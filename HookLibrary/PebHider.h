@@ -6,9 +6,7 @@
 //Evolution of Process Environment Block (PEB) http://blog.rewolf.pl/blog/?p=573
 //March 2, 2013 / ReWolf posted in programming, reverse engineering, source code, x64 /
 
-#pragma pack(push)
-#pragma pack(1)
-
+#pragma pack(push, 1)
 template <class T>
 struct LIST_ENTRY_T
 {
@@ -121,6 +119,7 @@ struct _PEB_T
     T SystemAssemblyStorageMap;
     T MinimumStackCommit;*/
 };
+#pragma pack(pop)
 
 typedef _PEB_T<DWORD, DWORD64, 34> PEB32;
 typedef _PEB_T<DWORD64, DWORD, 30> PEB64;
@@ -130,11 +129,3 @@ typedef PEB64 PEB_CURRENT;
 #else
 typedef PEB32 PEB_CURRENT;
 #endif
-
-#pragma pack(pop)
-
-
-//PEB_CURRENT * GetPEBCurrent();
-//PEB64 * GetPEB64();
-//void FixPebAntidebug();
-

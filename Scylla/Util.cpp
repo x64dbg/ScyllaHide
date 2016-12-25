@@ -1,6 +1,5 @@
 #include "Util.h"
 #include <cstdio>
-#include <memory>
 
 std::wstring Scylla::format_wstring(const wchar_t *fmt, ...)
 {
@@ -18,14 +17,14 @@ std::wstring Scylla::vformat_wstring(const wchar_t *fmt, va_list ap)
     va_list vap;
 
     va_copy(vap, ap);
-    auto size = _vsnwprintf(nullptr, 0, fmt, vap);
+    auto size = ::_vsnwprintf(nullptr, 0, fmt, vap);
     va_end(vap);
 
     std::wstring wstr;
     wstr.resize(size + 1);
 
     va_copy(vap, ap);
-    _vsnwprintf(&wstr[0], wstr.size(), fmt, vap);
+    ::_vsnwprintf(&wstr[0], wstr.size(), fmt, vap);
     va_end(vap);
 
     return wstr;
@@ -55,7 +54,7 @@ std::wstring Scylla::FormatMessageW(DWORD dwErrnum)
     if (wszBuffer) {
         wstrError = wszBuffer;
         wstrError.resize(wstrError.size() - 1); // remove trailing \n
-        LocalFree(wszBuffer);
+        ::LocalFree(wszBuffer);
     }
     else
     {
@@ -63,4 +62,63 @@ std::wstring Scylla::FormatMessageW(DWORD dwErrnum)
     }
 
     return wstrError;
+}
+
+std::wstring Scylla::GetWindowTextW(HWND hWnd)
+{
+    std::wstring wstr;
+    auto len = ::GetWindowTextLengthW(hWnd) + 1;
+    wstr.resize(len);
+    ::GetWindowTextW(hWnd, &wstr[0], len);
+    return wstr;
+}
+
+std::wstring Scylla::GetDlgItemTextW(HWND hDlg, int nIDDlgItem)
+{
+    return GetWindowTextW(::GetDlgItem(hDlg, nIDDlgItem));
+}
+
+bool Scylla::FileExistsW(const wchar_t *wszPath)
+{
+    auto dwAttrib = ::GetFileAttributesW(wszPath);
+
+    return (dwAttrib != INVALID_FILE_ATTRIBUTES) && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+std::vector<std::wstring> Scylla::GetPrivateProfileSectionNamesW(const wchar_t *wszIniFile)
+{
+    std::wstring buf;
+    DWORD ret = 0;
+    while (((DWORD)buf.size() - ret) < 3) {
+        buf.resize(buf.size() + MAX_PATH);
+        ret = ::GetPrivateProfileSectionNamesW(&buf[0], (DWORD)buf.size(), wszIniFile);
+    }
+
+    std::vector<std::wstring> sections;
+    auto data = buf.c_str();
+    for (; data[0]; data += lstrlenW(data) + 1) {
+        sections.push_back(data);
+    }
+
+    return sections;
+}
+
+std::wstring Scylla::GetPrivateProfileStringW(const wchar_t *wszProfile, const wchar_t *wszKey, const wchar_t *wszDefaultValue, const wchar_t *wszIniFile)
+{
+    std::wstring buf;
+    DWORD ret = 0;
+
+    while (((DWORD)buf.size() - ret) < 3) {
+        buf.resize(buf.size() + MAX_PATH);
+        ret = ::GetPrivateProfileStringW(wszProfile, wszKey, wszDefaultValue, &buf[0], (DWORD)buf.size(), wszIniFile);
+    }
+    buf.resize(ret);
+
+    return buf;
+}
+
+bool Scylla::WritePrivateProfileIntW(const wchar_t *wszProfile, const wchar_t *wszKey, int nValue, const wchar_t *wszIniFile)
+{
+    auto strValue = format_wstring(L"%d", nValue);
+    return WritePrivateProfileStringW(wszProfile, wszKey, strValue.c_str(), wszIniFile) == TRUE;
 }

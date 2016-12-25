@@ -1,6 +1,9 @@
 #pragma once
+
 #include <Windows.h>
+#pragma pack(push)
 #include <ollydbg1/ollyplugindefinitions.h>
+#pragma pack(pop)
 
 #define ADDR_TYPE_RVA 2
 #define ADDR_TYPE_OFFSET 3

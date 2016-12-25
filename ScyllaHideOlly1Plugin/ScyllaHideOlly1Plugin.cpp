@@ -1,10 +1,12 @@
+#include <codecvt>
+#include <locale>
+#include <sstream>
 #include <Scylla/OsInfo.h>
-#include <ollydbg1/ollyplugindefinitions.h>
+#include <Scylla/Settings.h>
 
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
 #include "..\PluginGeneric\CustomExceptionHandler.h"
@@ -13,6 +15,8 @@
 #include "olly1patches.h"
 
 #pragma comment(lib, "ollydbg1\\ollydbg.lib")
+
+#define MENU_PROFILES_OFFSET 10
 
 typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
@@ -25,8 +29,9 @@ void AttachProcess(DWORD dwPID);
 void SetDebuggerBreakpoint(DWORD_PTR address);
 bool __cdecl IsAddressBreakpoint(DWORD_PTR address);
 
-//scyllaHide definitions
-struct HideOptions pHideOptions = {0};
+std::vector<std::wstring> g_hideProfileNames;
+std::wstring g_hideProfileName;
+Scylla::HideSettings g_hideSettings;
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
@@ -45,8 +50,6 @@ WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 WCHAR ScyllaHideIniPath[MAX_PATH] = {0};
 
-extern WCHAR CurrentProfile[MAX_SECTION_NAME];
-extern WCHAR ProfileNames[2048];
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
@@ -106,15 +109,15 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
 	hwmain=hw;
 
-	ReadCurrentProfile();
-	ReadSettings();
+    g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
+    Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 
 	_Addtolist(0,0,"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A);
 	_Addtolist(0,-1,"  Copyright (C) 2014 Aguila / cypher");
 	_Addtolist(0,-1,"  Operating System: %s", Scylla::GetWindowsVersionNameA());
 
 	//do some Olly fixes
-	if(pHideOptions.fixOllyBugs) {
+	if(g_hideSettings.fixOllyBugs) {
 		fixBadPEBugs();
 		fixForegroundWindow();
 		fixFPUBug();
@@ -122,30 +125,30 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 		fixNTSymbols();
 		fixFaultyHandleOnExit();
 	}
-	if(pHideOptions.x64Fix && Scylla::IsWindows64()) {
+    if (g_hideSettings.x64Fix && Scylla::IsWindows64()) {
 		fixX64Bug();
 	}
-	if(pHideOptions.skipEPOutsideCode) {
+    if (g_hideSettings.skipEPOutsideCode) {
 		patchEPOutsideCode();
 	}
 
-	if(pHideOptions.killAntiAttach) {
+    if (g_hideSettings.killAntiAttach) {
 		InstallAntiAttachHook();
 	}
 
-	if(pHideOptions.ignoreBadPEImage) {
+    if (g_hideSettings.ignoreBadPEImage) {
 		fixBadPEImage();
 	}
 
-	if(pHideOptions.advancedGoto) {
+    if (g_hideSettings.advancedGoto) {
 		advcancedCtrlG();
 	};
 
-	if(pHideOptions.skipCompressedDoAnalyze || pHideOptions.skipCompressedDoNothing) {
+    if (g_hideSettings.skipCompressedDoAnalyze || g_hideSettings.skipCompressedDoNothing) {
 		skipCompressedCode();
 	}
 
-	if(pHideOptions.skipLoadDllDoLoad || pHideOptions.skipLoadDllDoNothing) {
+    if (g_hideSettings.skipLoadDllDoLoad || g_hideSettings.skipLoadDllDoNothing) {
 		skipLoadDll();
 	}
 	return 0;
@@ -169,14 +172,19 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
 	{
 	case PM_MAIN:
 		{
-			char sectionNamesA[2048] = {0};
-			GetProfileNames(sectionNamesA);
-			strcpy(data, "0 &Options, 4 &Load Profile");
-			strcat(data, sectionNamesA);
-			strcat(data, ",|2 &Inject DLL|5 &Attach process, 6 &Detach process|1 &About");
+            std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> wstr2str;
+            g_hideProfileNames = Scylla::LoadHideProfileNames(ScyllaHideIniPath);
+            std::stringstream ssMenu;
+            ssMenu << "0 & Options, 4 & Load Profile{";
+            for (size_t i = 0; i < g_hideProfileNames.size(); i++)
+            {
+                ssMenu << (i + MENU_PROFILES_OFFSET) << ' ' << wstr2str.to_bytes(g_hideProfileNames[i].c_str()) << ",";
+            }
+            ssMenu << "},|2 &Inject DLL|5 &Attach process, 6 &Detach process|1 &About";
+            strncpy(data, ssMenu.str().c_str(), min(4096, ssMenu.str().size()));
 
 			//also patch olly title
-			SetWindowTextW(hwmain, pHideOptions.ollyTitle);
+            SetWindowTextW(hwmain, g_hideSettings.ollyTitle.c_str());
 			return 1;
 		}
 	case PM_THREADS:
@@ -231,8 +239,8 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 			}
 			//profile names/count is dynamic so we catch loading them with default case
 		default: {
-			SetCurrentProfile(action);
-			ReadSettings();
+            g_hideProfileName = g_hideProfileNames[action - MENU_PROFILES_OFFSET];
+            Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 
 			if (ProcessId)
 			{
@@ -289,7 +297,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 	if(!debugevent)
 		return;
 
-	if (pHideOptions.PEBHeapFlags)
+    if (g_hideSettings.PEBHeapFlags)
 	{
 		if (specialPebFix)
 		{
@@ -309,14 +317,14 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 	case CREATE_PROCESS_DEBUG_EVENT:
 		{
 
-			if (pHideOptions.handleExceptionPrint || 
-				pHideOptions.handleExceptionRip ||
-				pHideOptions.handleExceptionIllegalInstruction ||
-				pHideOptions.handleExceptionInvalidLockSequence ||
-				pHideOptions.handleExceptionNoncontinuableException ||
-				pHideOptions.handleExceptionBreakpoint ||
-				pHideOptions.handleExceptionWx86Breakpoint ||
-				pHideOptions.handleExceptionGuardPageViolation
+            if (g_hideSettings.handleExceptionPrint ||
+                g_hideSettings.handleExceptionRip ||
+                g_hideSettings.handleExceptionIllegalInstruction ||
+                g_hideSettings.handleExceptionInvalidLockSequence ||
+                g_hideSettings.handleExceptionNoncontinuableException ||
+                g_hideSettings.handleExceptionBreakpoint ||
+                g_hideSettings.handleExceptionWx86Breakpoint ||
+                g_hideSettings.handleExceptionGuardPageViolation
 				)
 			{
 				if (executeOnce == false)
@@ -335,7 +343,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 			{
 				//ATTACH to an existing process!
 				//Apply anti-anti-attach
-				if(pHideOptions.killAntiAttach)
+                if (g_hideSettings.killAntiAttach)
 				{
 					if (!ApplyAntiAntiAttach(ProcessId))
 					{
@@ -347,7 +355,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 			ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
 			//change olly caption again !
-			SetWindowTextW(hwmain, pHideOptions.ollyTitle);
+            SetWindowTextW(hwmain, g_hideSettings.ollyTitle.c_str());
 
 			if(!bHookedDumpProc) {
 				hookOllyWindowProcs();
@@ -361,7 +369,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 		{
 			if (bHooked)
 			{
-				if(pHideOptions.fixOllyBugs && Scylla::IsWindows64()) {
+                if (g_hideSettings.fixOllyBugs && Scylla::IsWindows64()) {
 					MarkSystemDllsOnx64();
 				}
 
@@ -380,7 +388,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 					if (!bHooked)
 					{
 						_Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
-						ReadNtApiInformation();
+						ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
 
 						bHooked = true;
 						startInjection(ProcessId, ScyllaHideDllPath, true);

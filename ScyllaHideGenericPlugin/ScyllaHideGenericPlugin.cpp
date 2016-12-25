@@ -1,20 +1,18 @@
+#include "ScyllaHideGenericPlugin.h"
 #include <string>
 #include <unordered_map>
+#include <Scylla/Settings.h>
 
-#include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\PluginGeneric\IniSettings.h"
-#include "..\PluginGeneric\OptionsDialog.h"
-#include "..\PluginGeneric\AttachDialog.h"
 
-#include "ScyllaHideGenericPlugin.h"
 
 typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
-//scyllaHide definitions
-struct HideOptions pHideOptions = { 0 };
+std::vector<std::wstring> g_hideProfileNames;
+std::wstring g_hideProfileName;
+Scylla::HideSettings g_hideSettings;
 
 #ifdef _WIN64
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -29,8 +27,6 @@ WCHAR ScyllaHideDllPath[MAX_PATH] = { 0 };
 WCHAR NtApiIniPath[MAX_PATH] = { 0 };
 WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
 
-extern WCHAR CurrentProfile[MAX_SECTION_NAME];
-extern WCHAR ProfileNames[2048];
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
@@ -64,7 +60,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
     else
         status = hookStatusMap[pid];
 
-    if (pHideOptions.PEBHeapFlags)
+    if (g_hideSettings.PEBHeapFlags)
     {
         if (status.specialPebFix)
         {
@@ -90,7 +86,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
         if (DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
         {
             //ATTACH
-            if (pHideOptions.killAntiAttach)
+            if (g_hideSettings.killAntiAttach)
             {
                 if (!ApplyAntiAntiAttach(status.ProcessId))
                 {
@@ -121,7 +117,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
             if (!status.bHooked)
             {
                 LogWrap(L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
-                ReadNtApiInformation();
+                ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
 
                 status.bHooked = true;
                 startInjection(status.ProcessId, ScyllaHideDllPath, true);
@@ -207,6 +203,6 @@ DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory, LOGWRAPPER Logger, LOGWRA
     }
 
     //Read settings file
-    ReadCurrentProfile();
-    ReadSettings();
+    g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
+    Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 }

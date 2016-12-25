@@ -78,7 +78,6 @@
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
     <ClCompile Include="..\PluginGeneric\AttachDialog.cpp" />
-    <ClCompile Include="..\PluginGeneric\IniSettings.cpp" />
     <ClCompile Include="..\PluginGeneric\Injector.cpp" />
     <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp" />
     <ClCompile Include="IdaServerClient.cpp" />
@@ -94,7 +93,6 @@
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
     <ClInclude Include="..\PluginGeneric\AttachDialog.h" />
-    <ClInclude Include="..\PluginGeneric\IniSettings.h" />
     <ClInclude Include="..\PluginGeneric\Injector.h" />
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
     <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
