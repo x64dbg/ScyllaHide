@@ -8,4 +8,6 @@ end_of_line = CRLF
 ; Tab indentation
 [*.{c,cpp,h,hpp}]
 indent_style = space
-tab_width = 4
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
