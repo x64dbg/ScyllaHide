@@ -1,24 +1,34 @@
 #include "OptionsDialog.h"
+#include <codecvt>
+#include <locale>
 #include <Scylla/OsInfo.h>
+#include <Scylla/Settings.h>
+#include <Scylla/Util.h>
 
-#include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\ScyllaHideVersion.h"
 
 #ifdef OLLY1
-#include "..\ScyllaHideOlly1Plugin\resource.h"
+#pragma pack(push)
 #include <ollydbg1/ollyplugindefinitions.h>
+#pragma pack(pop)
+#include "..\ScyllaHideOlly1Plugin\resource.h"
+
 #elif OLLY2
-#include "..\ScyllaHideOlly2Plugin\resource.h"
+#pragma pack(push)
 #include <ollydbg2/plugin.h>
+#pragma pack(pop)
+#include "..\ScyllaHideOlly2Plugin\resource.h"
+
 #elif __IDP__
 //#define BUILD_IDA_64BIT 1
-#include "..\ScyllaHideIDAProPlugin\resource.h"
 #include <idasdk/ida.hpp>
 #include <idasdk/idp.hpp>
 #include <idasdk/dbg.hpp>
 #include "..\ScyllaHideIDAProPlugin\IdaServerClient.h"
 #include "..\PluginGeneric\AttachDialog.h"
+#include "..\ScyllaHideIDAProPlugin\resource.h"
+
 #elif X64DBG
 #include <x64dbg/bridgemain.h>
 #include "..\ScyllaHideX64DBGPlugin\resource.h"
@@ -26,9 +36,10 @@
 #define IDC_SELECT_EXCEPTIONS 23949
 #endif
 
-extern WCHAR CurrentProfile[MAX_SECTION_NAME];
-extern WCHAR ProfileNames[2048];
-extern struct HideOptions pHideOptions;
+extern std::vector<std::wstring> g_hideProfileNames;
+extern std::wstring g_hideProfileName;
+extern Scylla::HideSettings g_hideSettings;
+
 extern WCHAR ScyllaHideIniPath[MAX_PATH];
 extern WCHAR ScyllaHideDllPath[MAX_PATH];
 extern DWORD ProcessId;
@@ -82,82 +93,82 @@ bool GetFileDialog(TCHAR Buffer[MAX_PATH])
 
 void UpdateOptions(HWND hWnd)
 {
-    SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, pHideOptions.PEBBeingDebugged, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, pHideOptions.PEBHeapFlags, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, pHideOptions.PEBNtGlobalFlag, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_SETCHECK, pHideOptions.PEBStartupInfo, 0);
-    if(pHideOptions.PEBBeingDebugged && pHideOptions.PEBHeapFlags && pHideOptions.PEBNtGlobalFlag && pHideOptions.PEBStartupInfo)
+    SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, g_hideSettings.PEBBeingDebugged, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, g_hideSettings.PEBHeapFlags, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, g_hideSettings.PEBNtGlobalFlag, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_SETCHECK, g_hideSettings.PEBStartupInfo, 0);
+    if(g_hideSettings.PEBBeingDebugged && g_hideSettings.PEBHeapFlags && g_hideSettings.PEBNtGlobalFlag && g_hideSettings.PEBStartupInfo)
         SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
     else
         SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 0, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_SETCHECK, pHideOptions.NtSetInformationThread, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONPROCESS), BM_SETCHECK, pHideOptions.NtSetInformationProcess, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_SETCHECK, pHideOptions.NtQuerySystemInformation, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_SETCHECK, pHideOptions.NtQueryInformationProcess, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_SETCHECK, pHideOptions.NtQueryObject, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_SETCHECK, pHideOptions.NtYieldExecution, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_SETCHECK, pHideOptions.OutputDebugStringA, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_SETCHECK, pHideOptions.BlockInput, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, pHideOptions.NtGetContextThread, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_SETCHECK, pHideOptions.NtSetContextThread, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_SETCHECK, pHideOptions.NtContinue, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_SETCHECK, pHideOptions.KiUserExceptionDispatcher, 0);
-    if(pHideOptions.NtGetContextThread && pHideOptions.NtSetContextThread && pHideOptions.NtContinue && pHideOptions.KiUserExceptionDispatcher)
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_SETCHECK, g_hideSettings.NtSetInformationThread, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONPROCESS), BM_SETCHECK, g_hideSettings.NtSetInformationProcess, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_SETCHECK, g_hideSettings.NtQuerySystemInformation, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_SETCHECK, g_hideSettings.NtQueryInformationProcess, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_SETCHECK, g_hideSettings.NtQueryObject, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_SETCHECK, g_hideSettings.NtYieldExecution, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_SETCHECK, g_hideSettings.OutputDebugStringA, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_SETCHECK, g_hideSettings.BlockInput, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, g_hideSettings.NtGetContextThread, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_SETCHECK, g_hideSettings.NtSetContextThread, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_SETCHECK, g_hideSettings.NtContinue, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_SETCHECK, g_hideSettings.KiUserExceptionDispatcher, 0);
+    if(g_hideSettings.NtGetContextThread && g_hideSettings.NtSetContextThread && g_hideSettings.NtContinue && g_hideSettings.KiUserExceptionDispatcher)
         SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 1, 0);
     else
         SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 0, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_SETCHECK, pHideOptions.NtUserFindWindowEx, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_SETCHECK, pHideOptions.NtUserBuildHwndList, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_SETCHECK, pHideOptions.NtUserQueryWindow, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, pHideOptions.NtSetDebugFilterState, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, pHideOptions.NtClose, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, pHideOptions.NtCreateThreadEx, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_SETCHECK, pHideOptions.removeDebugPrivileges, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, pHideOptions.preventThreadCreation, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_RUNPE), BM_SETCHECK, pHideOptions.malwareRunpeUnpacker, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, pHideOptions.DLLStealth, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, pHideOptions.DLLNormal, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, pHideOptions.DLLUnload, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_SETCHECK, pHideOptions.GetTickCount, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT64), BM_SETCHECK, pHideOptions.GetTickCount64, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_GETLOCALTIME), BM_SETCHECK, pHideOptions.GetLocalTime, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_SETCHECK, pHideOptions.GetSystemTime, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_SETCHECK, pHideOptions.NtQuerySystemTime, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, pHideOptions.NtQueryPerformanceCounter, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_KILLANTIATTACH), BM_SETCHECK, pHideOptions.killAntiAttach, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_SETCHECK, g_hideSettings.NtUserFindWindowEx, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_SETCHECK, g_hideSettings.NtUserBuildHwndList, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_SETCHECK, g_hideSettings.NtUserQueryWindow, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, g_hideSettings.NtSetDebugFilterState, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, g_hideSettings.NtClose, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, g_hideSettings.NtCreateThreadEx, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_SETCHECK, g_hideSettings.removeDebugPrivileges, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, g_hideSettings.preventThreadCreation, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_RUNPE), BM_SETCHECK, g_hideSettings.malwareRunpeUnpacker, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, g_hideSettings.DLLStealth, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, g_hideSettings.DLLNormal, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, g_hideSettings.DLLUnload, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_SETCHECK, g_hideSettings.GetTickCount, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT64), BM_SETCHECK, g_hideSettings.GetTickCount64, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETLOCALTIME), BM_SETCHECK, g_hideSettings.GetLocalTime, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_SETCHECK, g_hideSettings.GetSystemTime, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_SETCHECK, g_hideSettings.NtQuerySystemTime, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, g_hideSettings.NtQueryPerformanceCounter, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_KILLANTIATTACH), BM_SETCHECK, g_hideSettings.killAntiAttach, 0);
 
 
 #ifdef OLLY1
-    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
-    SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, pHideOptions.removeEPBreak, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, pHideOptions.fixOllyBugs, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, pHideOptions.x64Fix, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_SETCHECK, pHideOptions.skipEPOutsideCode, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, pHideOptions.breakTLS, 0);
+    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, g_hideSettings.ollyTitle.c_str());
+    SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, g_hideSettings.removeEPBreak, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, g_hideSettings.fixOllyBugs, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, g_hideSettings.x64Fix, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_SETCHECK, g_hideSettings.skipEPOutsideCode, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, g_hideSettings.breakTLS, 0);
 
-    if(pHideOptions.skipCompressedDoAnalyze || pHideOptions.skipCompressedDoNothing) {
+    if(g_hideSettings.skipCompressedDoAnalyze || g_hideSettings.skipCompressedDoNothing) {
         SendMessage(GetDlgItem(hWnd, IDC_COMPRESSED), BM_SETCHECK, 1, 0);
         EnableWindow(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), TRUE);
         EnableWindow(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), TRUE);
     }
-    SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), BM_SETCHECK, pHideOptions.skipCompressedDoAnalyze, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), BM_SETCHECK, pHideOptions.skipCompressedDoNothing, 0);
-    if(pHideOptions.skipLoadDllDoLoad || pHideOptions.skipLoadDllDoNothing) {
+    SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), BM_SETCHECK, g_hideSettings.skipCompressedDoAnalyze, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), BM_SETCHECK, g_hideSettings.skipCompressedDoNothing, 0);
+    if(g_hideSettings.skipLoadDllDoLoad || g_hideSettings.skipLoadDllDoNothing) {
         SendMessage(GetDlgItem(hWnd, IDC_LOADDLL), BM_SETCHECK, 1, 0);
         EnableWindow(GetDlgItem(hWnd, IDC_LOADDLLLOAD), TRUE);
         EnableWindow(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), TRUE);
     }
-    SendMessage(GetDlgItem(hWnd, IDC_LOADDLLLOAD), BM_SETCHECK, pHideOptions.skipLoadDllDoLoad, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), BM_SETCHECK, pHideOptions.skipLoadDllDoNothing, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDGOTO), BM_SETCHECK, pHideOptions.advancedGoto, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_BADPEIMAGE), BM_SETCHECK, pHideOptions.ignoreBadPEImage, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDINFOBAR), BM_SETCHECK, pHideOptions.advancedInfobar, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_LOADDLLLOAD), BM_SETCHECK, g_hideSettings.skipLoadDllDoLoad, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), BM_SETCHECK, g_hideSettings.skipLoadDllDoNothing, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDGOTO), BM_SETCHECK, g_hideSettings.advancedGoto, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_BADPEIMAGE), BM_SETCHECK, g_hideSettings.ignoreBadPEImage, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDINFOBAR), BM_SETCHECK, g_hideSettings.advancedInfobar, 0);
 	EnableWindow(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), FALSE);
 #elif OLLY2
-    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle);
+    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, g_hideSettings.ollyTitle.c_str());
 #elif __IDP__
-    SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_SETCHECK, pHideOptions.autostartServer, 0);
-    SetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort);
+    SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_SETCHECK, g_hideSettings.autostartServer, 0);
+    SetDlgItemTextW(hWnd, IDC_SERVERPORT, g_hideSettings.serverPort.c_str());
 
 #ifdef BUILD_IDA_64BIT
     if(isWindows64()) EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), TRUE);
@@ -179,309 +190,309 @@ void SaveOptions(HWND hWnd)
     //read all checkboxes
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.PEBBeingDebugged = 1;
+        g_hideSettings.PEBBeingDebugged = 1;
     }
     else
-        pHideOptions.PEBBeingDebugged = 0;
+        g_hideSettings.PEBBeingDebugged = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.PEBHeapFlags = 1;
+        g_hideSettings.PEBHeapFlags = 1;
     }
     else
-        pHideOptions.PEBHeapFlags = 0;
+        g_hideSettings.PEBHeapFlags = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.PEBNtGlobalFlag = 1;
+        g_hideSettings.PEBNtGlobalFlag = 1;
     }
     else
-        pHideOptions.PEBNtGlobalFlag = 0;
+        g_hideSettings.PEBNtGlobalFlag = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.PEBStartupInfo = 1;
+        g_hideSettings.PEBStartupInfo = 1;
     }
     else
-        pHideOptions.PEBStartupInfo = 0;
+        g_hideSettings.PEBStartupInfo = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtSetInformationThread = 1;
+        g_hideSettings.NtSetInformationThread = 1;
     }
     else
-        pHideOptions.NtSetInformationThread = 0;
+        g_hideSettings.NtSetInformationThread = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONPROCESS), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtSetInformationProcess = 1;
+        g_hideSettings.NtSetInformationProcess = 1;
     }
     else
-        pHideOptions.NtSetInformationProcess = 0;
+        g_hideSettings.NtSetInformationProcess = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtQuerySystemInformation = 1;
+        g_hideSettings.NtQuerySystemInformation = 1;
     }
     else
-        pHideOptions.NtQuerySystemInformation = 0;
+        g_hideSettings.NtQuerySystemInformation = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtQueryInformationProcess = 1;
+        g_hideSettings.NtQueryInformationProcess = 1;
     }
     else
-        pHideOptions.NtQueryInformationProcess = 0;
+        g_hideSettings.NtQueryInformationProcess = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtQueryObject = 1;
+        g_hideSettings.NtQueryObject = 1;
     }
     else
-        pHideOptions.NtQueryObject = 0;
+        g_hideSettings.NtQueryObject = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtYieldExecution = 1;
+        g_hideSettings.NtYieldExecution = 1;
     }
     else
-        pHideOptions.NtYieldExecution = 0;
+        g_hideSettings.NtYieldExecution = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.OutputDebugStringA = 1;
+        g_hideSettings.OutputDebugStringA = 1;
     }
     else
-        pHideOptions.OutputDebugStringA = 0;
+        g_hideSettings.OutputDebugStringA = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.BlockInput = 1;
+        g_hideSettings.BlockInput = 1;
     }
     else
-        pHideOptions.BlockInput = 0;
+        g_hideSettings.BlockInput = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtGetContextThread = 1;
+        g_hideSettings.NtGetContextThread = 1;
     }
     else
-        pHideOptions.NtGetContextThread = 0;
+        g_hideSettings.NtGetContextThread = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtSetContextThread = 1;
+        g_hideSettings.NtSetContextThread = 1;
     }
     else
-        pHideOptions.NtSetContextThread = 0;
+        g_hideSettings.NtSetContextThread = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtContinue = 1;
+        g_hideSettings.NtContinue = 1;
     }
     else
-        pHideOptions.NtContinue = 0;
+        g_hideSettings.NtContinue = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.KiUserExceptionDispatcher = 1;
+        g_hideSettings.KiUserExceptionDispatcher = 1;
     }
     else
-        pHideOptions.KiUserExceptionDispatcher = 0;
+        g_hideSettings.KiUserExceptionDispatcher = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtUserFindWindowEx = 1;
+        g_hideSettings.NtUserFindWindowEx = 1;
     }
     else
-        pHideOptions.NtUserFindWindowEx = 0;
+        g_hideSettings.NtUserFindWindowEx = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtUserBuildHwndList = 1;
+        g_hideSettings.NtUserBuildHwndList = 1;
     }
     else
-        pHideOptions.NtUserBuildHwndList = 0;
+        g_hideSettings.NtUserBuildHwndList = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtUserQueryWindow = 1;
+        g_hideSettings.NtUserQueryWindow = 1;
     }
     else
-        pHideOptions.NtUserQueryWindow = 0;
+        g_hideSettings.NtUserQueryWindow = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtSetDebugFilterState = 1;
+        g_hideSettings.NtSetDebugFilterState = 1;
     }
     else
-        pHideOptions.NtSetDebugFilterState = 0;
+        g_hideSettings.NtSetDebugFilterState = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtClose = 1;
+        g_hideSettings.NtClose = 1;
     }
     else
-        pHideOptions.NtClose = 0;
+        g_hideSettings.NtClose = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtCreateThreadEx = 1;
+        g_hideSettings.NtCreateThreadEx = 1;
     }
     else
-        pHideOptions.NtCreateThreadEx = 0;
+        g_hideSettings.NtCreateThreadEx = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.preventThreadCreation = 1;
+        g_hideSettings.preventThreadCreation = 1;
     }
     else
-        pHideOptions.preventThreadCreation = 0;
+        g_hideSettings.preventThreadCreation = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_RUNPE), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.malwareRunpeUnpacker = 1;
+        g_hideSettings.malwareRunpeUnpacker = 1;
     }
     else
-        pHideOptions.malwareRunpeUnpacker = 0;
+        g_hideSettings.malwareRunpeUnpacker = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.removeDebugPrivileges = 1;
+        g_hideSettings.removeDebugPrivileges = 1;
     }
     else
-        pHideOptions.removeDebugPrivileges = 0;
+        g_hideSettings.removeDebugPrivileges = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.DLLStealth = 1;
+        g_hideSettings.DLLStealth = 1;
     }
     else
-        pHideOptions.DLLStealth = 0;
+        g_hideSettings.DLLStealth = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.DLLNormal = 1;
+        g_hideSettings.DLLNormal = 1;
     }
     else
-        pHideOptions.DLLNormal = 0;
+        g_hideSettings.DLLNormal = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.DLLUnload = 1;
+        g_hideSettings.DLLUnload = 1;
     }
     else
-        pHideOptions.DLLUnload = 0;
+        g_hideSettings.DLLUnload = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.GetTickCount = 1;
+        g_hideSettings.GetTickCount = 1;
     }
     else
-        pHideOptions.GetTickCount = 0;
+        g_hideSettings.GetTickCount = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT64), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.GetTickCount64 = 1;
+        g_hideSettings.GetTickCount64 = 1;
     }
     else
-        pHideOptions.GetTickCount64 = 0;
+        g_hideSettings.GetTickCount64 = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETLOCALTIME), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.GetLocalTime = 1;
+        g_hideSettings.GetLocalTime = 1;
     }
     else
-        pHideOptions.GetLocalTime = 0;
+        g_hideSettings.GetLocalTime = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.GetSystemTime = 1;
+        g_hideSettings.GetSystemTime = 1;
     }
     else
-        pHideOptions.GetSystemTime = 0;
+        g_hideSettings.GetSystemTime = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtQuerySystemTime = 1;
+        g_hideSettings.NtQuerySystemTime = 1;
     }
     else
-        pHideOptions.NtQuerySystemTime = 0;
+        g_hideSettings.NtQuerySystemTime = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.NtQueryPerformanceCounter = 1;
+        g_hideSettings.NtQueryPerformanceCounter = 1;
     }
     else
-        pHideOptions.NtQueryPerformanceCounter = 0;
+        g_hideSettings.NtQueryPerformanceCounter = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_KILLANTIATTACH), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.killAntiAttach = 1;
+        g_hideSettings.killAntiAttach = 1;
     }
     else
-        pHideOptions.killAntiAttach = 0;
+        g_hideSettings.killAntiAttach = 0;
 
 #ifdef OLLY1
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.removeEPBreak = 1;
+        g_hideSettings.removeEPBreak = 1;
     }
     else
-        pHideOptions.removeEPBreak = 0;
+        g_hideSettings.removeEPBreak = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.fixOllyBugs = 1;
+        g_hideSettings.fixOllyBugs = 1;
     }
     else
-        pHideOptions.fixOllyBugs = 0;
+        g_hideSettings.fixOllyBugs = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.x64Fix = 1;
+        g_hideSettings.x64Fix = 1;
     }
     else
-        pHideOptions.x64Fix = 0;
+        g_hideSettings.x64Fix = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.breakTLS = 1;
+        g_hideSettings.breakTLS = 1;
     }
     else
-        pHideOptions.breakTLS = 0;
+        g_hideSettings.breakTLS = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.skipEPOutsideCode = 1;
+        g_hideSettings.skipEPOutsideCode = 1;
     }
     else
-        pHideOptions.skipEPOutsideCode = 0;
+        g_hideSettings.skipEPOutsideCode = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BADPEIMAGE), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.ignoreBadPEImage = 1;
+        g_hideSettings.ignoreBadPEImage = 1;
     }
     else
-        pHideOptions.ignoreBadPEImage = 0;
+        g_hideSettings.ignoreBadPEImage = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDGOTO), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.advancedGoto = 1;
+        g_hideSettings.advancedGoto = 1;
     }
     else
-        pHideOptions.advancedGoto = 0;
+        g_hideSettings.advancedGoto = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.skipCompressedDoAnalyze = 1;
+        g_hideSettings.skipCompressedDoAnalyze = 1;
     }
     else
-        pHideOptions.skipCompressedDoAnalyze = 0;
+        g_hideSettings.skipCompressedDoAnalyze = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.skipCompressedDoNothing = 1;
+        g_hideSettings.skipCompressedDoNothing = 1;
     }
     else
-        pHideOptions.skipCompressedDoNothing = 0;
+        g_hideSettings.skipCompressedDoNothing = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_LOADDLLLOAD), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.skipLoadDllDoLoad = 1;
+        g_hideSettings.skipLoadDllDoLoad = 1;
     }
     else
-        pHideOptions.skipLoadDllDoLoad = 0;
+        g_hideSettings.skipLoadDllDoLoad = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.skipLoadDllDoNothing = 1;
+        g_hideSettings.skipLoadDllDoNothing = 1;
     }
     else
-        pHideOptions.skipLoadDllDoNothing = 0;
+        g_hideSettings.skipLoadDllDoNothing = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDINFOBAR), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.advancedInfobar = 1;
+        g_hideSettings.advancedInfobar = 1;
     }
     else
-        pHideOptions.advancedInfobar = 0;
+        g_hideSettings.advancedInfobar = 0;
 #elif __IDP__
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_GETCHECK, 0, 0))
     {
-        pHideOptions.autostartServer = 1;
+        g_hideSettings.autostartServer = 1;
     }
     else
-        pHideOptions.autostartServer = 0;
+        g_hideSettings.autostartServer = 0;
 
-    GetDlgItemTextW(hWnd, IDC_SERVERPORT, pHideOptions.serverPort, 6);
+    g_hideSettings.serverPort = Scylla::GetDlgItemTextW(hWnd, IDC_SERVERPORT);
 #endif
 
 #ifdef OLLY1
-    GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
-    SetWindowTextW(hwmain, pHideOptions.ollyTitle);
+    g_hideSettings.ollyTitle = Scylla::GetDlgItemTextW(hWnd, IDC_OLLYTITLE);
+    SetWindowTextW(hwmain, g_hideSettings.ollyTitle.c_str());
 #elif OLLY2
-    GetDlgItemTextW(hWnd, IDC_OLLYTITLE, pHideOptions.ollyTitle, 33);
-    SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
+    g_hideSettings.ollyTitle = Scylla::GetDlgItemTextW(hWnd, IDC_OLLYTITLE);
+    SetWindowTextW(hwollymain, g_hideSettings.ollyTitle.c_str());
 #endif
 
     //save all options
-    SaveSettings();
+    Scylla::SaveHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 }
 
 HWND CreateTooltips(HWND hwndDlg)
@@ -647,28 +658,16 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     {
     case WM_INITDIALOG:
     {
-        ReadSettings();
+        // add current profile to options title
+        auto wstrTitle = Scylla::format_wstring(L"[ScyllaHide Options] Profile: %s", g_hideProfileName.c_str());
+        SetWindowTextW(hWnd, wstrTitle.c_str());
 
-        //add current profile to options title
-        WCHAR title[MAX_SECTION_NAME+30] = {0};
-        wcscpy(title, L"[ScyllaHide Options] Profile: ");
-        wcscat(title, CurrentProfile);
-        SetWindowTextW(hWnd, title);
-
-        //fill combobox with profiles
-        WCHAR* profile = ProfileNames;
-        int index = 0;
-        while(*profile != 0x00)
+        // fill combobox with profiles
+        for (size_t i = 0; i < g_hideProfileNames.size(); i++)
         {
-
-            SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_ADDSTRING,0,(LPARAM) profile);
-
-            if(wcscmp(profile, CurrentProfile) == 0)
-                SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_SETCURSEL, index, 0);
-
-
-            index++;
-            profile = profile + wcslen(profile) + 1;
+            SendDlgItemMessageW(hWnd, IDC_PROFILES, CB_ADDSTRING, 0, (LPARAM)g_hideProfileNames[i].c_str());
+            if (g_hideProfileName == g_hideProfileNames[i])
+                SendDlgItemMessageW(hWnd, IDC_PROFILES, CB_SETCURSEL, i, 0);
         }
 
         UpdateOptions(hWnd);
@@ -696,56 +695,64 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         {
         case IDC_PROFILES:
         {
-            int profileIndex = (int)SendMessage(GetDlgItem(hWnd, IDC_PROFILES), (UINT) CB_GETCURSEL, 0, 0);
-            profileIndex+=10; //increase when top-level menu needs more than 9 elements, probably never
+            if (HIWORD(wParam) == CBN_SELCHANGE)
+            {
+                auto profileIdx = (int)SendDlgItemMessageW(hWnd, IDC_PROFILES, (UINT)CB_GETCURSEL, 0, 0);
+                g_hideProfileName = g_hideProfileNames[profileIdx];
 
-            SetCurrentProfile(profileIndex);
+                // update options title
+                auto wstrTitle = Scylla::format_wstring(L"[ScyllaHide Options] Profile: %s", g_hideProfileName.c_str());
+                SetWindowTextW(hWnd, wstrTitle.c_str());
 
-            //update options title
-            WCHAR title[MAX_SECTION_NAME+30] = {0};
-            wcscpy(title, L"[ScyllaHide Options] Profile: ");
-            wcscat(title, CurrentProfile);
-            SetWindowTextW(hWnd, title);
-
-            ReadSettings();
-            UpdateOptions(hWnd);
-
+                Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
+                UpdateOptions(hWnd);
+            }
             break;
         }
         case IDC_SAVEPROFILE:
         {
-            WCHAR newProfileW[MAX_SECTION_NAME] = {0};
+            std::wstring wstrNewProfileName;
+
 #ifdef OLLY1
-            char newProfile[MAX_SECTION_NAME] = {0};
-            if(_Gettext("New profile name?", newProfile, 0, 0, 0)>0) {
-                mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
+            std::string strNewProfileName;
+            strNewProfileName.resize(MAX_PATH);
+            if (_Gettext("New profile name?", &strNewProfileName[0], 0, 0, 0) <= 0)
+                break;
+            wstrNewProfileName = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().from_bytes(strNewProfileName.c_str());
+
 #elif OLLY2
-            if(Getstring(hWnd, L"New profile name?", newProfileW, MAX_SECTION_NAME, 0, 0, 0, 0, 0, 0)>0) {
+            wstrNewProfileName.resize(MAX_PATH);
+            if (Getstring(hWnd, L"New profile name?", &wstrNewProfileName[0], wstrNewProfileName.size(), 0, 0, 0, 0, 0, 0) <= 0)
+                break;
+            wstrNewProfileName.resize(lstrlenW(wstrNewProfileName.c_str()));
+
 #elif __IDP__
-            char* newProfile;
-            newProfile = askstr(0, "", "New profile name?");
-            if(newProfile != NULL) {
-                mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
+            auto szNewProfileName = askstr(0, "", "New profile name?");
+            if (!szNewProfileName)
+                break;
+            wstrNewProfileName = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().from_bytes(szNewProfileName);
+
 #elif X64DBG
-            char newProfile[GUI_MAX_LINE_SIZE]="";
-            if(GuiGetLineWindow("New profile name?", newProfile)) {
-                mbstowcs(newProfileW, newProfile, MAX_SECTION_NAME);
+            std::string strNewProfileName;
+            strNewProfileName.resize(GUI_MAX_LINE_SIZE);
+            if (!GuiGetLineWindow("New profile name?", &strNewProfileName[0]))
+                break;
+            wstrNewProfileName = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().from_bytes(strNewProfileName.c_str());
 #endif
-                SetCurrentProfile(newProfileW);
-                SaveOptions(hWnd); //this creates the new section in the ini
 
-                WCHAR title[MAX_SECTION_NAME+30] = {0};
-                wcscpy(title, L"[ScyllaHide Options] Profile: ");
-                wcscat(title, CurrentProfile);
-                SetWindowTextW(hWnd, title);
-                SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_ADDSTRING,0,(LPARAM) newProfileW);
-                int profileCount = (int)SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_GETCOUNT, 0, 0);
-                SendMessage(GetDlgItem(hWnd, IDC_PROFILES), CB_SETCURSEL, profileCount-1, 0);
+            g_hideProfileName = wstrNewProfileName;
+            g_hideProfileNames.push_back(g_hideProfileName);
+            SaveOptions(hWnd); //this creates the new section in the ini
 
-                //need to update the ProfileNames buffer so re-selecting new profile while dialog hasnt been closed will work
-                GetPrivateProfileSectionNamesW(ProfileNames, sizeof(ProfileNames)/sizeof(WCHAR), ScyllaHideIniPath);
-            }
+            auto wstrTitle = Scylla::format_wstring(L"[ScyllaHide Options] Profile: %s", g_hideProfileName.c_str());
+            SetWindowTextW(hWnd, wstrTitle.c_str());
 
+            SendDlgItemMessageW(hWnd, IDC_PROFILES, CB_ADDSTRING, 0, (LPARAM)wstrNewProfileName.c_str());
+            auto profileCount = (int)SendDlgItemMessageW(hWnd, IDC_PROFILES, CB_GETCOUNT, 0, 0);
+            SendDlgItemMessageW(hWnd, IDC_PROFILES, CB_SETCURSEL, profileCount - 1, 0);
+
+            // need to update the ProfileNames buffer so re-selecting new profile while dialog hasnt been closed will work
+            g_hideProfileNames = Scylla::LoadHideProfileNames(ScyllaHideIniPath);
             break;
         }
         case IDOK:
@@ -783,15 +790,15 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 				ResetAllExceptions();
 				if (IsDlgButtonChecked(hWnd, IDC_EXCEPTION_ALL) == BST_CHECKED)
 				{
-					pHideOptions.handleExceptionPrint = 1;
-					pHideOptions.handleExceptionIllegalInstruction = 1;
-					pHideOptions.handleExceptionInvalidLockSequence = 1;
-					pHideOptions.handleExceptionNoncontinuableException = 1;
-					pHideOptions.handleExceptionRip = 1;
-					pHideOptions.handleExceptionAssertionFailure = 1;
-					pHideOptions.handleExceptionBreakpoint = 1;
-					pHideOptions.handleExceptionGuardPageViolation = 1;
-					pHideOptions.handleExceptionWx86Breakpoint = 1;
+					g_hideSettings.handleExceptionPrint = 1;
+					g_hideSettings.handleExceptionIllegalInstruction = 1;
+					g_hideSettings.handleExceptionInvalidLockSequence = 1;
+					g_hideSettings.handleExceptionNoncontinuableException = 1;
+					g_hideSettings.handleExceptionRip = 1;
+					g_hideSettings.handleExceptionAssertionFailure = 1;
+					g_hideSettings.handleExceptionBreakpoint = 1;
+					g_hideSettings.handleExceptionGuardPageViolation = 1;
+					g_hideSettings.handleExceptionWx86Breakpoint = 1;
 				}
 			}
         case IDC_PROTECTDRX:
@@ -890,22 +897,22 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         {   //DLL injection options need to be updated on-the-fly coz the injection button is ON the options window
             if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_GETCHECK, 0, 0))
             {
-                pHideOptions.DLLStealth = 1;
+                g_hideSettings.DLLStealth = 1;
             }
             else
-                pHideOptions.DLLStealth = 0;
+                g_hideSettings.DLLStealth = 0;
             if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_GETCHECK, 0, 0))
             {
-                pHideOptions.DLLNormal = 1;
+                g_hideSettings.DLLNormal = 1;
             }
             else
-                pHideOptions.DLLNormal = 0;
+                g_hideSettings.DLLNormal = 0;
             if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_GETCHECK, 0, 0))
             {
-                pHideOptions.DLLUnload = 1;
+                g_hideSettings.DLLUnload = 1;
             }
             else
-                pHideOptions.DLLUnload = 0;
+                g_hideSettings.DLLUnload = 0;
 
 
             break;
@@ -966,27 +973,27 @@ default:
 void HandleGuiException(HWND hwnd)
 {
 #ifdef OLLY1
-	if (pHideOptions.handleExceptionIllegalInstruction &&
-		pHideOptions.handleExceptionInvalidLockSequence &&
-		pHideOptions.handleExceptionNoncontinuableException &&
-		pHideOptions.handleExceptionPrint &&
-		pHideOptions.handleExceptionRip &&
-		pHideOptions.handleExceptionBreakpoint &&
-		pHideOptions.handleExceptionWx86Breakpoint &&
-		pHideOptions.handleExceptionGuardPageViolation
+	if (g_hideSettings.handleExceptionIllegalInstruction &&
+		g_hideSettings.handleExceptionInvalidLockSequence &&
+		g_hideSettings.handleExceptionNoncontinuableException &&
+		g_hideSettings.handleExceptionPrint &&
+		g_hideSettings.handleExceptionRip &&
+		g_hideSettings.handleExceptionBreakpoint &&
+		g_hideSettings.handleExceptionWx86Breakpoint &&
+		g_hideSettings.handleExceptionGuardPageViolation
 		)
 #endif
 #ifdef OLLY2
-		if (pHideOptions.handleExceptionNoncontinuableException &&
-			pHideOptions.handleExceptionPrint &&
-			pHideOptions.handleExceptionRip
+		if (g_hideSettings.handleExceptionNoncontinuableException &&
+			g_hideSettings.handleExceptionPrint &&
+			g_hideSettings.handleExceptionRip
 			)
 #endif
 #ifdef __IDP__
-			if (pHideOptions.handleExceptionNoncontinuableException &&
-				pHideOptions.handleExceptionPrint &&
-				pHideOptions.handleExceptionAssertionFailure &&
-				pHideOptions.handleExceptionRip
+			if (g_hideSettings.handleExceptionNoncontinuableException &&
+				g_hideSettings.handleExceptionPrint &&
+				g_hideSettings.handleExceptionAssertionFailure &&
+				g_hideSettings.handleExceptionRip
 				)
 #endif
 #ifdef X64DBG
@@ -1060,15 +1067,15 @@ NAME_TOOLTIP exceptionNamesTooltip[] = {
 
 void ResetAllExceptions()
 {
-	pHideOptions.handleExceptionPrint = 0;
-	pHideOptions.handleExceptionIllegalInstruction = 0;
-	pHideOptions.handleExceptionInvalidLockSequence = 0;
-	pHideOptions.handleExceptionNoncontinuableException = 0;
-	pHideOptions.handleExceptionRip = 0;
-	pHideOptions.handleExceptionAssertionFailure = 0;
-	pHideOptions.handleExceptionBreakpoint = 0;
-	pHideOptions.handleExceptionGuardPageViolation = 0;
-	pHideOptions.handleExceptionWx86Breakpoint = 0;
+	g_hideSettings.handleExceptionPrint = 0;
+	g_hideSettings.handleExceptionIllegalInstruction = 0;
+	g_hideSettings.handleExceptionInvalidLockSequence = 0;
+	g_hideSettings.handleExceptionNoncontinuableException = 0;
+	g_hideSettings.handleExceptionRip = 0;
+	g_hideSettings.handleExceptionAssertionFailure = 0;
+	g_hideSettings.handleExceptionBreakpoint = 0;
+	g_hideSettings.handleExceptionGuardPageViolation = 0;
+	g_hideSettings.handleExceptionWx86Breakpoint = 0;
 }
 
 #define HEIGHT_OF_EXCEPTION_CHECKBOX 16
@@ -1121,15 +1128,15 @@ LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LP
 			SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
 		}
 
-		if (pHideOptions.handleExceptionPrint) CheckDlgButton(hwnd, ID_EXCEPTION_PRINT, BST_CHECKED);
-		if (pHideOptions.handleExceptionIllegalInstruction) CheckDlgButton(hwnd, ID_EXCEPTION_Illegal, BST_CHECKED);
-		if (pHideOptions.handleExceptionInvalidLockSequence) CheckDlgButton(hwnd, ID_EXCEPTION_InvalidLockSequence, BST_CHECKED);
-		if (pHideOptions.handleExceptionNoncontinuableException) CheckDlgButton(hwnd, ID_EXCEPTION_Noncontinable, BST_CHECKED);
-		if (pHideOptions.handleExceptionAssertionFailure) CheckDlgButton(hwnd, ID_EXCEPTION_AssertionFailure, BST_CHECKED);
-		if (pHideOptions.handleExceptionBreakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Breakpoint, BST_CHECKED);
-		if (pHideOptions.handleExceptionGuardPageViolation) CheckDlgButton(hwnd, ID_EXCEPTION_GuardPage, BST_CHECKED);
-		if (pHideOptions.handleExceptionWx86Breakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Wx86Breakpoint, BST_CHECKED);
-		if (pHideOptions.handleExceptionRip) CheckDlgButton(hwnd, ID_EXCEPTION_RIP, BST_CHECKED);
+		if (g_hideSettings.handleExceptionPrint) CheckDlgButton(hwnd, ID_EXCEPTION_PRINT, BST_CHECKED);
+		if (g_hideSettings.handleExceptionIllegalInstruction) CheckDlgButton(hwnd, ID_EXCEPTION_Illegal, BST_CHECKED);
+		if (g_hideSettings.handleExceptionInvalidLockSequence) CheckDlgButton(hwnd, ID_EXCEPTION_InvalidLockSequence, BST_CHECKED);
+		if (g_hideSettings.handleExceptionNoncontinuableException) CheckDlgButton(hwnd, ID_EXCEPTION_Noncontinable, BST_CHECKED);
+		if (g_hideSettings.handleExceptionAssertionFailure) CheckDlgButton(hwnd, ID_EXCEPTION_AssertionFailure, BST_CHECKED);
+		if (g_hideSettings.handleExceptionBreakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Breakpoint, BST_CHECKED);
+		if (g_hideSettings.handleExceptionGuardPageViolation) CheckDlgButton(hwnd, ID_EXCEPTION_GuardPage, BST_CHECKED);
+		if (g_hideSettings.handleExceptionWx86Breakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Wx86Breakpoint, BST_CHECKED);
+		if (g_hideSettings.handleExceptionRip) CheckDlgButton(hwnd, ID_EXCEPTION_RIP, BST_CHECKED);
 
 		control = CreateWindowExW(0, L"Button", L"Apply", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, (numOfExceptions)*20 + 1, 100, 25, hwnd, (HMENU)ID_EXCEPTION_APPLY, hInst, NULL);
 		SendMessage(control,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(1,0));
@@ -1148,39 +1155,39 @@ LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_PRINT) == BST_CHECKED)
 			{
-				pHideOptions.handleExceptionPrint = 1;
+				g_hideSettings.handleExceptionPrint = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Illegal) == BST_CHECKED)
 			{
-				pHideOptions.handleExceptionIllegalInstruction = 1;
+				g_hideSettings.handleExceptionIllegalInstruction = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_InvalidLockSequence) == BST_CHECKED)
 			{
-				pHideOptions.handleExceptionInvalidLockSequence = 1;
+				g_hideSettings.handleExceptionInvalidLockSequence = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Noncontinable) == BST_CHECKED)
 			{
-				pHideOptions.handleExceptionNoncontinuableException = 1;
+				g_hideSettings.handleExceptionNoncontinuableException = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_RIP) == BST_CHECKED)
 			{
-				pHideOptions.handleExceptionRip = 1;
+				g_hideSettings.handleExceptionRip = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_GuardPage) == BST_CHECKED)
 			{
-				pHideOptions.handleExceptionGuardPageViolation = 1;
+				g_hideSettings.handleExceptionGuardPageViolation = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Breakpoint) == BST_CHECKED)
 			{
-				pHideOptions.handleExceptionBreakpoint = 1;
+				g_hideSettings.handleExceptionBreakpoint = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Wx86Breakpoint) == BST_CHECKED)
 			{
-				pHideOptions.handleExceptionWx86Breakpoint = 1;
+				g_hideSettings.handleExceptionWx86Breakpoint = 1;
 			}
 			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_AssertionFailure) == BST_CHECKED)
 			{
-				pHideOptions.handleExceptionAssertionFailure = 1;
+				g_hideSettings.handleExceptionAssertionFailure = 1;
 			}
 			DestroyWindow(hwnd);
 		}

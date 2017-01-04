@@ -1,20 +1,21 @@
+#include "ScyllaHideOlly2Plugin.h"
 #include <cstdio>
-#include <cstring>
 #include <Scylla/OsInfo.h>
+#include <Scylla/Settings.h>
 
 #include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
-#include "..\PluginGeneric\IniSettings.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
+#include "..\PluginGeneric\ScyllaHideVersion.h"
 
 #include "resource.h"
-#include "ScyllaHideOlly2Plugin.h"
 
 #pragma comment(lib, "ollydbg2\\ollydbg.lib")
 
-//scyllaHide definitions
-struct HideOptions pHideOptions = {0};
+std::vector<std::wstring> g_hideProfileNames;
+std::wstring g_hideProfileName;
+Scylla::HideSettings g_hideSettings;
 
 typedef int (__cdecl * t_Attachtoactiveprocess)(int newprocessid);
 #define OLLY201_Attachtoactiveprocess_VA 0x44B108
@@ -32,8 +33,6 @@ WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 WCHAR ScyllaHideIniPath[MAX_PATH] = {0};
 
-extern WCHAR CurrentProfile[MAX_SECTION_NAME];
-extern WCHAR ProfileNames[2048];
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
@@ -64,16 +63,15 @@ static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
 static int Mprofiles(t_table *pt,wchar_t *name,ulong index,int mode)
 {
     if (mode==MENU_VERIFY) {
-        if(wcscmp(CurrentProfile, name)==0)
+        if (name == g_hideProfileName)
             return MENU_CHECKED;
 
         return MENU_NORMAL;
     }
     else if (mode==MENU_EXECUTE)
     {
-        int offset = 10;
-        SetCurrentProfile(index+offset);
-        ReadSettings();
+        g_hideProfileName = g_hideProfileNames[index];
+        Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 
         if (ProcessId)
         {
@@ -228,17 +226,17 @@ extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginnam
 //initialization happens in here
 extc int __cdecl ODBG2_Plugininit(void)
 {
-    ReadCurrentProfile();
-    ReadSettings();
+    g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
+    Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 
     Addtolist(0,0,L"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_W);
     Addtolist(0,2,L"  Copyright (C) 2014 Aguila / cypher");
     Addtolist(0,2,L"  Operating System: %S", Scylla::GetWindowsVersionNameA());
 
     //change olly caption
-    SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
+    SetWindowTextW(hwollymain, g_hideSettings.ollyTitle.c_str());
 
-    if(pHideOptions.killAntiAttach) {
+    if (g_hideSettings.killAntiAttach) {
         InstallAntiAttachHook();
     }
 
@@ -250,19 +248,14 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
 {
     if (wcscmp(type,PWM_MAIN)==0) {
         //add profiles to menu
-        GetPrivateProfileSectionNamesWithFilter();
+        g_hideProfileNames = Scylla::LoadHideProfileNames(ScyllaHideIniPath);
 
-        WCHAR* profile = ProfileNames;
-        int i=0;
-        while(*profile != 0x00 && i<MAX_PROFILES-1) {
-            t_menu profile_entry = {profile, profile, K_NONE, Mprofiles, NULL, i};
-            profilemenu[i] = profile_entry;
-            i++;
-
-            profile = profile + wcslen(profile) + 1;
+        for (size_t i = 0; i < g_hideProfileNames.size(); i++)
+        {
+            profilemenu[i] = { &g_hideProfileNames[i][0], &g_hideProfileNames[i][0], K_NONE, Mprofiles, NULL, { i } };
         }
         t_menu menu_end = {NULL, NULL, K_NONE, NULL, NULL, 0};
-        profilemenu[i] = menu_end;
+        profilemenu[g_hideProfileNames.size()] = menu_end;
 
         return mainmenu;
     }
@@ -280,7 +273,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         return;
 
 
-    if (pHideOptions.PEBHeapFlags)
+    if (g_hideSettings.PEBHeapFlags)
     {
         if (specialPebFix)
         {
@@ -306,7 +299,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 		if (debugevent->u.CreateProcessInfo.lpStartAddress == NULL)
 		{
 			//ATTACH
-			if(pHideOptions.killAntiAttach)
+            if (g_hideSettings.killAntiAttach)
 			{
 				if (!ApplyAntiAntiAttach(ProcessId))
 				{
@@ -316,7 +309,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 		}
 
         //change olly caption again !
-        SetWindowTextW(hwollymain, pHideOptions.ollyTitle);
+        SetWindowTextW(hwollymain, g_hideSettings.ollyTitle.c_str());
     }
     break;
     case LOAD_DLL_DEBUG_EVENT:
@@ -336,7 +329,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
             if (!bHooked)
             {
                 Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
-                ReadNtApiInformation();
+                ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
 
                 bHooked = true;
                 startInjection(ProcessId, ScyllaHideDllPath, true);

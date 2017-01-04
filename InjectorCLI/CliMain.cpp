@@ -1,13 +1,16 @@
-#include <cstdio>
-#include <windows.h>
-#include <TlHelp32.h>
+#include <Windows.h>
 #include <Shlwapi.h>
+#include <TlHelp32.h>
+#include <cstdio>
+#include <cstring>
+#include <Scylla/Util.h>
 
 #include "DynamicMapping.h"
 #include "..\HookLibrary\HookMain.h"
 #include "RemoteHook.h"
 #include "RemotePebHider.h"
 #include "ApplyHooking.h"
+#include "ReadNtConfig.h"
 
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
@@ -16,7 +19,6 @@ const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 void ChangeBadWindowText();
 void CreateSettings();
 void ReadSettings();
-void ReadNtApiInformation();
 void ReadSettingsFromIni(const WCHAR * iniFile);
 void CreateDummyUnicodeFile(const WCHAR * file);
 bool WriteIniSettings(const WCHAR * settingName, const WCHAR * settingValue, const WCHAR* inifile);
@@ -50,7 +52,7 @@ int wmain(int argc, wchar_t* argv[])
     wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
     wcscat(NtApiIniPath, NtApiIniFilename);
 
-    ReadNtApiInformation();
+    ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
     SetDebugPrivileges();
     //ChangeBadWindowText();
     CreateSettings();
@@ -279,18 +281,11 @@ DWORD GetProcessIdByName(const WCHAR * processName)
     return pid;
 }
 
-BOOL FileExists(LPCWSTR szPath)
-{
-    DWORD dwAttrib = GetFileAttributesW(szPath);
-
-    return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
-}
-
 void CreateDummyUnicodeFile(const WCHAR * file)
 {
     //http://www.codeproject.com/Articles/9071/Using-Unicode-in-INI-files
 
-    if (!FileExists(file))
+    if (!Scylla::FileExistsW(file))
     {
         const WCHAR section[] = L"[" INI_APPNAME L"]\r\n";
         // UTF16-LE BOM(FFFE)
@@ -324,7 +319,7 @@ int ReadIniSettingsInt(const WCHAR * settingName, const WCHAR* inifile)
 
 void CreateSettings()
 {
-    if (!FileExists(ScyllaHideIniPath))
+    if (!Scylla::FileExistsW(ScyllaHideIniPath))
     {
         CreateDefaultSettings(ScyllaHideIniPath);
     }

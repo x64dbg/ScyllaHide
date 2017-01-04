@@ -1,5 +1,7 @@
 #include <WinSock2.h>
 #include <Scylla/OsInfo.h>
+#include <Scylla/Settings.h>
+#include <Scylla/Util.h>
 
 #include "idaserver.h"
 #include "IdaServerExchange.h"
@@ -13,7 +15,7 @@ unsigned short ListenPort = IDA_SERVER_DEFAULT_PORT;
 
 IDA_SERVER_EXCHANGE idaExchange = {0};
 
-struct HideOptions pHideOptions = {0};
+Scylla::HideSettings g_hideSettings;
 
 #ifdef _WIN64
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -27,7 +29,6 @@ WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
 
 bool SetDebugPrivileges();
-BOOL FileExists(LPCWSTR szPath);
 void checkPaths();
 
 
@@ -70,14 +71,6 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-BOOL FileExists(LPCWSTR szPath)
-{
-	DWORD dwAttrib = GetFileAttributes(szPath);
-
-	return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
-		!(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
-}
-
 void checkPaths()
 {
 	GetModuleFileNameW(0, NtApiIniPath, _countof(NtApiIniPath));
@@ -93,14 +86,14 @@ void checkPaths()
 
 	bool missing = false;
 
-	if (!FileExists(ScyllaHideDllPath))
+	if (!Scylla::FileExistsW(ScyllaHideDllPath))
 	{
-		wprintf(L"File missing %s\n", ScyllaHideDllPath);
+		wprintf(L"File is missing: %s\n", ScyllaHideDllPath);
 		missing = true;
 	}
-	if (!FileExists(NtApiIniPath))
+	if (!Scylla::FileExistsW(NtApiIniPath))
 	{
-		wprintf(L"File missing %s\n", NtApiIniPath);
+		wprintf(L"File is missing: %s\n", NtApiIniPath);
 		missing = true;
 	}
 	if (missing)
@@ -199,42 +192,42 @@ static bool bHooked = false;
 
 void MapSettings()
 {
-	pHideOptions.DLLUnload = idaExchange.UnloadDllAfterInjection;
-	pHideOptions.DLLNormal = idaExchange.DllInjectNormal;
-	pHideOptions.DLLStealth = idaExchange.DllInjectStealth;
-	pHideOptions.KiUserExceptionDispatcher = idaExchange.EnableKiUserExceptionDispatcherHook;
-	pHideOptions.NtClose = idaExchange.EnableNtCloseHook;
-	pHideOptions.NtContinue = idaExchange.EnableNtCloseHook;
-	pHideOptions.NtCreateThreadEx = idaExchange.EnableNtCreateThreadExHook;
-	pHideOptions.NtGetContextThread = idaExchange.EnableNtGetContextThreadHook;
-	pHideOptions.NtQueryInformationProcess = idaExchange.EnableNtQueryInformationProcessHook;
-	pHideOptions.NtQueryObject = idaExchange.EnableNtQueryObjectHook;
-	pHideOptions.NtQuerySystemInformation = idaExchange.EnableNtQuerySystemInformationHook;
-	pHideOptions.NtSetContextThread = idaExchange.EnableNtSetContextThreadHook;
-	pHideOptions.NtSetDebugFilterState = idaExchange.EnableNtSetDebugFilterStateHook;
-	pHideOptions.NtSetInformationThread = idaExchange.EnableNtSetInformationThreadHook;
-	pHideOptions.NtUserBuildHwndList = idaExchange.EnableNtUserBuildHwndListHook;
-	pHideOptions.NtUserFindWindowEx = idaExchange.EnableNtUserFindWindowExHook;
-	pHideOptions.NtUserQueryWindow = idaExchange.EnableNtUserQueryWindowHook;
-	pHideOptions.NtYieldExecution = idaExchange.EnableNtYieldExecutionHook;
-	pHideOptions.preventThreadCreation = idaExchange.EnablePreventThreadCreation;
-	pHideOptions.OutputDebugStringA = idaExchange.EnableOutputDebugStringHook;
-	pHideOptions.BlockInput = idaExchange.EnableBlockInputHook;
-	pHideOptions.NtSetInformationProcess = idaExchange.EnableNtSetInformationProcessHook;
+    g_hideSettings.DLLUnload = idaExchange.UnloadDllAfterInjection;
+    g_hideSettings.DLLNormal = idaExchange.DllInjectNormal;
+    g_hideSettings.DLLStealth = idaExchange.DllInjectStealth;
+    g_hideSettings.KiUserExceptionDispatcher = idaExchange.EnableKiUserExceptionDispatcherHook;
+    g_hideSettings.NtClose = idaExchange.EnableNtCloseHook;
+    g_hideSettings.NtContinue = idaExchange.EnableNtCloseHook;
+    g_hideSettings.NtCreateThreadEx = idaExchange.EnableNtCreateThreadExHook;
+    g_hideSettings.NtGetContextThread = idaExchange.EnableNtGetContextThreadHook;
+    g_hideSettings.NtQueryInformationProcess = idaExchange.EnableNtQueryInformationProcessHook;
+    g_hideSettings.NtQueryObject = idaExchange.EnableNtQueryObjectHook;
+    g_hideSettings.NtQuerySystemInformation = idaExchange.EnableNtQuerySystemInformationHook;
+    g_hideSettings.NtSetContextThread = idaExchange.EnableNtSetContextThreadHook;
+    g_hideSettings.NtSetDebugFilterState = idaExchange.EnableNtSetDebugFilterStateHook;
+    g_hideSettings.NtSetInformationThread = idaExchange.EnableNtSetInformationThreadHook;
+    g_hideSettings.NtUserBuildHwndList = idaExchange.EnableNtUserBuildHwndListHook;
+    g_hideSettings.NtUserFindWindowEx = idaExchange.EnableNtUserFindWindowExHook;
+    g_hideSettings.NtUserQueryWindow = idaExchange.EnableNtUserQueryWindowHook;
+    g_hideSettings.NtYieldExecution = idaExchange.EnableNtYieldExecutionHook;
+    g_hideSettings.preventThreadCreation = idaExchange.EnablePreventThreadCreation;
+    g_hideSettings.OutputDebugStringA = idaExchange.EnableOutputDebugStringHook;
+    g_hideSettings.BlockInput = idaExchange.EnableBlockInputHook;
+    g_hideSettings.NtSetInformationProcess = idaExchange.EnableNtSetInformationProcessHook;
 
-	pHideOptions.GetTickCount = idaExchange.EnableGetTickCountHook;
-	pHideOptions.GetTickCount64 = idaExchange.EnableGetTickCount64Hook;
-	pHideOptions.GetLocalTime = idaExchange.EnableGetLocalTimeHook;
-	pHideOptions.GetSystemTime = idaExchange.EnableGetSystemTimeHook;
-	pHideOptions.NtQuerySystemTime = idaExchange.EnableNtQuerySystemTimeHook;
-	pHideOptions.NtQueryPerformanceCounter = idaExchange.EnableNtQueryPerformanceCounterHook;
+    g_hideSettings.GetTickCount = idaExchange.EnableGetTickCountHook;
+    g_hideSettings.GetTickCount64 = idaExchange.EnableGetTickCount64Hook;
+    g_hideSettings.GetLocalTime = idaExchange.EnableGetLocalTimeHook;
+    g_hideSettings.GetSystemTime = idaExchange.EnableGetSystemTimeHook;
+    g_hideSettings.NtQuerySystemTime = idaExchange.EnableNtQuerySystemTimeHook;
+    g_hideSettings.NtQueryPerformanceCounter = idaExchange.EnableNtQueryPerformanceCounterHook;
 
-	pHideOptions.PEBBeingDebugged = idaExchange.EnablePebBeingDebugged;
-	pHideOptions.PEBHeapFlags = idaExchange.EnablePebHeapFlags;
-	pHideOptions.PEBNtGlobalFlag = idaExchange.EnablePebNtGlobalFlag;
-	pHideOptions.PEBStartupInfo = idaExchange.EnablePebStartupInfo;
+    g_hideSettings.PEBBeingDebugged = idaExchange.EnablePebBeingDebugged;
+    g_hideSettings.PEBHeapFlags = idaExchange.EnablePebHeapFlags;
+    g_hideSettings.PEBNtGlobalFlag = idaExchange.EnablePebNtGlobalFlag;
+    g_hideSettings.PEBStartupInfo = idaExchange.EnablePebStartupInfo;
 
-	pHideOptions.malwareRunpeUnpacker = idaExchange.EnableMalwareRunPeUnpacker;
+    g_hideSettings.malwareRunpeUnpacker = idaExchange.EnableMalwareRunPeUnpacker;
 }
 
 void DoSomeBitCheck()

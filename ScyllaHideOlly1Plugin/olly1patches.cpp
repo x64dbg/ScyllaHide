@@ -2,10 +2,11 @@
 #include <Windows.h>
 #include <TlHelp32.h>
 #include <string>
-#include "resource.h"
-#include "..\PluginGeneric\Injector.h"
+#include <Scylla/Settings.h>
 
-extern struct HideOptions pHideOptions;
+#include "resource.h"
+
+extern Scylla::HideSettings g_hideSettings;
 extern HINSTANCE hinst;
 extern LPVOID ImageBase;
 extern DWORD ProcessId;
@@ -222,12 +223,12 @@ void __declspec(naked) handleBreakpoints()
 {
     _asm { pushad };
 
-    if(pHideOptions.removeEPBreak)
+    if (g_hideSettings.removeEPBreak)
     {
         CreateThread(NULL, NULL, removeEPBreak, NULL, NULL, NULL);
     }
 
-    if(pHideOptions.breakTLS)
+    if (g_hideSettings.breakTLS)
     {
         ReadTlsAndSetBreakpoints(ProcessId, (LPVOID)ImageBase);
     }
@@ -626,10 +627,11 @@ void skipCompressedCode()
     BYTE patch[] = {0x83,0xC4,0x10,0x90,0x90}; //add esp,10;nop;nop
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &patch, sizeof(patch), NULL);
 
-    if(pHideOptions.skipCompressedDoAnalyze) {
+    if (g_hideSettings.skipCompressedDoAnalyze) {
         BYTE jmp[] = {0xEB};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+10), &jmp, sizeof(jmp), NULL);
-    } else if(pHideOptions.skipCompressedDoNothing) {
+    }
+    else if (g_hideSettings.skipCompressedDoNothing) {
         BYTE zero[] = {0x00};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+11), &zero, sizeof(zero), NULL);
     }
@@ -644,10 +646,11 @@ void skipLoadDll()
     BYTE patch[] = {0x83,0xC4,0x10,0x90,0x90}; //add esp,10;nop;nop
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &patch, sizeof(patch), NULL);
 
-    if(pHideOptions.skipLoadDllDoLoad) {
+    if (g_hideSettings.skipLoadDllDoLoad) {
         BYTE jmp[] = {0xEB};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+8), &jmp, sizeof(jmp), NULL);
-    } else if(pHideOptions.skipLoadDllDoNothing) {
+    }
+    else if (g_hideSettings.skipLoadDllDoNothing) {
         BYTE zero[] = {0x00};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+9), &zero, sizeof(zero), NULL);
     }
@@ -733,7 +736,7 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     if((message == WM_LBUTTONUP ||
             ((message == WM_LBUTTONDOWN || WM_MOUSEMOVE) && wParam == MK_LBUTTON)) &&
-            pHideOptions.advancedInfobar
+            g_hideSettings.advancedInfobar
       )  {
         DWORD startAddr = dump->sel0;
         DWORD endAddr = dump->sel1;

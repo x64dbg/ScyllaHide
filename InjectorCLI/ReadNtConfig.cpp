@@ -1,32 +1,28 @@
 #include "ReadNtConfig.h"
 #include <Scylla/OsInfo.h>
 #include <Scylla/Util.h>
-#include "..\HookLibrary\HookMain.h"
-#include "Logger.h"
 
-extern HOOK_DLL_EXCHANGE DllExchangeLoader;
-extern WCHAR NtApiIniPath[MAX_PATH];
-
-DWORD ReadApiFromIni(const WCHAR * name, const WCHAR * section) //rva
+static DWORD ReadApiFromIni(const wchar_t *szFilePath, const wchar_t *szSection, const wchar_t *szName)
 {
-    WCHAR buf[100] = { 0 };
-    if (GetPrivateProfileStringW(section, name, L"0", buf, _countof(buf), NtApiIniPath) > 0)
-    {
-        return wcstoul(buf, 0, 16);
-    }
+    auto strValue = Scylla::GetPrivateProfileStringW(szSection, szName, L"0", szFilePath);
 
-    return 0;
+    return wcstoul(strValue.c_str(), nullptr, 16);
 }
 
-WCHAR text[500];
-
-void ReadNtApiInformation()
+bool ReadNtApiInformation(const wchar_t *szFilePath, HOOK_DLL_EXCHANGE *pDllExchangeLoader)
 {
-    WCHAR OsId[300] = { 0 };
-    WCHAR temp[50] = { 0 };
-
     const auto osVerInfo = Scylla::GetVersionExW();
     const auto osSysInfo = Scylla::GetNativeSystemInfo();
+
+    auto hUser = GetModuleHandleW(L"user32.dll");
+    auto pDosUser = (PIMAGE_DOS_HEADER)hUser;
+    auto pNtUser = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosUser + pDosUser->e_lfanew);
+
+    if (pNtUser->Signature != IMAGE_NT_SIGNATURE)
+    {
+        MessageBoxW(HWND_DESKTOP, L"Wrong user32.dll IMAGE_NT_SIGNATURE", L"ERROR", MB_ICONERROR);
+        return false;
+    }
 
 #ifdef _WIN64
     const wchar_t wszArch[] = L"x64";
@@ -34,33 +30,28 @@ void ReadNtApiInformation()
     const wchar_t wszArch[] = L"x86";
 #endif
 
-    auto wstrOsId = Scylla::format_wstring(L"%02X%02X%02X%02X%02X%02X_%s",
+    auto wstrSection = Scylla::format_wstring(L"%02X%02X%02X%02X%02X%02X_%s_%08X",
         osVerInfo->dwMajorVersion, osVerInfo->dwMinorVersion,
         osVerInfo->wServicePackMajor, osVerInfo->wServicePackMinor,
-        osVerInfo->wProductType, osSysInfo->wProcessorArchitecture, wszArch);
+        osVerInfo->wProductType, osSysInfo->wProcessorArchitecture, wszArch,
+        pNtUser->OptionalHeader.AddressOfEntryPoint);
 
-    HMODULE hUser = GetModuleHandleW(L"user32.dll");
-    PIMAGE_DOS_HEADER pDosUser = (PIMAGE_DOS_HEADER)hUser;
-    PIMAGE_NT_HEADERS pNtUser = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosUser + pDosUser->e_lfanew);
+    pDllExchangeLoader->NtUserBuildHwndListRVA = ReadApiFromIni(szFilePath, wstrSection.c_str(), L"NtUserBuildHwndList");
+    pDllExchangeLoader->NtUserFindWindowExRVA = ReadApiFromIni(szFilePath, wstrSection.c_str(), L"NtUserFindWindowEx");
+    pDllExchangeLoader->NtUserQueryWindowRVA = ReadApiFromIni(szFilePath, wstrSection.c_str(), L"NtUserQueryWindow");
 
-    if (pNtUser->Signature != IMAGE_NT_SIGNATURE)
+    if (!pDllExchangeLoader->NtUserBuildHwndListRVA || !pDllExchangeLoader->NtUserFindWindowExRVA || !pDllExchangeLoader->NtUserQueryWindowRVA)
     {
-        MessageBoxA(0,"Wrong user32.dll IMAGE_NT_SIGNATURE", "ERROR", MB_ICONERROR);
-        return;
+        auto strMessage = Scylla::format_wstring(
+            L"NtUser* API Addresses missing!\r\n"
+            L"File: %s\r\n"
+            L"Section: %s\r\n"
+            L"\r\n"
+            L"Please read the documentation to fix this problem! https://bitbucket.org/NtQuery/scyllahide/downloads/ScyllaHide.pdf",
+            szFilePath, wstrSection.c_str());
+        MessageBoxW(HWND_DESKTOP, strMessage.c_str(), L"ERROR", MB_ICONERROR);
+        return false;
     }
-    wsprintfW(temp, L"%08X", pNtUser->OptionalHeader.AddressOfEntryPoint);
-    wcscat(OsId, L"_");
-    wcscat(OsId, temp);
 
-	LogDebug("ReadNtApiInformation -> Requesting OS-ID %S", OsId);
-
-    DllExchangeLoader.NtUserBuildHwndListRVA = ReadApiFromIni(L"NtUserBuildHwndList", OsId);
-    DllExchangeLoader.NtUserFindWindowExRVA = ReadApiFromIni(L"NtUserFindWindowEx", OsId);
-    DllExchangeLoader.NtUserQueryWindowRVA = ReadApiFromIni(L"NtUserQueryWindow", OsId);
-
-    if (!DllExchangeLoader.NtUserBuildHwndListRVA || !DllExchangeLoader.NtUserFindWindowExRVA || !DllExchangeLoader.NtUserQueryWindowRVA)
-    {
-        wsprintfW(text, L"NtUser* API Addresses missing!\r\nSection: %s\r\nFile: %s\r\n\r\nPlease read the documentation to fix this problem! https://bitbucket.org/NtQuery/scyllahide/downloads/ScyllaHide.pdf", OsId, NtApiIniPath);
-        MessageBoxW(0, text, L"ERROR", MB_ICONERROR);
-    }
+    return true;
 }

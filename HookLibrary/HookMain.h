@@ -163,7 +163,7 @@ typedef struct _HOOK_DLL_EXCHANGE {
     PVOID NativeCallContinue;
 #endif
 } HOOK_DLL_EXCHANGE;
-
+#pragma pack(pop)
 
 #define HOOK_ERROR_SUCCESS 0
 #define HOOK_ERROR_RESOLVE_IMPORT 1

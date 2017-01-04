@@ -1,6 +1,8 @@
 #pragma once
+#include <Windows.h>
+#pragma pack(push)
 #include <ollydbg2/plugin.h>
-#include "..\PluginGeneric\ScyllaHideVersion.h"
+#pragma pack(pop)
 
 #define PLUGINNAME     L"ScyllaHide"
 #define MAX_PROFILES 128

@@ -1,15 +1,16 @@
-#include <windows.h>
+#include <Windows.h>
 #include <titan/TitanEngine.h>
+#include <Scylla/Settings.h>
+
 #include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\ScyllaHideVersion.h"
-#include "..\PluginGeneric\IniSettings.h"
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
 
-
-struct HideOptions pHideOptions = {0};
+std::wstring g_hideProfileName;
+Scylla::HideSettings g_hideSettings;
 
 #ifdef _WIN64
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -52,8 +53,8 @@ BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
             wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
             wcscat(NtApiIniPath, NtApiIniFilename);
 
-            ReadCurrentProfile();
-            ReadSettings();
+            g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
+            Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 
             SetDebugPrivileges(); //set debug privilege
         }
@@ -107,7 +108,7 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
             ProcessId=debugEvent->dwProcessId;
             bHooked = false;
             ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
-            ReadSettings();
+            Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
             break;
         }
 
@@ -127,7 +128,7 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
             {
                 if (!bHooked)
                 {
-                    ReadNtApiInformation();
+                    ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
 
                     bHooked = true;
                     startInjection(ProcessId, ScyllaHideDllPath, true);

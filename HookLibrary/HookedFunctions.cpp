@@ -5,15 +5,6 @@
 
 HOOK_DLL_EXCHANGE DllExchange = { 0 };
 
-#pragma pack(show)
-#pragma pack(pop)
-#ifdef _WIN64
-#pragma pack(push, 16)
-#else
-#pragma pack(push, 8)
-#endif
-#pragma pack(show)
-
 #include "HookedFunctions.h"
 #include "HookHelper.h"
 
