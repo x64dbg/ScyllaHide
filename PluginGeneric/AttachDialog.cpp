@@ -17,7 +17,7 @@
 #define BULLSEYE_CENTER_X_OFFSET		15
 #define BULLSEYE_CENTER_Y_OFFSET		18
 
-typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
+typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
 t_AttachProcess _AttachProcess = 0;
 
@@ -44,11 +44,11 @@ wchar_t pidTextDec[11];
 DWORD pid = NULL;
 
 //toggles the finder image
-void SetFinderToolImage (HWND hwnd, BOOL bSet)
+void SetFinderToolImage(HWND hwnd, BOOL bSet)
 {
     HBITMAP hBmpToSet = NULL;
 
-    if(bSet)
+    if (bSet)
     {
         hBmpToSet = hBitmapFinderToolFilled;
     }
@@ -61,7 +61,7 @@ void SetFinderToolImage (HWND hwnd, BOOL bSet)
 }
 
 //centers cursor in bullseye. adds to the illusion that the bullseye can be dragged out
-void MoveCursorPositionToBullsEye (HWND hwnd)
+void MoveCursorPositionToBullsEye(HWND hwnd)
 {
     HWND hwndToolFinder = NULL;
     RECT rect;
@@ -69,51 +69,51 @@ void MoveCursorPositionToBullsEye (HWND hwnd)
 
     hwndToolFinder = GetDlgItem(hwnd, IDC_ICON_FINDER);
 
-    if(hwndToolFinder)
+    if (hwndToolFinder)
     {
-        GetWindowRect (hwndToolFinder, &rect);
+        GetWindowRect(hwndToolFinder, &rect);
         screenpoint.x = rect.left + BULLSEYE_CENTER_X_OFFSET;
         screenpoint.y = rect.top + BULLSEYE_CENTER_Y_OFFSET;
-        SetCursorPos (screenpoint.x, screenpoint.y);
+        SetCursorPos(screenpoint.x, screenpoint.y);
     }
 }
 
 //does some sanity checks on a possible found window
-BOOL CheckWindowValidity (HWND hwnd, HWND hwndToCheck)
+BOOL CheckWindowValidity(HWND hwnd, HWND hwndToCheck)
 {
     HWND hwndTemp = NULL;
 
-    if(hwndToCheck == NULL)
+    if (hwndToCheck == NULL)
     {
         return FALSE;
     }
 
-    if(IsWindow(hwndToCheck) == FALSE)
+    if (IsWindow(hwndToCheck) == FALSE)
     {
         return FALSE;
     }
 
     //same window as previous?
-    if(hwndToCheck == hwndFoundWindow)
+    if (hwndToCheck == hwndFoundWindow)
     {
         return FALSE;
     }
 
     //debugger window is not a valid one
-    if(hwndToCheck == hwmain)
+    if (hwndToCheck == hwmain)
     {
         return FALSE;
     }
 
     // It also must not be the "Search Window" dialog box itself.
-    if(hwndToCheck == hwnd)
+    if (hwndToCheck == hwnd)
     {
         return FALSE;
     }
 
     // It also must not be one of the dialog box's children...
     hwndTemp = GetParent(hwndToCheck);
-    if((hwndTemp == hwnd) || (hwndTemp == hwmain))
+    if ((hwndTemp == hwnd) || (hwndTemp == hwmain))
     {
         return FALSE;
     }
@@ -122,34 +122,34 @@ BOOL CheckWindowValidity (HWND hwnd, HWND hwndToCheck)
     return TRUE;
 }
 
-void DisplayExe( HWND hwnd, DWORD dwPid )
+void DisplayExe(HWND hwnd, DWORD dwPid)
 {
-	WCHAR filepath[MAX_PATH] = {0};
-	HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwPid);
-	if (hProc)
-	{
-		GetModuleFileNameExW(hProc, NULL, filepath, _countof(filepath));
-		CloseHandle(hProc);
+    WCHAR filepath[MAX_PATH] = { 0 };
+    HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwPid);
+    if (hProc)
+    {
+        GetModuleFileNameExW(hProc, NULL, filepath, _countof(filepath));
+        CloseHandle(hProc);
 
-		if (wcslen(filepath) > 0)
-		{
-			SetDlgItemTextW(hwnd, IDC_EXEPATH, wcsrchr(filepath, L'\\')+1);
-		}
-		else
-		{
-			SetDlgItemTextW(hwnd, IDC_EXEPATH, L"UNKNOWN");
-		}
-	}
-	else
-	{
-		SetDlgItemTextW(hwnd, IDC_EXEPATH, L"UNKNOWN");
-	}
+        if (wcslen(filepath) > 0)
+        {
+            SetDlgItemTextW(hwnd, IDC_EXEPATH, wcsrchr(filepath, L'\\') + 1);
+        }
+        else
+        {
+            SetDlgItemTextW(hwnd, IDC_EXEPATH, L"UNKNOWN");
+        }
+    }
+    else
+    {
+        SetDlgItemTextW(hwnd, IDC_EXEPATH, L"UNKNOWN");
+    }
 }
 
 //attach dialog proc
 INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	wchar_t buf[20] = {0};
+    wchar_t buf[20] = { 0 };
 
     switch (message)
     {
@@ -171,11 +171,11 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
     }
     break;
 
-    case WM_COMMAND :
+    case WM_COMMAND:
     {
-        switch(LOWORD(wParam)) {
+        switch (LOWORD(wParam)) {
         case IDOK: { //attach
-            if(pid!=NULL) {
+            if (pid != NULL) {
                 EndDialog(hWnd, NULL);
 
                 if (_AttachProcess != 0)
@@ -194,29 +194,29 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
             break;
         }
         case IDC_PIDHEX: {
-            if(0<GetDlgItemTextW(hWnd, IDC_PIDHEX, buf, _countof(buf))) {
-                if(wcscmp(buf, pidTextHex)!=0) {
+            if (0 < GetDlgItemTextW(hWnd, IDC_PIDHEX, buf, _countof(buf))) {
+                if (wcscmp(buf, pidTextHex) != 0) {
                     wcscpy(pidTextHex, buf);
                     swscanf(pidTextHex, L"%X", &pid);
                     wsprintfW(pidTextDec, L"%d", pid);
                     SetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec);
-					DisplayExe(hWnd, pid);
-					SetDlgItemTextW(hWnd, IDC_TITLE, L"");
+                    DisplayExe(hWnd, pid);
+                    SetDlgItemTextW(hWnd, IDC_TITLE, L"");
                 }
             }
             break;
         }
         case IDC_PIDDEC:
         {
-			
-            if(0<GetDlgItemTextW(hWnd, IDC_PIDDEC, buf, _countof(buf))) {
-                if(wcscmp(buf, pidTextDec)!=0) {
+
+            if (0 < GetDlgItemTextW(hWnd, IDC_PIDDEC, buf, _countof(buf))) {
+                if (wcscmp(buf, pidTextDec) != 0) {
                     wcscpy(pidTextDec, buf);
                     swscanf(pidTextDec, L"%d", &pid);
                     wsprintfW(pidTextHex, L"%X", pid);
                     SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
-					DisplayExe(hWnd, pid);
-					SetDlgItemTextW(hWnd, IDC_TITLE, L"");
+                    DisplayExe(hWnd, pid);
+                    SetDlgItemTextW(hWnd, IDC_TITLE, L"");
                 }
             }
             break;
@@ -250,7 +250,7 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
         break;
     }
 
-    case WM_MOUSEMOVE :
+    case WM_MOUSEMOVE:
     {
         if (bStartSearchWindow)
         {
@@ -266,16 +266,16 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
                 //get some info about the window
                 GetWindowThreadProcessId(hwndFoundWindow, &pid);
 
-				DisplayExe(hWnd,pid);
+                DisplayExe(hWnd, pid);
 
                 if (GetWindowTextW(hwndCurrentWindow, title, _countof(title)) > 0)
-				{
-					SetDlgItemTextW(hWnd, IDC_TITLE, title);
-				}
-				else
-				{
-					SetDlgItemTextW(hWnd, IDC_TITLE, L"");
-				}
+                {
+                    SetDlgItemTextW(hWnd, IDC_TITLE, title);
+                }
+                else
+                {
+                    SetDlgItemTextW(hWnd, IDC_TITLE, L"");
+                }
 
                 wsprintfW(pidTextHex, L"%X", pid);
                 wsprintfW(pidTextDec, L"%d", pid);
@@ -288,7 +288,7 @@ INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
         break;
     }
 
-    case WM_LBUTTONUP :
+    case WM_LBUTTONUP:
     {
         if (bStartSearchWindow)
         {

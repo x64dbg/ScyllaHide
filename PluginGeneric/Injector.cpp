@@ -11,8 +11,8 @@ HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 
 static LPVOID remoteImageBase = 0;
 
-typedef void (__cdecl * t_SetDebuggerBreakpoint)(DWORD_PTR address);
-typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+typedef void(__cdecl * t_SetDebuggerBreakpoint)(DWORD_PTR address);
+typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 t_LogWrapper LogWrap = 0;
 t_LogWrapper LogErrorWrap = 0;
 t_SetDebuggerBreakpoint _SetDebuggerBreakpoint = 0;
@@ -31,18 +31,18 @@ void __declspec(naked) handleAntiAttach()
 {
     _asm {
         push ebp //stolen bytes
-        mov ebp,esp //stolen bytes
+        mov ebp, esp //stolen bytes
         pushad
-        mov eax,dword ptr[ebp+0x8]
-        mov hDebuggee,eax
+        mov eax, dword ptr[ebp + 0x8]
+        mov hDebuggee, eax
     }
 
     //write our RemoteBreakIn patch to target memory
-    RemoteBreakinPatch = (BYTE*) VirtualAllocEx(hDebuggee, 0, sizeof(code), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    RemoteBreakinPatch = (BYTE*)VirtualAllocEx(hDebuggee, 0, sizeof(code), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     WriteProcessMemory(hDebuggee, (LPVOID)RemoteBreakinPatch, code, sizeof(code), NULL);
 
     //find push ntdll.DbgUiRemoteBreakin and patch our patch function addr there
-    while(*(DWORD*)DbgUiIssueRemoteBreakin_addr != DbgUiRemoteBreakin_addr) {
+    while (*(DWORD*)DbgUiIssueRemoteBreakin_addr != DbgUiRemoteBreakin_addr) {
         DbgUiIssueRemoteBreakin_addr++;
     }
     WriteProcessMemory(GetCurrentProcess(), DbgUiIssueRemoteBreakin_addr, &RemoteBreakinPatch, 4, NULL);
@@ -61,28 +61,28 @@ void InstallAntiAttachHook()
     HANDLE hOlly = GetCurrentProcess();
     DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
 
-    DbgUiIssueRemoteBreakin_addr = (BYTE*) GetProcAddress(GetModuleHandleA("ntdll.dll"),"DbgUiIssueRemoteBreakin");
-    DbgUiRemoteBreakin_addr = (DWORD) GetProcAddress(GetModuleHandleA("ntdll.dll"),"DbgUiRemoteBreakin");
-    ExitThread_addr = (DWORD) GetProcAddress(GetModuleHandleA("kernel32.dll"),"ExitThread");
+    DbgUiIssueRemoteBreakin_addr = (BYTE*)GetProcAddress(GetModuleHandleA("ntdll.dll"), "DbgUiIssueRemoteBreakin");
+    DbgUiRemoteBreakin_addr = (DWORD)GetProcAddress(GetModuleHandleA("ntdll.dll"), "DbgUiRemoteBreakin");
+    ExitThread_addr = (DWORD)GetProcAddress(GetModuleHandleA("kernel32.dll"), "ExitThread");
     jmpback = (DWORD)DbgUiIssueRemoteBreakin_addr;
     jmpback += 5;
 
-    BYTE jmp[1] = {0xE9};
+    BYTE jmp[1] = { 0xE9 };
     WriteProcessMemory(hOlly, DbgUiIssueRemoteBreakin_addr, &jmp, sizeof(jmp), NULL);
     DWORD patch = (DWORD)handleAntiAttach;
     patch -= (DWORD)DbgUiIssueRemoteBreakin_addr;
     patch -= 5;
-    WriteProcessMemory(hOlly, DbgUiIssueRemoteBreakin_addr+1, &patch, 4, NULL);
+    WriteProcessMemory(hOlly, DbgUiIssueRemoteBreakin_addr + 1, &patch, 4, NULL);
 
     //init our remote breakin patch
     BYTE* p = &code[0];
-    *p=0xCC;  //int3
+    *p = 0xCC;  //int3
     p++;
-    *p=0x68;  //push
+    *p = 0x68;  //push
     p++;
     *(DWORD*)(p) = ExitThread_addr;
-    p+=4;
-    *p=0xC3; //retn
+    p += 4;
+    *p = 0xC3; //retn
 #endif
 }
 
@@ -182,7 +182,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
     }
 }
 
-void DoThreadMagic( HANDLE hThread )
+void DoThreadMagic(HANDLE hThread)
 {
     SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
     NtSetInformationThread(hThread, ThreadHideFromDebugger, 0, 0);
@@ -191,7 +191,7 @@ void DoThreadMagic( HANDLE hThread )
     WaitForSingleObject(hThread, INFINITE);
 }
 
-LPVOID NormalDllInjection( HANDLE hProcess, const WCHAR * dllPath )
+LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
 {
     SIZE_T memorySize = (wcslen(dllPath) + 1) * sizeof(WCHAR);
 
@@ -206,7 +206,7 @@ LPVOID NormalDllInjection( HANDLE hProcess, const WCHAR * dllPath )
 
     if (WriteProcessMemory(hProcess, remoteMemory, dllPath, memorySize, 0))
     {
-        HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)LoadLibraryW,remoteMemory,CREATE_SUSPENDED, 0);
+        HANDLE hThread = CreateRemoteThread(hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)LoadLibraryW, remoteMemory, CREATE_SUSPENDED, 0);
         if (hThread)
         {
             DoThreadMagic(hThread);
@@ -237,32 +237,32 @@ LPVOID NormalDllInjection( HANDLE hProcess, const WCHAR * dllPath )
     return (LPVOID)hModule;
 }
 
-DWORD_PTR GetAddressOfEntryPoint( BYTE * dllMemory )
+DWORD_PTR GetAddressOfEntryPoint(BYTE * dllMemory)
 {
-	PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)dllMemory;
-	PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
-	return pNt->OptionalHeader.AddressOfEntryPoint;
+    PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)dllMemory;
+    PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
+    return pNt->OptionalHeader.AddressOfEntryPoint;
 }
 
-LPVOID StealthDllInjection( HANDLE hProcess, const WCHAR * dllPath,  BYTE * dllMemory )
+LPVOID StealthDllInjection(HANDLE hProcess, const WCHAR * dllPath, BYTE * dllMemory)
 {
     LPVOID remoteImageBaseOfInjectedDll = 0;
 
     if (dllMemory)
     {
         remoteImageBaseOfInjectedDll = MapModuleToProcess(hProcess, dllMemory);
-        if(remoteImageBaseOfInjectedDll)
+        if (remoteImageBaseOfInjectedDll)
         {
 
-			DWORD_PTR entryPoint = GetAddressOfEntryPoint(dllMemory);
+            DWORD_PTR entryPoint = GetAddressOfEntryPoint(dllMemory);
 
             if (entryPoint)
             {
                 DWORD_PTR dllMain = entryPoint + (DWORD_PTR)remoteImageBaseOfInjectedDll;
 
-				LogWrap(L"[ScyllaHide] DLL INJECTION: Starting thread at RVA %p VA %p!", entryPoint, dllMain);
+                LogWrap(L"[ScyllaHide] DLL INJECTION: Starting thread at RVA %p VA %p!", entryPoint, dllMain);
 
-                HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)dllMain,remoteImageBaseOfInjectedDll,CREATE_SUSPENDED, 0);
+                HANDLE hThread = CreateRemoteThread(hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)dllMain, remoteImageBaseOfInjectedDll, CREATE_SUSPENDED, 0);
                 if (hThread)
                 {
                     DoThreadMagic(hThread);
@@ -290,13 +290,13 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
     HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
     BYTE * dllMemory = ReadFileToMemory(dllPath);
 
-	if (hProcess && dllMemory)
+    if (hProcess && dllMemory)
     {
         LPVOID remoteImage = 0;
 
-		DWORD entryPoint = (DWORD)GetAddressOfEntryPoint(dllMemory);
+        DWORD entryPoint = (DWORD)GetAddressOfEntryPoint(dllMemory);
 
-		if (entryPoint) LogWrap(L"[ScyllaHide] DLL entry point (DllMain) RVA %X!", entryPoint);
+        if (entryPoint) LogWrap(L"[ScyllaHide] DLL entry point (DllMain) RVA %X!", entryPoint);
 
         if (g_hideSettings.DLLStealth)
         {
@@ -323,7 +323,7 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
 
                 if (g_hideSettings.DLLNormal)
                 {
-                    HANDLE hThread = CreateRemoteThread(hProcess,NULL,NULL,(LPTHREAD_START_ROUTINE)FreeLibrary,remoteImage, CREATE_SUSPENDED, 0);
+                    HANDLE hThread = CreateRemoteThread(hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)FreeLibrary, remoteImage, CREATE_SUSPENDED, 0);
                     if (hThread)
                     {
                         DoThreadMagic(hThread);
@@ -343,13 +343,13 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
             }
         }
 
-		free(dllMemory);
+        free(dllMemory);
         CloseHandle(hProcess);
     }
     else
     {
         if (!hProcess) LogWrap(L"[ScyllaHide] DLL INJECTION: Cannot open process handle %d", targetPid);
-		if (!dllMemory) LogWrap(L"[ScyllaHide] DLL INJECTION: Failed to read file %s!", dllPath);
+        if (!dllMemory) LogWrap(L"[ScyllaHide] DLL INJECTION: Failed to read file %s!", dllPath);
     }
 }
 
@@ -360,7 +360,7 @@ BYTE * ReadFileToMemory(const WCHAR * targetFilePath)
     DWORD FileSize;
     BYTE* FilePtr = 0;
 
-    hFile = CreateFileW(targetFilePath, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    hFile = CreateFileW(targetFilePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
     if (hFile != INVALID_HANDLE_VALUE)
     {
         FileSize = GetFileSize(hFile, NULL);
@@ -462,66 +462,66 @@ bool RemoveDebugPrivileges(HANDLE hProcess)
 #endif
 
 typedef struct _PATCH_FUNC {
-	PCHAR funcName;
-	PVOID funcAddr;
-	SIZE_T funcSize;
+    PCHAR funcName;
+    PVOID funcAddr;
+    SIZE_T funcSize;
 } PATCH_FUNC;
 
 
 PATCH_FUNC patchFunctions[] = {
-	{
-		"DbgBreakPoint", 0, DbgBreakPoint_FUNC_SIZE
-	},
-	{
-		"DbgUiRemoteBreakin",0,DbgUiRemoteBreakin_FUNC_SIZE
-	},
-	{
-		"NtContinue", 0, NtContinue_FUNC_SIZE
-	}
+    {
+        "DbgBreakPoint", 0, DbgBreakPoint_FUNC_SIZE
+    },
+    {
+        "DbgUiRemoteBreakin", 0, DbgUiRemoteBreakin_FUNC_SIZE
+    },
+    {
+        "NtContinue", 0, NtContinue_FUNC_SIZE
+    }
 };
 
 bool ApplyAntiAntiAttach(DWORD targetPid)
 {
-	bool resu = false;
+    bool resu = false;
 
-	WCHAR modName[MAX_PATH] = {0};
-	HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+    WCHAR modName[MAX_PATH] = { 0 };
+    HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
 
-	if (!hProcess)
-		return resu;
+    if (!hProcess)
+        return resu;
 
-	HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
+    HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
 
-	for (int i = 0; i < _countof(patchFunctions); i++)
-	{
-		patchFunctions[i].funcAddr = GetProcAddress(hMod, patchFunctions[i].funcName);
-	}
+    for (int i = 0; i < _countof(patchFunctions); i++)
+    {
+        patchFunctions[i].funcAddr = GetProcAddress(hMod, patchFunctions[i].funcName);
+    }
 
-	//has remote ntdll same image base? if not -> crap
-	if (GetModuleBaseNameW(hProcess, hMod, modName, _countof(modName)))
-	{
-		if (wcsstr(modName, L"ntdll") || wcsstr(modName, L"NTDLL"))
-		{
-			for (int i = 0; i < _countof(patchFunctions); i++)
-			{
-				if (WriteProcessMemory(hProcess, patchFunctions[i].funcAddr, patchFunctions[i].funcAddr, patchFunctions[i].funcSize, 0))
-				{
-					resu = true;
-				}
-				else
-				{
-					resu = false;
-					break;
-				}
-			}
-		}
-		else
-		{
-			MessageBoxA(0, "Remote NTDLL does not have the same image base, please contact ScyllaHide developers!", "Error", MB_ICONERROR);
-		}
-	}
+    //has remote ntdll same image base? if not -> crap
+    if (GetModuleBaseNameW(hProcess, hMod, modName, _countof(modName)))
+    {
+        if (wcsstr(modName, L"ntdll") || wcsstr(modName, L"NTDLL"))
+        {
+            for (int i = 0; i < _countof(patchFunctions); i++)
+            {
+                if (WriteProcessMemory(hProcess, patchFunctions[i].funcAddr, patchFunctions[i].funcAddr, patchFunctions[i].funcSize, 0))
+                {
+                    resu = true;
+                }
+                else
+                {
+                    resu = false;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            MessageBoxA(0, "Remote NTDLL does not have the same image base, please contact ScyllaHide developers!", "Error", MB_ICONERROR);
+        }
+    }
 
-	CloseHandle(hProcess);
+    CloseHandle(hProcess);
 
-	return resu;
+    return resu;
 }

@@ -5,4 +5,3 @@
 void LogDebug(const char * format, ...);
 void LogError(const char * format, ...);
 void LogErrorBox(const char * format, ...);
-

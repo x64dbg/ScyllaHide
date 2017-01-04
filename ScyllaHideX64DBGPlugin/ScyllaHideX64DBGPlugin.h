@@ -17,15 +17,15 @@ extern "C"
 {
 #endif
 
-DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct);
-DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct);
+    DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct);
+    DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct);
 
 #ifdef __cplusplus
 }
 #endif
 
-typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
-typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
+typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
 static void cbMenuEntry(CBTYPE cbType, void* callbackInfo);
 static void cbDebugloop(CBTYPE cbType, void* callbackInfo);

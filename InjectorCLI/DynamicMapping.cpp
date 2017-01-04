@@ -103,7 +103,7 @@ bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module)
 
             if (!funcRef->u1.Function)
             {
-                MessageBoxA(0,"Function not resolved", moduleName, 0);
+                MessageBoxA(0, "Function not resolved", moduleName, 0);
                 return false;
             }
 
@@ -241,13 +241,13 @@ DWORD StartDllInitFunction(HANDLE hProcess, DWORD_PTR functionAddress, LPVOID im
     t_NtCreateThreadEx _NtCreateThreadEx = (t_NtCreateThreadEx)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtCreateThreadEx");
 
 
-//	if (_NtCreateThreadEx)
-//	{
-//#define THREAD_ALL_ACCESS_VISTA         (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | \
-//	0xFFFF)
-//		ntStat = _NtCreateThreadEx(&hThread, THREAD_ALL_ACCESS_VISTA, 0, hProcess, (LPTHREAD_START_ROUTINE)functionAddress, imageBase, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, 0, 0, 0, 0);
-//	}
-//	else
+    //	if (_NtCreateThreadEx)
+    //	{
+    //#define THREAD_ALL_ACCESS_VISTA         (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | \
+    //	0xFFFF)
+    //		ntStat = _NtCreateThreadEx(&hThread, THREAD_ALL_ACCESS_VISTA, 0, hProcess, (LPTHREAD_START_ROUTINE)functionAddress, imageBase, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, 0, 0, 0, 0);
+    //	}
+    //	else
     {
         hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)functionAddress, imageBase, CREATE_SUSPENDED, 0);
     }
@@ -342,7 +342,7 @@ BYTE jmpDword[] = { 0xE9, 0x00, 0x00, 0x00, 0x00 };
 
 int GetInjectStubSize()
 {
-    return sizeof(pushDword)+sizeof(callDword)+sizeof(jmpDword)+2;
+    return sizeof(pushDword) + sizeof(callDword) + sizeof(jmpDword) + 2;
 }
 
 void PrepareInjectStub(DWORD memoryAddress, DWORD dllImageBase, DWORD systemBreakpointContinue, DWORD dllInitAddress, BYTE * result)
@@ -351,16 +351,16 @@ void PrepareInjectStub(DWORD memoryAddress, DWORD dllImageBase, DWORD systemBrea
     *temp = dllImageBase;
 
     temp = (DWORD *)&callDword[1];
-    *temp = (DWORD)(dllInitAddress - (memoryAddress + sizeof(pushDword)+1) - 5);
+    *temp = (DWORD)(dllInitAddress - (memoryAddress + sizeof(pushDword) + 1) - 5);
 
     temp = (DWORD *)&jmpDword[1];
-    *temp = (DWORD)(systemBreakpointContinue - (memoryAddress + sizeof(pushDword)+sizeof(callDword)+2) - 5);
+    *temp = (DWORD)(systemBreakpointContinue - (memoryAddress + sizeof(pushDword) + sizeof(callDword) + 2) - 5);
 
     result[0] = pushad;
     memcpy(result + 1, pushDword, sizeof(pushDword));
     memcpy(result + 1 + sizeof(pushDword), callDword, sizeof(callDword));
-    memcpy(result + 1 + sizeof(pushDword)+sizeof(callDword), &popad, 1);
-    memcpy(result + 1 + sizeof(pushDword)+sizeof(callDword)+1, jmpDword, sizeof(jmpDword));
+    memcpy(result + 1 + sizeof(pushDword) + sizeof(callDword), &popad, 1);
+    memcpy(result + 1 + sizeof(pushDword) + sizeof(callDword) + 1, jmpDword, sizeof(jmpDword));
 
 }
 #else

@@ -88,9 +88,9 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
     void * HookedNtSetDebugFilterState = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetDebugFilterState") + imageBase);
     void * HookedNtCreateThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtCreateThread") + imageBase);
     void * HookedNtCreateThreadEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtCreateThreadEx") + imageBase);
-	void * HookedNtQuerySystemTime = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQuerySystemTime") + imageBase);
-	void * HookedNtQueryPerformanceCounter = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQueryPerformanceCounter") + imageBase);
-	void * HookedNtResumeThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtResumeThread") + imageBase);
+    void * HookedNtQuerySystemTime = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQuerySystemTime") + imageBase);
+    void * HookedNtQueryPerformanceCounter = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQueryPerformanceCounter") + imageBase);
+    void * HookedNtResumeThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtResumeThread") + imageBase);
 
     HookedNativeCallInternal = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNativeCallInternal") + imageBase);
 
@@ -108,125 +108,125 @@ void ApplyNtdllHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dll
     _NtSetDebugFilterState = (t_NtSetDebugFilterState)GetProcAddress(hNtdll, "NtSetDebugFilterState");
     _NtCreateThread = (t_NtCreateThread)GetProcAddress(hNtdll, "NtCreateThread");
     _NtCreateThreadEx = (t_NtCreateThreadEx)GetProcAddress(hNtdll, "NtCreateThreadEx");
-	_NtQuerySystemTime = (t_NtQuerySystemTime)GetProcAddress(hNtdll, "NtQuerySystemTime");
-	_NtQueryPerformanceCounter = (t_NtQueryPerformanceCounter)GetProcAddress(hNtdll, "NtQueryPerformanceCounter");
-	_NtResumeThread = (t_NtResumeThread)GetProcAddress(hNtdll, "NtResumeThread");
+    _NtQuerySystemTime = (t_NtQuerySystemTime)GetProcAddress(hNtdll, "NtQuerySystemTime");
+    _NtQueryPerformanceCounter = (t_NtQueryPerformanceCounter)GetProcAddress(hNtdll, "NtQueryPerformanceCounter");
+    _NtResumeThread = (t_NtResumeThread)GetProcAddress(hNtdll, "NtResumeThread");
 
-	LogDebug("ApplyNtdllHook -> _NtSetInformationThread %p _NtQuerySystemInformation %p _NtQueryInformationProcess %p _NtSetInformationProcess %p _NtQueryObject %p", 
-		_NtSetInformationThread,
-		_NtQuerySystemInformation,
-		_NtQueryInformationProcess,
-		_NtSetInformationProcess,
-		_NtQueryObject);
-	LogDebug("ApplyNtdllHook -> _NtYieldExecution %p _NtGetContextThread %p _NtSetContextThread %p _KiUserExceptionDispatcher %p _NtContinue %p", 
-		_NtYieldExecution,
-		_NtGetContextThread,
-		_NtSetContextThread,
-		_KiUserExceptionDispatcher,
-		_NtContinue);
-	LogDebug("ApplyNtdllHook -> _NtClose %p _NtSetDebugFilterState %p _NtCreateThread %p _NtCreateThreadEx %p _NtQuerySystemTime %p _NtQueryPerformanceCounter %p _NtResumeThread %p", 
-		_NtClose,
-		_NtSetDebugFilterState,
-		_NtCreateThread,
-		_NtCreateThreadEx,
-		_NtQuerySystemTime,
-		_NtQueryPerformanceCounter,
-		_NtResumeThread);
+    LogDebug("ApplyNtdllHook -> _NtSetInformationThread %p _NtQuerySystemInformation %p _NtQueryInformationProcess %p _NtSetInformationProcess %p _NtQueryObject %p",
+        _NtSetInformationThread,
+        _NtQuerySystemInformation,
+        _NtQueryInformationProcess,
+        _NtSetInformationProcess,
+        _NtQueryObject);
+    LogDebug("ApplyNtdllHook -> _NtYieldExecution %p _NtGetContextThread %p _NtSetContextThread %p _KiUserExceptionDispatcher %p _NtContinue %p",
+        _NtYieldExecution,
+        _NtGetContextThread,
+        _NtSetContextThread,
+        _KiUserExceptionDispatcher,
+        _NtContinue);
+    LogDebug("ApplyNtdllHook -> _NtClose %p _NtSetDebugFilterState %p _NtCreateThread %p _NtCreateThreadEx %p _NtQuerySystemTime %p _NtQueryPerformanceCounter %p _NtResumeThread %p",
+        _NtClose,
+        _NtSetDebugFilterState,
+        _NtCreateThread,
+        _NtCreateThreadEx,
+        _NtQuerySystemTime,
+        _NtQueryPerformanceCounter,
+        _NtResumeThread);
 
-    if (dllexchange->EnableNtSetInformationThreadHook == TRUE) 
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtSetInformationThread");
-		HOOK_NATIVE(NtSetInformationThread); 
-	}
+    if (dllexchange->EnableNtSetInformationThreadHook == TRUE)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtSetInformationThread");
+        HOOK_NATIVE(NtSetInformationThread);
+    }
     if (dllexchange->EnableNtQuerySystemInformationHook == TRUE)
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtQuerySystemInformation");
-		HOOK_NATIVE(NtQuerySystemInformation); 
-	}
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtQuerySystemInformation");
+        HOOK_NATIVE(NtQuerySystemInformation);
+    }
     if (dllexchange->EnableNtQueryInformationProcessHook == TRUE)
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtQueryInformationProcess");
-		HOOK_NATIVE(NtQueryInformationProcess);
-	}
-	if (dllexchange->EnableNtSetInformationProcessHook == TRUE)
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtSetInformationProcess");
-		HOOK_NATIVE(NtSetInformationProcess); 
-	}
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtQueryInformationProcess");
+        HOOK_NATIVE(NtQueryInformationProcess);
+    }
+    if (dllexchange->EnableNtSetInformationProcessHook == TRUE)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtSetInformationProcess");
+        HOOK_NATIVE(NtSetInformationProcess);
+    }
 
-    if (dllexchange->EnableNtQueryObjectHook == TRUE) 
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtQueryObject");
-		HOOK_NATIVE(NtQueryObject); 
-	}
-    if (dllexchange->EnableNtYieldExecutionHook == TRUE) 
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtYieldExecution");
-		HOOK_NATIVE(NtYieldExecution); 
-	}
-    if (dllexchange->EnableNtGetContextThreadHook == TRUE) 
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtGetContextThread");
-		HOOK_NATIVE(NtGetContextThread); 
-	}
-	if (dllexchange->EnableNtSetContextThreadHook == TRUE) 
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtSetContextThread");
-		HOOK_NATIVE(NtSetContextThread); 
-	}
+    if (dllexchange->EnableNtQueryObjectHook == TRUE)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtQueryObject");
+        HOOK_NATIVE(NtQueryObject);
+    }
+    if (dllexchange->EnableNtYieldExecutionHook == TRUE)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtYieldExecution");
+        HOOK_NATIVE(NtYieldExecution);
+    }
+    if (dllexchange->EnableNtGetContextThreadHook == TRUE)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtGetContextThread");
+        HOOK_NATIVE(NtGetContextThread);
+    }
+    if (dllexchange->EnableNtSetContextThreadHook == TRUE)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtSetContextThread");
+        HOOK_NATIVE(NtSetContextThread);
+    }
 
-	if (dllexchange->EnableNtCloseHook == TRUE)
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtClose");
-		HOOK_NATIVE(NtClose);
-	}
+    if (dllexchange->EnableNtCloseHook == TRUE)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtClose");
+        HOOK_NATIVE(NtClose);
+    }
     if (dllexchange->EnablePreventThreadCreation == TRUE)
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtCreateThread");
-		HOOK_NATIVE(NtCreateThread);
-	}
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtCreateThread");
+        HOOK_NATIVE(NtCreateThread);
+    }
 
     if (((dllexchange->EnablePreventThreadCreation == TRUE) || (dllexchange->EnableNtCreateThreadExHook == TRUE)) && _NtCreateThreadEx != 0)
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtCreateThreadEx");
-		HOOK_NATIVE(NtCreateThreadEx);
-	}
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtCreateThreadEx");
+        HOOK_NATIVE(NtCreateThreadEx);
+    }
 
-	if (dllexchange->EnableNtSetDebugFilterStateHook == TRUE) 
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtSetDebugFilterState");
-		HOOK_NATIVE_NOTRAMP(NtSetDebugFilterState); 
-	}
+    if (dllexchange->EnableNtSetDebugFilterStateHook == TRUE)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtSetDebugFilterState");
+        HOOK_NATIVE_NOTRAMP(NtSetDebugFilterState);
+    }
 
 #ifndef _WIN64
-    if (dllexchange->EnableKiUserExceptionDispatcherHook == TRUE) 
-	{
-		LogDebug("ApplyNtdllHook -> Hooking KiUserExceptionDispatcher");
-		HOOK(KiUserExceptionDispatcher);
-	}
+    if (dllexchange->EnableKiUserExceptionDispatcherHook == TRUE)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking KiUserExceptionDispatcher");
+        HOOK(KiUserExceptionDispatcher);
+    }
     if (dllexchange->EnableNtContinueHook == TRUE)
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtContinue");
-		HOOK_NATIVE(NtContinue);
-	}
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtContinue");
+        HOOK_NATIVE(NtContinue);
+    }
 #endif
 
-	if (dllexchange->EnableNtQuerySystemTimeHook == TRUE && _NtQuerySystemTime != 0)
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtQuerySystemTime");
-		HOOK_NATIVE(NtQuerySystemTime);
-	}
-	if (dllexchange->EnableNtQueryPerformanceCounterHook == TRUE) 
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtQueryPerformanceCounter");
-		HOOK_NATIVE(NtQueryPerformanceCounter);
-	}
+    if (dllexchange->EnableNtQuerySystemTimeHook == TRUE && _NtQuerySystemTime != 0)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtQuerySystemTime");
+        HOOK_NATIVE(NtQuerySystemTime);
+    }
+    if (dllexchange->EnableNtQueryPerformanceCounterHook == TRUE)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtQueryPerformanceCounter");
+        HOOK_NATIVE(NtQueryPerformanceCounter);
+    }
 
-	if (dllexchange->EnableMalwareRunPeUnpacker == TRUE)
-	{
-		LogDebug("ApplyNtdllHook -> Hooking NtResumeThread for RUNPE UNPACKER");
-		HOOK_NATIVE(NtResumeThread);
-	}
+    if (dllexchange->EnableMalwareRunPeUnpacker == TRUE)
+    {
+        LogDebug("ApplyNtdllHook -> Hooking NtResumeThread for RUNPE UNPACKER");
+        HOOK_NATIVE(NtResumeThread);
+    }
 
     dllexchange->isNtdllHooked = TRUE;
 
@@ -242,56 +242,56 @@ void ApplyKernel32Hook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * 
 
     void * HookedOutputDebugStringA = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedOutputDebugStringA") + imageBase);
     void * HookedGetTickCount = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetTickCount") + imageBase);
-	void * HookedGetTickCount64 = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetTickCount64") + imageBase);
-	void * HookedGetLocalTime = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetLocalTime") + imageBase);
-	void * HookedGetSystemTime = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetSystemTime") + imageBase);
+    void * HookedGetTickCount64 = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetTickCount64") + imageBase);
+    void * HookedGetLocalTime = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetLocalTime") + imageBase);
+    void * HookedGetSystemTime = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetSystemTime") + imageBase);
 
-	HMODULE hCurrent = hKernel;
-	if (hKernelbase)
-	{
-		hCurrent = hKernelbase;
-		LogDebug("ApplyKernel32Hook -> Using Kernelbase %p instead of kernel32 %p", hKernelbase, hKernel);
-	}
+    HMODULE hCurrent = hKernel;
+    if (hKernelbase)
+    {
+        hCurrent = hKernelbase;
+        LogDebug("ApplyKernel32Hook -> Using Kernelbase %p instead of kernel32 %p", hKernelbase, hKernel);
+    }
 
-	_GetTickCount = (t_GetTickCount)GetProcAddress(hCurrent, "GetTickCount");
-	_GetTickCount64 = (t_GetTickCount64)GetProcAddress(hCurrent, "GetTickCount64");
-	_GetLocalTime = (t_GetLocalTime)GetProcAddress(hCurrent, "GetLocalTime");
-	_GetSystemTime = (t_GetSystemTime)GetProcAddress(hCurrent, "GetSystemTime");
+    _GetTickCount = (t_GetTickCount)GetProcAddress(hCurrent, "GetTickCount");
+    _GetTickCount64 = (t_GetTickCount64)GetProcAddress(hCurrent, "GetTickCount64");
+    _GetLocalTime = (t_GetLocalTime)GetProcAddress(hCurrent, "GetLocalTime");
+    _GetSystemTime = (t_GetSystemTime)GetProcAddress(hCurrent, "GetSystemTime");
 
-	_OutputDebugStringA = (t_OutputDebugStringA)GetProcAddress(hCurrent, "OutputDebugStringA");
+    _OutputDebugStringA = (t_OutputDebugStringA)GetProcAddress(hCurrent, "OutputDebugStringA");
 
-	LogDebug("ApplyKernel32Hook -> _GetTickCount %p _GetTickCount64 %p _GetLocalTime %p _GetSystemTime %p _OutputDebugStringA %p", 
-		_GetTickCount,
-		_GetTickCount64,
-		_GetLocalTime,
-		_GetSystemTime,
-		_OutputDebugStringA);
+    LogDebug("ApplyKernel32Hook -> _GetTickCount %p _GetTickCount64 %p _GetLocalTime %p _GetSystemTime %p _OutputDebugStringA %p",
+        _GetTickCount,
+        _GetTickCount64,
+        _GetLocalTime,
+        _GetSystemTime,
+        _OutputDebugStringA);
 
     if (dllexchange->EnableGetTickCountHook == TRUE)
-	{
-		LogDebug("ApplyKernel32Hook -> Hooking GetTickCount");
-		HOOK(GetTickCount); 
-	}
-	if (dllexchange->EnableGetTickCount64Hook == TRUE && _GetTickCount64 != 0) 
-	{
-		LogDebug("ApplyKernel32Hook -> Hooking GetTickCount64");
-		HOOK(GetTickCount64); 
-	}
-	if (dllexchange->EnableGetLocalTimeHook == TRUE) 
-	{
-		LogDebug("ApplyKernel32Hook -> Hooking GetLocalTime");
-		HOOK(GetLocalTime); 
-	}
-	if (dllexchange->EnableGetSystemTimeHook == TRUE)
-	{
-		LogDebug("ApplyKernel32Hook -> Hooking GetSystemTime");
-		HOOK(GetSystemTime);
-	}
+    {
+        LogDebug("ApplyKernel32Hook -> Hooking GetTickCount");
+        HOOK(GetTickCount);
+    }
+    if (dllexchange->EnableGetTickCount64Hook == TRUE && _GetTickCount64 != 0)
+    {
+        LogDebug("ApplyKernel32Hook -> Hooking GetTickCount64");
+        HOOK(GetTickCount64);
+    }
+    if (dllexchange->EnableGetLocalTimeHook == TRUE)
+    {
+        LogDebug("ApplyKernel32Hook -> Hooking GetLocalTime");
+        HOOK(GetLocalTime);
+    }
+    if (dllexchange->EnableGetSystemTimeHook == TRUE)
+    {
+        LogDebug("ApplyKernel32Hook -> Hooking GetSystemTime");
+        HOOK(GetSystemTime);
+    }
     if (dllexchange->EnableOutputDebugStringHook == TRUE)
-	{
-		LogDebug("ApplyKernel32Hook -> Hooking OutputDebugStringA");
-		HOOK(OutputDebugStringA);
-	}
+    {
+        LogDebug("ApplyKernel32Hook -> Hooking OutputDebugStringA");
+        HOOK(OutputDebugStringA);
+    }
     dllexchange->isKernel32Hooked = TRUE;
 }
 
@@ -311,11 +311,11 @@ void ApplyUser32Hook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dl
     void * HookedNtUserBuildHwndList = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBuildHwndList") + imageBase);
     void * HookedNtUserQueryWindow = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserQueryWindow") + imageBase);
 
-	LogDebug("ApplyUser32Hook -> HookedBlockInput %p HookedNtUserFindWindowEx %p HookedNtUserBuildHwndList %p HookedNtUserQueryWindow %p", 
-		HookedBlockInput,
-		HookedNtUserFindWindowEx,
-		HookedNtUserBuildHwndList,
-		HookedNtUserQueryWindow);
+    LogDebug("ApplyUser32Hook -> HookedBlockInput %p HookedNtUserFindWindowEx %p HookedNtUserBuildHwndList %p HookedNtUserQueryWindow %p",
+        HookedBlockInput,
+        HookedNtUserFindWindowEx,
+        HookedNtUserBuildHwndList,
+        HookedNtUserQueryWindow);
 
     if (dllexchange->NtUserBuildHwndListRVA && dllexchange->NtUserQueryWindowRVA)
     {
@@ -332,34 +332,34 @@ void ApplyUser32Hook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dl
     }
     _BlockInput = (t_BlockInput)GetProcAddress(hUser, "BlockInput");
 
-	LogDebug("ApplyUser32Hook -> _BlockInput %p _NtUserFindWindowEx %p _NtUserBuildHwndList %p _NtUserQueryWindow %p", 
-		_BlockInput,
-		_NtUserFindWindowEx,
-		_NtUserBuildHwndList,
-		_NtUserQueryWindow);
+    LogDebug("ApplyUser32Hook -> _BlockInput %p _NtUserFindWindowEx %p _NtUserBuildHwndList %p _NtUserQueryWindow %p",
+        _BlockInput,
+        _NtUserFindWindowEx,
+        _NtUserBuildHwndList,
+        _NtUserQueryWindow);
 
     if (dllexchange->EnableBlockInputHook == TRUE)
-	{
-		LogDebug("ApplyUser32Hook -> Hooking BlockInput");
-		HOOK_NATIVE(BlockInput);
-	}
-	if (dllexchange->EnableNtUserFindWindowExHook == TRUE && _NtUserFindWindowEx != 0) 
-	{
-		LogDebug("ApplyUser32Hook -> Hooking NtUserFindWindowEx");
-		HOOK_NATIVE(NtUserFindWindowEx); 
-	}
-    if (dllexchange->EnableNtUserBuildHwndListHook == TRUE && _NtUserBuildHwndList != 0) 
-	{ 
-		LogDebug("ApplyUser32Hook -> Hooking NtUserBuildHwndList");
-		HOOK_NATIVE(NtUserBuildHwndList); 
-	}
-	if (dllexchange->EnableNtUserQueryWindowHook == TRUE && _NtUserQueryWindow != 0) 
-	{
-		LogDebug("ApplyUser32Hook -> Hooking NtUserQueryWindow");
-		HOOK_NATIVE(NtUserQueryWindow); 
-	}
+    {
+        LogDebug("ApplyUser32Hook -> Hooking BlockInput");
+        HOOK_NATIVE(BlockInput);
+    }
+    if (dllexchange->EnableNtUserFindWindowExHook == TRUE && _NtUserFindWindowEx != 0)
+    {
+        LogDebug("ApplyUser32Hook -> Hooking NtUserFindWindowEx");
+        HOOK_NATIVE(NtUserFindWindowEx);
+    }
+    if (dllexchange->EnableNtUserBuildHwndListHook == TRUE && _NtUserBuildHwndList != 0)
+    {
+        LogDebug("ApplyUser32Hook -> Hooking NtUserBuildHwndList");
+        HOOK_NATIVE(NtUserBuildHwndList);
+    }
+    if (dllexchange->EnableNtUserQueryWindowHook == TRUE && _NtUserQueryWindow != 0)
+    {
+        LogDebug("ApplyUser32Hook -> Hooking NtUserQueryWindow");
+        HOOK_NATIVE(NtUserQueryWindow);
+    }
 
-        dllexchange->isUser32Hooked = TRUE;
+    dllexchange->isUser32Hooked = TRUE;
 }
 
 void ApplyWin32uHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
@@ -377,10 +377,10 @@ void ApplyWin32uHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dl
     _NtUserQueryWindow = (t_NtUserQueryWindow)GetProcAddress(hWin32u, "NtUserQueryWindow");
 
     LogDebug("ApplyWin32uHook -> _NtUserBlockInput %p _NtUserFindWindowEx %p _NtUserBuildHwndList %p _NtUserQueryWindow %p",
-             _NtUserBlockInput,
-             _NtUserFindWindowEx,
-             _NtUserBuildHwndList,
-             _NtUserQueryWindow);
+        _NtUserBlockInput,
+        _NtUserFindWindowEx,
+        _NtUserBuildHwndList,
+        _NtUserQueryWindow);
 
     if (dllexchange->EnableBlockInputHook) {
         LogDebug("ApplyWin32uHook -> Hooking NtUserBlockInput");
@@ -408,12 +408,12 @@ bool ApplyPEBPatch(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, DWORD enabl
     {
         //DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_StartUpInfo;
         if (dllexchange->EnablePebBeingDebugged ||
-                dllexchange->EnablePebHeapFlags ||
-                dllexchange->EnablePebNtGlobalFlag ||
-                dllexchange->EnablePebStartupInfo)
-		{
-			return FixPebInProcess(hProcess, enableFlags);
-		}
+            dllexchange->EnablePebHeapFlags ||
+            dllexchange->EnablePebNtGlobalFlag ||
+            dllexchange->EnablePebStartupInfo)
+        {
+            return FixPebInProcess(hProcess, enableFlags);
+        }
         return true;
     }
 
@@ -461,7 +461,7 @@ void FreeMemory(HANDLE hProcess, void * buffer)
     }
 }
 
-void RestoreNtdllHooks( HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess )
+void RestoreNtdllHooks(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess)
 {
 #ifndef _WIN64
     if (Scylla::IsWow64Process(hProcess))
@@ -509,7 +509,7 @@ void RestoreNtdllHooks( HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess )
     dllexchange->isNtdllHooked = FALSE;
 }
 
-void RestoreKernel32Hooks( HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess )
+void RestoreKernel32Hooks(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess)
 {
     RESTORE_JMP(GetTickCount);
     FREE_HOOK(GetTickCount);
@@ -520,7 +520,7 @@ void RestoreKernel32Hooks( HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess )
     dllexchange->isKernel32Hooked = FALSE;
 }
 
-void RestoreUser32Hooks( HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess )
+void RestoreUser32Hooks(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess)
 {
 
 #ifdef _WIN64
@@ -551,7 +551,7 @@ void RestoreWin32uHooks(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess)
     FREE_HOOK(NtUserFindWindowEx);
     FREE_HOOK(NtUserBuildHwndList);
     FREE_HOOK(NtUserQueryWindow);
-    
+
     dllexchange->isWin32uHooked = FALSE;
 }
 

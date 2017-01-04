@@ -11,5 +11,5 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data);
 void StartFixBeingDebugged(DWORD targetPid, bool setToNull);
 bool ApplyAntiAntiAttach(DWORD targetPid);
 
-DWORD_PTR GetAddressOfEntryPoint( BYTE * dllMemory );
+DWORD_PTR GetAddressOfEntryPoint(BYTE * dllMemory);
 bool RemoveDebugPrivileges(HANDLE hProcess);

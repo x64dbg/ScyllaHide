@@ -59,23 +59,23 @@ void HandleGuiException(HWND hwnd);
 void ShowAbout(HWND hWnd)
 {
     MessageBoxA(hWnd,
-                "ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A " (" __DATE__ ")\n\n"
-                "Copyright (C) 2014 Aguila / cypher\n\n"
-                "Special thanks to:\n"
-                "- What for his POISON assembler source code\n"
-                "- waliedassar for his blog posts\n"
-                "- Peter Ferrie for his Anti-Debug PDFs\n"
-                "- MaRKuS-DJM for OllyAdvanced assembler source code\n"
-                "- Steve Micallef for his IDA SDK doc\n"
-                "- Authors of PhantOm and StrongOD\n"
-                "- Tuts4You, Exetools, Exelab community for testing\n"
-                "- last but not least deepzero & mr.exodia for tech chats",
-                "ScyllaHide Plugin",MB_OK|MB_ICONINFORMATION);
+        "ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A " (" __DATE__ ")\n\n"
+        "Copyright (C) 2014 Aguila / cypher\n\n"
+        "Special thanks to:\n"
+        "- What for his POISON assembler source code\n"
+        "- waliedassar for his blog posts\n"
+        "- Peter Ferrie for his Anti-Debug PDFs\n"
+        "- MaRKuS-DJM for OllyAdvanced assembler source code\n"
+        "- Steve Micallef for his IDA SDK doc\n"
+        "- Authors of PhantOm and StrongOD\n"
+        "- Tuts4You, Exetools, Exelab community for testing\n"
+        "- last but not least deepzero & mr.exodia for tech chats",
+        "ScyllaHide Plugin", MB_OK | MB_ICONINFORMATION);
 }
 
 bool GetFileDialog(TCHAR Buffer[MAX_PATH])
 {
-    OPENFILENAME sOpenFileName = {0};
+    OPENFILENAME sOpenFileName = { 0 };
     const TCHAR szFilterString[] = L"DLL \0*.dll\0\0";
     const TCHAR szDialogTitle[] = L"ScyllaHide";
 
@@ -97,7 +97,7 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, g_hideSettings.PEBHeapFlags, 0);
     SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, g_hideSettings.PEBNtGlobalFlag, 0);
     SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_SETCHECK, g_hideSettings.PEBStartupInfo, 0);
-    if(g_hideSettings.PEBBeingDebugged && g_hideSettings.PEBHeapFlags && g_hideSettings.PEBNtGlobalFlag && g_hideSettings.PEBStartupInfo)
+    if (g_hideSettings.PEBBeingDebugged && g_hideSettings.PEBHeapFlags && g_hideSettings.PEBNtGlobalFlag && g_hideSettings.PEBStartupInfo)
         SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
     else
         SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 0, 0);
@@ -113,7 +113,7 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_SETCHECK, g_hideSettings.NtSetContextThread, 0);
     SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_SETCHECK, g_hideSettings.NtContinue, 0);
     SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_SETCHECK, g_hideSettings.KiUserExceptionDispatcher, 0);
-    if(g_hideSettings.NtGetContextThread && g_hideSettings.NtSetContextThread && g_hideSettings.NtContinue && g_hideSettings.KiUserExceptionDispatcher)
+    if (g_hideSettings.NtGetContextThread && g_hideSettings.NtSetContextThread && g_hideSettings.NtContinue && g_hideSettings.KiUserExceptionDispatcher)
         SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 1, 0);
     else
         SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 0, 0);
@@ -163,7 +163,7 @@ void UpdateOptions(HWND hWnd)
     SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDGOTO), BM_SETCHECK, g_hideSettings.advancedGoto, 0);
     SendMessage(GetDlgItem(hWnd, IDC_BADPEIMAGE), BM_SETCHECK, g_hideSettings.ignoreBadPEImage, 0);
     SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDINFOBAR), BM_SETCHECK, g_hideSettings.advancedInfobar, 0);
-	EnableWindow(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), FALSE);
+    EnableWindow(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), FALSE);
 #elif OLLY2
     SetDlgItemTextW(hWnd, IDC_OLLYTITLE, g_hideSettings.ollyTitle.c_str());
 #elif __IDP__
@@ -182,7 +182,7 @@ void UpdateOptions(HWND hWnd)
 #endif
 
 
-	HandleGuiException(hWnd);
+    HandleGuiException(hWnd);
 }
 
 void SaveOptions(HWND hWnd)
@@ -505,70 +505,70 @@ HWND CreateTooltips(HWND hwndDlg)
         UINT    uId;
         LPCWSTR lpszText;
     } CtrlTips[] = {
-        { IDOK,                          L"Apply Settings and close the dialog"   },
-        { IDC_PROFILES,                  L"Select profile"                        },
-        { IDC_SAVEPROFILE,               L"Save profile"                          },
-        { IDC_PEB,                       L"The most important anti-anti-debug option. Almost every protector checks for\r\nPEB values. There are three important options and one minor option."},
-        { IDC_PEBBEINGDEBUGGED,          L"Very important option, should be always enabled.\r\nIsDebuggerPresent is using this value to check for debuggers."},
-        { IDC_PEBHEAPFLAGS,              L"Very important option, a lot of protectors check for this value."},
-        { IDC_PEBNTGLOBALFLAG,           L"Very important option. E.g. Themida checks for heap artifacts and heap flags."},
-        { IDC_PEBSTARTUPINFO,            L"This is not really important, only a few protectors check for this. Maybe Enigma checks it."},
-        { IDC_NTSETINFORMATIONTHREAD,    L"The THREADINFOCLASS value ThreadHideFromDebugger is a well-known\r\nanti-debug measurement. The debugger cannot handle hidden threads.\r\nThis leads to a loss of control over the target."},
-        { IDC_NTSETINFORMATIONPROCESS,   L"The PROCESSINFOCLASS value ProcessHandleTracing can be used to\r\ndetect a debugger. The PROCESSINFOCLASS value ProcessBreakOnTermination\r\ncan be used to generate a Blue Screen of Death on process termination."},
-        { IDC_NTQUERYSYSTEMINFORMATION,  L"The SYSTEM_INFORMATION_CLASS value SystemKernelDebuggerInformation\r\ncan be used to detect kernel debuggers. The SYSTEM_INFORMATION_CLASS\r\nvalue SystemProcessInformation is used to get a process list. A debugger\r\nshould be hidden in a process list and the debugee should have a good parent\r\nprocess ID like the ID from explorer.exe."},
-        {   IDC_NTQUERYINFORMATIONPROCESS, L"A very important option. Various PROCESSINFOCLASS values can be used\r\nto detect a debugger.\r\n\
-    ProcessDebugFlags: Should return 1 in the supplied buffer.\r\n\
-    ProcessDebugPort: Should return 0 in the supplied buffer.\r\n\
-    ProcessDebugObjectHandle: Should return 0 in the supplied buffer\r\nand the error STATUS_PORT_NOT_SET (0xC0000353)\r\n\
-    ProcessBasicInformation: Reveals the parent process ID.\r\n\
-    ProcessBreakOnTermination: Please see NtSetInformationProcess\r\n\
-    ProcessHandleTracing: Please see NtSetInformationProcess\r\n\
-A lot of protectors use this to detect debuggers. The windows API CheckRemoteDebuggerPresent uses NtQueryInformationProcess internally."
+        { IDOK, L"Apply Settings and close the dialog" },
+        { IDC_PROFILES, L"Select profile" },
+        { IDC_SAVEPROFILE, L"Save profile" },
+        { IDC_PEB, L"The most important anti-anti-debug option. Almost every protector checks for\r\nPEB values. There are three important options and one minor option." },
+        { IDC_PEBBEINGDEBUGGED, L"Very important option, should be always enabled.\r\nIsDebuggerPresent is using this value to check for debuggers." },
+        { IDC_PEBHEAPFLAGS, L"Very important option, a lot of protectors check for this value." },
+        { IDC_PEBNTGLOBALFLAG, L"Very important option. E.g. Themida checks for heap artifacts and heap flags." },
+        { IDC_PEBSTARTUPINFO, L"This is not really important, only a few protectors check for this. Maybe Enigma checks it." },
+        { IDC_NTSETINFORMATIONTHREAD, L"The THREADINFOCLASS value ThreadHideFromDebugger is a well-known\r\nanti-debug measurement. The debugger cannot handle hidden threads.\r\nThis leads to a loss of control over the target." },
+        { IDC_NTSETINFORMATIONPROCESS, L"The PROCESSINFOCLASS value ProcessHandleTracing can be used to\r\ndetect a debugger. The PROCESSINFOCLASS value ProcessBreakOnTermination\r\ncan be used to generate a Blue Screen of Death on process termination." },
+        { IDC_NTQUERYSYSTEMINFORMATION, L"The SYSTEM_INFORMATION_CLASS value SystemKernelDebuggerInformation\r\ncan be used to detect kernel debuggers. The SYSTEM_INFORMATION_CLASS\r\nvalue SystemProcessInformation is used to get a process list. A debugger\r\nshould be hidden in a process list and the debugee should have a good parent\r\nprocess ID like the ID from explorer.exe." },
+        { IDC_NTQUERYINFORMATIONPROCESS, L"A very important option. Various PROCESSINFOCLASS values can be used\r\nto detect a debugger.\r\n\
+                                              ProcessDebugFlags: Should return 1 in the supplied buffer.\r\n\
+                                                  ProcessDebugPort: Should return 0 in the supplied buffer.\r\n\
+                                                      ProcessDebugObjectHandle: Should return 0 in the supplied buffer\r\nand the error STATUS_PORT_NOT_SET (0xC0000353)\r\n\
+                                                          ProcessBasicInformation: Reveals the parent process ID.\r\n\
+                                                              ProcessBreakOnTermination: Please see NtSetInformationProcess\r\n\
+                                                                  ProcessHandleTracing: Please see NtSetInformationProcess\r\n\
+                                                                  A lot of protectors use this to detect debuggers. The windows API CheckRemoteDebuggerPresent uses NtQueryInformationProcess internally."
         },
-        { IDC_NTQUERYOBJECT,             L"The OBJECT_INFORMATION_CLASS ObjectTypesInformation and ObjectTypeInformation\r\ncan be used to detect debuggers. ScyllaHide filters DebugObject references."},
-        { IDC_NTYIELDEXECUTION,          L"A very unrealiable anti-debug method. This is only used in some UnpackMe's\r\nor in some Proof of Concept code. Only activate this if you really need it.\r\nProbably you will never need this option."},
-        { IDC_NTCREATETHREADEX,          L"Threads hidden from debuggers can be created with a special creation flag\r\nTHREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER. ScyllaHide doesn't\r\nallow hidden threads. The anti-debug effect is similar to NtSetInformationThread"},
-        { IDC_OUTPUTDEBUGSTRINGA,        L"OutputDebugStringW uses OutputDebugStringA internally. ScyllaHide only hooks\r\nthe ANSI version and this is therefore enough. This is a very unreliable\r\nantidebug method, so you will not need this option very often."},
-        { IDC_BLOCKINPUT,                L"Very effective anti-debug method. This is used e.g. in Yoda's Protector. \r\n\"Blocks keyboard and mouse input events from reaching applications.\""},
-        { IDC_NTUSERFINDWINDOWEX,        L"This is a system call function in user32.dll. The windows APIs FindWindowA/W\r\n and FindWindowExA/W call this internally. The debugger window will be hidden."},
-        { IDC_NTUSERBUILDHWNDLIST,       L"This is a system call function in user32.dll. The windows APIs EnumWindows\r\nand EnumThreadWindows call this internally. The debugger window will be hidden."},
-        { IDC_NTUSERQUERYWINDOW,         L"This is a system call function in user32.dll. The windows API GetWindowThreadProcessId\r\n calls this internally. This is used to hide the debugger process."},
-        { IDC_NTSETDEBUGFILTERSTATE,     L"ScyllaHide returns always STATUS_ACCESS_DENIED. This anti-debugn measurement\r\nisn't used very often. Probably you will never need this option in a real world target."},
-        { IDC_NTCLOSE,                   L"This is called with an invalid handle to detect a debugger. ScyllaHide calls\r\nNtQueryObject to check the validity of the handle. A few protectors are using\r\nthis method."},
-        { IDC_REMOVEDEBUGPRIV,           L"If a debugger creates the process of the target, the target will have debug\r\nprivileges. This can be used to detect a debugger."},
-        { IDC_PROTECTDRX,                L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!"},
-        { IDC_NTGETCONTEXTTHREAD,        L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!"},
-        { IDC_NTSETCONTEXTTHREAD,        L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!"},
-        { IDC_NTCONTINUE,                L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!"},
-        { IDC_KIUED,                     L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!"},
-        { IDC_GETTICKCOUNT,              L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
-        { IDC_GETTICKCOUNT64,            L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
-        { IDC_GETLOCALTIME,              L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
-        { IDC_GETSYSTEMTIME,             L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
-        { IDC_NTQUERYSYSTEMTIME,         L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
-        { IDC_NTQUERYPERFCOUNTER,        L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!"},
-        { IDC_PREVENTTHREADCREATION,     L"This option prevents the creation of new threads. This can be useful if a protector\r\n uses a lot of protection threads. This option can be useful for EXECryptor.\r\nEnable with care and only if you need it!\r\nYou must know what you are doing here!"},
-        {   IDC_RUNPE,                     L"This option hooks NtResumeThread. If the malware creates a new process,\r\nScyllaHide terminates and dumps any newly created process. If you are unpacking\r\nmalware, enable and try it. Should be only used inside a VM.\r\n\
-A typical RunPE workflow:\r\n\
-    1. Create a new process of any target in suspended state (Process flag\r\nCREATE_SUSPENDED: 0x00000004)\r\n\
-    2. Replace the original process PE image with a new (malicious) PE image.\r\nThis can involve several steps and various windows API functions.\r\n\
-    3. Start the process with the windows API function ResumeThread (or NtResumeThread)."
+        { IDC_NTQUERYOBJECT, L"The OBJECT_INFORMATION_CLASS ObjectTypesInformation and ObjectTypeInformation\r\ncan be used to detect debuggers. ScyllaHide filters DebugObject references." },
+        { IDC_NTYIELDEXECUTION, L"A very unrealiable anti-debug method. This is only used in some UnpackMe's\r\nor in some Proof of Concept code. Only activate this if you really need it.\r\nProbably you will never need this option." },
+        { IDC_NTCREATETHREADEX, L"Threads hidden from debuggers can be created with a special creation flag\r\nTHREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER. ScyllaHide doesn't\r\nallow hidden threads. The anti-debug effect is similar to NtSetInformationThread" },
+        { IDC_OUTPUTDEBUGSTRINGA, L"OutputDebugStringW uses OutputDebugStringA internally. ScyllaHide only hooks\r\nthe ANSI version and this is therefore enough. This is a very unreliable\r\nantidebug method, so you will not need this option very often." },
+        { IDC_BLOCKINPUT, L"Very effective anti-debug method. This is used e.g. in Yoda's Protector. \r\n\"Blocks keyboard and mouse input events from reaching applications.\"" },
+        { IDC_NTUSERFINDWINDOWEX, L"This is a system call function in user32.dll. The windows APIs FindWindowA/W\r\n and FindWindowExA/W call this internally. The debugger window will be hidden." },
+        { IDC_NTUSERBUILDHWNDLIST, L"This is a system call function in user32.dll. The windows APIs EnumWindows\r\nand EnumThreadWindows call this internally. The debugger window will be hidden." },
+        { IDC_NTUSERQUERYWINDOW, L"This is a system call function in user32.dll. The windows API GetWindowThreadProcessId\r\n calls this internally. This is used to hide the debugger process." },
+        { IDC_NTSETDEBUGFILTERSTATE, L"ScyllaHide returns always STATUS_ACCESS_DENIED. This anti-debugn measurement\r\nisn't used very often. Probably you will never need this option in a real world target." },
+        { IDC_NTCLOSE, L"This is called with an invalid handle to detect a debugger. ScyllaHide calls\r\nNtQueryObject to check the validity of the handle. A few protectors are using\r\nthis method." },
+        { IDC_REMOVEDEBUGPRIV, L"If a debugger creates the process of the target, the target will have debug\r\nprivileges. This can be used to detect a debugger." },
+        { IDC_PROTECTDRX, L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!" },
+        { IDC_NTGETCONTEXTTHREAD, L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!" },
+        { IDC_NTSETCONTEXTTHREAD, L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!" },
+        { IDC_NTCONTINUE, L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!" },
+        { IDC_KIUED, L"Hardware breakpoints can be detected/cleared with exceptions or the windows\r\nAPIs NtGetContextThread/NtSetContextThread. Enable this option only if you need it!" },
+        { IDC_GETTICKCOUNT, L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!" },
+        { IDC_GETTICKCOUNT64, L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!" },
+        { IDC_GETLOCALTIME, L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!" },
+        { IDC_GETSYSTEMTIME, L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!" },
+        { IDC_NTQUERYSYSTEMTIME, L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!" },
+        { IDC_NTQUERYPERFCOUNTER, L"There are a few windows APIs to measure the time. Timing can be used to\r\ndetect debuggers, because they slow down the execution. Enable with care\r\nand only if you need it!" },
+        { IDC_PREVENTTHREADCREATION, L"This option prevents the creation of new threads. This can be useful if a protector\r\n uses a lot of protection threads. This option can be useful for EXECryptor.\r\nEnable with care and only if you need it!\r\nYou must know what you are doing here!" },
+        { IDC_RUNPE, L"This option hooks NtResumeThread. If the malware creates a new process,\r\nScyllaHide terminates and dumps any newly created process. If you are unpacking\r\nmalware, enable and try it. Should be only used inside a VM.\r\n\
+                      A typical RunPE workflow:\r\n\
+                          1. Create a new process of any target in suspended state (Process flag\r\nCREATE_SUSPENDED: 0x00000004)\r\n\
+                              2. Replace the original process PE image with a new (malicious) PE image.\r\nThis can involve several steps and various windows API functions.\r\n\
+                                  3. Start the process with the windows API function ResumeThread (or NtResumeThread)."
         },
-        { IDC_DLLSTEALTH,                L"Normal DLL injection or stealth dll injection. You better try the normal\r\ninjection first..."},
-        { IDC_DLLNORMAL,                 L"Normal DLL injection or stealth dll injection. You better try the normal\r\ninjection first..."},
-        { IDC_DLLUNLOAD,                 L"Unload after DLLMain"                  },
-        { IDC_KILLANTIATTACH,            L"Kill Anti-Attach"                      },
+        { IDC_DLLSTEALTH, L"Normal DLL injection or stealth dll injection. You better try the normal\r\ninjection first..." },
+        { IDC_DLLNORMAL, L"Normal DLL injection or stealth dll injection. You better try the normal\r\ninjection first..." },
+        { IDC_DLLUNLOAD, L"Unload after DLLMain" },
+        { IDC_KILLANTIATTACH, L"Kill Anti-Attach" },
 #ifdef OLLY1
         { IDC_OLLYTITLE,                 L"Olly caption"                          },
         { IDC_DELEPBREAK,                L"Some protectors use Thread-Local-Storage (TLS) as entrypoint and check for\r\nbreakpoints at the normal PE entrypoint address. You must remove the PE\r\nentrypoint to hide your debugger. This option is necessary for VMProtect."},
         {   IDC_FIXOLLY,                   L"This option fixes various OllyDbg bugs:\r\n\
-    - PE Fix for NumOfRvaAndSizes\r\n\
-    - ForegroundWindow Fix\r\n\
-    - FPU bugfix\r\n\
-    - Format string (sprintf) bug\r\n\
-    - NT Symbols path bug, patch by blabberer\r\n\
-    - Faulty handle bug. Sometimes Olly does not terminate,\r\n\
-    error appears \"Operating system reports error ERROR_ACCESS_DENIED\""
+                                                - PE Fix for NumOfRvaAndSizes\r\n\
+                                                    - ForegroundWindow Fix\r\n\
+                                                        - FPU bugfix\r\n\
+                                                            - Format string (sprintf) bug\r\n\
+                                                                - NT Symbols path bug, patch by blabberer\r\n\
+                                                                    - Faulty handle bug. Sometimes Olly does not terminate,\r\n\
+                                                                        error appears \"Operating system reports error ERROR_ACCESS_DENIED\""
         },
         { IDC_X64FIX,                    L"OllyDbg doesn't work very well on x64 operating systems.\r\nThis option fixes the most annoying bug."},
         { IDC_SKIPEPOUTSIDE,             L"Skip\"EP outside of Code\""            },
@@ -600,18 +600,18 @@ A typical RunPE workflow:\r\n\
 
     // Create tooltip for main window
     hwndTT = CreateWindowEx(WS_EX_TOPMOST,
-                            TOOLTIPS_CLASS,
-                            NULL,
-                            WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
-                            CW_USEDEFAULT,
-                            CW_USEDEFAULT,
-                            CW_USEDEFAULT,
-                            CW_USEDEFAULT,
-                            hwndDlg,
-                            NULL,
-                            hInstance,
-                            NULL
-                           );
+        TOOLTIPS_CLASS,
+        NULL,
+        WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        hwndDlg,
+        NULL,
+        hInstance,
+        NULL
+        );
 
     if (hwndTT)
     {
@@ -629,13 +629,13 @@ A typical RunPE workflow:\r\n\
                 {
                     TOOLINFO ti;
 
-                    ti.cbSize   = TTTOOLINFO_V1_SIZE;
-                    ti.uFlags   = TTF_SUBCLASS | TTF_IDISHWND;
-                    ti.hwnd     = hwndDlg;
-                    ti.uId      = (UINT_PTR)hwnd;
-                    ti.hinst    = hInstance;
+                    ti.cbSize = TTTOOLINFO_V1_SIZE;
+                    ti.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
+                    ti.hwnd = hwndDlg;
+                    ti.uId = (UINT_PTR)hwnd;
+                    ti.hinst = hInstance;
                     ti.lpszText = (LPWSTR)lpszText;
-                    ti.lParam   = 0;
+                    ti.lParam = 0;
 
                     if ((BOOL)SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti))
                         ++count;
@@ -691,7 +691,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
     case WM_COMMAND:
     {
-        switch(LOWORD(wParam))
+        switch (LOWORD(wParam))
         {
         case IDC_PROFILES:
         {
@@ -785,26 +785,26 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             SaveOptions(hWnd);
             break;
         }
-		case IDC_EXCEPTION_ALL:
-			{
-				ResetAllExceptions();
-				if (IsDlgButtonChecked(hWnd, IDC_EXCEPTION_ALL) == BST_CHECKED)
-				{
-					g_hideSettings.handleExceptionPrint = 1;
-					g_hideSettings.handleExceptionIllegalInstruction = 1;
-					g_hideSettings.handleExceptionInvalidLockSequence = 1;
-					g_hideSettings.handleExceptionNoncontinuableException = 1;
-					g_hideSettings.handleExceptionRip = 1;
-					g_hideSettings.handleExceptionAssertionFailure = 1;
-					g_hideSettings.handleExceptionBreakpoint = 1;
-					g_hideSettings.handleExceptionGuardPageViolation = 1;
-					g_hideSettings.handleExceptionWx86Breakpoint = 1;
-				}
-			}
+        case IDC_EXCEPTION_ALL:
+        {
+            ResetAllExceptions();
+            if (IsDlgButtonChecked(hWnd, IDC_EXCEPTION_ALL) == BST_CHECKED)
+            {
+                g_hideSettings.handleExceptionPrint = 1;
+                g_hideSettings.handleExceptionIllegalInstruction = 1;
+                g_hideSettings.handleExceptionInvalidLockSequence = 1;
+                g_hideSettings.handleExceptionNoncontinuableException = 1;
+                g_hideSettings.handleExceptionRip = 1;
+                g_hideSettings.handleExceptionAssertionFailure = 1;
+                g_hideSettings.handleExceptionBreakpoint = 1;
+                g_hideSettings.handleExceptionGuardPageViolation = 1;
+                g_hideSettings.handleExceptionWx86Breakpoint = 1;
+            }
+        }
         case IDC_PROTECTDRX:
         {
             WPARAM state;
-            (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_GETCHECK, 0, 0))?state=1:state=0;
+            (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_GETCHECK, 0, 0)) ? state = 1 : state = 0;
 
             //trigger child checkboxes
             SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, state, 0);
@@ -820,12 +820,12 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         case IDC_KIUED:
         {   //this is just for GUI continuity
             int allChecked = 1;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_GETCHECK, 0, 0)) allChecked--;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_GETCHECK, 0, 0)) allChecked--;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_GETCHECK, 0, 0)) allChecked--;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_GETCHECK, 0, 0)) allChecked--;
+            if (BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_GETCHECK, 0, 0)) allChecked--;
+            if (BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_GETCHECK, 0, 0)) allChecked--;
+            if (BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_GETCHECK, 0, 0)) allChecked--;
+            if (BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_GETCHECK, 0, 0)) allChecked--;
 
-            if(allChecked<1) SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 0, 0);
+            if (allChecked < 1) SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 0, 0);
             else SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 1, 0);
 
             break;
@@ -833,7 +833,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         case IDC_PEB:
         {
             WPARAM state;
-            (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_GETCHECK, 0, 0))?state=1:state=0;
+            (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_GETCHECK, 0, 0)) ? state = 1 : state = 0;
 
             //trigger child checkboxes
             SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, state, 0);
@@ -849,12 +849,12 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         case IDC_PEBSTARTUPINFO:
         {
             int allChecked = 1;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_GETCHECK, 0, 0)) allChecked--;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_GETCHECK, 0, 0)) allChecked--;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_GETCHECK, 0, 0)) allChecked--;
-            if(BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_GETCHECK, 0, 0)) allChecked--;
+            if (BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_GETCHECK, 0, 0)) allChecked--;
+            if (BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_GETCHECK, 0, 0)) allChecked--;
+            if (BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_GETCHECK, 0, 0)) allChecked--;
+            if (BST_UNCHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_GETCHECK, 0, 0)) allChecked--;
 
-            if(allChecked<1) SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 0, 0);
+            if (allChecked < 1) SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 0, 0);
             else SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
             break;
         }
@@ -950,21 +950,21 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             break;
         }
 #endif
-		case IDC_SELECT_EXCEPTIONS:
-			{
-				createExceptionWindow(hWnd);
-				HandleGuiException(hWnd);
-				break;
-			}
+        case IDC_SELECT_EXCEPTIONS:
+        {
+            createExceptionWindow(hWnd);
+            HandleGuiException(hWnd);
+            break;
+        }
+        }
+
     }
+    break;
 
-}
-break;
-
-default:
-{
-    return FALSE;
-}
+    default:
+    {
+        return FALSE;
+    }
     }
 
     return 0;
@@ -973,109 +973,109 @@ default:
 void HandleGuiException(HWND hwnd)
 {
 #ifdef OLLY1
-	if (g_hideSettings.handleExceptionIllegalInstruction &&
-		g_hideSettings.handleExceptionInvalidLockSequence &&
-		g_hideSettings.handleExceptionNoncontinuableException &&
-		g_hideSettings.handleExceptionPrint &&
-		g_hideSettings.handleExceptionRip &&
-		g_hideSettings.handleExceptionBreakpoint &&
-		g_hideSettings.handleExceptionWx86Breakpoint &&
-		g_hideSettings.handleExceptionGuardPageViolation
-		)
+    if (g_hideSettings.handleExceptionIllegalInstruction &&
+        g_hideSettings.handleExceptionInvalidLockSequence &&
+        g_hideSettings.handleExceptionNoncontinuableException &&
+        g_hideSettings.handleExceptionPrint &&
+        g_hideSettings.handleExceptionRip &&
+        g_hideSettings.handleExceptionBreakpoint &&
+        g_hideSettings.handleExceptionWx86Breakpoint &&
+        g_hideSettings.handleExceptionGuardPageViolation
+        )
 #endif
 #ifdef OLLY2
-		if (g_hideSettings.handleExceptionNoncontinuableException &&
-			g_hideSettings.handleExceptionPrint &&
-			g_hideSettings.handleExceptionRip
-			)
+        if (g_hideSettings.handleExceptionNoncontinuableException &&
+            g_hideSettings.handleExceptionPrint &&
+            g_hideSettings.handleExceptionRip
+            )
 #endif
 #ifdef __IDP__
-			if (g_hideSettings.handleExceptionNoncontinuableException &&
-				g_hideSettings.handleExceptionPrint &&
-				g_hideSettings.handleExceptionAssertionFailure &&
-				g_hideSettings.handleExceptionRip
-				)
+            if (g_hideSettings.handleExceptionNoncontinuableException &&
+                g_hideSettings.handleExceptionPrint &&
+                g_hideSettings.handleExceptionAssertionFailure &&
+                g_hideSettings.handleExceptionRip
+                )
 #endif
 #ifdef X64DBG
-		if (1)
+                if (1)
 #endif
-		{
-			CheckDlgButton(hwnd, IDC_EXCEPTION_ALL, BST_CHECKED);
-		}
-		else
-		{
-			CheckDlgButton(hwnd, IDC_EXCEPTION_ALL, 0);
-		}
+                {
+                    CheckDlgButton(hwnd, IDC_EXCEPTION_ALL, BST_CHECKED);
+                }
+                else
+                {
+                    CheckDlgButton(hwnd, IDC_EXCEPTION_ALL, 0);
+                }
 }
 
 typedef struct _NAME_TOOLTIP {
-	const WCHAR * name;
-	WCHAR * tooltip;
-	int windowId;
+    const WCHAR * name;
+    WCHAR * tooltip;
+    int windowId;
 } NAME_TOOLTIP;
 
 
 enum {
-	ID_EXCEPTION_PRINT = 200,
-	ID_EXCEPTION_RIP,
-	ID_EXCEPTION_Noncontinable,
-	ID_EXCEPTION_Illegal,
-	ID_EXCEPTION_InvalidLockSequence,
-	ID_EXCEPTION_AssertionFailure,
-	ID_EXCEPTION_GuardPage,
-	ID_EXCEPTION_Breakpoint,
-	ID_EXCEPTION_Wx86Breakpoint,
-	ID_EXCEPTION_APPLY,
-	ID_EXCEPTION_CANCEL
+    ID_EXCEPTION_PRINT = 200,
+    ID_EXCEPTION_RIP,
+    ID_EXCEPTION_Noncontinable,
+    ID_EXCEPTION_Illegal,
+    ID_EXCEPTION_InvalidLockSequence,
+    ID_EXCEPTION_AssertionFailure,
+    ID_EXCEPTION_GuardPage,
+    ID_EXCEPTION_Breakpoint,
+    ID_EXCEPTION_Wx86Breakpoint,
+    ID_EXCEPTION_APPLY,
+    ID_EXCEPTION_CANCEL
 };
 
 NAME_TOOLTIP exceptionNamesTooltip[] = {
-	{
-		L"Print",L"DBG_PRINTEXCEPTION_C 0x40010006", ID_EXCEPTION_PRINT
-	},
-	{
-		L"RIP", L"DBG_RIPEXCEPTION 0x40010007", ID_EXCEPTION_RIP
-	}
+    {
+        L"Print", L"DBG_PRINTEXCEPTION_C 0x40010006", ID_EXCEPTION_PRINT
+    },
+    {
+        L"RIP", L"DBG_RIPEXCEPTION 0x40010007", ID_EXCEPTION_RIP
+    }
 #if defined(OLLY1) || defined(OLLY2)
-	,{
-		L"Non-continuable", L"STATUS_NONCONTINUABLE_EXCEPTION 0xC0000025", ID_EXCEPTION_Noncontinable
-	}
+    ,{
+        L"Non-continuable", L"STATUS_NONCONTINUABLE_EXCEPTION 0xC0000025", ID_EXCEPTION_Noncontinable
+    }
 #endif
 #ifdef OLLY1
-	,{
-		L"Illegal Instruction", L"STATUS_ILLEGAL_INSTRUCTION 0xC000001D", ID_EXCEPTION_Illegal
-	},
-	{
-		L"Invalid Lock Sequence", L"STATUS_INVALID_LOCK_SEQUENCE 0xC000001E", ID_EXCEPTION_InvalidLockSequence
-	},
-	{
-		L"Guard Page Violation", L"STATUS_GUARD_PAGE_VIOLATION 0x80000001", ID_EXCEPTION_GuardPage
-	},
-	{
-		L"Breakpoint", L"STATUS_BREAKPOINT 0x80000003", ID_EXCEPTION_Breakpoint
-	},
-	{
-		L"WX86 Breakpoint", L"STATUS_WX86_BREAKPOINT 0x4000001F", ID_EXCEPTION_Wx86Breakpoint
-	}
+    ,{
+        L"Illegal Instruction", L"STATUS_ILLEGAL_INSTRUCTION 0xC000001D", ID_EXCEPTION_Illegal
+    },
+    {
+        L"Invalid Lock Sequence", L"STATUS_INVALID_LOCK_SEQUENCE 0xC000001E", ID_EXCEPTION_InvalidLockSequence
+    },
+    {
+        L"Guard Page Violation", L"STATUS_GUARD_PAGE_VIOLATION 0x80000001", ID_EXCEPTION_GuardPage
+    },
+    {
+        L"Breakpoint", L"STATUS_BREAKPOINT 0x80000003", ID_EXCEPTION_Breakpoint
+    },
+    {
+        L"WX86 Breakpoint", L"STATUS_WX86_BREAKPOINT 0x4000001F", ID_EXCEPTION_Wx86Breakpoint
+    }
 #endif
 #ifdef __IDP__
-	,{
-		L"Assertion Failure", L"STATUS_ASSERTION_FAILURE 0xC0000420", ID_EXCEPTION_AssertionFailure
-	}
+    ,{
+        L"Assertion Failure", L"STATUS_ASSERTION_FAILURE 0xC0000420", ID_EXCEPTION_AssertionFailure
+    }
 #endif
 };
 
 void ResetAllExceptions()
 {
-	g_hideSettings.handleExceptionPrint = 0;
-	g_hideSettings.handleExceptionIllegalInstruction = 0;
-	g_hideSettings.handleExceptionInvalidLockSequence = 0;
-	g_hideSettings.handleExceptionNoncontinuableException = 0;
-	g_hideSettings.handleExceptionRip = 0;
-	g_hideSettings.handleExceptionAssertionFailure = 0;
-	g_hideSettings.handleExceptionBreakpoint = 0;
-	g_hideSettings.handleExceptionGuardPageViolation = 0;
-	g_hideSettings.handleExceptionWx86Breakpoint = 0;
+    g_hideSettings.handleExceptionPrint = 0;
+    g_hideSettings.handleExceptionIllegalInstruction = 0;
+    g_hideSettings.handleExceptionInvalidLockSequence = 0;
+    g_hideSettings.handleExceptionNoncontinuableException = 0;
+    g_hideSettings.handleExceptionRip = 0;
+    g_hideSettings.handleExceptionAssertionFailure = 0;
+    g_hideSettings.handleExceptionBreakpoint = 0;
+    g_hideSettings.handleExceptionGuardPageViolation = 0;
+    g_hideSettings.handleExceptionWx86Breakpoint = 0;
 }
 
 #define HEIGHT_OF_EXCEPTION_CHECKBOX 16
@@ -1083,170 +1083,170 @@ void ResetAllExceptions()
 #define EXCEPTION_WINDOW_WIDTH 200
 LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-	RECT rect;
-	LONG height;
-	HINSTANCE hInst = GetModuleHandleW(0);
+    RECT rect;
+    LONG height;
+    HINSTANCE hInst = GetModuleHandleW(0);
 
-	if (msg == WM_CREATE)
-	{
-		int numOfExceptions = _countof(exceptionNamesTooltip);
+    if (msg == WM_CREATE)
+    {
+        int numOfExceptions = _countof(exceptionNamesTooltip);
 
-		HWND control;
-		GetClientRect(hwnd, &rect);
-		height = rect.bottom;
-		GetWindowRect(hwnd, &rect);
-		height = rect.bottom - rect.top - height + (EXCEPTION_WINDOW_BASE_HEIGHT + (numOfExceptions*(HEIGHT_OF_EXCEPTION_CHECKBOX+5))) + 5;
-		SetWindowPos(hwnd, NULL, 0, 0, rect.right - rect.left, height, SWP_NOMOVE | SWP_NOZORDER);
+        HWND control;
+        GetClientRect(hwnd, &rect);
+        height = rect.bottom;
+        GetWindowRect(hwnd, &rect);
+        height = rect.bottom - rect.top - height + (EXCEPTION_WINDOW_BASE_HEIGHT + (numOfExceptions*(HEIGHT_OF_EXCEPTION_CHECKBOX + 5))) + 5;
+        SetWindowPos(hwnd, NULL, 0, 0, rect.right - rect.left, height, SWP_NOMOVE | SWP_NOZORDER);
 
-		HFONT hFont;
-		NONCLIENTMETRICSW metric = {0};
-		metric.cbSize = sizeof(NONCLIENTMETRICSW);
-		if (SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &metric, 0))
-		{
-			hFont = CreateFontIndirectW(&metric.lfMessageFont);
-		}
-		else
-		{
-			hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
-		}
+        HFONT hFont;
+        NONCLIENTMETRICSW metric = { 0 };
+        metric.cbSize = sizeof(NONCLIENTMETRICSW);
+        if (SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &metric, 0))
+        {
+            hFont = CreateFontIndirectW(&metric.lfMessageFont);
+        }
+        else
+        {
+            hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+        }
 
-		HWND hwndTT = CreateWindowExW(WS_EX_TOPMOST,TOOLTIPS_CLASS,NULL,WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,hwnd,NULL,0,NULL);
+        HWND hwndTT = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, hwnd, NULL, 0, NULL);
 
-		for (int i = 0, j = 200; i < numOfExceptions; i++, j++)
-		{
-			control = CreateWindowExW(0, L"Button", exceptionNamesTooltip[i].name, WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 1, i*20, EXCEPTION_WINDOW_WIDTH, HEIGHT_OF_EXCEPTION_CHECKBOX, hwnd, (HMENU)exceptionNamesTooltip[i].windowId, hInst, NULL);
-			SendMessage(control,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(1,0));
+        for (int i = 0, j = 200; i < numOfExceptions; i++, j++)
+        {
+            control = CreateWindowExW(0, L"Button", exceptionNamesTooltip[i].name, WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 1, i * 20, EXCEPTION_WINDOW_WIDTH, HEIGHT_OF_EXCEPTION_CHECKBOX, hwnd, (HMENU)exceptionNamesTooltip[i].windowId, hInst, NULL);
+            SendMessage(control, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(1, 0));
 
-			TOOLINFO ti = {0};
+            TOOLINFO ti = { 0 };
 
-			ti.cbSize   = TTTOOLINFO_V1_SIZE;
-			ti.uFlags   = TTF_SUBCLASS | TTF_IDISHWND;
-			ti.hwnd     = hwnd;
-			ti.uId      = (UINT_PTR)control;
-			ti.lpszText = exceptionNamesTooltip[i].tooltip;
+            ti.cbSize = TTTOOLINFO_V1_SIZE;
+            ti.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
+            ti.hwnd = hwnd;
+            ti.uId = (UINT_PTR)control;
+            ti.lpszText = exceptionNamesTooltip[i].tooltip;
 
-			SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
-		}
+            SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
+        }
 
-		if (g_hideSettings.handleExceptionPrint) CheckDlgButton(hwnd, ID_EXCEPTION_PRINT, BST_CHECKED);
-		if (g_hideSettings.handleExceptionIllegalInstruction) CheckDlgButton(hwnd, ID_EXCEPTION_Illegal, BST_CHECKED);
-		if (g_hideSettings.handleExceptionInvalidLockSequence) CheckDlgButton(hwnd, ID_EXCEPTION_InvalidLockSequence, BST_CHECKED);
-		if (g_hideSettings.handleExceptionNoncontinuableException) CheckDlgButton(hwnd, ID_EXCEPTION_Noncontinable, BST_CHECKED);
-		if (g_hideSettings.handleExceptionAssertionFailure) CheckDlgButton(hwnd, ID_EXCEPTION_AssertionFailure, BST_CHECKED);
-		if (g_hideSettings.handleExceptionBreakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Breakpoint, BST_CHECKED);
-		if (g_hideSettings.handleExceptionGuardPageViolation) CheckDlgButton(hwnd, ID_EXCEPTION_GuardPage, BST_CHECKED);
-		if (g_hideSettings.handleExceptionWx86Breakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Wx86Breakpoint, BST_CHECKED);
-		if (g_hideSettings.handleExceptionRip) CheckDlgButton(hwnd, ID_EXCEPTION_RIP, BST_CHECKED);
+        if (g_hideSettings.handleExceptionPrint) CheckDlgButton(hwnd, ID_EXCEPTION_PRINT, BST_CHECKED);
+        if (g_hideSettings.handleExceptionIllegalInstruction) CheckDlgButton(hwnd, ID_EXCEPTION_Illegal, BST_CHECKED);
+        if (g_hideSettings.handleExceptionInvalidLockSequence) CheckDlgButton(hwnd, ID_EXCEPTION_InvalidLockSequence, BST_CHECKED);
+        if (g_hideSettings.handleExceptionNoncontinuableException) CheckDlgButton(hwnd, ID_EXCEPTION_Noncontinable, BST_CHECKED);
+        if (g_hideSettings.handleExceptionAssertionFailure) CheckDlgButton(hwnd, ID_EXCEPTION_AssertionFailure, BST_CHECKED);
+        if (g_hideSettings.handleExceptionBreakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Breakpoint, BST_CHECKED);
+        if (g_hideSettings.handleExceptionGuardPageViolation) CheckDlgButton(hwnd, ID_EXCEPTION_GuardPage, BST_CHECKED);
+        if (g_hideSettings.handleExceptionWx86Breakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Wx86Breakpoint, BST_CHECKED);
+        if (g_hideSettings.handleExceptionRip) CheckDlgButton(hwnd, ID_EXCEPTION_RIP, BST_CHECKED);
 
-		control = CreateWindowExW(0, L"Button", L"Apply", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, (numOfExceptions)*20 + 1, 100, 25, hwnd, (HMENU)ID_EXCEPTION_APPLY, hInst, NULL);
-		SendMessage(control,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(1,0));
-		control = CreateWindowExW(0, L"Button", L"Cancel", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,1, (numOfExceptions+1)*20 + 5, 100, 25, hwnd, (HMENU)ID_EXCEPTION_CANCEL, hInst, NULL);
-		SendMessage(control,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(1,0));
+        control = CreateWindowExW(0, L"Button", L"Apply", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, (numOfExceptions)* 20 + 1, 100, 25, hwnd, (HMENU)ID_EXCEPTION_APPLY, hInst, NULL);
+        SendMessage(control, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(1, 0));
+        control = CreateWindowExW(0, L"Button", L"Cancel", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, (numOfExceptions + 1) * 20 + 5, 100, 25, hwnd, (HMENU)ID_EXCEPTION_CANCEL, hInst, NULL);
+        SendMessage(control, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(1, 0));
 
-		//DeleteObject(hFont);
+        //DeleteObject(hFont);
 
-	}
-	else if (msg == WM_COMMAND)
-	{
-		if (LOWORD(wparam) == ID_EXCEPTION_APPLY)
-		{
+    }
+    else if (msg == WM_COMMAND)
+    {
+        if (LOWORD(wparam) == ID_EXCEPTION_APPLY)
+        {
 
-			ResetAllExceptions();
+            ResetAllExceptions();
 
-			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_PRINT) == BST_CHECKED)
-			{
-				g_hideSettings.handleExceptionPrint = 1;
-			}
-			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Illegal) == BST_CHECKED)
-			{
-				g_hideSettings.handleExceptionIllegalInstruction = 1;
-			}
-			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_InvalidLockSequence) == BST_CHECKED)
-			{
-				g_hideSettings.handleExceptionInvalidLockSequence = 1;
-			}
-			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Noncontinable) == BST_CHECKED)
-			{
-				g_hideSettings.handleExceptionNoncontinuableException = 1;
-			}
-			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_RIP) == BST_CHECKED)
-			{
-				g_hideSettings.handleExceptionRip = 1;
-			}
-			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_GuardPage) == BST_CHECKED)
-			{
-				g_hideSettings.handleExceptionGuardPageViolation = 1;
-			}
-			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Breakpoint) == BST_CHECKED)
-			{
-				g_hideSettings.handleExceptionBreakpoint = 1;
-			}
-			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Wx86Breakpoint) == BST_CHECKED)
-			{
-				g_hideSettings.handleExceptionWx86Breakpoint = 1;
-			}
-			if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_AssertionFailure) == BST_CHECKED)
-			{
-				g_hideSettings.handleExceptionAssertionFailure = 1;
-			}
-			DestroyWindow(hwnd);
-		}
-		else if (LOWORD(wparam) == ID_EXCEPTION_CANCEL)
-		{
-			DestroyWindow(hwnd);
-		}
-	}
-	else if (msg == WM_CLOSE)
-	{
-		DestroyWindow(hwnd);
-	}
-	else if (msg == WM_DESTROY)
-	{
-		PostQuitMessage(0);
-	}
-	return DefWindowProcW(hwnd, msg, wparam, lparam);
+            if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_PRINT) == BST_CHECKED)
+            {
+                g_hideSettings.handleExceptionPrint = 1;
+            }
+            if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Illegal) == BST_CHECKED)
+            {
+                g_hideSettings.handleExceptionIllegalInstruction = 1;
+            }
+            if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_InvalidLockSequence) == BST_CHECKED)
+            {
+                g_hideSettings.handleExceptionInvalidLockSequence = 1;
+            }
+            if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Noncontinable) == BST_CHECKED)
+            {
+                g_hideSettings.handleExceptionNoncontinuableException = 1;
+            }
+            if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_RIP) == BST_CHECKED)
+            {
+                g_hideSettings.handleExceptionRip = 1;
+            }
+            if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_GuardPage) == BST_CHECKED)
+            {
+                g_hideSettings.handleExceptionGuardPageViolation = 1;
+            }
+            if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Breakpoint) == BST_CHECKED)
+            {
+                g_hideSettings.handleExceptionBreakpoint = 1;
+            }
+            if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_Wx86Breakpoint) == BST_CHECKED)
+            {
+                g_hideSettings.handleExceptionWx86Breakpoint = 1;
+            }
+            if (IsDlgButtonChecked(hwnd, ID_EXCEPTION_AssertionFailure) == BST_CHECKED)
+            {
+                g_hideSettings.handleExceptionAssertionFailure = 1;
+            }
+            DestroyWindow(hwnd);
+        }
+        else if (LOWORD(wparam) == ID_EXCEPTION_CANCEL)
+        {
+            DestroyWindow(hwnd);
+        }
+    }
+    else if (msg == WM_CLOSE)
+    {
+        DestroyWindow(hwnd);
+    }
+    else if (msg == WM_DESTROY)
+    {
+        PostQuitMessage(0);
+    }
+    return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
 void createExceptionWindow(HWND hwnd)
 {
-	WCHAR * classname = L"exception_window_config_scyllahide";
-	WNDCLASSW wc = {0};
-	HWND     wnd;
-	MSG      msg;
-	//wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
-	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
-	wc.hInstance     = GetModuleHandleW(0);
-	wc.style         = CS_PARENTDC | CS_DBLCLKS;
-	wc.lpfnWndProc   = ExceptionSettingsWndproc;
-	wc.lpszClassName = classname;
-	RegisterClassW(&wc);
+    WCHAR * classname = L"exception_window_config_scyllahide";
+    WNDCLASSW wc = { 0 };
+    HWND     wnd;
+    MSG      msg;
+    //wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
+    wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
+    wc.hInstance = GetModuleHandleW(0);
+    wc.style = CS_PARENTDC | CS_DBLCLKS;
+    wc.lpfnWndProc = ExceptionSettingsWndproc;
+    wc.lpszClassName = classname;
+    RegisterClassW(&wc);
 
-	int windowHeight = EXCEPTION_WINDOW_BASE_HEIGHT + (_countof(exceptionNamesTooltip)*(HEIGHT_OF_EXCEPTION_CHECKBOX+5) );
+    int windowHeight = EXCEPTION_WINDOW_BASE_HEIGHT + (_countof(exceptionNamesTooltip)*(HEIGHT_OF_EXCEPTION_CHECKBOX + 5));
 
-	wnd = CreateWindowExW(0,
-		classname,
-		L"Exception Settings",
-		WS_VISIBLE | WS_SYSMENU | WS_OVERLAPPED | DS_SYSMODAL,
-		(GetSystemMetrics(SM_CXSCREEN) - EXCEPTION_WINDOW_WIDTH) / 2,
-		(GetSystemMetrics(SM_CYSCREEN) - windowHeight) / 2,
-		EXCEPTION_WINDOW_WIDTH,
-		windowHeight,
-		hwnd,
-		NULL,
-		GetModuleHandleW(0),
-		NULL);
+    wnd = CreateWindowExW(0,
+        classname,
+        L"Exception Settings",
+        WS_VISIBLE | WS_SYSMENU | WS_OVERLAPPED | DS_SYSMODAL,
+        (GetSystemMetrics(SM_CXSCREEN) - EXCEPTION_WINDOW_WIDTH) / 2,
+        (GetSystemMetrics(SM_CYSCREEN) - windowHeight) / 2,
+        EXCEPTION_WINDOW_WIDTH,
+        windowHeight,
+        hwnd,
+        NULL,
+        GetModuleHandleW(0),
+        NULL);
 
-	ShowWindow(wnd, SW_SHOWNORMAL);
-	UpdateWindow(wnd);
+    ShowWindow(wnd, SW_SHOWNORMAL);
+    UpdateWindow(wnd);
 
-	//EnableWindow(hwnd, FALSE);
+    //EnableWindow(hwnd, FALSE);
 
-	while (GetMessageW(&msg, NULL, 0, 0))
-	{
-		TranslateMessage(&msg);
-		DispatchMessageW(&msg);
-	}
+    while (GetMessageW(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
 
-	//EnableWindow(hwnd, TRUE);
-	UnregisterClassW(classname, 0);
+    //EnableWindow(hwnd, TRUE);
+    UnregisterClassW(classname, 0);
 }

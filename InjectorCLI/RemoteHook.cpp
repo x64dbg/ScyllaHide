@@ -15,7 +15,7 @@ _DecodeType DecodingType = Decode64Bits;
 #ifdef _WIN64
 const int minDetourLen = 2 + sizeof(DWORD)+sizeof(DWORD_PTR); //8+4+2=14
 #else
-const int minDetourLen = sizeof(DWORD)+1;
+const int minDetourLen = sizeof(DWORD) + 1;
 #endif
 
 
@@ -76,67 +76,67 @@ void * FixWindowsRedirects(void * address)
 
 DWORD GetEcxSysCallIndex32(const BYTE * data, int dataSize)
 {
-	unsigned int DecodedInstructionsCount = 0;
-	_CodeInfo decomposerCi = {0};
-	_DInst decomposerResult[10] = {0};
+    unsigned int DecodedInstructionsCount = 0;
+    _CodeInfo decomposerCi = { 0 };
+    _DInst decomposerResult[10] = { 0 };
 
-	decomposerCi.code = data;
-	decomposerCi.codeLen = dataSize;
-	decomposerCi.dt = DecodingType;
-	decomposerCi.codeOffset = (LONG_PTR)data;
+    decomposerCi.code = data;
+    decomposerCi.codeLen = dataSize;
+    decomposerCi.dt = DecodingType;
+    decomposerCi.codeOffset = (LONG_PTR)data;
 
-	if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
-	{
-		if (decomposerResult[0].flags != FLAG_NOT_DECODABLE && decomposerResult[1].flags != FLAG_NOT_DECODABLE)
-		{
-			if (decomposerResult[0].opcode == I_MOV && decomposerResult[1].opcode == I_MOV)
-			{
-				if (decomposerResult[1].ops[0].index == R_ECX)
-				{
-					return decomposerResult[1].imm.dword;
-				}
-			}
-		}
-	}
+    if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
+    {
+        if (decomposerResult[0].flags != FLAG_NOT_DECODABLE && decomposerResult[1].flags != FLAG_NOT_DECODABLE)
+        {
+            if (decomposerResult[0].opcode == I_MOV && decomposerResult[1].opcode == I_MOV)
+            {
+                if (decomposerResult[1].ops[0].index == R_ECX)
+                {
+                    return decomposerResult[1].imm.dword;
+                }
+            }
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
 DWORD GetSysCallIndex32(const BYTE * data)
 {
-	unsigned int DecodedInstructionsCount = 0;
-	_CodeInfo decomposerCi = {0};
-	_DInst decomposerResult[1] = {0};
+    unsigned int DecodedInstructionsCount = 0;
+    _CodeInfo decomposerCi = { 0 };
+    _DInst decomposerResult[1] = { 0 };
 
-	decomposerCi.code = data;
-	decomposerCi.codeLen = MAXIMUM_INSTRUCTION_SIZE;
-	decomposerCi.dt = DecodingType;
-	decomposerCi.codeOffset = (LONG_PTR)data;
+    decomposerCi.code = data;
+    decomposerCi.codeLen = MAXIMUM_INSTRUCTION_SIZE;
+    decomposerCi.dt = DecodingType;
+    decomposerCi.codeOffset = (LONG_PTR)data;
 
-	if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
-	{
-		if (decomposerResult[0].flags != FLAG_NOT_DECODABLE)
-		{
-			if (decomposerResult[0].opcode == I_MOV)
-			{
-				return decomposerResult[0].imm.dword;
-			}
-			else
-			{
-				MessageBoxA(0, "Distorm opcode no I_MOV", "Distorm ERROR", MB_ICONERROR);
-			}
-		}
-		else
-		{
-			MessageBoxA(0, "Distorm flags FLAG_NOT_DECODABLE", "Distorm ERROR", MB_ICONERROR);
-		}
-	}
-	else
-	{
-		MessageBoxA(0, "Distorm distorm_decompose error DECRES_INPUTERR", "Distorm ERROR", MB_ICONERROR);
-	}
+    if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
+    {
+        if (decomposerResult[0].flags != FLAG_NOT_DECODABLE)
+        {
+            if (decomposerResult[0].opcode == I_MOV)
+            {
+                return decomposerResult[0].imm.dword;
+            }
+            else
+            {
+                MessageBoxA(0, "Distorm opcode no I_MOV", "Distorm ERROR", MB_ICONERROR);
+            }
+        }
+        else
+        {
+            MessageBoxA(0, "Distorm flags FLAG_NOT_DECODABLE", "Distorm ERROR", MB_ICONERROR);
+        }
+    }
+    else
+    {
+        MessageBoxA(0, "Distorm distorm_decompose error DECRES_INPUTERR", "Distorm ERROR", MB_ICONERROR);
+    }
 
-	return 0;
+    return 0;
 }
 
 #ifndef _WIN64
@@ -209,7 +209,7 @@ DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
                             return callDestination;
                         }
                     }
-                    else if (decomposerResult[2].ops[0].type == O_REG) //CALL EDX 
+                    else if (decomposerResult[2].ops[0].type == O_REG) //CALL EDX
                     {
                         return decomposerResult[1].imm.dword;
                     }
@@ -226,63 +226,63 @@ DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
 
 #endif
 
-DWORD GetFunctionSizeRETN( BYTE * data, int dataSize )
+DWORD GetFunctionSizeRETN(BYTE * data, int dataSize)
 {
-	unsigned int DecodedInstructionsCount = 0;
-	_CodeInfo decomposerCi = {0};
-	_DInst decomposerResult[100] = {0};
+    unsigned int DecodedInstructionsCount = 0;
+    _CodeInfo decomposerCi = { 0 };
+    _DInst decomposerResult[100] = { 0 };
 
-	decomposerCi.code = data;
-	decomposerCi.codeLen = dataSize;
-	decomposerCi.dt = DecodingType;
-	decomposerCi.codeOffset = (LONG_PTR)data;
+    decomposerCi.code = data;
+    decomposerCi.codeLen = dataSize;
+    decomposerCi.dt = DecodingType;
+    decomposerCi.codeOffset = (LONG_PTR)data;
 
-	if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
-	{
-		for (unsigned int i = 0; i < DecodedInstructionsCount; i++) 
-		{
-			if (decomposerResult[i].flags != FLAG_NOT_DECODABLE)
-			{
-				if (decomposerResult[i].opcode == I_RET)
-				{
-					return (DWORD)(((DWORD_PTR)decomposerResult[i].addr + (DWORD_PTR)decomposerResult[i].size) - (DWORD_PTR)data);
-				}
-			}
-		}
+    if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
+    {
+        for (unsigned int i = 0; i < DecodedInstructionsCount; i++)
+        {
+            if (decomposerResult[i].flags != FLAG_NOT_DECODABLE)
+            {
+                if (decomposerResult[i].opcode == I_RET)
+                {
+                    return (DWORD)(((DWORD_PTR)decomposerResult[i].addr + (DWORD_PTR)decomposerResult[i].size) - (DWORD_PTR)data);
+                }
+            }
+        }
 
-	}
+    }
 
-	return 0;
+    return 0;
 }
 
-DWORD GetCallOffset(const BYTE * data, int dataSize, DWORD * callSize )
+DWORD GetCallOffset(const BYTE * data, int dataSize, DWORD * callSize)
 {
-	unsigned int DecodedInstructionsCount = 0;
-	_CodeInfo decomposerCi = {0};
-	_DInst decomposerResult[100] = {0};
+    unsigned int DecodedInstructionsCount = 0;
+    _CodeInfo decomposerCi = { 0 };
+    _DInst decomposerResult[100] = { 0 };
 
-	decomposerCi.code = data;
-	decomposerCi.codeLen = dataSize;
-	decomposerCi.dt = DecodingType;
-	decomposerCi.codeOffset = (LONG_PTR)data;
+    decomposerCi.code = data;
+    decomposerCi.codeLen = dataSize;
+    decomposerCi.dt = DecodingType;
+    decomposerCi.codeOffset = (LONG_PTR)data;
 
-	if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
-	{
-		for (unsigned int i = 0; i < DecodedInstructionsCount; i++) 
-		{
-			if (decomposerResult[i].flags != FLAG_NOT_DECODABLE)
-			{
-				if (decomposerResult[i].opcode == I_CALL || decomposerResult[i].opcode == I_CALL_FAR)
-				{
-					*callSize = decomposerResult[i].size;
-					return (DWORD)((DWORD_PTR)decomposerResult[i].addr - (DWORD_PTR)data);
-				}
-			}
-		}
+    if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
+    {
+        for (unsigned int i = 0; i < DecodedInstructionsCount; i++)
+        {
+            if (decomposerResult[i].flags != FLAG_NOT_DECODABLE)
+            {
+                if (decomposerResult[i].opcode == I_CALL || decomposerResult[i].opcode == I_CALL_FAR)
+                {
+                    *callSize = decomposerResult[i].size;
+                    return (DWORD)((DWORD_PTR)decomposerResult[i].addr - (DWORD_PTR)data);
+                }
+            }
+        }
 
-	}
+    }
 
-	return 0;
+    return 0;
 }
 
 #ifndef _WIN64
@@ -292,234 +292,234 @@ DWORD GetCallOffset(const BYTE * data, int dataSize, DWORD * callSize )
 BYTE sysWowSpecialJmp[7] = { 0 };
 DWORD sysWowSpecialJmpAddress = 0;
 
-void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp,unsigned long * backupSize)
+void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
 {
-	PBYTE trampoline = 0;
-	DWORD protect;
+    PBYTE trampoline = 0;
+    DWORD protect;
 
     // NtQueryInformationProcess on Windows 10 under sysWow64 has an irregular structure, this is a call at +4 or bytes from itself
     // Another case for Windows 10 is 'call $+5'
     bool bSpecialSyscallStructure = (originalBytes[5] == 0xE8 && (originalBytes[6] == 0x04 || originalBytes[6] == 0x00));
 
-	// We're "borrowing" another api's code as a template, the ret must match
-	if (bSpecialSyscallStructure)
-	{
-		//LogDebug("[ScyllaHide 0x33] NtQueryInformationProcess Windows 10 detected");
+    // We're "borrowing" another api's code as a template, the ret must match
+    if (bSpecialSyscallStructure)
+    {
+        //LogDebug("[ScyllaHide 0x33] NtQueryInformationProcess Windows 10 detected");
 
-		BYTE syscallAddressBytes[5];	// save syscall id eg. Mov eax, 0x19
-		
-		memcpy(syscallAddressBytes, originalBytes, sizeof(syscallAddressBytes));			// Copy the syscall id bytes
-		
-		//LogDebug(L"syscallAddressBytes: %x", syscallAddressBytes);
+        BYTE syscallAddressBytes[5];	// save syscall id eg. Mov eax, 0x19
 
-		// This is a "normal" function and both have a ret 14
-		DWORD ntQueryKey = (DWORD)GetProcAddress(GetModuleHandleA("ntdll"), "NtQueryKey");
+        memcpy(syscallAddressBytes, originalBytes, sizeof(syscallAddressBytes));			// Copy the syscall id bytes
 
-		//LogDebug(L"NtQueryKey address: %x", ntQueryKey);
+        //LogDebug(L"syscallAddressBytes: %x", syscallAddressBytes);
 
-		ReadProcessMemory(hProcess, (LPCVOID)ntQueryKey, &originalBytes, sizeof(originalBytes), 0);
-		ReadProcessMemory(hProcess, (LPCVOID)ntQueryKey, &changedBytes, sizeof(originalBytes), 0);
+        // This is a "normal" function and both have a ret 14
+        DWORD ntQueryKey = (DWORD)GetProcAddress(GetModuleHandleA("ntdll"), "NtQueryKey");
 
-		memcpy(originalBytes, syscallAddressBytes, sizeof(syscallAddressBytes));
-		memcpy(changedBytes, syscallAddressBytes, sizeof(syscallAddressBytes));
-	}
+        //LogDebug(L"NtQueryKey address: %x", ntQueryKey);
 
-	DWORD funcSize = GetFunctionSizeRETN(originalBytes, sizeof(originalBytes));
-	DWORD callSize = 0;
-	DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
-	
-	// if the bytes at sysWowSpecialJmpAddress != 0xEA then take our new code path
-	// Plugin is expecting something like this at sysWowSpecialJmpAddress: JMP FAR 0033:74E5271E ; Far jump
-	// But on Windows 10, we have this at that address
-	/*
-	CPU Disasm
-	77C9B4C0 syscalledx                          |.  64:8B15 30000000                       MOV EDX,FS:[30]						<<<< sysWowSpecialJmpAddress
-	77C9B4C7                                     |.  8B92 64040000                          MOV EDX,[EDX+464]
-	77C9B4CD                                     |.  F7C2 02000000                          TEST EDX,00000002
-	77C9B4D3                                     |.- 74 03                                  JZ SHORT 77C9B4D8
-	77C9B4D5                                     |.  CD 2E                                  INT 2E
-	77C9B4D7                                     |.  C3                                     RETN
-	77C9B4D8                                     \>  EA DFB4C977 3300                       JMP FAR 0033:77C9B4DF               <<<< Expects this
-	77C9B4DF                                     /.  41                                     INC ECX
-	77C9B4E0                                     \.  FFA7 F8000000                          JMP [EDI+0F8]
-	*/
+        ReadProcessMemory(hProcess, (LPCVOID)ntQueryKey, &originalBytes, sizeof(originalBytes), 0);
+        ReadProcessMemory(hProcess, (LPCVOID)ntQueryKey, &changedBytes, sizeof(originalBytes), 0);
 
-	sysWowSpecialJmpAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
+        memcpy(originalBytes, syscallAddressBytes, sizeof(syscallAddressBytes));
+        memcpy(changedBytes, syscallAddressBytes, sizeof(syscallAddressBytes));
+    }
 
-	// Windows 8.1 Gateway is just a JMP FAR 0033:77C9B4DF
-	// Windows 10 Gateway has extra code before the JMP FAR
+    DWORD funcSize = GetFunctionSizeRETN(originalBytes, sizeof(originalBytes));
+    DWORD callSize = 0;
+    DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
+
+    // if the bytes at sysWowSpecialJmpAddress != 0xEA then take our new code path
+    // Plugin is expecting something like this at sysWowSpecialJmpAddress: JMP FAR 0033:74E5271E ; Far jump
+    // But on Windows 10, we have this at that address
+    /*
+    CPU Disasm
+    77C9B4C0 syscalledx                          |.  64:8B15 30000000                       MOV EDX,FS:[30]						<<<< sysWowSpecialJmpAddress
+    77C9B4C7                                     |.  8B92 64040000                          MOV EDX,[EDX+464]
+    77C9B4CD                                     |.  F7C2 02000000                          TEST EDX,00000002
+    77C9B4D3                                     |.- 74 03                                  JZ SHORT 77C9B4D8
+    77C9B4D5                                     |.  CD 2E                                  INT 2E
+    77C9B4D7                                     |.  C3                                     RETN
+    77C9B4D8                                     \>  EA DFB4C977 3300                       JMP FAR 0033:77C9B4DF               <<<< Expects this
+    77C9B4DF                                     /.  41                                     INC ECX
+    77C9B4E0                                     \.  FFA7 F8000000                          JMP [EDI+0F8]
+    */
+
+    sysWowSpecialJmpAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
+
+    // Windows 8.1 Gateway is just a JMP FAR 0033:77C9B4DF
+    // Windows 10 Gateway has extra code before the JMP FAR
     // And some Windows 10 has JMP DS:_Wow64Transition
-	// The code below adjusts the sysWowSpecialJmpAddress for windows 10
+    // The code below adjusts the sysWowSpecialJmpAddress for windows 10
     if ((*(BYTE*)sysWowSpecialJmpAddress != 0xEA) && (*(BYTE*)sysWowSpecialJmpAddress != 0xFF))
-	{
-		//LogDebug("[ScyllaHide 0x33] Adjusting address for Windows 10 gateway ");
+    {
+        //LogDebug("[ScyllaHide 0x33] Adjusting address for Windows 10 gateway ");
 
-		// Windows 10 specific
-		BYTE sysWowGatewayOriginalBytes[100] = { 0 };
+        // Windows 10 specific
+        BYTE sysWowGatewayOriginalBytes[100] = { 0 };
 
-		ReadProcessMemory(hProcess, (LPCVOID)sysWowSpecialJmpAddress, &sysWowGatewayOriginalBytes, sizeof(sysWowGatewayOriginalBytes), 0);
+        ReadProcessMemory(hProcess, (LPCVOID)sysWowSpecialJmpAddress, &sysWowGatewayOriginalBytes, sizeof(sysWowGatewayOriginalBytes), 0);
 
-		DWORD sysWowGatewayFuncSize = GetFunctionSizeRETN(sysWowGatewayOriginalBytes, sizeof(sysWowGatewayOriginalBytes));
-		DWORD pActualSysWowSpecialJmpAddress = (sysWowSpecialJmpAddress + sysWowGatewayFuncSize);
-		
-		if (*(BYTE*)pActualSysWowSpecialJmpAddress != 0xEA)
-		{
-			// 0xEA == JMP FAR 0033:XXXXXXXXXX
-			MessageBoxA(0, "Windows 10 SysWowSpecialJmpAddress was not found!", "Error", MB_OK);
-		}
-		
-		sysWowSpecialJmpAddress = pActualSysWowSpecialJmpAddress;
-	}
+        DWORD sysWowGatewayFuncSize = GetFunctionSizeRETN(sysWowGatewayOriginalBytes, sizeof(sysWowGatewayOriginalBytes));
+        DWORD pActualSysWowSpecialJmpAddress = (sysWowSpecialJmpAddress + sysWowGatewayFuncSize);
 
-	if (onceNativeCallContinue == false)
-	{
-		ReadProcessMemory(hProcess, (void*)sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0);
-		NativeCallContinue = VirtualAllocEx(hProcess, 0, sizeof(sysWowSpecialJmp), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-		if (!WriteProcessMemory(hProcess, NativeCallContinue, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0))
-		{
-			MessageBoxA(0, "Failed to write NativeCallContinue routine", "Error", MB_ICONERROR);
-		}
-	}
+        if (*(BYTE*)pActualSysWowSpecialJmpAddress != 0xEA)
+        {
+            // 0xEA == JMP FAR 0033:XXXXXXXXXX
+            MessageBoxA(0, "Windows 10 SysWowSpecialJmpAddress was not found!", "Error", MB_OK);
+        }
 
-	if (funcSize && createTramp)
-	{
-		trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, sizeof(changedBytes), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-		if (!trampoline)
-			return 0;
+        sysWowSpecialJmpAddress = pActualSysWowSpecialJmpAddress;
+    }
 
-		changedBytes[callOffset] = 0x68; //PUSH
-		*((DWORD*)&changedBytes[callOffset+1]) = ((DWORD)trampoline+(DWORD)callOffset+5+7);
-		memcpy(changedBytes + callOffset + 5, sysWowSpecialJmp, sizeof(sysWowSpecialJmp));
+    if (onceNativeCallContinue == false)
+    {
+        ReadProcessMemory(hProcess, (void*)sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0);
+        NativeCallContinue = VirtualAllocEx(hProcess, 0, sizeof(sysWowSpecialJmp), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+        if (!WriteProcessMemory(hProcess, NativeCallContinue, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0))
+        {
+            MessageBoxA(0, "Failed to write NativeCallContinue routine", "Error", MB_ICONERROR);
+        }
+    }
 
-		memcpy(changedBytes + callOffset + 5 + sizeof(sysWowSpecialJmp), originalBytes + callOffset + callSize, funcSize - callOffset - callSize);
+    if (funcSize && createTramp)
+    {
+        trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, sizeof(changedBytes), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+        if (!trampoline)
+            return 0;
 
-		WriteProcessMemory(hProcess, trampoline, changedBytes, sizeof(changedBytes), 0);
-	}
+        changedBytes[callOffset] = 0x68; //PUSH
+        *((DWORD*)&changedBytes[callOffset + 1]) = ((DWORD)trampoline + (DWORD)callOffset + 5 + 7);
+        memcpy(changedBytes + callOffset + 5, sysWowSpecialJmp, sizeof(sysWowSpecialJmp));
 
-	if (onceNativeCallContinue == false)
-	{
-		if (VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, PAGE_EXECUTE_READWRITE, &protect))
-		{
-			ZeroMemory(tempSpace, sizeof(tempSpace));
-			WriteJumper((PBYTE)sysWowSpecialJmpAddress, (PBYTE)HookedNativeCallInternal, tempSpace);
-			if (!WriteProcessMemory(hProcess, (void *)sysWowSpecialJmpAddress, tempSpace, minDetourLen, 0))
-			{
-				MessageBoxA(0, "Failed to write new WOW64 gateway", "Error", MB_ICONERROR);
-			}
+        memcpy(changedBytes + callOffset + 5 + sizeof(sysWowSpecialJmp), originalBytes + callOffset + callSize, funcSize - callOffset - callSize);
 
-			VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, protect, &protect);
-			FlushInstructionCache(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen);
-		}
-		else
-		{
-			MessageBoxA(0, "Failed to unprotect WOW64 gateway", "Error", MB_ICONERROR);
-		}
-		onceNativeCallContinue = true;
-	}
+        WriteProcessMemory(hProcess, trampoline, changedBytes, sizeof(changedBytes), 0);
+    }
 
-	return trampoline;
+    if (onceNativeCallContinue == false)
+    {
+        if (VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, PAGE_EXECUTE_READWRITE, &protect))
+        {
+            ZeroMemory(tempSpace, sizeof(tempSpace));
+            WriteJumper((PBYTE)sysWowSpecialJmpAddress, (PBYTE)HookedNativeCallInternal, tempSpace);
+            if (!WriteProcessMemory(hProcess, (void *)sysWowSpecialJmpAddress, tempSpace, minDetourLen, 0))
+            {
+                MessageBoxA(0, "Failed to write new WOW64 gateway", "Error", MB_ICONERROR);
+            }
+
+            VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, protect, &protect);
+            FlushInstructionCache(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen);
+        }
+        else
+        {
+            MessageBoxA(0, "Failed to unprotect WOW64 gateway", "Error", MB_ICONERROR);
+        }
+        onceNativeCallContinue = true;
+    }
+
+    return trampoline;
 }
 #endif
 
 //7C91E4F0 ntdll.KiFastSystemCall  EB F9   JMP 7C91E4EB
 
-BYTE KiSystemCallJmpPatch[] = {0xE9, 0x00, 0x00, 0x00, 0x00, 0xEB, 0xF9};
-BYTE KiSystemCallBackup[20] = {0};
+BYTE KiSystemCallJmpPatch[] = { 0xE9, 0x00, 0x00, 0x00, 0x00, 0xEB, 0xF9 };
+BYTE KiSystemCallBackup[20] = { 0 };
 DWORD KiSystemCallAddress = 0;
 DWORD KiSystemCallBackupSize = 0;
 #ifndef _WIN64
-void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp,unsigned long * backupSize)
+void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
 {
-	PBYTE trampoline = 0;
-	DWORD protect;
+    PBYTE trampoline = 0;
+    DWORD protect;
 
-	DWORD funcSize = GetFunctionSizeRETN(originalBytes, sizeof(originalBytes));
+    DWORD funcSize = GetFunctionSizeRETN(originalBytes, sizeof(originalBytes));
 
-	DWORD callSize = 0;
-	DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
-	KiSystemCallAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
+    DWORD callSize = 0;
+    DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
+    KiSystemCallAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
 
-	if (onceNativeCallContinue == false)
-	{
-		ReadProcessMemory(hProcess, (void*)KiSystemCallAddress, KiSystemCallBackup, sizeof(KiSystemCallBackup), 0);
-		KiSystemCallBackupSize = GetFunctionSizeRETN(KiSystemCallBackup, sizeof(KiSystemCallBackup));
-		if (KiSystemCallBackupSize)
-		{
-			NativeCallContinue = VirtualAllocEx(hProcess, 0, KiSystemCallBackupSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-			if (NativeCallContinue)
-			{
-				WriteProcessMemory(hProcess, NativeCallContinue, KiSystemCallBackup, KiSystemCallBackupSize, 0);
-			}
-			else
-			{
-				MessageBoxA(0, "DetourCreateRemoteNative32Normal -> NativeCallContinue", "ERROR", MB_ICONERROR);
-			}
-		}
-		else
-		{
-			MessageBoxA(0, "DetourCreateRemoteNative32Normal -> KiSystemCallBackupSize", "ERROR", MB_ICONERROR);
-		}
-	}
+    if (onceNativeCallContinue == false)
+    {
+        ReadProcessMemory(hProcess, (void*)KiSystemCallAddress, KiSystemCallBackup, sizeof(KiSystemCallBackup), 0);
+        KiSystemCallBackupSize = GetFunctionSizeRETN(KiSystemCallBackup, sizeof(KiSystemCallBackup));
+        if (KiSystemCallBackupSize)
+        {
+            NativeCallContinue = VirtualAllocEx(hProcess, 0, KiSystemCallBackupSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+            if (NativeCallContinue)
+            {
+                WriteProcessMemory(hProcess, NativeCallContinue, KiSystemCallBackup, KiSystemCallBackupSize, 0);
+            }
+            else
+            {
+                MessageBoxA(0, "DetourCreateRemoteNative32Normal -> NativeCallContinue", "ERROR", MB_ICONERROR);
+            }
+        }
+        else
+        {
+            MessageBoxA(0, "DetourCreateRemoteNative32Normal -> KiSystemCallBackupSize", "ERROR", MB_ICONERROR);
+        }
+    }
 
-	if (funcSize && createTramp)
-	{
-		trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, sizeof(changedBytes), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-		if (!trampoline)
-			return 0;
+    if (funcSize && createTramp)
+    {
+        trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, sizeof(changedBytes), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+        if (!trampoline)
+            return 0;
 
-		changedBytes[callOffset] = 0x68; //PUSH
-		*((DWORD*)&changedBytes[callOffset+1]) = ((DWORD)trampoline+(DWORD)callOffset+5+KiSystemCallBackupSize);
-		memcpy(changedBytes + callOffset + 5, KiSystemCallBackup, KiSystemCallBackupSize);
+        changedBytes[callOffset] = 0x68; //PUSH
+        *((DWORD*)&changedBytes[callOffset + 1]) = ((DWORD)trampoline + (DWORD)callOffset + 5 + KiSystemCallBackupSize);
+        memcpy(changedBytes + callOffset + 5, KiSystemCallBackup, KiSystemCallBackupSize);
 
-		memcpy(changedBytes + callOffset + 5 + KiSystemCallBackupSize, originalBytes + callOffset + callSize, funcSize - callOffset - callSize);
+        memcpy(changedBytes + callOffset + 5 + KiSystemCallBackupSize, originalBytes + callOffset + callSize, funcSize - callOffset - callSize);
 
-		WriteProcessMemory(hProcess, trampoline, changedBytes, sizeof(changedBytes), 0);
-	}
+        WriteProcessMemory(hProcess, trampoline, changedBytes, sizeof(changedBytes), 0);
+    }
 
-	if (onceNativeCallContinue == false)
-	{
-		DWORD_PTR patchAddr = (DWORD_PTR)KiSystemCallAddress - 5;
+    if (onceNativeCallContinue == false)
+    {
+        DWORD_PTR patchAddr = (DWORD_PTR)KiSystemCallAddress - 5;
 
-		if (VirtualProtectEx(hProcess, (void *)patchAddr, 5+2, PAGE_EXECUTE_READWRITE, &protect))
-		{
+        if (VirtualProtectEx(hProcess, (void *)patchAddr, 5 + 2, PAGE_EXECUTE_READWRITE, &protect))
+        {
 
-			WriteJumper((PBYTE)patchAddr, (PBYTE)HookedNativeCallInternal, KiSystemCallJmpPatch);
-			WriteProcessMemory(hProcess, (void *)patchAddr, KiSystemCallJmpPatch, 5+2, 0);
+            WriteJumper((PBYTE)patchAddr, (PBYTE)HookedNativeCallInternal, KiSystemCallJmpPatch);
+            WriteProcessMemory(hProcess, (void *)patchAddr, KiSystemCallJmpPatch, 5 + 2, 0);
 
-			VirtualProtectEx(hProcess, (void *)patchAddr, 5+2, protect, &protect);
-			FlushInstructionCache(hProcess, (void *)patchAddr, 5+2);
-		}
-		onceNativeCallContinue = true;
-	}
+            VirtualProtectEx(hProcess, (void *)patchAddr, 5 + 2, protect, &protect);
+            FlushInstructionCache(hProcess, (void *)patchAddr, 5 + 2);
+        }
+        onceNativeCallContinue = true;
+    }
 
-	return trampoline;
+    return trampoline;
 }
 #endif
 #ifndef _WIN64
-void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp,unsigned long * backupSize)
+void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
 {
-	memset(changedBytes, 0x90, sizeof(changedBytes));
-	memset(originalBytes, 0x90, sizeof(originalBytes));
-	memset(tempSpace, 0x90, sizeof(tempSpace));
+    memset(changedBytes, 0x90, sizeof(changedBytes));
+    memset(originalBytes, 0x90, sizeof(originalBytes));
+    memset(tempSpace, 0x90, sizeof(tempSpace));
 
-	if (!ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), 0))
-	{
-		MessageBoxA(0, "DetourCreateRemoteNative32->ReadProcessMemory failed", "ERROR", MB_ICONERROR);
+    if (!ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), 0))
+    {
+        MessageBoxA(0, "DetourCreateRemoteNative32->ReadProcessMemory failed", "ERROR", MB_ICONERROR);
         return NULL;
-	}
+    }
 
-	memcpy(changedBytes, originalBytes, sizeof(originalBytes));
+    memcpy(changedBytes, originalBytes, sizeof(originalBytes));
 
-	DWORD sysCallIndex = GetSysCallIndex32(originalBytes);
+    DWORD sysCallIndex = GetSysCallIndex32(originalBytes);
 
-	PVOID result = 0;
+    PVOID result = 0;
 
     if (!sysCallIndex)
     {
         MessageBoxA(0, "GetSysCallIndex32 -> sysCallIndex not found", "ERROR", MB_ICONERROR);
         return NULL;
     }
-		
+
     HookNative[countNativeHooks].eaxValue = sysCallIndex;
     HookNative[countNativeHooks].ecxValue = 0;
     HookNative[countNativeHooks].hookedFunction = lpFuncDetour;
@@ -527,7 +527,8 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
     if (!Scylla::IsWow64Process(hProcess))
     {
         result = DetourCreateRemoteNative32Normal(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
-    } else
+    }
+    else
     {
         HookNative[countNativeHooks].ecxValue = GetEcxSysCallIndex32(originalBytes, sizeof(originalBytes));
         result = DetourCreateRemoteNativeSysWow64(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
@@ -554,7 +555,7 @@ void * DetourCreateRemote(void * hProcess, void * lpFuncOrig, void * lpFuncDetou
 
     if (createTramp)
     {
-		*backupSize = detourLen;
+        *backupSize = detourLen;
 
         trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, detourLen + minDetourLen, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
         if (!trampoline)
@@ -649,8 +650,8 @@ int GetDetourLen(const void * lpStart, const int minSize)
     while (totalLen < minSize)
     {
         len = (int)LengthDisassemble((void *)lpDataPos);
-		if (len < 1) //len < 1 will cause infinite loops
-			len = 1;
+        if (len < 1) //len < 1 will cause infinite loops
+            len = 1;
         lpDataPos += len;
         totalLen += len;
     }
@@ -660,22 +661,22 @@ int GetDetourLen(const void * lpStart, const int minSize)
 
 int LengthDisassemble(LPVOID DisassmAddress)
 {
-	unsigned int DecodedInstructionsCount = 0;
-	_CodeInfo decomposerCi = {0};
-	_DInst decomposerResult[1] = {0};
+    unsigned int DecodedInstructionsCount = 0;
+    _CodeInfo decomposerCi = { 0 };
+    _DInst decomposerResult[1] = { 0 };
 
-	decomposerCi.code = (BYTE *)DisassmAddress;
-	decomposerCi.codeLen = MAXIMUM_INSTRUCTION_SIZE;
-	decomposerCi.dt = DecodingType;
-	decomposerCi.codeOffset = (LONG_PTR)DisassmAddress;
+    decomposerCi.code = (BYTE *)DisassmAddress;
+    decomposerCi.codeLen = MAXIMUM_INSTRUCTION_SIZE;
+    decomposerCi.dt = DecodingType;
+    decomposerCi.codeOffset = (LONG_PTR)DisassmAddress;
 
-	if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
-	{
-		if (decomposerResult[0].flags != FLAG_NOT_DECODABLE)
-		{
-			return decomposerResult[0].size;
-		}
-	}
+    if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
+    {
+        if (decomposerResult[0].flags != FLAG_NOT_DECODABLE)
+        {
+            return decomposerResult[0].size;
+        }
+    }
 
-	return -1; //this is dangerous
+    return -1; //this is dangerous
 }
