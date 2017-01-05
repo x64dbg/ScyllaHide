@@ -37,7 +37,6 @@ bool SetDebugPrivileges();
 
 Scylla::Settings g_settings;
 
-const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 const WCHAR ScyllaHidex64ServerFilename[] = L"ScyllaHideIDASrvx64.exe";
@@ -80,7 +79,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
             wcscpy(ScyllaHideIniPath, NtApiIniPath);
-            wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
+            wcscat(ScyllaHideIniPath, Scylla::Settings::kFileName);
             wcscpy(ScyllaHidex64ServerPath, NtApiIniPath);
             wcscat(ScyllaHidex64ServerPath, ScyllaHidex64ServerFilename);
             wcscat(NtApiIniPath, NtApiIniFilename);

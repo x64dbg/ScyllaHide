@@ -71,6 +71,8 @@ namespace Scylla
             int handleExceptionGuardPageViolation;
         };
 
+        static const wchar_t kFileName[];
+
         void Load(const wchar_t *ini_file);
         bool AddProfile(const wchar_t *name);
         void SetProfile(const wchar_t *name);

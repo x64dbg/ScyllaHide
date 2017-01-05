@@ -3,6 +3,7 @@
 #include <TlHelp32.h>
 #include <cstdio>
 #include <cstring>
+#include <Scylla/Settings.h>
 #include <Scylla/Util.h>
 
 #include "DynamicMapping.h"
@@ -12,7 +13,6 @@
 #include "ApplyHooking.h"
 #include "ReadNtConfig.h"
 
-const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 #define INI_APPNAME L"SCYLLA_HIDE"
 
@@ -49,7 +49,7 @@ int wmain(int argc, wchar_t* argv[])
     temp++;
     *temp = 0;
     wcscpy(ScyllaHideIniPath, NtApiIniPath);
-    wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
+    wcscat(ScyllaHideIniPath, Scylla::Settings::kFileName);
     wcscat(NtApiIniPath, NtApiIniFilename);
 
     ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);

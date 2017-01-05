@@ -37,7 +37,6 @@ const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
-const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 
 WCHAR ScyllaHideDllPath[MAX_PATH] = { 0 };
 WCHAR NtApiIniPath[MAX_PATH] = { 0 };
@@ -283,7 +282,7 @@ extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
             wcscpy(ScyllaHideIniPath, NtApiIniPath);
-            wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
+            wcscat(ScyllaHideIniPath, Scylla::Settings::kFileName);
             wcscat(NtApiIniPath, NtApiIniFilename);
         }
 

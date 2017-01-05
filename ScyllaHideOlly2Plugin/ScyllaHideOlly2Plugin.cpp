@@ -25,7 +25,6 @@ void AttachProcess(DWORD dwPID);
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
-const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
@@ -199,7 +198,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
             wcscpy(ScyllaHideIniPath, NtApiIniPath);
-            wcscat(ScyllaHideIniPath, ScyllaHideIniFilename);
+            wcscat(ScyllaHideIniPath, Scylla::Settings::kFileName);
             wcscat(NtApiIniPath, NtApiIniFilename);
         }
 

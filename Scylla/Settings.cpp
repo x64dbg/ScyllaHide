@@ -8,6 +8,8 @@
 #define SCYLLA_HIDE_SETTINGS_CURRENT_PROFILE_KEY    L"CurrentProfile"
 #define SCYLLA_HIDE_SETTINGS_DEFAULT_PROFILE        L"SCYLLA_HIDE"
 
+const wchar_t Scylla::Settings::kFileName[] = L"scylla_hide.ini";
+
 void Scylla::Settings::Load(const wchar_t *ini_path)
 {
     ini_path_ = ini_path;
