@@ -6,7 +6,8 @@
 
 #include "resource.h"
 
-extern Scylla::HideSettings g_hideSettings;
+extern Scylla::Settings g_settings;
+
 extern HINSTANCE hinst;
 extern LPVOID ImageBase;
 extern DWORD ProcessId;
@@ -223,12 +224,12 @@ void __declspec(naked) handleBreakpoints()
 {
     _asm { pushad };
 
-    if (g_hideSettings.removeEPBreak)
+    if (g_settings.opts().removeEPBreak)
     {
         CreateThread(NULL, NULL, removeEPBreak, NULL, NULL, NULL);
     }
 
-    if (g_hideSettings.breakTLS)
+    if (g_settings.opts().breakTLS)
     {
         ReadTlsAndSetBreakpoints(ProcessId, (LPVOID)ImageBase);
     }
@@ -627,11 +628,11 @@ void skipCompressedCode()
     BYTE patch[] = {0x83,0xC4,0x10,0x90,0x90}; //add esp,10;nop;nop
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &patch, sizeof(patch), NULL);
 
-    if (g_hideSettings.skipCompressedDoAnalyze) {
+    if (g_settings.opts().skipCompressedDoAnalyze) {
         BYTE jmp[] = {0xEB};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+10), &jmp, sizeof(jmp), NULL);
     }
-    else if (g_hideSettings.skipCompressedDoNothing) {
+    else if (g_settings.opts().skipCompressedDoNothing) {
         BYTE zero[] = {0x00};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+11), &zero, sizeof(zero), NULL);
     }
@@ -646,11 +647,11 @@ void skipLoadDll()
     BYTE patch[] = {0x83,0xC4,0x10,0x90,0x90}; //add esp,10;nop;nop
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &patch, sizeof(patch), NULL);
 
-    if (g_hideSettings.skipLoadDllDoLoad) {
+    if (g_settings.opts().skipLoadDllDoLoad) {
         BYTE jmp[] = {0xEB};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+8), &jmp, sizeof(jmp), NULL);
     }
-    else if (g_hideSettings.skipLoadDllDoNothing) {
+    else if (g_settings.opts().skipLoadDllDoNothing) {
         BYTE zero[] = {0x00};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+9), &zero, sizeof(zero), NULL);
     }
@@ -736,7 +737,7 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     if((message == WM_LBUTTONUP ||
             ((message == WM_LBUTTONDOWN || WM_MOUSEMOVE) && wParam == MK_LBUTTON)) &&
-            g_hideSettings.advancedInfobar
+            g_settings.opts().advancedInfobar
       )  {
         DWORD startAddr = dump->sel0;
         DWORD endAddr = dump->sel1;
@@ -745,7 +746,7 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         char modName[20] = "unknown";
         char sectName[20] = "unknown";
-        if(module != NULL) 
+        if(module != NULL)
 		{
 			ZeroMemory(modName, sizeof(modName));
             strncpy(modName, module->name, SHORTLEN);
@@ -774,7 +775,7 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					_Dumpbackup(dump, BKUP_CREATE);
 				}
-			
+
 				memsetRemoteMemory(startAddr, endAddr, 0x90);
 
         break;

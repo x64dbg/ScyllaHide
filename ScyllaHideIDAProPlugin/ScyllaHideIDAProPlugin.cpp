@@ -35,9 +35,7 @@ void __cdecl AttachProcess(DWORD dwPID);
 int idaapi debug_mainloop(void *user_data, int notif_code, va_list va);
 bool SetDebugPrivileges();
 
-std::vector<std::wstring> g_hideProfileNames;
-std::wstring g_hideProfileName;
-Scylla::HideSettings g_hideSettings;
+Scylla::Settings g_settings;
 
 const WCHAR ScyllaHideIniFilename[] = L"scylla_hide.ini";
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
@@ -90,8 +88,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 
         SetDebugPrivileges();
 
-        g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
-        Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
+        g_settings.Load(ScyllaHideIniPath);
 
         if (!StartWinsock())
         {
@@ -125,9 +122,6 @@ int idaapi IDAP_init(void)
     ProcessId = 0;
     ZeroMemory(&ServerStartupInfo, sizeof(ServerStartupInfo));
     ZeroMemory(&ServerProcessInfo, sizeof(ServerProcessInfo));
-
-    //read profile names
-    g_hideProfileNames = Scylla::LoadHideProfileNames(ScyllaHideIniPath);
 
     return PLUGIN_KEEP;
 }
@@ -183,7 +177,7 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                 qstring hoststring;
                 char host[200] = {0};
                 char port[6] = {0};
-                wcstombs(port, g_hideSettings.serverPort.c_str(), _countof(port));
+                wcstombs(port, g_settings.opts().serverPort.c_str(), _countof(port));
 
                 get_process_options(NULL, NULL, NULL, &hoststring, NULL, NULL);
                 GetHost((char*)hoststring.c_str(), host);

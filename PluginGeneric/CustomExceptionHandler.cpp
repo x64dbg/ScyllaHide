@@ -11,7 +11,7 @@ typedef bool (__cdecl * t_IsAddressBreakpoint)(DWORD_PTR address);
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 extern t_LogWrapper LogWrap;
 
-extern Scylla::HideSettings g_hideSettings;
+extern Scylla::Settings g_settings;
 
 char OutputDebugStringBuffer[500] = {0};
 
@@ -38,7 +38,7 @@ void handleOutputDebugString( LPDEBUG_EVENT lpDebugEvent )
 				LogWrap(L"[ScyllaHide] Debug String is too long: %d", lpDebugEvent->u.DebugString.nDebugStringLength);
 			}
 			CloseHandle(hProcess);
-		}		
+		}
 	}
 	else
 	{
@@ -70,14 +70,14 @@ void handleRipEvent( LPDEBUG_EVENT lpDebugEvent )
 	{
 		LogWrap(L"[ScyllaHide] RIP Exception: Error 0x%X Type SLE_WARNING", lpDebugEvent->u.RipInfo.dwError);
 	}
-	
+
 }
 
 DWORD_PTR hNtdll = 0;
 DWORD_PTR hKernel = 0;
 
 bool IsNotInsideKernelOrNtdll( DWORD dwProcessId, DWORD_PTR address )
-{	
+{
 	PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)hNtdll;
 	PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
 
@@ -104,39 +104,39 @@ bool IsNotInsideKernelOrNtdll( DWORD dwProcessId, DWORD_PTR address )
 
 bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 {
-    if (g_hideSettings.handleExceptionPrint != 0 && lpDebugEvent->dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
+    if (g_settings.opts().handleExceptionPrint != 0 && lpDebugEvent->dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
 	{
 		handleOutputDebugString(lpDebugEvent);
 		return true;
 	}
-    else if (g_hideSettings.handleExceptionRip != 0 && lpDebugEvent->dwDebugEventCode == RIP_EVENT)
+    else if (g_settings.opts().handleExceptionRip != 0 && lpDebugEvent->dwDebugEventCode == RIP_EVENT)
 	{
 		handleRipEvent(lpDebugEvent);
 		return true;
 	}
 	else if (lpDebugEvent->dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
 	{
-        if (g_hideSettings.handleExceptionIllegalInstruction != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ILLEGAL_INSTRUCTION)
+        if (g_settings.opts().handleExceptionIllegalInstruction != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ILLEGAL_INSTRUCTION)
 		{
 			LogWrap(L"[ScyllaHide] Illegal Instruction %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
-        else if (g_hideSettings.handleExceptionInvalidLockSequence != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_INVALID_LOCK_SEQUENCE)
+        else if (g_settings.opts().handleExceptionInvalidLockSequence != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_INVALID_LOCK_SEQUENCE)
 		{
 			LogWrap(L"[ScyllaHide] Invalid Lock Sequence %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
-        else if (g_hideSettings.handleExceptionNoncontinuableException != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
+        else if (g_settings.opts().handleExceptionNoncontinuableException != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
 		{
 			LogWrap(L"[ScyllaHide] Non-continuable Exception %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
-        else if (g_hideSettings.handleExceptionAssertionFailure != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ASSERTION_FAILURE)
+        else if (g_settings.opts().handleExceptionAssertionFailure != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ASSERTION_FAILURE)
 		{
 			LogWrap(L"[ScyllaHide] Assertion Failure %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
-        else if (g_hideSettings.handleExceptionBreakpoint != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT)
+        else if (g_settings.opts().handleExceptionBreakpoint != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT)
 		{
 			if (_IsAddressBreakpoint((DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress) == false)
 			{
@@ -148,7 +148,7 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 				}
 			}
 		}
-        else if (g_hideSettings.handleExceptionWx86Breakpoint != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_WX86_BREAKPOINT)
+        else if (g_settings.opts().handleExceptionWx86Breakpoint != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_WX86_BREAKPOINT)
 		{
 			if (_IsAddressBreakpoint((DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress) == false)
 			{
@@ -160,7 +160,7 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 				}
 			}
 		}
-        else if (g_hideSettings.handleExceptionGuardPageViolation != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_GUARD_PAGE_VIOLATION)
+        else if (g_settings.opts().handleExceptionGuardPageViolation != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_GUARD_PAGE_VIOLATION)
 		{
 			LogWrap(L"[ScyllaHide] Guard Page Violation %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;

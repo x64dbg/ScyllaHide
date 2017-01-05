@@ -13,9 +13,7 @@
 
 #pragma comment(lib, "ollydbg2\\ollydbg.lib")
 
-std::vector<std::wstring> g_hideProfileNames;
-std::wstring g_hideProfileName;
-Scylla::HideSettings g_hideSettings;
+Scylla::Settings g_settings;
 
 typedef int (__cdecl * t_Attachtoactiveprocess)(int newprocessid);
 #define OLLY201_Attachtoactiveprocess_VA 0x44B108
@@ -63,15 +61,14 @@ static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
 static int Mprofiles(t_table *pt,wchar_t *name,ulong index,int mode)
 {
     if (mode==MENU_VERIFY) {
-        if (name == g_hideProfileName)
+        if (name == g_settings.profile_name())
             return MENU_CHECKED;
 
         return MENU_NORMAL;
     }
     else if (mode==MENU_EXECUTE)
     {
-        g_hideProfileName = g_hideProfileNames[index];
-        Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
+        g_settings.SetProfile(g_settings.profile_names()[index].c_str());
 
         if (ProcessId)
         {
@@ -226,17 +223,16 @@ extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginnam
 //initialization happens in here
 extc int __cdecl ODBG2_Plugininit(void)
 {
-    g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
-    Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
+    g_settings.Load(ScyllaHideIniPath);
 
     Addtolist(0,0,L"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_W);
     Addtolist(0,2,L"  Copyright (C) 2014 Aguila / cypher");
     Addtolist(0,2,L"  Operating System: %S", Scylla::GetWindowsVersionNameA());
 
     //change olly caption
-    SetWindowTextW(hwollymain, g_hideSettings.ollyTitle.c_str());
+    SetWindowTextW(hwollymain, g_settings.opts().ollyTitle.c_str());
 
-    if (g_hideSettings.killAntiAttach) {
+    if (g_settings.opts().killAntiAttach) {
         InstallAntiAttachHook();
     }
 
@@ -247,15 +243,15 @@ extc int __cdecl ODBG2_Plugininit(void)
 extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
 {
     if (wcscmp(type,PWM_MAIN)==0) {
-        //add profiles to menu
-        g_hideProfileNames = Scylla::LoadHideProfileNames(ScyllaHideIniPath);
-
-        for (size_t i = 0; i < g_hideProfileNames.size(); i++)
+        // add profiles to menu
+        for (size_t i = 0; i < g_settings.profile_names().size(); i++)
         {
-            profilemenu[i] = { &g_hideProfileNames[i][0], &g_hideProfileNames[i][0], K_NONE, Mprofiles, NULL, { i } };
+            profilemenu[i] = {
+                (wchar_t *)&g_settings.profile_names()[i][0], (wchar_t *)&g_settings.profile_names()[i][0], K_NONE, Mprofiles, NULL, { i }
+            };
         }
         t_menu menu_end = {NULL, NULL, K_NONE, NULL, NULL, 0};
-        profilemenu[g_hideProfileNames.size()] = menu_end;
+        profilemenu[g_settings.profile_names().size()] = menu_end;
 
         return mainmenu;
     }
@@ -273,7 +269,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         return;
 
 
-    if (g_hideSettings.PEBHeapFlags)
+    if (g_settings.opts().PEBHeapFlags)
     {
         if (specialPebFix)
         {
@@ -299,7 +295,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 		if (debugevent->u.CreateProcessInfo.lpStartAddress == NULL)
 		{
 			//ATTACH
-            if (g_hideSettings.killAntiAttach)
+            if (g_settings.opts().killAntiAttach)
 			{
 				if (!ApplyAntiAntiAttach(ProcessId))
 				{
@@ -309,7 +305,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 		}
 
         //change olly caption again !
-        SetWindowTextW(hwollymain, g_hideSettings.ollyTitle.c_str());
+        SetWindowTextW(hwollymain, g_settings.opts().ollyTitle.c_str());
     }
     break;
     case LOAD_DLL_DEBUG_EVENT:

@@ -10,9 +10,7 @@
 typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
-std::vector<std::wstring> g_hideProfileNames;
-std::wstring g_hideProfileName;
-Scylla::HideSettings g_hideSettings;
+Scylla::Settings g_settings;
 
 #ifdef _WIN64
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -60,7 +58,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
     else
         status = hookStatusMap[pid];
 
-    if (g_hideSettings.PEBHeapFlags)
+    if (g_settings.opts().PEBHeapFlags)
     {
         if (status.specialPebFix)
         {
@@ -86,7 +84,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
         if (DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
         {
             //ATTACH
-            if (g_hideSettings.killAntiAttach)
+            if (g_settings.opts().killAntiAttach)
             {
                 if (!ApplyAntiAntiAttach(status.ProcessId))
                 {
@@ -179,7 +177,7 @@ DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory, LOGWRAPPER Logger, LOGWRA
         LogErrorWrap = LogErrorWrapper;
     else
         LogErrorWrap = ErrorLogger;
-    
+
     //Load paths
     hNtdllModule = GetModuleHandleW(L"ntdll.dll");
     if (!Directory)
@@ -202,7 +200,5 @@ DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory, LOGWRAPPER Logger, LOGWRA
         wcscat(NtApiIniPath, NtApiIniFilename);
     }
 
-    //Read settings file
-    g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
-    Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
+    g_settings.Load(ScyllaHideIniPath);
 }

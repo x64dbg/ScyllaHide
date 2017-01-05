@@ -4,99 +4,119 @@
 
 #include "Util.h"
 
-static const wchar_t kSettingsSectionName[] = L"SETTINGS";
-static const wchar_t kDefaultHideProfileName[] = L"SCYLLA_HIDE";
+#define SCYLLA_HIDE_SETTINGS_SECTION                L"SETTINGS"
+#define SCYLLA_HIDE_SETTINGS_CURRENT_PROFILE_KEY    L"CurrentProfile"
+#define SCYLLA_HIDE_SETTINGS_DEFAULT_PROFILE        L"SCYLLA_HIDE"
 
-std::vector<std::wstring> Scylla::LoadHideProfileNames(const wchar_t *wszIniFile)
+void Scylla::Settings::Load(const wchar_t *ini_path)
 {
-    auto sections = GetPrivateProfileSectionNamesW(wszIniFile);
-    sections.erase(std::remove(sections.begin(), sections.end(), kSettingsSectionName), sections.end());
-    return sections;
+    ini_path_ = ini_path;
+    profile_names_ = GetPrivateProfileSectionNamesW(ini_path);
+    profile_names_.erase(std::remove(profile_names_.begin(), profile_names_.end(), SCYLLA_HIDE_SETTINGS_SECTION), profile_names_.end());
+
+    profile_name_ = GetPrivateProfileStringW(SCYLLA_HIDE_SETTINGS_SECTION, SCYLLA_HIDE_SETTINGS_CURRENT_PROFILE_KEY, SCYLLA_HIDE_SETTINGS_DEFAULT_PROFILE, ini_path);
+    LoadProfile(profile_name_.c_str());
 }
 
-std::wstring Scylla::LoadHideProfileName(const wchar_t *wszIniFile)
+bool Scylla::Settings::AddProfile(const wchar_t *name)
 {
-    return GetPrivateProfileStringW(kSettingsSectionName, L"CurrentProfile", kDefaultHideProfileName, wszIniFile);
+    if (std::find(profile_names_.begin(), profile_names_.end(), name) != profile_names_.end())
+        return false;
+
+    profile_names_.push_back(name);
+    return true;
 }
 
-void Scylla::LoadHideProfileSettings(const wchar_t *wszIniFile, const wchar_t *wszProfile, HideSettings *pSettings)
+void Scylla::Settings::SetProfile(const wchar_t *name)
 {
-    pSettings->BlockInput = ::GetPrivateProfileIntW(wszProfile, L"BlockInputHook", 1, wszIniFile);
-    pSettings->DLLNormal = ::GetPrivateProfileIntW(wszProfile, L"DLLNormal", 1, wszIniFile);
-    pSettings->DLLStealth = ::GetPrivateProfileIntW(wszProfile, L"DLLStealth", 0, wszIniFile);
-    pSettings->DLLUnload = ::GetPrivateProfileIntW(wszProfile, L"DLLUnload", 1, wszIniFile);
-    pSettings->GetLocalTime = ::GetPrivateProfileIntW(wszProfile, L"GetLocalTimeHook", 1, wszIniFile);
-    pSettings->GetSystemTime = ::GetPrivateProfileIntW(wszProfile, L"GetSystemTimeHook", 1, wszIniFile);
-    pSettings->GetTickCount = ::GetPrivateProfileIntW(wszProfile, L"GetTickCountHook", 1, wszIniFile);
-    pSettings->GetTickCount64 = ::GetPrivateProfileIntW(wszProfile, L"GetTickCount64Hook", 1, wszIniFile);
-    pSettings->KiUserExceptionDispatcher = ::GetPrivateProfileIntW(wszProfile, L"KiUserExceptionDispatcherHook", 1, wszIniFile);
-    pSettings->NtClose = ::GetPrivateProfileIntW(wszProfile, L"NtCloseHook", 1, wszIniFile);
-    pSettings->NtContinue = ::GetPrivateProfileIntW(wszProfile, L"NtContinueHook", 1, wszIniFile);
-    pSettings->NtCreateThreadEx = ::GetPrivateProfileIntW(wszProfile, L"NtCreateThreadExHook", 1, wszIniFile);
-    pSettings->NtGetContextThread = ::GetPrivateProfileIntW(wszProfile, L"NtGetContextThreadHook", 1, wszIniFile);
-    pSettings->NtQueryInformationProcess = ::GetPrivateProfileIntW(wszProfile, L"NtQueryInformationProcessHook", 1, wszIniFile);
-    pSettings->NtQueryObject = ::GetPrivateProfileIntW(wszProfile, L"NtQueryObjectHook", 1, wszIniFile);
-    pSettings->NtQueryPerformanceCounter = ::GetPrivateProfileIntW(wszProfile, L"NtQueryPerformanceCounterHook", 1, wszIniFile);
-    pSettings->NtQuerySystemInformation = ::GetPrivateProfileIntW(wszProfile, L"NtQuerySystemInformationHook", 1, wszIniFile);
-    pSettings->NtQuerySystemTime = ::GetPrivateProfileIntW(wszProfile, L"NtQuerySystemTimeHook", 1, wszIniFile);
-    pSettings->NtSetContextThread = ::GetPrivateProfileIntW(wszProfile, L"NtSetContextThreadHook", 1, wszIniFile);
-    pSettings->NtSetDebugFilterState = ::GetPrivateProfileIntW(wszProfile, L"NtSetDebugFilterStateHook", 1, wszIniFile);
-    pSettings->NtSetInformationThread = ::GetPrivateProfileIntW(wszProfile, L"NtSetInformationThreadHook", 1, wszIniFile);
-    pSettings->NtSetInformationProcess = ::GetPrivateProfileIntW(wszProfile, L"NtSetInformationProcessHook", 1, wszIniFile);
-    pSettings->NtUserBuildHwndList = ::GetPrivateProfileIntW(wszProfile, L"NtUserBuildHwndListHook", 1, wszIniFile);
-    pSettings->NtUserFindWindowEx = ::GetPrivateProfileIntW(wszProfile, L"NtUserFindWindowExHook", 1, wszIniFile);
-    pSettings->NtUserQueryWindow = ::GetPrivateProfileIntW(wszProfile, L"NtUserQueryWindowHook", 1, wszIniFile);
-    pSettings->NtYieldExecution = ::GetPrivateProfileIntW(wszProfile, L"NtYieldExecutionHook", 1, wszIniFile);
-    pSettings->OutputDebugStringA = ::GetPrivateProfileIntW(wszProfile, L"OutputDebugStringHook", 1, wszIniFile);
-    pSettings->PEBBeingDebugged = ::GetPrivateProfileIntW(wszProfile, L"PebBeingDebugged", 1, wszIniFile);
-    pSettings->PEBHeapFlags = ::GetPrivateProfileIntW(wszProfile, L"PebHeapFlags", 1, wszIniFile);
-    pSettings->PEBNtGlobalFlag = ::GetPrivateProfileIntW(wszProfile, L"PebNtGlobalFlag", 1, wszIniFile);
-    pSettings->PEBStartupInfo = ::GetPrivateProfileIntW(wszProfile, L"PebStartupInfo", 1, wszIniFile);
-    pSettings->preventThreadCreation = ::GetPrivateProfileIntW(wszProfile, L"PreventThreadCreation", 0, wszIniFile); // disabled by default
-    pSettings->removeDebugPrivileges = ::GetPrivateProfileIntW(wszProfile, L"RemoveDebugPrivileges", 1, wszIniFile);
-    pSettings->killAntiAttach = ::GetPrivateProfileIntW(wszProfile, L"KillAntiAttach", 1, wszIniFile);
+    if (profile_name_ == name)
+        return;
 
-    pSettings->handleExceptionPrint = ::GetPrivateProfileIntW(wszProfile, L"handleExceptionPrint", 1, wszIniFile);
-    pSettings->handleExceptionRip = ::GetPrivateProfileIntW(wszProfile, L"handleExceptionRip", 1, wszIniFile);
-    pSettings->handleExceptionIllegalInstruction = ::GetPrivateProfileIntW(wszProfile, L"handleExceptionIllegalInstruction", 1, wszIniFile);
-    pSettings->handleExceptionInvalidLockSequence = ::GetPrivateProfileIntW(wszProfile, L"handleExceptionInvalidLockSequence", 1, wszIniFile);
-    pSettings->handleExceptionNoncontinuableException = ::GetPrivateProfileIntW(wszProfile, L"handleExceptionNoncontinuableException", 1, wszIniFile);
-    pSettings->handleExceptionAssertionFailure = ::GetPrivateProfileIntW(wszProfile, L"handleExceptionAssertionFailure", 1, wszIniFile);
-    pSettings->handleExceptionBreakpoint = ::GetPrivateProfileIntW(wszProfile, L"handleExceptionBreakpoint", 1, wszIniFile);
-    pSettings->handleExceptionGuardPageViolation = ::GetPrivateProfileIntW(wszProfile, L"handleExceptionGuardPageViolation", 1, wszIniFile);
-    pSettings->handleExceptionWx86Breakpoint = ::GetPrivateProfileIntW(wszProfile, L"handleExceptionWx86Breakpoint", 1, wszIniFile);
+    profile_name_ = name;
+    WritePrivateProfileStringW(SCYLLA_HIDE_SETTINGS_SECTION, SCYLLA_HIDE_SETTINGS_CURRENT_PROFILE_KEY, name, ini_path_.c_str());
 
-    if (pSettings->DLLNormal)
-        pSettings->DLLStealth = 0;
+    LoadProfile(name);
+}
+
+
+void Scylla::Settings::LoadProfile(const wchar_t *name)
+{
+    profile_.BlockInput = ::GetPrivateProfileIntW(name, L"BlockInputHook", 1, ini_path_.c_str());
+    profile_.DLLNormal = ::GetPrivateProfileIntW(name, L"DLLNormal", 1, ini_path_.c_str());
+    profile_.DLLStealth = ::GetPrivateProfileIntW(name, L"DLLStealth", 0, ini_path_.c_str());
+    profile_.DLLUnload = ::GetPrivateProfileIntW(name, L"DLLUnload", 1, ini_path_.c_str());
+    profile_.GetLocalTime = ::GetPrivateProfileIntW(name, L"GetLocalTimeHook", 1, ini_path_.c_str());
+    profile_.GetSystemTime = ::GetPrivateProfileIntW(name, L"GetSystemTimeHook", 1, ini_path_.c_str());
+    profile_.GetTickCount = ::GetPrivateProfileIntW(name, L"GetTickCountHook", 1, ini_path_.c_str());
+    profile_.GetTickCount64 = ::GetPrivateProfileIntW(name, L"GetTickCount64Hook", 1, ini_path_.c_str());
+    profile_.KiUserExceptionDispatcher = ::GetPrivateProfileIntW(name, L"KiUserExceptionDispatcherHook", 1, ini_path_.c_str());
+    profile_.NtClose = ::GetPrivateProfileIntW(name, L"NtCloseHook", 1, ini_path_.c_str());
+    profile_.NtContinue = ::GetPrivateProfileIntW(name, L"NtContinueHook", 1, ini_path_.c_str());
+    profile_.NtCreateThreadEx = ::GetPrivateProfileIntW(name, L"NtCreateThreadExHook", 1, ini_path_.c_str());
+    profile_.NtGetContextThread = ::GetPrivateProfileIntW(name, L"NtGetContextThreadHook", 1, ini_path_.c_str());
+    profile_.NtQueryInformationProcess = ::GetPrivateProfileIntW(name, L"NtQueryInformationProcessHook", 1, ini_path_.c_str());
+    profile_.NtQueryObject = ::GetPrivateProfileIntW(name, L"NtQueryObjectHook", 1, ini_path_.c_str());
+    profile_.NtQueryPerformanceCounter = ::GetPrivateProfileIntW(name, L"NtQueryPerformanceCounterHook", 1, ini_path_.c_str());
+    profile_.NtQuerySystemInformation = ::GetPrivateProfileIntW(name, L"NtQuerySystemInformationHook", 1, ini_path_.c_str());
+    profile_.NtQuerySystemTime = ::GetPrivateProfileIntW(name, L"NtQuerySystemTimeHook", 1, ini_path_.c_str());
+    profile_.NtSetContextThread = ::GetPrivateProfileIntW(name, L"NtSetContextThreadHook", 1, ini_path_.c_str());
+    profile_.NtSetDebugFilterState = ::GetPrivateProfileIntW(name, L"NtSetDebugFilterStateHook", 1, ini_path_.c_str());
+    profile_.NtSetInformationThread = ::GetPrivateProfileIntW(name, L"NtSetInformationThreadHook", 1, ini_path_.c_str());
+    profile_.NtSetInformationProcess = ::GetPrivateProfileIntW(name, L"NtSetInformationProcessHook", 1, ini_path_.c_str());
+    profile_.NtUserBuildHwndList = ::GetPrivateProfileIntW(name, L"NtUserBuildHwndListHook", 1, ini_path_.c_str());
+    profile_.NtUserFindWindowEx = ::GetPrivateProfileIntW(name, L"NtUserFindWindowExHook", 1, ini_path_.c_str());
+    profile_.NtUserQueryWindow = ::GetPrivateProfileIntW(name, L"NtUserQueryWindowHook", 1, ini_path_.c_str());
+    profile_.NtYieldExecution = ::GetPrivateProfileIntW(name, L"NtYieldExecutionHook", 1, ini_path_.c_str());
+    profile_.OutputDebugStringA = ::GetPrivateProfileIntW(name, L"OutputDebugStringHook", 1, ini_path_.c_str());
+    profile_.PEBBeingDebugged = ::GetPrivateProfileIntW(name, L"PebBeingDebugged", 1, ini_path_.c_str());
+    profile_.PEBHeapFlags = ::GetPrivateProfileIntW(name, L"PebHeapFlags", 1, ini_path_.c_str());
+    profile_.PEBNtGlobalFlag = ::GetPrivateProfileIntW(name, L"PebNtGlobalFlag", 1, ini_path_.c_str());
+    profile_.PEBStartupInfo = ::GetPrivateProfileIntW(name, L"PebStartupInfo", 1, ini_path_.c_str());
+    profile_.preventThreadCreation = ::GetPrivateProfileIntW(name, L"PreventThreadCreation", 0, ini_path_.c_str());
+    profile_.removeDebugPrivileges = ::GetPrivateProfileIntW(name, L"RemoveDebugPrivileges", 1, ini_path_.c_str());
+    profile_.killAntiAttach = ::GetPrivateProfileIntW(name, L"KillAntiAttach", 1, ini_path_.c_str());
+
+    profile_.handleExceptionPrint = ::GetPrivateProfileIntW(name, L"handleExceptionPrint", 1, ini_path_.c_str());
+    profile_.handleExceptionRip = ::GetPrivateProfileIntW(name, L"handleExceptionRip", 1, ini_path_.c_str());
+    profile_.handleExceptionIllegalInstruction = ::GetPrivateProfileIntW(name, L"handleExceptionIllegalInstruction", 1, ini_path_.c_str());
+    profile_.handleExceptionInvalidLockSequence = ::GetPrivateProfileIntW(name, L"handleExceptionInvalidLockSequence", 1, ini_path_.c_str());
+    profile_.handleExceptionNoncontinuableException = ::GetPrivateProfileIntW(name, L"handleExceptionNoncontinuableException", 1, ini_path_.c_str());
+    profile_.handleExceptionAssertionFailure = ::GetPrivateProfileIntW(name, L"handleExceptionAssertionFailure", 1, ini_path_.c_str());
+    profile_.handleExceptionBreakpoint = ::GetPrivateProfileIntW(name, L"handleExceptionBreakpoint", 1, ini_path_.c_str());
+    profile_.handleExceptionGuardPageViolation = ::GetPrivateProfileIntW(name, L"handleExceptionGuardPageViolation", 1, ini_path_.c_str());
+    profile_.handleExceptionWx86Breakpoint = ::GetPrivateProfileIntW(name, L"handleExceptionWx86Breakpoint", 1, ini_path_.c_str());
+
+    if (profile_.DLLNormal)
+        profile_.DLLStealth = 0;
 
     //ida specific
-    pSettings->autostartServer = ::GetPrivateProfileIntW(wszProfile, L"AutostartServer", 1, wszIniFile);
-    pSettings->serverPort = GetPrivateProfileStringW(wszProfile, L"ServerPort", L"1337", wszIniFile);
+    profile_.autostartServer = ::GetPrivateProfileIntW(name, L"AutostartServer", 1, ini_path_.c_str());
+    profile_.serverPort = GetPrivateProfileStringW(name, L"ServerPort", L"1337", ini_path_.c_str());
 
     //olly1 specific
-    pSettings->breakTLS = ::GetPrivateProfileIntW(wszProfile, L"BreakOnTLS", 1, wszIniFile);
-    pSettings->fixOllyBugs = ::GetPrivateProfileIntW(wszProfile, L"FixOllyBugs", 1, wszIniFile);
-    pSettings->removeEPBreak = ::GetPrivateProfileIntW(wszProfile, L"RemoveEPBreak", 0, wszIniFile);
-    pSettings->skipEPOutsideCode = ::GetPrivateProfileIntW(wszProfile, L"SkipEPOutsideCode", 1, wszIniFile);
-    pSettings->x64Fix = ::GetPrivateProfileIntW(wszProfile, L"X64Fix", 0, wszIniFile);
-    pSettings->advancedGoto = ::GetPrivateProfileIntW(wszProfile, L"advancedGoto", 0, wszIniFile);
-    pSettings->ignoreBadPEImage = ::GetPrivateProfileIntW(wszProfile, L"ignoreBadPEImage", 0, wszIniFile);
-    pSettings->skipCompressedDoAnalyze = ::GetPrivateProfileIntW(wszProfile, L"skipCompressedDoAnalyze", 0, wszIniFile);
-    pSettings->skipCompressedDoNothing = ::GetPrivateProfileIntW(wszProfile, L"skipCompressedDoNothing", 0, wszIniFile);
-    pSettings->skipLoadDllDoLoad = ::GetPrivateProfileIntW(wszProfile, L"skipLoadDllDoLoad", 0, wszIniFile);
-    pSettings->skipLoadDllDoNothing = ::GetPrivateProfileIntW(wszProfile, L"skipLoadDllDoNothing", 0, wszIniFile);
-    pSettings->advancedInfobar = ::GetPrivateProfileIntW(wszProfile, L"advancedInfobar", 0, wszIniFile);
-    pSettings->ollyTitle = GetPrivateProfileStringW(wszProfile, L"WindowTitle", L"ScyllaHide", wszIniFile);
+    profile_.breakTLS = ::GetPrivateProfileIntW(name, L"BreakOnTLS", 1, ini_path_.c_str());
+    profile_.fixOllyBugs = ::GetPrivateProfileIntW(name, L"FixOllyBugs", 1, ini_path_.c_str());
+    profile_.removeEPBreak = ::GetPrivateProfileIntW(name, L"RemoveEPBreak", 0, ini_path_.c_str());
+    profile_.skipEPOutsideCode = ::GetPrivateProfileIntW(name, L"SkipEPOutsideCode", 1, ini_path_.c_str());
+    profile_.x64Fix = ::GetPrivateProfileIntW(name, L"X64Fix", 0, ini_path_.c_str());
+    profile_.advancedGoto = ::GetPrivateProfileIntW(name, L"advancedGoto", 0, ini_path_.c_str());
+    profile_.ignoreBadPEImage = ::GetPrivateProfileIntW(name, L"ignoreBadPEImage", 0, ini_path_.c_str());
+    profile_.skipCompressedDoAnalyze = ::GetPrivateProfileIntW(name, L"skipCompressedDoAnalyze", 0, ini_path_.c_str());
+    profile_.skipCompressedDoNothing = ::GetPrivateProfileIntW(name, L"skipCompressedDoNothing", 0, ini_path_.c_str());
+    profile_.skipLoadDllDoLoad = ::GetPrivateProfileIntW(name, L"skipLoadDllDoLoad", 0, ini_path_.c_str());
+    profile_.skipLoadDllDoNothing = ::GetPrivateProfileIntW(name, L"skipLoadDllDoNothing", 0, ini_path_.c_str());
+    profile_.advancedInfobar = ::GetPrivateProfileIntW(name, L"advancedInfobar", 0, ini_path_.c_str());
+    profile_.ollyTitle = GetPrivateProfileStringW(name, L"WindowTitle", L"ScyllaHide", ini_path_.c_str());
 }
 
-bool Scylla::SaveHideProfileSettings(const wchar_t *wszIniFile, const wchar_t *wszProfile, const HideSettings *pSettings)
+bool Scylla::Settings::SaveProfile() const
 {
-    if (!FileExistsW(wszIniFile))
+    if (!FileExistsW(ini_path_.c_str()))
     {
         WORD wBOM = 0xFEFF; // UTF16-LE
         DWORD NumberOfBytesWritten;
 
-        auto hFile = CreateFileW(wszIniFile, GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+        auto hFile = CreateFileW(ini_path_.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
         if (!hFile)
             return false;
         WriteFile(hFile, &wBOM, sizeof(WORD), &NumberOfBytesWritten, nullptr);
@@ -104,69 +124,77 @@ bool Scylla::SaveHideProfileSettings(const wchar_t *wszIniFile, const wchar_t *w
     }
 
     auto success = true;
-    success &= WritePrivateProfileIntW(wszProfile, L"BlockInputHook", pSettings->BlockInput, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"DLLNormal", pSettings->DLLNormal, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"DLLStealth", pSettings->DLLStealth, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"DLLUnload", pSettings->DLLUnload, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"GetLocalTimeHook", pSettings->GetLocalTime, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"GetSystemTimeHook", pSettings->GetSystemTime, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"GetTickCount64Hook", pSettings->GetTickCount64, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"GetTickCountHook", pSettings->GetTickCount, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"KiUserExceptionDispatcherHook", pSettings->KiUserExceptionDispatcher, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtCloseHook", pSettings->NtClose, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtContinueHook", pSettings->NtContinue, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtCreateThreadExHook", pSettings->NtCreateThreadEx, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtGetContextThreadHook", pSettings->NtGetContextThread, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtQueryInformationProcessHook", pSettings->NtQueryInformationProcess, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtQueryObjectHook", pSettings->NtQueryObject, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtQueryPerformanceCounterHook", pSettings->NtQueryPerformanceCounter, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtQuerySystemInformationHook", pSettings->NtQuerySystemInformation, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtQuerySystemTimeHook", pSettings->NtQuerySystemTime, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtSetContextThreadHook", pSettings->NtSetContextThread, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtSetDebugFilterStateHook", pSettings->NtSetDebugFilterState, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtSetInformationThreadHook", pSettings->NtSetInformationThread, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtSetInformationProcessHook", pSettings->NtSetInformationProcess, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtUserBuildHwndListHook", pSettings->NtUserBuildHwndList, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtUserFindWindowExHook", pSettings->NtUserFindWindowEx, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtUserQueryWindowHook", pSettings->NtUserQueryWindow, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"NtYieldExecutionHook", pSettings->NtYieldExecution, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"OutputDebugStringHook", pSettings->OutputDebugStringA, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"PebBeingDebugged", pSettings->PEBBeingDebugged, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"PebHeapFlags", pSettings->PEBHeapFlags, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"PebNtGlobalFlag", pSettings->PEBNtGlobalFlag, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"PebStartupInfo", pSettings->PEBStartupInfo, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"PreventThreadCreation", pSettings->preventThreadCreation, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"RemoveDebugPrivileges", pSettings->removeDebugPrivileges, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"KillAntiAttach", pSettings->killAntiAttach, wszIniFile);
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"BlockInputHook", profile_.BlockInput, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"DLLNormal", profile_.DLLNormal, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"DLLStealth", profile_.DLLStealth, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"DLLUnload", profile_.DLLUnload, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"GetLocalTimeHook", profile_.GetLocalTime, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"GetSystemTimeHook", profile_.GetSystemTime, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"GetTickCount64Hook", profile_.GetTickCount64, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"GetTickCountHook", profile_.GetTickCount, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"KiUserExceptionDispatcherHook", profile_.KiUserExceptionDispatcher, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtCloseHook", profile_.NtClose, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtContinueHook", profile_.NtContinue, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtCreateThreadExHook", profile_.NtCreateThreadEx, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtGetContextThreadHook", profile_.NtGetContextThread, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtQueryInformationProcessHook", profile_.NtQueryInformationProcess, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtQueryObjectHook", profile_.NtQueryObject, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtQueryPerformanceCounterHook", profile_.NtQueryPerformanceCounter, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtQuerySystemInformationHook", profile_.NtQuerySystemInformation, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtQuerySystemTimeHook", profile_.NtQuerySystemTime, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtSetContextThreadHook", profile_.NtSetContextThread, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtSetDebugFilterStateHook", profile_.NtSetDebugFilterState, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtSetInformationThreadHook", profile_.NtSetInformationThread, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtSetInformationProcessHook", profile_.NtSetInformationProcess, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtUserBuildHwndListHook", profile_.NtUserBuildHwndList, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtUserFindWindowExHook", profile_.NtUserFindWindowEx, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtUserQueryWindowHook", profile_.NtUserQueryWindow, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"NtYieldExecutionHook", profile_.NtYieldExecution, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"OutputDebugStringHook", profile_.OutputDebugStringA, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"PebBeingDebugged", profile_.PEBBeingDebugged, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"PebHeapFlags", profile_.PEBHeapFlags, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"PebNtGlobalFlag", profile_.PEBNtGlobalFlag, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"PebStartupInfo", profile_.PEBStartupInfo, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"PreventThreadCreation", profile_.preventThreadCreation, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"RemoveDebugPrivileges", profile_.removeDebugPrivileges, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"KillAntiAttach", profile_.killAntiAttach, ini_path_.c_str());
 
-    success &= WritePrivateProfileIntW(wszProfile, L"handleExceptionPrint", pSettings->handleExceptionPrint, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"handleExceptionRip", pSettings->handleExceptionRip, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"handleExceptionIllegalInstruction", pSettings->handleExceptionIllegalInstruction, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"handleExceptionInvalidLockSequence", pSettings->handleExceptionInvalidLockSequence, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"handleExceptionNoncontinuableException", pSettings->handleExceptionNoncontinuableException, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"handleExceptionAssertionFailure", pSettings->handleExceptionAssertionFailure, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"handleExceptionBreakpoint", pSettings->handleExceptionBreakpoint, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"handleExceptionGuardPageViolation", pSettings->handleExceptionGuardPageViolation, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"handleExceptionWx86Breakpoint", pSettings->handleExceptionWx86Breakpoint, wszIniFile);
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"handleExceptionPrint", profile_.handleExceptionPrint, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"handleExceptionRip", profile_.handleExceptionRip, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"handleExceptionIllegalInstruction", profile_.handleExceptionIllegalInstruction, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"handleExceptionInvalidLockSequence", profile_.handleExceptionInvalidLockSequence, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"handleExceptionNoncontinuableException", profile_.handleExceptionNoncontinuableException, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"handleExceptionAssertionFailure", profile_.handleExceptionAssertionFailure, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"handleExceptionBreakpoint", profile_.handleExceptionBreakpoint, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"handleExceptionGuardPageViolation", profile_.handleExceptionGuardPageViolation, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"handleExceptionWx86Breakpoint", profile_.handleExceptionWx86Breakpoint, ini_path_.c_str());
 
     //ida specific
-    success &= WritePrivateProfileIntW(wszProfile, L"AutostartServer", pSettings->autostartServer, wszIniFile);
-    success &= ::WritePrivateProfileStringW(wszProfile, L"ServerPort", pSettings->serverPort.c_str(), wszIniFile) == TRUE;
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"AutostartServer", profile_.autostartServer, ini_path_.c_str());
+    success &= ::WritePrivateProfileStringW(profile_name().c_str(), L"ServerPort", profile_.serverPort.c_str(), ini_path_.c_str()) == TRUE;
 
     //olly1 specific
-    success &= WritePrivateProfileIntW(wszProfile, L"BreakOnTLS", pSettings->breakTLS, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"FixOllyBugs", pSettings->fixOllyBugs, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"RemoveEPBreak", pSettings->removeEPBreak, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"SkipEPOutsideCode", pSettings->skipEPOutsideCode, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"X64Fix", pSettings->x64Fix, wszIniFile);
-    success &= ::WritePrivateProfileStringW(wszProfile, L"WindowTitle", pSettings->ollyTitle.c_str(), wszIniFile) == TRUE;
-    success &= WritePrivateProfileIntW(wszProfile, L"advancedGoto", pSettings->advancedGoto, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"ignoreBadPEImage", pSettings->ignoreBadPEImage, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"skipCompressedDoAnalyze", pSettings->skipCompressedDoAnalyze, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"skipCompressedDoNothing", pSettings->skipCompressedDoNothing, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"skipLoadDllDoLoad", pSettings->skipLoadDllDoLoad, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"skipLoadDllDoNothing", pSettings->skipLoadDllDoNothing, wszIniFile);
-    success &= WritePrivateProfileIntW(wszProfile, L"advancedInfobar", pSettings->advancedInfobar, wszIniFile);
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"BreakOnTLS", profile_.breakTLS, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"FixOllyBugs", profile_.fixOllyBugs, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"RemoveEPBreak", profile_.removeEPBreak, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"SkipEPOutsideCode", profile_.skipEPOutsideCode, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"X64Fix", profile_.x64Fix, ini_path_.c_str());
+    success &= ::WritePrivateProfileStringW(profile_name().c_str(), L"WindowTitle", profile_.ollyTitle.c_str(), ini_path_.c_str()) == TRUE;
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"advancedGoto", profile_.advancedGoto, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"ignoreBadPEImage", profile_.ignoreBadPEImage, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"skipCompressedDoAnalyze", profile_.skipCompressedDoAnalyze, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"skipCompressedDoNothing", profile_.skipCompressedDoNothing, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"skipLoadDllDoLoad", profile_.skipLoadDllDoLoad, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"skipLoadDllDoNothing", profile_.skipLoadDllDoNothing, ini_path_.c_str());
+    success &= WritePrivateProfileIntW(profile_name().c_str(), L"advancedInfobar", profile_.advancedInfobar, ini_path_.c_str());
 
     return success;
 }
+
+
+
+
+
+
+
+

@@ -29,9 +29,7 @@ void AttachProcess(DWORD dwPID);
 void SetDebuggerBreakpoint(DWORD_PTR address);
 bool __cdecl IsAddressBreakpoint(DWORD_PTR address);
 
-std::vector<std::wstring> g_hideProfileNames;
-std::wstring g_hideProfileName;
-Scylla::HideSettings g_hideSettings;
+Scylla::Settings g_settings;
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
@@ -109,13 +107,12 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
 	hwmain=hw;
 
-    g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
-    Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
+    g_settings.Load(ScyllaHideIniPath);
 
 	_Addtolist(0, 0, "%s Plugin v%s Copyright (C) 2014 Aguila / cypher", SCYLLA_HIDE_NAME_A, SCYLLA_HIDE_VERSION_STRING_A);
 
 	//do some Olly fixes
-	if(g_hideSettings.fixOllyBugs) {
+	if(g_settings.opts().fixOllyBugs) {
 		fixBadPEBugs();
 		fixForegroundWindow();
 		fixFPUBug();
@@ -123,30 +120,30 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 		fixNTSymbols();
 		fixFaultyHandleOnExit();
 	}
-    if (g_hideSettings.x64Fix && Scylla::IsWindows64()) {
+    if (g_settings.opts().x64Fix && Scylla::IsWindows64()) {
 		fixX64Bug();
 	}
-    if (g_hideSettings.skipEPOutsideCode) {
+    if (g_settings.opts().skipEPOutsideCode) {
 		patchEPOutsideCode();
 	}
 
-    if (g_hideSettings.killAntiAttach) {
+    if (g_settings.opts().killAntiAttach) {
 		InstallAntiAttachHook();
 	}
 
-    if (g_hideSettings.ignoreBadPEImage) {
+    if (g_settings.opts().ignoreBadPEImage) {
 		fixBadPEImage();
 	}
 
-    if (g_hideSettings.advancedGoto) {
+    if (g_settings.opts().advancedGoto) {
 		advcancedCtrlG();
 	};
 
-    if (g_hideSettings.skipCompressedDoAnalyze || g_hideSettings.skipCompressedDoNothing) {
+    if (g_settings.opts().skipCompressedDoAnalyze || g_settings.opts().skipCompressedDoNothing) {
 		skipCompressedCode();
 	}
 
-    if (g_hideSettings.skipLoadDllDoLoad || g_hideSettings.skipLoadDllDoNothing) {
+    if (g_settings.opts().skipLoadDllDoLoad || g_settings.opts().skipLoadDllDoNothing) {
 		skipLoadDll();
 	}
 	return 0;
@@ -171,18 +168,17 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
 	case PM_MAIN:
 		{
             std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> wstr2str;
-            g_hideProfileNames = Scylla::LoadHideProfileNames(ScyllaHideIniPath);
             std::stringstream ssMenu;
             ssMenu << "0 & Options, 4 & Load Profile{";
-            for (size_t i = 0; i < g_hideProfileNames.size(); i++)
+            for (size_t i = 0; i < g_settings.profile_names().size(); i++)
             {
-                ssMenu << (i + MENU_PROFILES_OFFSET) << ' ' << wstr2str.to_bytes(g_hideProfileNames[i].c_str()) << ",";
+                ssMenu << (i + MENU_PROFILES_OFFSET) << ' ' << wstr2str.to_bytes(g_settings.profile_names()[i].c_str()) << ",";
             }
             ssMenu << "},|2 &Inject DLL|5 &Attach process, 6 &Detach process|1 &About";
             strncpy(data, ssMenu.str().c_str(), min(4096, ssMenu.str().size()));
 
 			//also patch olly title
-            SetWindowTextW(hwmain, g_hideSettings.ollyTitle.c_str());
+            SetWindowTextW(hwmain, g_settings.opts().ollyTitle.c_str());
 			return 1;
 		}
 	case PM_THREADS:
@@ -235,10 +231,10 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 				HandleDetachProcess();
 				break;
 			}
-			//profile names/count is dynamic so we catch loading them with default case
+
 		default: {
-            g_hideProfileName = g_hideProfileNames[action - MENU_PROFILES_OFFSET];
-            Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
+            //profile names/count is dynamic so we catch loading them with default case
+            g_settings.SetProfile(g_settings.profile_names()[action - MENU_PROFILES_OFFSET].c_str());
 
 			if (ProcessId)
 			{
@@ -295,7 +291,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 	if(!debugevent)
 		return;
 
-    if (g_hideSettings.PEBHeapFlags)
+    if (g_settings.opts().PEBHeapFlags)
 	{
 		if (specialPebFix)
 		{
@@ -315,14 +311,14 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 	case CREATE_PROCESS_DEBUG_EVENT:
 		{
 
-            if (g_hideSettings.handleExceptionPrint ||
-                g_hideSettings.handleExceptionRip ||
-                g_hideSettings.handleExceptionIllegalInstruction ||
-                g_hideSettings.handleExceptionInvalidLockSequence ||
-                g_hideSettings.handleExceptionNoncontinuableException ||
-                g_hideSettings.handleExceptionBreakpoint ||
-                g_hideSettings.handleExceptionWx86Breakpoint ||
-                g_hideSettings.handleExceptionGuardPageViolation
+            if (g_settings.opts().handleExceptionPrint ||
+                g_settings.opts().handleExceptionRip ||
+                g_settings.opts().handleExceptionIllegalInstruction ||
+                g_settings.opts().handleExceptionInvalidLockSequence ||
+                g_settings.opts().handleExceptionNoncontinuableException ||
+                g_settings.opts().handleExceptionBreakpoint ||
+                g_settings.opts().handleExceptionWx86Breakpoint ||
+                g_settings.opts().handleExceptionGuardPageViolation
 				)
 			{
 				if (executeOnce == false)
@@ -341,7 +337,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 			{
 				//ATTACH to an existing process!
 				//Apply anti-anti-attach
-                if (g_hideSettings.killAntiAttach)
+                if (g_settings.opts().killAntiAttach)
 				{
 					if (!ApplyAntiAntiAttach(ProcessId))
 					{
@@ -353,7 +349,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 			ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
 			//change olly caption again !
-            SetWindowTextW(hwmain, g_hideSettings.ollyTitle.c_str());
+            SetWindowTextW(hwmain, g_settings.opts().ollyTitle.c_str());
 
 			if(!bHookedDumpProc) {
 				hookOllyWindowProcs();
@@ -367,7 +363,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 		{
 			if (bHooked)
 			{
-                if (g_hideSettings.fixOllyBugs && Scylla::IsWindows64()) {
+                if (g_settings.opts().fixOllyBugs && Scylla::IsWindows64()) {
 					MarkSystemDllsOnx64();
 				}
 

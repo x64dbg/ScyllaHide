@@ -28,9 +28,7 @@ enum ScyllaMenuItems : int {
     MENU_MAX
 };
 
-std::vector<std::wstring> g_hideProfileNames;
-std::wstring g_hideProfileName;
-Scylla::HideSettings g_hideSettings;
+Scylla::Settings g_settings;
 
 #ifdef _WIN64
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -81,7 +79,6 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
     {
     case MENU_OPTIONS:
     {
-        g_hideProfileNames = Scylla::LoadHideProfileNames(ScyllaHideIniPath);
         DialogBox(hinst, MAKEINTRESOURCE(IDD_OPTIONS), hwndDlg, &OptionsProc);
         break;
     }
@@ -106,9 +103,8 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
         break;
     }
     default: {
-        // Set hide profile.
-        g_hideProfileName = g_hideProfileNames[info->hEntry - MENU_MAX];
-        Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
+        auto profile_name = g_settings.profile_names()[info->hEntry - MENU_MAX].c_str();
+        g_settings.SetProfile(profile_name);
 
         if (ProcessId)
         {
@@ -130,8 +126,7 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
     hwndDlg = setupStruct->hwndDlg;
     hMenu = setupStruct->hMenu;
 
-    g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
-    Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
+    g_settings.Load(ScyllaHideIniPath);
 
     _plugin_logprintf("%s Plugin v%s Copyright (C) 2014 Aguila / cypher\n", SCYLLA_HIDE_NAME_A, SCYLLA_HIDE_VERSION_STRING_A);
 
@@ -140,10 +135,9 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
 
     //add profiles to menu
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> wstr2str;
-    g_hideProfileNames = Scylla::LoadHideProfileNames(ScyllaHideIniPath);
-    for (size_t i = 0; i < g_hideProfileNames.size(); i++)
+    for (size_t i = 0; i < g_settings.profile_names().size(); i++)
     {
-        auto mbstrName = wstr2str.to_bytes(g_hideProfileNames[i].c_str());
+        auto mbstrName = wstr2str.to_bytes(g_settings.profile_names()[i].c_str());
         _plugin_menuaddentry(hProfile, (int)i + MENU_MAX, mbstrName.c_str());
     }
 
@@ -189,7 +183,7 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
 {
     PLUG_CB_DEBUGEVENT* d = (PLUG_CB_DEBUGEVENT*)callbackInfo;
 
-    if (g_hideSettings.PEBHeapFlags)
+    if (g_settings.opts().PEBHeapFlags)
     {
         if (specialPebFix)
         {
@@ -219,7 +213,7 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
         if (d->DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
         {
             //ATTACH
-            if (g_hideSettings.killAntiAttach)
+            if (g_settings.opts().killAntiAttach)
             {
                 if (!ApplyAntiAntiAttach(ProcessId))
                 {
