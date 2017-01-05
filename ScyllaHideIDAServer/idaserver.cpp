@@ -2,10 +2,10 @@
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
+#include <Scylla/Version.h>
 
 #include "idaserver.h"
 #include "IdaServerExchange.h"
-#include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "..\PluginGeneric\Injector.h"
 
 WSADATA wsaData;
@@ -47,8 +47,7 @@ int main(int argc, char *argv[])
 
 	SetDebugPrivileges();
 
-	printf("Starting IDA Server v" SCYLLA_HIDE_VERSION_STRING_A "...\n");
-	printf("- Operating System: %s\n", Scylla::GetWindowsVersionNameA());
+	printf("%s IDA Server v%s\n", SCYLLA_HIDE_NAME_A, SCYLLA_HIDE_VERSION_STRING_A);
 
 	checkPaths();
 

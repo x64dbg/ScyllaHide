@@ -1,10 +1,10 @@
 #include <Windows.h>
 #include <titan/TitanEngine.h>
 #include <Scylla/Settings.h>
+#include <Scylla/Version.h>
 
 #include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\Injector.h"
-#include "..\PluginGeneric\ScyllaHideVersion.h"
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 void LogWrapper(const WCHAR * format, ...);
@@ -151,9 +151,9 @@ extern "C" __declspec(dllexport) bool TitanRegisterPlugin(char* szPluginName, DW
 {
     if(titanPluginMajorVersion && titanPluginMinorVersion)
     {
-        *titanPluginMajorVersion = SCYLLA_HIDE_MAJOR_VERSION;
-        *titanPluginMinorVersion = SCYLLA_HIDE_MINOR_VERSION;
-        strcpy(szPluginName, "ScyllaHide");
+        *titanPluginMajorVersion = SCYLLA_HIDE_VERSION_MAJOR;
+        *titanPluginMinorVersion = SCYLLA_HIDE_VERSION_MINOR;
+        strcpy(szPluginName, SCYLLA_HIDE_NAME_A);
         return true;
     }
     return false;

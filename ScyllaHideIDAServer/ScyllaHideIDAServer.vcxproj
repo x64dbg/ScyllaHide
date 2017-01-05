@@ -139,7 +139,6 @@
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
     <ClInclude Include="..\PluginGeneric\Injector.h" />
-    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
     <ClInclude Include="idaserver.h" />
     <ClInclude Include="IdaServerExchange.h" />
     <ClInclude Include="resource.h" />

@@ -20,9 +20,9 @@
 #include <idasdk/loader.hpp>
 #include <idasdk/kernwin.hpp>
 #include <Scylla/Settings.h>
+#include <Scylla/Version.h>
 
 #include "..\PluginGeneric\Injector.h"
-#include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "IdaServerClient.h"
 #include "resource.h"

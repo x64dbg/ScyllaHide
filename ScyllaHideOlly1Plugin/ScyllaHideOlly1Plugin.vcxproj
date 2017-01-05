@@ -91,7 +91,6 @@
     <ClInclude Include="..\PluginGeneric\CustomExceptionHandler.h" />
     <ClInclude Include="..\PluginGeneric\Injector.h" />
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
-    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
     <ClInclude Include="olly1patches.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

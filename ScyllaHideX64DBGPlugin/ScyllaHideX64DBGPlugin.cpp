@@ -2,8 +2,8 @@
 #include <codecvt>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
+#include <Scylla/Version.h>
 
-#include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\OptionsDialog.h"
@@ -18,8 +18,6 @@
 #pragma comment(lib, "x64dbg\\x32dbg.lib")
 #pragma comment(lib, "x64dbg\\x32bridge.lib")
 #endif
-
-#define plugin_name "ScyllaHide"
 
 enum ScyllaMenuItems : int {
     MENU_OPTIONS = 0,
@@ -64,9 +62,9 @@ ICONDATA mainIconData = { 0 };
 
 DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct)
 {
-    initStruct->pluginVersion = (SCYLLA_HIDE_MAJOR_VERSION * 10) + SCYLLA_HIDE_MINOR_VERSION;
+    initStruct->pluginVersion = (SCYLLA_HIDE_VERSION_MAJOR * 100) + (SCYLLA_HIDE_VERSION_MINOR * 10) + SCYLLA_HIDE_VERSION_PATCH;
     initStruct->sdkVersion = PLUG_SDKVERSION;
-    strcpy(initStruct->pluginName, plugin_name);
+    strncpy(initStruct->pluginName, SCYLLA_HIDE_NAME_A, sizeof(initStruct->pluginName));
     pluginHandle = initStruct->pluginHandle;
 
     _plugin_registercallback(pluginHandle, CB_MENUENTRY, cbMenuEntry);
@@ -135,9 +133,7 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
     g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
     Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 
-    _plugin_logprintf("ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A "\n");
-    _plugin_logprintf("  Copyright (C) 2014 Aguila / cypher\n");
-    _plugin_logprintf("  Operating System: %s\n", Scylla::GetWindowsVersionNameA());
+    _plugin_logprintf("%s Plugin v%s Copyright (C) 2014 Aguila / cypher\n", SCYLLA_HIDE_NAME_A, SCYLLA_HIDE_VERSION_STRING_A);
 
     _plugin_menuaddentry(hMenu, MENU_OPTIONS, "&Options");
     int hProfile = _plugin_menuadd(hMenu, "&Load Profile");

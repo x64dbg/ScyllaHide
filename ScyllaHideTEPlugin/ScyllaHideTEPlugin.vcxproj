@@ -140,7 +140,6 @@
     <ClInclude Include="..\InjectorCLI\ReadNtConfig.h" />
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\PluginGeneric\Injector.h" />
-    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

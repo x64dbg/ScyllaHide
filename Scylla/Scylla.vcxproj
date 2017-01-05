@@ -30,6 +30,7 @@
     <ClInclude Include="OsInfo.h" />
     <ClInclude Include="Peb.h" />
     <ClInclude Include="Util.h" />
+    <ClInclude Include="Version.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E468DA07-48EA-40EB-A845-FA69C39D3396}</ProjectGuid>

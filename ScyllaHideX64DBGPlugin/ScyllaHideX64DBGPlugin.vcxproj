@@ -144,7 +144,6 @@
     <ClInclude Include="..\PluginGeneric\AttachDialog.h" />
     <ClInclude Include="..\PluginGeneric\Injector.h" />
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
-    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ScyllaHideX64DBGPlugin.h" />
   </ItemGroup>

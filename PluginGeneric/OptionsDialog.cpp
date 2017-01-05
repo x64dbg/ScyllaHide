@@ -4,9 +4,9 @@
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
+#include <Scylla/Version.h>
 
 #include "..\PluginGeneric\Injector.h"
-#include "..\PluginGeneric\ScyllaHideVersion.h"
 
 #ifdef OLLY1
 #pragma pack(push)
@@ -59,7 +59,7 @@ void HandleGuiException(HWND hwnd);
 void ShowAbout(HWND hWnd)
 {
     MessageBoxA(hWnd,
-        "ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A " (" __DATE__ ")\n\n"
+        SCYLLA_HIDE_NAME_A " Plugin v" SCYLLA_HIDE_VERSION_STRING_A " (" __DATE__ ")\n\n"
         "Copyright (C) 2014 Aguila / cypher\n\n"
         "Special thanks to:\n"
         "- What for his POISON assembler source code\n"

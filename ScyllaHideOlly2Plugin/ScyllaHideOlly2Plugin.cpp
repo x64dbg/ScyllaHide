@@ -2,12 +2,12 @@
 #include <cstdio>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
+#include <Scylla/Version.h>
 
 #include "..\PluginGeneric\Injector.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
-#include "..\PluginGeneric\ScyllaHideVersion.h"
 
 #include "resource.h"
 

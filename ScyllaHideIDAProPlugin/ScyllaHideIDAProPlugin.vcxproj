@@ -95,7 +95,6 @@
     <ClInclude Include="..\PluginGeneric\AttachDialog.h" />
     <ClInclude Include="..\PluginGeneric\Injector.h" />
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
-    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h" />
     <ClInclude Include="IdaServerClient.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

@@ -59,9 +59,6 @@
     <ClInclude Include="..\PluginGeneric\Injector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\PluginGeneric\ScyllaHideVersion.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\InjectorCLI\ApplyHooking.h">
       <Filter>Header Files</Filter>
     </ClInclude>

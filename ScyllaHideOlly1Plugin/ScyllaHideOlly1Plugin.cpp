@@ -3,9 +3,9 @@
 #include <sstream>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
+#include <Scylla/Version.h>
 
 #include "..\PluginGeneric\Injector.h"
-#include "..\PluginGeneric\ScyllaHideVersion.h"
 #include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
@@ -68,7 +68,7 @@ void HandleDetachProcess();
 DEBUG_EVENT *currentDebugEvent;
 
 BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
-{ 
+{
 	if (reason == DLL_PROCESS_ATTACH)
 	{
 		_AttachProcess = AttachProcess;
@@ -112,9 +112,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
     g_hideProfileName = Scylla::LoadHideProfileName(ScyllaHideIniPath);
     Scylla::LoadHideProfileSettings(ScyllaHideIniPath, g_hideProfileName.c_str(), &g_hideSettings);
 
-	_Addtolist(0,0,"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_A);
-	_Addtolist(0,-1,"  Copyright (C) 2014 Aguila / cypher");
-	_Addtolist(0,-1,"  Operating System: %s", Scylla::GetWindowsVersionNameA());
+	_Addtolist(0, 0, "%s Plugin v%s Copyright (C) 2014 Aguila / cypher", SCYLLA_HIDE_NAME_A, SCYLLA_HIDE_VERSION_STRING_A);
 
 	//do some Olly fixes
 	if(g_hideSettings.fixOllyBugs) {
@@ -570,7 +568,7 @@ void HandleDetachProcess()
 	}
 
 	DebugSetProcessKillOnExit(FALSE);
-	
+
 	//terminate olly
 	ExitProcess(0);
 }
