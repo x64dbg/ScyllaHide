@@ -45,6 +45,7 @@ namespace Scylla
             std::wstring ollyTitle;
             int x64Fix;
             int preventThreadCreation;
+            int protectProcessId;
             int DLLStealth;
             int DLLNormal;
             int DLLUnload;

@@ -85,13 +85,13 @@ bool Scylla::FileExistsW(const wchar_t *wszPath)
     return (dwAttrib != INVALID_FILE_ATTRIBUTES) && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-std::vector<std::wstring> Scylla::GetPrivateProfileSectionNamesW(const wchar_t *wszIniFile)
+std::vector<std::wstring> Scylla::IniLoadSectionNames(const wchar_t *file)
 {
     std::wstring buf;
     DWORD ret = 0;
     while (((DWORD)buf.size() - ret) < 3) {
         buf.resize(buf.size() + MAX_PATH);
-        ret = ::GetPrivateProfileSectionNamesW(&buf[0], (DWORD)buf.size(), wszIniFile);
+        ret = ::GetPrivateProfileSectionNamesW(&buf[0], (DWORD)buf.size(), file);
     }
 
     std::vector<std::wstring> sections;
@@ -103,22 +103,21 @@ std::vector<std::wstring> Scylla::GetPrivateProfileSectionNamesW(const wchar_t *
     return sections;
 }
 
-std::wstring Scylla::GetPrivateProfileStringW(const wchar_t *wszProfile, const wchar_t *wszKey, const wchar_t *wszDefaultValue, const wchar_t *wszIniFile)
+std::wstring Scylla::IniLoadString(const wchar_t *file, const wchar_t *section, const wchar_t *key, const wchar_t *default_value)
 {
     std::wstring buf;
     DWORD ret = 0;
 
     while (((DWORD)buf.size() - ret) < 3) {
         buf.resize(buf.size() + MAX_PATH);
-        ret = ::GetPrivateProfileStringW(wszProfile, wszKey, wszDefaultValue, &buf[0], (DWORD)buf.size(), wszIniFile);
+        ret = ::GetPrivateProfileStringW(section, key, default_value, &buf[0], (DWORD)buf.size(), file);
     }
     buf.resize(ret);
 
     return buf;
 }
 
-bool Scylla::WritePrivateProfileIntW(const wchar_t *wszProfile, const wchar_t *wszKey, int nValue, const wchar_t *wszIniFile)
+bool Scylla::IniSaveString(const wchar_t *file, const wchar_t *section, const wchar_t *key, const wchar_t *value)
 {
-    auto strValue = format_wstring(L"%d", nValue);
-    return WritePrivateProfileStringW(wszProfile, wszKey, strValue.c_str(), wszIniFile) == TRUE;
+    return WritePrivateProfileStringW(section, key, value, file) == TRUE;
 }

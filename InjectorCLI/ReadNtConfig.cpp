@@ -2,12 +2,7 @@
 #include <Scylla/OsInfo.h>
 #include <Scylla/Util.h>
 
-static DWORD ReadApiFromIni(const wchar_t *szFilePath, const wchar_t *szSection, const wchar_t *szName)
-{
-    auto strValue = Scylla::GetPrivateProfileStringW(szSection, szName, L"0", szFilePath);
 
-    return wcstoul(strValue.c_str(), nullptr, 16);
-}
 
 bool ReadNtApiInformation(const wchar_t *szFilePath, HOOK_DLL_EXCHANGE *pDllExchangeLoader)
 {
@@ -36,9 +31,9 @@ bool ReadNtApiInformation(const wchar_t *szFilePath, HOOK_DLL_EXCHANGE *pDllExch
         osVerInfo->wProductType, osSysInfo->wProcessorArchitecture, wszArch,
         pNtUser->OptionalHeader.AddressOfEntryPoint);
 
-    pDllExchangeLoader->NtUserBuildHwndListRVA = ReadApiFromIni(szFilePath, wstrSection.c_str(), L"NtUserBuildHwndList");
-    pDllExchangeLoader->NtUserFindWindowExRVA = ReadApiFromIni(szFilePath, wstrSection.c_str(), L"NtUserFindWindowEx");
-    pDllExchangeLoader->NtUserQueryWindowRVA = ReadApiFromIni(szFilePath, wstrSection.c_str(), L"NtUserQueryWindow");
+    pDllExchangeLoader->NtUserBuildHwndListRVA = Scylla::IniLoadNum<16>(szFilePath, wstrSection.c_str(), L"NtUserBuildHwndList", 0);
+    pDllExchangeLoader->NtUserFindWindowExRVA = Scylla::IniLoadNum<16>(szFilePath, wstrSection.c_str(), L"NtUserFindWindowEx", 0);
+    pDllExchangeLoader->NtUserQueryWindowRVA = Scylla::IniLoadNum<16>(szFilePath, wstrSection.c_str(), L"NtUserQueryWindow", 0);
 
     if (!pDllExchangeLoader->NtUserBuildHwndListRVA || !pDllExchangeLoader->NtUserFindWindowExRVA || !pDllExchangeLoader->NtUserQueryWindowRVA)
     {

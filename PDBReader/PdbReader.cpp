@@ -117,9 +117,8 @@ int wmain(int argc, wchar_t* argv[])
         }
 
         auto ulFunctionRVA = ulFunctionVA - (ULONG64)hUser32;
-        auto wstrFunctionRva = Scylla::format_wstring(L"%08llX", ulFunctionRVA);
         wprintf(L"Name %s VA 0x%p RVA 0x%08llX\n", wszFunctionNames[i], (void *)ulFunctionVA, ulFunctionRVA);
-        WritePrivateProfileStringW(wstrIniSection.c_str(), wszFunctionNames[i], wstrFunctionRva.c_str(), wstrIniFile.c_str());
+        Scylla::IniSaveNum<16>(wstrIniFile.c_str(), wstrIniSection.c_str(), wszFunctionNames[i], ulFunctionRVA);
     }
 
     SymCleanup(GetCurrentProcess());
