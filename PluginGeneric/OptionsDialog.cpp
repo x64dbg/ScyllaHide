@@ -490,7 +490,7 @@ void SaveOptions(HWND hWnd)
 #endif
 
     //save all options
-    g_settings.SaveProfile();
+    g_settings.Save();
 }
 
 HWND CreateTooltips(HWND hwndDlg)

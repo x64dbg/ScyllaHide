@@ -75,9 +75,11 @@ namespace Scylla
         static const wchar_t kFileName[];
 
         void Load(const wchar_t *ini_file);
+        bool Save() const;
+
         bool AddProfile(const wchar_t *name);
         void SetProfile(const wchar_t *name);
-        bool SaveProfile() const;
+
 
         const std::vector<std::wstring> &profile_names() const
         {
@@ -100,7 +102,8 @@ namespace Scylla
         }
 
     protected:
-        void LoadProfile(const wchar_t *name);
+        static void LoadProfile(const wchar_t *file, const wchar_t *name, Profile *profile);
+        static bool SaveProfile(const wchar_t *file, const wchar_t *name, const Profile *profile);
 
     private:
         std::wstring ini_path_;
