@@ -66,7 +66,7 @@ int wmain(int argc, wchar_t* argv[])
     wstrPath.resize(wstrPath.find_last_of(L"\\"));
 
     auto wstrIniFile = wstrPath + L"\\NtApiCollection.ini";
-    auto wstrSymbolPath = scl::format_wstring(L"srv*%s*http://msdl.microsoft.com/download/symbols", wstrPath.c_str());
+    auto wstrSymbolPath = scl::fmtw(L"srv*%s*http://msdl.microsoft.com/download/symbols", wstrPath.c_str());
 
     // Must be called before InitSymServ()
     auto hUser32 = LoadLibraryW(L"user32.dll");
@@ -88,7 +88,7 @@ int wmain(int argc, wchar_t* argv[])
     const wchar_t wszArch[] = L"x86";
 #endif
 
-    auto wstrOsId = scl::format_wstring(L"%02X%02X%02X%02X%02X%02X_%s",
+    auto wstrOsId = scl::fmtw(L"%02X%02X%02X%02X%02X%02X_%s",
         osVerInfo->dwMajorVersion, osVerInfo->dwMinorVersion,
         osVerInfo->wServicePackMajor, osVerInfo->wServicePackMinor,
         osVerInfo->wProductType, osSysInfo->wProcessorArchitecture, wszArch);
@@ -106,7 +106,7 @@ int wmain(int argc, wchar_t* argv[])
 
     wprintf(L"User32 Base 0x%p\nFetching symbols...\n", hUser32);
 
-    auto wstrIniSection = scl::format_wstring(L"%s_%08X", wstrOsId.c_str(), pNtUser->OptionalHeader.AddressOfEntryPoint);
+    auto wstrIniSection = scl::fmtw(L"%s_%08X", wstrOsId.c_str(), pNtUser->OptionalHeader.AddressOfEntryPoint);
     for (size_t i = 0; i < _countof(wszFunctionNames); i++)
     {
         auto ulFunctionVA = GetFunctionAddressPDB(hUser32, wszFunctionNames[i]);

@@ -657,7 +657,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     case WM_INITDIALOG:
     {
         // add current profile to options title
-        auto wstrTitle = scl::format_wstring(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
+        auto wstrTitle = scl::fmtw(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
         SetWindowTextW(hWnd, wstrTitle.c_str());
 
         // fill combobox with profiles
@@ -699,7 +699,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
                 g_settings.SetProfile(g_settings.profile_names()[profileIdx].c_str());
 
                 // update options title
-                auto wstrTitle = scl::format_wstring(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
+                auto wstrTitle = scl::fmtw(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
                 SetWindowTextW(hWnd, wstrTitle.c_str());
 
                 UpdateOptions(hWnd);
@@ -741,7 +741,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
                 break;
             g_settings.SetProfile(wstrNewProfileName.c_str());
 
-            auto wstrTitle = scl::format_wstring(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
+            auto wstrTitle = scl::fmtw(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
             SetWindowTextW(hWnd, wstrTitle.c_str());
 
             SendDlgItemMessageW(hWnd, IDC_PROFILES, CB_ADDSTRING, 0, (LPARAM)wstrNewProfileName.c_str());

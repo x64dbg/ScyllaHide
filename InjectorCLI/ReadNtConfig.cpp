@@ -25,7 +25,7 @@ bool ReadNtApiInformation(const wchar_t *szFilePath, HOOK_DLL_EXCHANGE *pDllExch
     const wchar_t wszArch[] = L"x86";
 #endif
 
-    auto wstrSection = scl::format_wstring(L"%02X%02X%02X%02X%02X%02X_%s_%08X",
+    auto wstrSection = scl::fmtw(L"%02X%02X%02X%02X%02X%02X_%s_%08X",
         osVerInfo->dwMajorVersion, osVerInfo->dwMinorVersion,
         osVerInfo->wServicePackMajor, osVerInfo->wServicePackMinor,
         osVerInfo->wProductType, osSysInfo->wProcessorArchitecture, wszArch,
@@ -37,7 +37,7 @@ bool ReadNtApiInformation(const wchar_t *szFilePath, HOOK_DLL_EXCHANGE *pDllExch
 
     if (!pDllExchangeLoader->NtUserBuildHwndListRVA || !pDllExchangeLoader->NtUserFindWindowExRVA || !pDllExchangeLoader->NtUserQueryWindowRVA)
     {
-        auto strMessage = scl::format_wstring(
+        auto strMessage = scl::fmtw(
             L"NtUser* API Addresses missing!\r\n"
             L"File: %s\r\n"
             L"Section: %s\r\n"

@@ -1,18 +1,18 @@
 #include "Util.h"
 #include <cstdio>
 
-std::wstring scl::format_wstring(const wchar_t *fmt, ...)
+std::wstring scl::fmtw(const wchar_t *fmt, ...)
 {
     va_list ap;
 
     va_start(ap, fmt);
-    auto str = vformat_wstring(fmt, ap);
+    auto str = vfmtw(fmt, ap);
     va_end(ap);
 
     return str;
 }
 
-std::wstring scl::vformat_wstring(const wchar_t *fmt, va_list ap)
+std::wstring scl::vfmtw(const wchar_t *fmt, va_list ap)
 {
     va_list vap;
 
