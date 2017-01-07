@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-namespace Scylla
+namespace scl
 {
     enum eOsVersion {
         OS_UNKNOWN,

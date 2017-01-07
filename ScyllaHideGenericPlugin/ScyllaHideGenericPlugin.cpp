@@ -10,7 +10,7 @@
 typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
-Scylla::Settings g_settings;
+scl::Settings g_settings;
 
 #ifdef _WIN64
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -195,7 +195,7 @@ DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory, LOGWRAPPER Logger, LOGWRA
         wcscpy(ScyllaHideDllPath, NtApiIniPath);
         wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
         wcscpy(ScyllaHideIniPath, NtApiIniPath);
-        wcscat(ScyllaHideIniPath, Scylla::Settings::kFileName);
+        wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
         wcscat(NtApiIniPath, NtApiIniFilename);
     }
 

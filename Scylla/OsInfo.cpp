@@ -20,7 +20,7 @@
  * Windows 2000                    5.0
  */
 
-const SYSTEM_INFO *Scylla::GetNativeSystemInfo()
+const SYSTEM_INFO *scl::GetNativeSystemInfo()
 {
     static SYSTEM_INFO si = { 0 };
     static auto cached = false;
@@ -30,11 +30,11 @@ const SYSTEM_INFO *Scylla::GetNativeSystemInfo()
         ::GetNativeSystemInfo(&si);
         cached = true;
     }
-    
+
     return &si;
 }
 
-const OSVERSIONINFOEXW* Scylla::GetVersionExW()
+const OSVERSIONINFOEXW* scl::GetVersionExW()
 {
     static OSVERSIONINFOEXW osVerInfo = { 0 };
     static auto cached = false;
@@ -55,7 +55,7 @@ const OSVERSIONINFOEXW* Scylla::GetVersionExW()
     return &osVerInfo;
 }
 
-bool Scylla::IsWindows64()
+bool scl::IsWindows64()
 {
 #ifdef _WIN64
     return true;
@@ -64,14 +64,14 @@ bool Scylla::IsWindows64()
 #endif
 }
 
-bool Scylla::IsWow64Process(HANDLE hProcess)
+bool scl::IsWow64Process(HANDLE hProcess)
 {
     auto fIsWow64 = FALSE;
     return ::IsWow64Process(hProcess, &fIsWow64) && (fIsWow64 == TRUE);
 }
 
 
-Scylla::eOsVersion Scylla::GetWindowsVersion()
+scl::eOsVersion scl::GetWindowsVersion()
 {
     static auto version = OS_UNKNOWN;
 
@@ -125,7 +125,7 @@ Scylla::eOsVersion Scylla::GetWindowsVersion()
     return version;
 }
 
-const char *Scylla::GetWindowsVersionNameA()
+const char *scl::GetWindowsVersionNameA()
 {
     switch (GetWindowsVersion())
     {

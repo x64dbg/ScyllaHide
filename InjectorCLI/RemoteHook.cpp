@@ -145,7 +145,7 @@ DWORD GetSysCallIndex32(const BYTE * data)
 DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
 {
     // Colin Edit, hacky
-    if (Scylla::GetWindowsVersion() < Scylla::OS_WIN_10) {
+    if (scl::GetWindowsVersion() < scl::OS_WIN_10) {
         DWORD SysWow64 = (DWORD)__readfsdword(0xC0);
         if (SysWow64) {
             return SysWow64;
@@ -524,7 +524,7 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
     HookNative[countNativeHooks].ecxValue = 0;
     HookNative[countNativeHooks].hookedFunction = lpFuncDetour;
 
-    if (!Scylla::IsWow64Process(hProcess))
+    if (!scl::IsWow64Process(hProcess))
     {
         result = DetourCreateRemoteNative32Normal(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
     }

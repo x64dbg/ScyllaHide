@@ -8,7 +8,7 @@
  * March 2, 2013 / ReWolf posted in programming, reverse engineering, source code, x64 /
  */
 
-namespace Scylla {
+namespace scl {
 
 #pragma pack(push, 1)
     template <typename T>

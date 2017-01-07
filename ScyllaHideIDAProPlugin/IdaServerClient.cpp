@@ -8,7 +8,7 @@
 
 #pragma comment (lib, "Ws2_32.lib")
 
-extern Scylla::Settings g_settings;
+extern scl::Settings g_settings;
 
 
 SOCKET serverSock = INVALID_SOCKET;

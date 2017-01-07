@@ -5,7 +5,7 @@
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\\ApplyHooking.h"
 
-extern Scylla::Settings g_settings;
+extern scl::Settings g_settings;
 
 HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
 

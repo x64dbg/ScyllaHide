@@ -1,7 +1,7 @@
 #include "Util.h"
 #include <cstdio>
 
-std::wstring Scylla::format_wstring(const wchar_t *fmt, ...)
+std::wstring scl::format_wstring(const wchar_t *fmt, ...)
 {
     va_list ap;
 
@@ -12,7 +12,7 @@ std::wstring Scylla::format_wstring(const wchar_t *fmt, ...)
     return str;
 }
 
-std::wstring Scylla::vformat_wstring(const wchar_t *fmt, va_list ap)
+std::wstring scl::vformat_wstring(const wchar_t *fmt, va_list ap)
 {
     va_list vap;
 
@@ -30,7 +30,7 @@ std::wstring Scylla::vformat_wstring(const wchar_t *fmt, va_list ap)
     return wstr;
 }
 
-std::wstring Scylla::GetModuleFileNameW(HMODULE hModule)
+std::wstring scl::GetModuleFileNameW(HMODULE hModule)
 {
     std::wstring wstrFileName;
     DWORD copied = 0;
@@ -43,7 +43,7 @@ std::wstring Scylla::GetModuleFileNameW(HMODULE hModule)
     return wstrFileName;
 }
 
-std::wstring Scylla::FormatMessageW(DWORD dwErrnum)
+std::wstring scl::FormatMessageW(DWORD dwErrnum)
 {
     wchar_t *wszBuffer = nullptr;
 
@@ -64,7 +64,7 @@ std::wstring Scylla::FormatMessageW(DWORD dwErrnum)
     return wstrError;
 }
 
-std::wstring Scylla::GetWindowTextW(HWND hWnd)
+std::wstring scl::GetWindowTextW(HWND hWnd)
 {
     std::wstring wstr;
     auto len = ::GetWindowTextLengthW(hWnd) + 1;
@@ -73,19 +73,19 @@ std::wstring Scylla::GetWindowTextW(HWND hWnd)
     return wstr;
 }
 
-std::wstring Scylla::GetDlgItemTextW(HWND hDlg, int nIDDlgItem)
+std::wstring scl::GetDlgItemTextW(HWND hDlg, int nIDDlgItem)
 {
     return GetWindowTextW(::GetDlgItem(hDlg, nIDDlgItem));
 }
 
-bool Scylla::FileExistsW(const wchar_t *wszPath)
+bool scl::FileExistsW(const wchar_t *wszPath)
 {
     auto dwAttrib = ::GetFileAttributesW(wszPath);
 
     return (dwAttrib != INVALID_FILE_ATTRIBUTES) && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-std::vector<std::wstring> Scylla::IniLoadSectionNames(const wchar_t *file)
+std::vector<std::wstring> scl::IniLoadSectionNames(const wchar_t *file)
 {
     std::wstring buf;
     DWORD ret = 0;
@@ -103,7 +103,7 @@ std::vector<std::wstring> Scylla::IniLoadSectionNames(const wchar_t *file)
     return sections;
 }
 
-std::wstring Scylla::IniLoadString(const wchar_t *file, const wchar_t *section, const wchar_t *key, const wchar_t *default_value)
+std::wstring scl::IniLoadString(const wchar_t *file, const wchar_t *section, const wchar_t *key, const wchar_t *default_value)
 {
     std::wstring buf;
     DWORD ret = 0;
@@ -117,7 +117,7 @@ std::wstring Scylla::IniLoadString(const wchar_t *file, const wchar_t *section, 
     return buf;
 }
 
-bool Scylla::IniSaveString(const wchar_t *file, const wchar_t *section, const wchar_t *key, const wchar_t *value)
+bool scl::IniSaveString(const wchar_t *file, const wchar_t *section, const wchar_t *key, const wchar_t *value)
 {
     return WritePrivateProfileStringW(section, key, value, file) == TRUE;
 }

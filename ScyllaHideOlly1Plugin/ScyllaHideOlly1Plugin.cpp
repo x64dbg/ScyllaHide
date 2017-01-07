@@ -29,7 +29,7 @@ void AttachProcess(DWORD dwPID);
 void SetDebuggerBreakpoint(DWORD_PTR address);
 bool __cdecl IsAddressBreakpoint(DWORD_PTR address);
 
-Scylla::Settings g_settings;
+scl::Settings g_settings;
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
@@ -82,7 +82,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 			wcscpy(ScyllaHideDllPath, NtApiIniPath);
 			wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
 			wcscpy(ScyllaHideIniPath, NtApiIniPath);
-			wcscat(ScyllaHideIniPath, Scylla::Settings::kFileName);
+            wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
 			wcscat(NtApiIniPath, NtApiIniFilename);
 		}
 
@@ -119,7 +119,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 		fixNTSymbols();
 		fixFaultyHandleOnExit();
 	}
-    if (g_settings.opts().x64Fix && Scylla::IsWindows64()) {
+    if (g_settings.opts().x64Fix && scl::IsWindows64()) {
 		fixX64Bug();
 	}
     if (g_settings.opts().skipEPOutsideCode) {
@@ -362,7 +362,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 		{
 			if (bHooked)
 			{
-                if (g_settings.opts().fixOllyBugs && Scylla::IsWindows64()) {
+                if (g_settings.opts().fixOllyBugs && scl::IsWindows64()) {
 					MarkSystemDllsOnx64();
 				}
 

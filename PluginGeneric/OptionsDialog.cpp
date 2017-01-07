@@ -36,7 +36,7 @@
 #define IDC_SELECT_EXCEPTIONS 23949
 #endif
 
-extern Scylla::Settings g_settings;
+extern scl::Settings g_settings;
 
 extern WCHAR ScyllaHideIniPath[MAX_PATH];
 extern WCHAR ScyllaHideDllPath[MAX_PATH];
@@ -478,14 +478,14 @@ void SaveOptions(HWND hWnd)
     else
         g_settings.opts().autostartServer = 0;
 
-    g_settings.opts().serverPort = Scylla::GetDlgItemTextW(hWnd, IDC_SERVERPORT);
+    g_settings.opts().serverPort = scl::GetDlgItemTextW(hWnd, IDC_SERVERPORT);
 #endif
 
 #ifdef OLLY1
-    g_settings.opts().ollyTitle = Scylla::GetDlgItemTextW(hWnd, IDC_OLLYTITLE);
+    g_settings.opts().ollyTitle = scl::GetDlgItemTextW(hWnd, IDC_OLLYTITLE);
     SetWindowTextW(hwmain, g_settings.opts().ollyTitle.c_str());
 #elif OLLY2
-    g_settings.opts().ollyTitle = Scylla::GetDlgItemTextW(hWnd, IDC_OLLYTITLE);
+    g_settings.opts().ollyTitle = scl::GetDlgItemTextW(hWnd, IDC_OLLYTITLE);
     SetWindowTextW(hwollymain, g_settings.opts().ollyTitle.c_str());
 #endif
 
@@ -657,7 +657,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     case WM_INITDIALOG:
     {
         // add current profile to options title
-        auto wstrTitle = Scylla::format_wstring(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
+        auto wstrTitle = scl::format_wstring(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
         SetWindowTextW(hWnd, wstrTitle.c_str());
 
         // fill combobox with profiles
@@ -671,7 +671,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         UpdateOptions(hWnd);
 
 #ifdef OLLY1
-        if (Scylla::IsWindows64())
+        if (scl::IsWindows64())
         {
             EnableWindow(GetDlgItem(hWnd, IDC_X64FIX), FALSE);
         }
@@ -699,7 +699,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
                 g_settings.SetProfile(g_settings.profile_names()[profileIdx].c_str());
 
                 // update options title
-                auto wstrTitle = Scylla::format_wstring(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
+                auto wstrTitle = scl::format_wstring(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
                 SetWindowTextW(hWnd, wstrTitle.c_str());
 
                 UpdateOptions(hWnd);
@@ -741,7 +741,7 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
                 break;
             g_settings.SetProfile(wstrNewProfileName.c_str());
 
-            auto wstrTitle = Scylla::format_wstring(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
+            auto wstrTitle = scl::format_wstring(L"[ScyllaHide Options] Profile: %s", g_settings.profile_name().c_str());
             SetWindowTextW(hWnd, wstrTitle.c_str());
 
             SendDlgItemMessageW(hWnd, IDC_PROFILES, CB_ADDSTRING, 0, (LPARAM)wstrNewProfileName.c_str());

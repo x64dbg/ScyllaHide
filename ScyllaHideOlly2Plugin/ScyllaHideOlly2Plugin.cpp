@@ -13,7 +13,7 @@
 
 #pragma comment(lib, "ollydbg2\\ollydbg.lib")
 
-Scylla::Settings g_settings;
+scl::Settings g_settings;
 
 typedef int (__cdecl * t_Attachtoactiveprocess)(int newprocessid);
 #define OLLY201_Attachtoactiveprocess_VA 0x44B108
@@ -198,7 +198,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
             wcscpy(ScyllaHideIniPath, NtApiIniPath);
-            wcscat(ScyllaHideIniPath, Scylla::Settings::kFileName);
+            wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
             wcscat(NtApiIniPath, NtApiIniFilename);
         }
 
@@ -226,7 +226,7 @@ extc int __cdecl ODBG2_Plugininit(void)
 
     Addtolist(0,0,L"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_W);
     Addtolist(0,2,L"  Copyright (C) 2014 Aguila / cypher");
-    Addtolist(0,2,L"  Operating System: %S", Scylla::GetWindowsVersionNameA());
+    Addtolist(0, 2, L"  Operating System: %S", scl::GetWindowsVersionNameA());
 
     //change olly caption
     SetWindowTextW(hwollymain, g_settings.opts().ollyTitle.c_str());

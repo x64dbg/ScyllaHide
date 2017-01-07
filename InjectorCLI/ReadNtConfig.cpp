@@ -6,8 +6,8 @@
 
 bool ReadNtApiInformation(const wchar_t *szFilePath, HOOK_DLL_EXCHANGE *pDllExchangeLoader)
 {
-    const auto osVerInfo = Scylla::GetVersionExW();
-    const auto osSysInfo = Scylla::GetNativeSystemInfo();
+    const auto osVerInfo = scl::GetVersionExW();
+    const auto osSysInfo = scl::GetNativeSystemInfo();
 
     auto hUser = GetModuleHandleW(L"user32.dll");
     auto pDosUser = (PIMAGE_DOS_HEADER)hUser;
@@ -25,19 +25,19 @@ bool ReadNtApiInformation(const wchar_t *szFilePath, HOOK_DLL_EXCHANGE *pDllExch
     const wchar_t wszArch[] = L"x86";
 #endif
 
-    auto wstrSection = Scylla::format_wstring(L"%02X%02X%02X%02X%02X%02X_%s_%08X",
+    auto wstrSection = scl::format_wstring(L"%02X%02X%02X%02X%02X%02X_%s_%08X",
         osVerInfo->dwMajorVersion, osVerInfo->dwMinorVersion,
         osVerInfo->wServicePackMajor, osVerInfo->wServicePackMinor,
         osVerInfo->wProductType, osSysInfo->wProcessorArchitecture, wszArch,
         pNtUser->OptionalHeader.AddressOfEntryPoint);
 
-    pDllExchangeLoader->NtUserBuildHwndListRVA = Scylla::IniLoadNum<16>(szFilePath, wstrSection.c_str(), L"NtUserBuildHwndList", 0);
-    pDllExchangeLoader->NtUserFindWindowExRVA = Scylla::IniLoadNum<16>(szFilePath, wstrSection.c_str(), L"NtUserFindWindowEx", 0);
-    pDllExchangeLoader->NtUserQueryWindowRVA = Scylla::IniLoadNum<16>(szFilePath, wstrSection.c_str(), L"NtUserQueryWindow", 0);
+    pDllExchangeLoader->NtUserBuildHwndListRVA = scl::IniLoadNum<16>(szFilePath, wstrSection.c_str(), L"NtUserBuildHwndList", 0);
+    pDllExchangeLoader->NtUserFindWindowExRVA = scl::IniLoadNum<16>(szFilePath, wstrSection.c_str(), L"NtUserFindWindowEx", 0);
+    pDllExchangeLoader->NtUserQueryWindowRVA = scl::IniLoadNum<16>(szFilePath, wstrSection.c_str(), L"NtUserQueryWindow", 0);
 
     if (!pDllExchangeLoader->NtUserBuildHwndListRVA || !pDllExchangeLoader->NtUserFindWindowExRVA || !pDllExchangeLoader->NtUserQueryWindowRVA)
     {
-        auto strMessage = Scylla::format_wstring(
+        auto strMessage = scl::format_wstring(
             L"NtUser* API Addresses missing!\r\n"
             L"File: %s\r\n"
             L"Section: %s\r\n"

@@ -12,14 +12,14 @@ static int getHeapFlagsOffset(bool x64)
 {
     if (x64) //x64 offsets
     {
-        if (Scylla::GetWindowsVersion() >= Scylla::OS_WIN_VISTA)
+        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
             return 0x70;
         else
             return 0x14;
     }
     else //x86 offsets
     {
-        if (Scylla::GetWindowsVersion() >= Scylla::OS_WIN_VISTA)
+        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
             return 0x40;
         else
             return 0x0C;
@@ -30,14 +30,14 @@ static int getHeapForceFlagsOffset(bool x64)
 {
     if (x64) //x64 offsets
     {
-        if (Scylla::GetWindowsVersion() >= Scylla::OS_WIN_VISTA)
+        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
             return 0x74;
         else
             return 0x18;
     }
     else //x86 offsets
     {
-        if (Scylla::GetWindowsVersion() >= Scylla::OS_WIN_VISTA)
+        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
             return 0x44;
         else
             return 0x10;
@@ -45,7 +45,7 @@ static int getHeapForceFlagsOffset(bool x64)
 }
 
 //some debuggers manipulate StartUpInfo to start the debugged process and therefore can be detected...
-bool FixStartUpInfo(Scylla::PEB* myPEB, HANDLE hProcess)
+bool FixStartUpInfo(scl::PEB* myPEB, HANDLE hProcess)
 {
     RTL_USER_PROCESS_PARAMETERS * rtlProcessParam = (RTL_USER_PROCESS_PARAMETERS *)myPEB->ProcessParameters;
 
@@ -97,23 +97,23 @@ void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase, bool isDefaultHeap)
 
 bool FixPebBeingDebugged(HANDLE hProcess, bool SetToNull)
 {
-    auto peb = Scylla::GetPeb(hProcess);
+    auto peb = scl::GetPeb(hProcess);
     if (!peb)
         return false;
 
     peb->BeingDebugged = SetToNull ? FALSE : TRUE;
-    if (!Scylla::SetPeb(hProcess, peb.get()))
+    if (!scl::SetPeb(hProcess, peb.get()))
         return false;
 
 #ifndef _WIN64
-    auto peb64 = Scylla::GetPeb64(hProcess);
-    if (!peb64 && Scylla::IsWow64Process(hProcess))
+    auto peb64 = scl::GetPeb64(hProcess);
+    if (!peb64 && scl::IsWow64Process(hProcess))
         return false;
 
     if (peb64)
     {
         peb64->BeingDebugged = SetToNull ? FALSE : TRUE;
-        return Scylla::SetPeb64(hProcess, peb64.get());
+        return scl::SetPeb64(hProcess, peb64.get());
     }
 #endif
 
@@ -122,13 +122,13 @@ bool FixPebBeingDebugged(HANDLE hProcess, bool SetToNull)
 
 bool FixPebInProcess(HANDLE hProcess, DWORD EnableFlags)
 {
-    auto peb = Scylla::GetPeb(hProcess);
+    auto peb = scl::GetPeb(hProcess);
     if (!peb)
         return false;
 
 #ifndef _WIN64
-    auto peb64 = Scylla::GetPeb64(hProcess);
-    if (!peb64 && Scylla::IsWow64Process(hProcess))
+    auto peb64 = scl::GetPeb64(hProcess);
+    if (!peb64 && scl::IsWow64Process(hProcess))
         return false;
 #endif
 
@@ -169,10 +169,10 @@ bool FixPebInProcess(HANDLE hProcess, DWORD EnableFlags)
         }
     }
 
-    if (!Scylla::SetPeb(hProcess, peb.get()))
+    if (!scl::SetPeb(hProcess, peb.get()))
         return false;
 #ifndef _WIN64
-    if (peb64 && !Scylla::SetPeb64(hProcess, peb64.get()))
+    if (peb64 && !scl::SetPeb64(hProcess, peb64.get()))
         return false;
 #endif
 

@@ -8,9 +8,9 @@
 #define SCYLLA_HIDE_SETTINGS_CURRENT_PROFILE_KEY    L"CurrentProfile"
 #define SCYLLA_HIDE_SETTINGS_DEFAULT_PROFILE        L"SCYLLA_HIDE"
 
-const wchar_t Scylla::Settings::kFileName[] = L"scylla_hide.ini";
+const wchar_t scl::Settings::kFileName[] = L"scylla_hide.ini";
 
-void Scylla::Settings::Load(const wchar_t *ini_path)
+void scl::Settings::Load(const wchar_t *ini_path)
 {
     ini_path_ = ini_path;
     profile_names_ = IniLoadSectionNames(ini_path);
@@ -20,7 +20,7 @@ void Scylla::Settings::Load(const wchar_t *ini_path)
     LoadProfile(ini_path_.c_str(), profile_name_.c_str(), &profile_);
 }
 
-bool Scylla::Settings::Save() const
+bool scl::Settings::Save() const
 {
     if (!FileExistsW(ini_path_.c_str()))
     {
@@ -37,7 +37,7 @@ bool Scylla::Settings::Save() const
     return SaveProfile(ini_path_.c_str(), profile_name_.c_str(), &profile_);
 }
 
-bool Scylla::Settings::AddProfile(const wchar_t *name)
+bool scl::Settings::AddProfile(const wchar_t *name)
 {
     if (std::find(profile_names_.begin(), profile_names_.end(), name) != profile_names_.end())
         return false;
@@ -46,7 +46,7 @@ bool Scylla::Settings::AddProfile(const wchar_t *name)
     return true;
 }
 
-void Scylla::Settings::SetProfile(const wchar_t *name)
+void scl::Settings::SetProfile(const wchar_t *name)
 {
     if (profile_name_ == name)
         return;
@@ -58,7 +58,7 @@ void Scylla::Settings::SetProfile(const wchar_t *name)
 }
 
 
-void Scylla::Settings::LoadProfile(const wchar_t *file, const wchar_t *name, Profile *profile)
+void scl::Settings::LoadProfile(const wchar_t *file, const wchar_t *name, Profile *profile)
 {
     profile->BlockInput = IniLoadNum(file, name, L"BlockInputHook", 1);
     profile->DLLNormal = IniLoadNum(file, name, L"DLLNormal", 1);
@@ -129,7 +129,7 @@ void Scylla::Settings::LoadProfile(const wchar_t *file, const wchar_t *name, Pro
     profile->ollyTitle = IniLoadString(file, name, L"WindowTitle", L"ScyllaHide");
 }
 
-bool Scylla::Settings::SaveProfile(const wchar_t *file, const wchar_t *name, const Profile *profile)
+bool scl::Settings::SaveProfile(const wchar_t *file, const wchar_t *name, const Profile *profile)
 {
     auto success = true;
     success &= IniSaveNum(file, name, L"BlockInputHook", profile->BlockInput);

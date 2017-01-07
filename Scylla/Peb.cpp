@@ -8,7 +8,7 @@
 #pragma comment(lib, "ntdll\\ntdll_x86.lib")
 #endif
 
-Scylla::PEB *Scylla::GetPebAddress(HANDLE hProcess)
+scl::PEB *scl::GetPebAddress(HANDLE hProcess)
 {
     PROCESS_BASIC_INFORMATION pbi = { nullptr };
 
@@ -17,7 +17,7 @@ Scylla::PEB *Scylla::GetPebAddress(HANDLE hProcess)
     return NT_SUCCESS(status) ? (PEB *)pbi.PebBaseAddress : nullptr;
 }
 
-Scylla::PEB64* Scylla::GetPeb64Address(HANDLE hProcess)
+scl::PEB64* scl::GetPeb64Address(HANDLE hProcess)
 {
 #ifndef _WIN64
     if (IsWow64Process(hProcess))
@@ -33,7 +33,7 @@ Scylla::PEB64* Scylla::GetPeb64Address(HANDLE hProcess)
     return nullptr;
 }
 
-std::shared_ptr<Scylla::PEB> Scylla::GetPeb(HANDLE hProcess)
+std::shared_ptr<scl::PEB> scl::GetPeb(HANDLE hProcess)
 {
     auto *pPebPtr = GetPebAddress(hProcess);
     if (!pPebPtr)
@@ -50,7 +50,7 @@ std::shared_ptr<Scylla::PEB> Scylla::GetPeb(HANDLE hProcess)
     return peb;
 }
 
-std::shared_ptr<Scylla::PEB64> Scylla::GetPeb64(HANDLE hProcess)
+std::shared_ptr<scl::PEB64> scl::GetPeb64(HANDLE hProcess)
 {
     auto *pPebPtr = GetPeb64Address(hProcess);
     if (!pPebPtr)
@@ -67,7 +67,7 @@ std::shared_ptr<Scylla::PEB64> Scylla::GetPeb64(HANDLE hProcess)
     return peb;
 }
 
-bool Scylla::SetPeb(HANDLE hProcess, const PEB *pPeb)
+bool scl::SetPeb(HANDLE hProcess, const PEB *pPeb)
 {
     auto *pPebPtr = GetPebAddress(hProcess);
     if (!pPebPtr)
@@ -78,7 +78,7 @@ bool Scylla::SetPeb(HANDLE hProcess, const PEB *pPeb)
     return WriteProcessMemory(hProcess, pPebPtr, pPeb, sizeof(*pPeb), nullptr) == TRUE;
 }
 
-bool Scylla::SetPeb64(HANDLE hProcess, const PEB64 *pPeb64)
+bool scl::SetPeb64(HANDLE hProcess, const PEB64 *pPeb64)
 {
     auto *pPeb64Ptr = GetPeb64Address(hProcess);
     if (!pPeb64Ptr)

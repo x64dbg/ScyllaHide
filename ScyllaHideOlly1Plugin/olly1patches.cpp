@@ -6,7 +6,7 @@
 
 #include "resource.h"
 
-extern Scylla::Settings g_settings;
+extern scl::Settings g_settings;
 
 extern HINSTANCE hinst;
 extern LPVOID ImageBase;

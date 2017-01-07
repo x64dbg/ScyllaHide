@@ -11,7 +11,7 @@ typedef bool (__cdecl * t_IsAddressBreakpoint)(DWORD_PTR address);
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 extern t_LogWrapper LogWrap;
 
-extern Scylla::Settings g_settings;
+extern scl::Settings g_settings;
 
 char OutputDebugStringBuffer[500] = {0};
 

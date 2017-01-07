@@ -59,26 +59,26 @@ static bool InitSymServ(const wchar_t *wszSymbolPath)
 
 int wmain(int argc, wchar_t* argv[])
 {
-    const auto osVerInfo = Scylla::GetVersionExW();
-    const auto osSysInfo = Scylla::GetNativeSystemInfo();
+    const auto osVerInfo = scl::GetVersionExW();
+    const auto osSysInfo = scl::GetNativeSystemInfo();
 
-    auto wstrPath = Scylla::GetModuleFileNameW();
+    auto wstrPath = scl::GetModuleFileNameW();
     wstrPath.resize(wstrPath.find_last_of(L"\\"));
 
     auto wstrIniFile = wstrPath + L"\\NtApiCollection.ini";
-    auto wstrSymbolPath = Scylla::format_wstring(L"srv*%s*http://msdl.microsoft.com/download/symbols", wstrPath.c_str());
+    auto wstrSymbolPath = scl::format_wstring(L"srv*%s*http://msdl.microsoft.com/download/symbols", wstrPath.c_str());
 
     // Must be called before InitSymServ()
     auto hUser32 = LoadLibraryW(L"user32.dll");
     if (!hUser32)
     {
-        fwprintf(stderr, L"Failed to get user32.dll module handle: %s\n", Scylla::FormatMessageW(GetLastError()).c_str());
+        fwprintf(stderr, L"Failed to get user32.dll module handle: %s\n", scl::FormatMessageW(GetLastError()).c_str());
         return EXIT_FAILURE;
     }
 
     if (!InitSymServ(wstrSymbolPath.c_str()))
     {
-        fwprintf(stderr, L"Failed to initialize symbol server API: %s\n", Scylla::FormatMessageW(GetLastError()).c_str());
+        fwprintf(stderr, L"Failed to initialize symbol server API: %s\n", scl::FormatMessageW(GetLastError()).c_str());
         return EXIT_FAILURE;
     }
 
@@ -88,7 +88,7 @@ int wmain(int argc, wchar_t* argv[])
     const wchar_t wszArch[] = L"x86";
 #endif
 
-    auto wstrOsId = Scylla::format_wstring(L"%02X%02X%02X%02X%02X%02X_%s",
+    auto wstrOsId = scl::format_wstring(L"%02X%02X%02X%02X%02X%02X_%s",
         osVerInfo->dwMajorVersion, osVerInfo->dwMinorVersion,
         osVerInfo->wServicePackMajor, osVerInfo->wServicePackMinor,
         osVerInfo->wProductType, osSysInfo->wProcessorArchitecture, wszArch);
@@ -106,19 +106,19 @@ int wmain(int argc, wchar_t* argv[])
 
     wprintf(L"User32 Base 0x%p\nFetching symbols...\n", hUser32);
 
-    auto wstrIniSection = Scylla::format_wstring(L"%s_%08X", wstrOsId.c_str(), pNtUser->OptionalHeader.AddressOfEntryPoint);
+    auto wstrIniSection = scl::format_wstring(L"%s_%08X", wstrOsId.c_str(), pNtUser->OptionalHeader.AddressOfEntryPoint);
     for (size_t i = 0; i < _countof(wszFunctionNames); i++)
     {
         auto ulFunctionVA = GetFunctionAddressPDB(hUser32, wszFunctionNames[i]);
         if (!ulFunctionVA)
         {
-            fwprintf(stderr, L"Failed to get symbol info for %s: %s\n", wszFunctionNames[i], Scylla::FormatMessageW(GetLastError()).c_str());
+            fwprintf(stderr, L"Failed to get symbol info for %s: %s\n", wszFunctionNames[i], scl::FormatMessageW(GetLastError()).c_str());
             continue;
         }
 
         auto ulFunctionRVA = ulFunctionVA - (ULONG64)hUser32;
         wprintf(L"Name %s VA 0x%p RVA 0x%08llX\n", wszFunctionNames[i], (void *)ulFunctionVA, ulFunctionRVA);
-        Scylla::IniSaveNum<16>(wstrIniFile.c_str(), wstrIniSection.c_str(), wszFunctionNames[i], ulFunctionRVA);
+        scl::IniSaveNum<16>(wstrIniFile.c_str(), wstrIniSection.c_str(), wszFunctionNames[i], ulFunctionRVA);
     }
 
     SymCleanup(GetCurrentProcess());

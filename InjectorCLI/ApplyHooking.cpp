@@ -464,7 +464,7 @@ void FreeMemory(HANDLE hProcess, void * buffer)
 void RestoreNtdllHooks(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess)
 {
 #ifndef _WIN64
-    if (Scylla::IsWow64Process(hProcess))
+    if (scl::IsWow64Process(hProcess))
     {
         RestoreMemory(hProcess, sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp));
     }

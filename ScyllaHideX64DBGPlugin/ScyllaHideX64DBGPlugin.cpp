@@ -28,7 +28,7 @@ enum ScyllaMenuItems : int {
     MENU_MAX
 };
 
-Scylla::Settings g_settings;
+scl::Settings g_settings;
 
 #ifdef _WIN64
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -282,7 +282,7 @@ extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
             wcscpy(ScyllaHideIniPath, NtApiIniPath);
-            wcscat(ScyllaHideIniPath, Scylla::Settings::kFileName);
+            wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
             wcscat(NtApiIniPath, NtApiIniFilename);
         }
 

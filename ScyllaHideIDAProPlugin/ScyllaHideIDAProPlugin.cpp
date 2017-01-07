@@ -35,7 +35,7 @@ void __cdecl AttachProcess(DWORD dwPID);
 int idaapi debug_mainloop(void *user_data, int notif_code, va_list va);
 bool SetDebugPrivileges();
 
-Scylla::Settings g_settings;
+scl::Settings g_settings;
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
@@ -79,7 +79,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
             wcscpy(ScyllaHideDllPath, NtApiIniPath);
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
             wcscpy(ScyllaHideIniPath, NtApiIniPath);
-            wcscat(ScyllaHideIniPath, Scylla::Settings::kFileName);
+            wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
             wcscpy(ScyllaHidex64ServerPath, NtApiIniPath);
             wcscat(ScyllaHidex64ServerPath, ScyllaHidex64ServerFilename);
             wcscat(NtApiIniPath, NtApiIniFilename);

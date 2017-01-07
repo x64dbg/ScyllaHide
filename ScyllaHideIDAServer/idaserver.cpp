@@ -15,7 +15,7 @@ unsigned short ListenPort = IDA_SERVER_DEFAULT_PORT;
 
 IDA_SERVER_EXCHANGE idaExchange = {0};
 
-Scylla::Settings g_settings;
+scl::Settings g_settings;
 
 #ifdef _WIN64
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -85,12 +85,12 @@ void checkPaths()
 
 	bool missing = false;
 
-	if (!Scylla::FileExistsW(ScyllaHideDllPath))
+    if (!scl::FileExistsW(ScyllaHideDllPath))
 	{
 		wprintf(L"File is missing: %s\n", ScyllaHideDllPath);
 		missing = true;
 	}
-	if (!Scylla::FileExistsW(NtApiIniPath))
+    if (!scl::FileExistsW(NtApiIniPath))
 	{
 		wprintf(L"File is missing: %s\n", NtApiIniPath);
 		missing = true;
@@ -231,21 +231,21 @@ void MapSettings()
 
 void DoSomeBitCheck()
 {
-	if (Scylla::IsWindows64())
+    if (scl::IsWindows64())
 	{
 		HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, 0, ProcessId);
 		if (hProcess)
 		{
 
 #ifdef _WIN64
-            if (Scylla::IsWow64Process(hProcess))
+            if (scl::IsWow64Process(hProcess))
 			{
 				printf("WARNING: This is a 32bit process and I am 64bit!");
 				getchar();
 				ExitProcess(0);
 			}
 #else
-            if (!Scylla::IsWow64Process(hProcess))
+            if (!scl::IsWow64Process(hProcess))
 			{
 				printf("WARNING: This is a 64bit process and I am 32bit!");
 				getchar();

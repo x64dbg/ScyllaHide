@@ -15,7 +15,7 @@
 
 const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
-Scylla::Settings g_settings;
+scl::Settings g_settings;
 
 void ChangeBadWindowText();
 void ReadSettings();
@@ -45,7 +45,7 @@ int wmain(int argc, wchar_t* argv[])
     temp++;
     *temp = 0;
     wcscpy(ScyllaHideIniPath, NtApiIniPath);
-    wcscat(ScyllaHideIniPath, Scylla::Settings::kFileName);
+    wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
     wcscat(NtApiIniPath, NtApiIniFilename);
 
     ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
