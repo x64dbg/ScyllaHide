@@ -224,12 +224,12 @@ void __declspec(naked) handleBreakpoints()
 {
     _asm { pushad };
 
-    if (g_settings.opts().removeEPBreak)
+    if (g_settings.opts().ollyRemoveEpBreak)
     {
         CreateThread(NULL, NULL, removeEPBreak, NULL, NULL, NULL);
     }
 
-    if (g_settings.opts().breakTLS)
+    if (g_settings.opts().ollyBreakOnTls)
     {
         ReadTlsAndSetBreakpoints(ProcessId, (LPVOID)ImageBase);
     }
@@ -628,11 +628,11 @@ void skipCompressedCode()
     BYTE patch[] = {0x83,0xC4,0x10,0x90,0x90}; //add esp,10;nop;nop
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &patch, sizeof(patch), NULL);
 
-    if (g_settings.opts().skipCompressedDoAnalyze) {
+    if (g_settings.opts().ollySkipCompressedDoAnalyze) {
         BYTE jmp[] = {0xEB};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+10), &jmp, sizeof(jmp), NULL);
     }
-    else if (g_settings.opts().skipCompressedDoNothing) {
+    else if (g_settings.opts().ollySkipCompressedDoNothing) {
         BYTE zero[] = {0x00};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+11), &zero, sizeof(zero), NULL);
     }
@@ -647,11 +647,11 @@ void skipLoadDll()
     BYTE patch[] = {0x83,0xC4,0x10,0x90,0x90}; //add esp,10;nop;nop
     WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr), &patch, sizeof(patch), NULL);
 
-    if (g_settings.opts().skipLoadDllDoLoad) {
+    if (g_settings.opts().ollySkipLoadDllDoLoad) {
         BYTE jmp[] = {0xEB};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+8), &jmp, sizeof(jmp), NULL);
     }
-    else if (g_settings.opts().skipLoadDllDoNothing) {
+    else if (g_settings.opts().ollySkipLoadDllDoNothing) {
         BYTE zero[] = {0x00};
         WriteProcessMemory(hOlly, (LPVOID)(lpBaseAddr+patchAddr+9), &zero, sizeof(zero), NULL);
     }
@@ -737,7 +737,7 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     if((message == WM_LBUTTONUP ||
             ((message == WM_LBUTTONDOWN || WM_MOUSEMOVE) && wParam == MK_LBUTTON)) &&
-            g_settings.opts().advancedInfobar
+            g_settings.opts().ollyAdvancedInfobar
       )  {
         DWORD startAddr = dump->sel0;
         DWORD endAddr = dump->sel1;

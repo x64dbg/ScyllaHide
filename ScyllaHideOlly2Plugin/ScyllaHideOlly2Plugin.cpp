@@ -229,7 +229,7 @@ extc int __cdecl ODBG2_Plugininit(void)
     Addtolist(0, 2, L"  Operating System: %S", scl::GetWindowsVersionNameA());
 
     //change olly caption
-    SetWindowTextW(hwollymain, g_settings.opts().ollyTitle.c_str());
+    SetWindowTextW(hwollymain, g_settings.opts().ollyWindowTitle.c_str());
 
     if (g_settings.opts().killAntiAttach) {
         InstallAntiAttachHook();
@@ -268,7 +268,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         return;
 
 
-    if (g_settings.opts().PEBHeapFlags)
+    if (g_settings.opts().fixPebHeapFlags)
     {
         if (specialPebFix)
         {
@@ -304,7 +304,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 		}
 
         //change olly caption again !
-        SetWindowTextW(hwollymain, g_settings.opts().ollyTitle.c_str());
+        SetWindowTextW(hwollymain, g_settings.opts().ollyWindowTitle.c_str());
     }
     break;
     case LOAD_DLL_DEBUG_EVENT:

@@ -91,82 +91,82 @@ bool GetFileDialog(TCHAR Buffer[MAX_PATH])
 
 void UpdateOptions(HWND hWnd)
 {
-    SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, g_settings.opts().PEBBeingDebugged, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, g_settings.opts().PEBHeapFlags, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, g_settings.opts().PEBNtGlobalFlag, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_SETCHECK, g_settings.opts().PEBStartupInfo, 0);
-    if (g_settings.opts().PEBBeingDebugged && g_settings.opts().PEBHeapFlags && g_settings.opts().PEBNtGlobalFlag && g_settings.opts().PEBStartupInfo)
+    SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_SETCHECK, g_settings.opts().fixPebBeingDebugged, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_SETCHECK, g_settings.opts().fixPebHeapFlags, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_SETCHECK, g_settings.opts().fixPebNtGlobalFlag, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_SETCHECK, g_settings.opts().fixPebStartupInfo, 0);
+    if (g_settings.opts().fixPebBeingDebugged && g_settings.opts().fixPebHeapFlags && g_settings.opts().fixPebNtGlobalFlag && g_settings.opts().fixPebStartupInfo)
         SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 1, 0);
     else
         SendMessage(GetDlgItem(hWnd, IDC_PEB), BM_SETCHECK, 0, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_SETCHECK, g_settings.opts().NtSetInformationThread, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONPROCESS), BM_SETCHECK, g_settings.opts().NtSetInformationProcess, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_SETCHECK, g_settings.opts().NtQuerySystemInformation, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_SETCHECK, g_settings.opts().NtQueryInformationProcess, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_SETCHECK, g_settings.opts().NtQueryObject, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_SETCHECK, g_settings.opts().NtYieldExecution, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_SETCHECK, g_settings.opts().OutputDebugStringA, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_SETCHECK, g_settings.opts().BlockInput, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, g_settings.opts().NtGetContextThread, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_SETCHECK, g_settings.opts().NtSetContextThread, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_SETCHECK, g_settings.opts().NtContinue, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_SETCHECK, g_settings.opts().KiUserExceptionDispatcher, 0);
-    if (g_settings.opts().NtGetContextThread && g_settings.opts().NtSetContextThread && g_settings.opts().NtContinue && g_settings.opts().KiUserExceptionDispatcher)
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_SETCHECK, g_settings.opts().hookNtSetInformationThread, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONPROCESS), BM_SETCHECK, g_settings.opts().hookNtSetInformationProcess, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_SETCHECK, g_settings.opts().hookNtQuerySystemInformation, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_SETCHECK, g_settings.opts().hookNtQueryInformationProcess, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_SETCHECK, g_settings.opts().hookNtQueryObject, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_SETCHECK, g_settings.opts().hookNtYieldExecution, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_SETCHECK, g_settings.opts().hookOutputDebugStringA, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_SETCHECK, g_settings.opts().hookBlockInput, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_SETCHECK, g_settings.opts().hookNtGetContextThread, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_SETCHECK, g_settings.opts().hookNtSetContextThread, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_SETCHECK, g_settings.opts().hookNtContinue, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_SETCHECK, g_settings.opts().hookKiUserExceptionDispatcher, 0);
+    if (g_settings.opts().hookNtGetContextThread && g_settings.opts().hookNtSetContextThread && g_settings.opts().hookNtContinue && g_settings.opts().hookKiUserExceptionDispatcher)
         SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 1, 0);
     else
         SendMessage(GetDlgItem(hWnd, IDC_PROTECTDRX), BM_SETCHECK, 0, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_SETCHECK, g_settings.opts().NtUserFindWindowEx, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_SETCHECK, g_settings.opts().NtUserBuildHwndList, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_SETCHECK, g_settings.opts().NtUserQueryWindow, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, g_settings.opts().NtSetDebugFilterState, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, g_settings.opts().NtClose, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, g_settings.opts().NtCreateThreadEx, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_SETCHECK, g_settings.opts().hookNtUserFindWindowEx, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_SETCHECK, g_settings.opts().hookNtUserBuildHwndList, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_SETCHECK, g_settings.opts().hookNtUserQueryWindow, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_SETCHECK, g_settings.opts().hookNtSetDebugFilterState, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_SETCHECK, g_settings.opts().hookNtClose, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_SETCHECK, g_settings.opts().hookNtCreateThreadEx, 0);
     SendMessage(GetDlgItem(hWnd, IDC_REMOVEDEBUGPRIV), BM_SETCHECK, g_settings.opts().removeDebugPrivileges, 0);
     SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_SETCHECK, g_settings.opts().preventThreadCreation, 0);
     SendMessage(GetDlgItem(hWnd, IDC_RUNPE), BM_SETCHECK, g_settings.opts().malwareRunpeUnpacker, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, g_settings.opts().DLLStealth, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, g_settings.opts().DLLNormal, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, g_settings.opts().DLLUnload, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_SETCHECK, g_settings.opts().GetTickCount, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT64), BM_SETCHECK, g_settings.opts().GetTickCount64, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_GETLOCALTIME), BM_SETCHECK, g_settings.opts().GetLocalTime, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_SETCHECK, g_settings.opts().GetSystemTime, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_SETCHECK, g_settings.opts().NtQuerySystemTime, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, g_settings.opts().NtQueryPerformanceCounter, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_SETCHECK, g_settings.opts().dllStealth, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_SETCHECK, g_settings.opts().dllNormal, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_SETCHECK, g_settings.opts().dllUnload, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_SETCHECK, g_settings.opts().hookGetTickCount, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT64), BM_SETCHECK, g_settings.opts().hookGetTickCount64, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETLOCALTIME), BM_SETCHECK, g_settings.opts().hookGetLocalTime, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_SETCHECK, g_settings.opts().hookGetSystemTime, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_SETCHECK, g_settings.opts().hookNtQuerySystemTime, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_SETCHECK, g_settings.opts().hookNtQueryPerformanceCounter, 0);
     SendMessage(GetDlgItem(hWnd, IDC_KILLANTIATTACH), BM_SETCHECK, g_settings.opts().killAntiAttach, 0);
 
 
 #ifdef OLLY1
-    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, g_settings.opts().ollyTitle.c_str());
-    SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, g_settings.opts().removeEPBreak, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, g_settings.opts().fixOllyBugs, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, g_settings.opts().x64Fix, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_SETCHECK, g_settings.opts().skipEPOutsideCode, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, g_settings.opts().breakTLS, 0);
+    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, g_settings.opts().ollyWindowTitle.c_str());
+    SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_SETCHECK, g_settings.opts().ollyRemoveEpBreak, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_SETCHECK, g_settings.opts().ollyFixBugs, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_SETCHECK, g_settings.opts().ollyX64Fix, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_SETCHECK, g_settings.opts().ollySkipEpOutsideCode, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_SETCHECK, g_settings.opts().ollyBreakOnTls, 0);
 
-    if (g_settings.opts().skipCompressedDoAnalyze || g_settings.opts().skipCompressedDoNothing) {
+    if (g_settings.opts().ollySkipCompressedDoAnalyze || g_settings.opts().ollySkipCompressedDoNothing) {
         SendMessage(GetDlgItem(hWnd, IDC_COMPRESSED), BM_SETCHECK, 1, 0);
         EnableWindow(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), TRUE);
         EnableWindow(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), TRUE);
     }
-    SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), BM_SETCHECK, g_settings.opts().skipCompressedDoAnalyze, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), BM_SETCHECK, g_settings.opts().skipCompressedDoNothing, 0);
-    if (g_settings.opts().skipLoadDllDoLoad || g_settings.opts().skipLoadDllDoNothing) {
+    SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), BM_SETCHECK, g_settings.opts().ollySkipCompressedDoAnalyze, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), BM_SETCHECK, g_settings.opts().ollySkipCompressedDoNothing, 0);
+    if (g_settings.opts().ollySkipLoadDllDoLoad || g_settings.opts().ollySkipLoadDllDoNothing) {
         SendMessage(GetDlgItem(hWnd, IDC_LOADDLL), BM_SETCHECK, 1, 0);
         EnableWindow(GetDlgItem(hWnd, IDC_LOADDLLLOAD), TRUE);
         EnableWindow(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), TRUE);
     }
-    SendMessage(GetDlgItem(hWnd, IDC_LOADDLLLOAD), BM_SETCHECK, g_settings.opts().skipLoadDllDoLoad, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), BM_SETCHECK, g_settings.opts().skipLoadDllDoNothing, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDGOTO), BM_SETCHECK, g_settings.opts().advancedGoto, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_BADPEIMAGE), BM_SETCHECK, g_settings.opts().ignoreBadPEImage, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDINFOBAR), BM_SETCHECK, g_settings.opts().advancedInfobar, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_LOADDLLLOAD), BM_SETCHECK, g_settings.opts().ollySkipLoadDllDoLoad, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), BM_SETCHECK, g_settings.opts().ollySkipLoadDllDoNothing, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDGOTO), BM_SETCHECK, g_settings.opts().ollyAdvancedGoto, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_BADPEIMAGE), BM_SETCHECK, g_settings.opts().ollyIgnoreBadPeImage, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDINFOBAR), BM_SETCHECK, g_settings.opts().ollyAdvancedInfobar, 0);
     EnableWindow(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), FALSE);
 #elif OLLY2
-    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, g_settings.opts().ollyTitle.c_str());
+    SetDlgItemTextW(hWnd, IDC_OLLYTITLE, g_settings.opts().ollyWindowTitle.c_str());
 #elif __IDP__
-    SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_SETCHECK, g_settings.opts().autostartServer, 0);
-    SetDlgItemTextW(hWnd, IDC_SERVERPORT, g_settings.opts().serverPort.c_str());
+    SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_SETCHECK, g_settings.opts().idaAutoStartServer, 0);
+    SetDlgItemTextW(hWnd, IDC_SERVERPORT, g_settings.opts().idaServerPort.c_str());
 
 #ifdef BUILD_IDA_64BIT
     if(isWindows64()) EnableWindow(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), TRUE);
@@ -188,136 +188,136 @@ void SaveOptions(HWND hWnd)
     //read all checkboxes
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBBEINGDEBUGGED), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().PEBBeingDebugged = 1;
+        g_settings.opts().fixPebBeingDebugged = 1;
     }
     else
-        g_settings.opts().PEBBeingDebugged = 0;
+        g_settings.opts().fixPebBeingDebugged = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBHEAPFLAGS), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().PEBHeapFlags = 1;
+        g_settings.opts().fixPebHeapFlags = 1;
     }
     else
-        g_settings.opts().PEBHeapFlags = 0;
+        g_settings.opts().fixPebHeapFlags = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBNTGLOBALFLAG), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().PEBNtGlobalFlag = 1;
+        g_settings.opts().fixPebNtGlobalFlag = 1;
     }
     else
-        g_settings.opts().PEBNtGlobalFlag = 0;
+        g_settings.opts().fixPebNtGlobalFlag = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PEBSTARTUPINFO), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().PEBStartupInfo = 1;
+        g_settings.opts().fixPebStartupInfo = 1;
     }
     else
-        g_settings.opts().PEBStartupInfo = 0;
+        g_settings.opts().fixPebStartupInfo = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONTHREAD), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtSetInformationThread = 1;
+        g_settings.opts().hookNtSetInformationThread = 1;
     }
     else
-        g_settings.opts().NtSetInformationThread = 0;
+        g_settings.opts().hookNtSetInformationThread = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETINFORMATIONPROCESS), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtSetInformationProcess = 1;
+        g_settings.opts().hookNtSetInformationProcess = 1;
     }
     else
-        g_settings.opts().NtSetInformationProcess = 0;
+        g_settings.opts().hookNtSetInformationProcess = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMINFORMATION), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtQuerySystemInformation = 1;
+        g_settings.opts().hookNtQuerySystemInformation = 1;
     }
     else
-        g_settings.opts().NtQuerySystemInformation = 0;
+        g_settings.opts().hookNtQuerySystemInformation = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYINFORMATIONPROCESS), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtQueryInformationProcess = 1;
+        g_settings.opts().hookNtQueryInformationProcess = 1;
     }
     else
-        g_settings.opts().NtQueryInformationProcess = 0;
+        g_settings.opts().hookNtQueryInformationProcess = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYOBJECT), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtQueryObject = 1;
+        g_settings.opts().hookNtQueryObject = 1;
     }
     else
-        g_settings.opts().NtQueryObject = 0;
+        g_settings.opts().hookNtQueryObject = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTYIELDEXECUTION), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtYieldExecution = 1;
+        g_settings.opts().hookNtYieldExecution = 1;
     }
     else
-        g_settings.opts().NtYieldExecution = 0;
+        g_settings.opts().hookNtYieldExecution = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_OUTPUTDEBUGSTRINGA), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().OutputDebugStringA = 1;
+        g_settings.opts().hookOutputDebugStringA = 1;
     }
     else
-        g_settings.opts().OutputDebugStringA = 0;
+        g_settings.opts().hookOutputDebugStringA = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BLOCKINPUT), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().BlockInput = 1;
+        g_settings.opts().hookBlockInput = 1;
     }
     else
-        g_settings.opts().BlockInput = 0;
+        g_settings.opts().hookBlockInput = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTGETCONTEXTTHREAD), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtGetContextThread = 1;
+        g_settings.opts().hookNtGetContextThread = 1;
     }
     else
-        g_settings.opts().NtGetContextThread = 0;
+        g_settings.opts().hookNtGetContextThread = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETCONTEXTTHREAD), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtSetContextThread = 1;
+        g_settings.opts().hookNtSetContextThread = 1;
     }
     else
-        g_settings.opts().NtSetContextThread = 0;
+        g_settings.opts().hookNtSetContextThread = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCONTINUE), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtContinue = 1;
+        g_settings.opts().hookNtContinue = 1;
     }
     else
-        g_settings.opts().NtContinue = 0;
+        g_settings.opts().hookNtContinue = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_KIUED), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().KiUserExceptionDispatcher = 1;
+        g_settings.opts().hookKiUserExceptionDispatcher = 1;
     }
     else
-        g_settings.opts().KiUserExceptionDispatcher = 0;
+        g_settings.opts().hookKiUserExceptionDispatcher = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERFINDWINDOWEX), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtUserFindWindowEx = 1;
+        g_settings.opts().hookNtUserFindWindowEx = 1;
     }
     else
-        g_settings.opts().NtUserFindWindowEx = 0;
+        g_settings.opts().hookNtUserFindWindowEx = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERBUILDHWNDLIST), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtUserBuildHwndList = 1;
+        g_settings.opts().hookNtUserBuildHwndList = 1;
     }
     else
-        g_settings.opts().NtUserBuildHwndList = 0;
+        g_settings.opts().hookNtUserBuildHwndList = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTUSERQUERYWINDOW), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtUserQueryWindow = 1;
+        g_settings.opts().hookNtUserQueryWindow = 1;
     }
     else
-        g_settings.opts().NtUserQueryWindow = 0;
+        g_settings.opts().hookNtUserQueryWindow = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTSETDEBUGFILTERSTATE), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtSetDebugFilterState = 1;
+        g_settings.opts().hookNtSetDebugFilterState = 1;
     }
     else
-        g_settings.opts().NtSetDebugFilterState = 0;
+        g_settings.opts().hookNtSetDebugFilterState = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCLOSE), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtClose = 1;
+        g_settings.opts().hookNtClose = 1;
     }
     else
-        g_settings.opts().NtClose = 0;
+        g_settings.opts().hookNtClose = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTCREATETHREADEX), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtCreateThreadEx = 1;
+        g_settings.opts().hookNtCreateThreadEx = 1;
     }
     else
-        g_settings.opts().NtCreateThreadEx = 0;
+        g_settings.opts().hookNtCreateThreadEx = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_PREVENTTHREADCREATION), BM_GETCHECK, 0, 0))
     {
         g_settings.opts().preventThreadCreation = 1;
@@ -338,58 +338,58 @@ void SaveOptions(HWND hWnd)
         g_settings.opts().removeDebugPrivileges = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().DLLStealth = 1;
+        g_settings.opts().dllStealth = 1;
     }
     else
-        g_settings.opts().DLLStealth = 0;
+        g_settings.opts().dllStealth = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().DLLNormal = 1;
+        g_settings.opts().dllNormal = 1;
     }
     else
-        g_settings.opts().DLLNormal = 0;
+        g_settings.opts().dllNormal = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().DLLUnload = 1;
+        g_settings.opts().dllUnload = 1;
     }
     else
-        g_settings.opts().DLLUnload = 0;
+        g_settings.opts().dllUnload = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().GetTickCount = 1;
+        g_settings.opts().hookGetTickCount = 1;
     }
     else
-        g_settings.opts().GetTickCount = 0;
+        g_settings.opts().hookGetTickCount = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETTICKCOUNT64), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().GetTickCount64 = 1;
+        g_settings.opts().hookGetTickCount64 = 1;
     }
     else
-        g_settings.opts().GetTickCount64 = 0;
+        g_settings.opts().hookGetTickCount64 = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETLOCALTIME), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().GetLocalTime = 1;
+        g_settings.opts().hookGetLocalTime = 1;
     }
     else
-        g_settings.opts().GetLocalTime = 0;
+        g_settings.opts().hookGetLocalTime = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_GETSYSTEMTIME), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().GetSystemTime = 1;
+        g_settings.opts().hookGetSystemTime = 1;
     }
     else
-        g_settings.opts().GetSystemTime = 0;
+        g_settings.opts().hookGetSystemTime = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYSYSTEMTIME), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtQuerySystemTime = 1;
+        g_settings.opts().hookNtQuerySystemTime = 1;
     }
     else
-        g_settings.opts().NtQuerySystemTime = 0;
+        g_settings.opts().hookNtQuerySystemTime = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_NTQUERYPERFCOUNTER), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().NtQueryPerformanceCounter = 1;
+        g_settings.opts().hookNtQueryPerformanceCounter = 1;
     }
     else
-        g_settings.opts().NtQueryPerformanceCounter = 0;
+        g_settings.opts().hookNtQueryPerformanceCounter = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_KILLANTIATTACH), BM_GETCHECK, 0, 0))
     {
         g_settings.opts().killAntiAttach = 1;
@@ -400,93 +400,93 @@ void SaveOptions(HWND hWnd)
 #ifdef OLLY1
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DELEPBREAK), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().removeEPBreak = 1;
+        g_settings.opts().ollyRemoveEpBreak = 1;
     }
     else
-        g_settings.opts().removeEPBreak = 0;
+        g_settings.opts().ollyRemoveEpBreak = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_FIXOLLY), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().fixOllyBugs = 1;
+        g_settings.opts().ollyFixBugs = 1;
     }
     else
-        g_settings.opts().fixOllyBugs = 0;
+        g_settings.opts().ollyFixBugs = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_X64FIX), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().x64Fix = 1;
+        g_settings.opts().ollyX64Fix = 1;
     }
     else
-        g_settings.opts().x64Fix = 0;
+        g_settings.opts().ollyX64Fix = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BREAKTLS), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().breakTLS = 1;
+        g_settings.opts().ollyBreakOnTls = 1;
     }
     else
-        g_settings.opts().breakTLS = 0;
+        g_settings.opts().ollyBreakOnTls = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_SKIPEPOUTSIDE), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().skipEPOutsideCode = 1;
+        g_settings.opts().ollySkipEpOutsideCode = 1;
     }
     else
-        g_settings.opts().skipEPOutsideCode = 0;
+        g_settings.opts().ollySkipEpOutsideCode = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_BADPEIMAGE), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().ignoreBadPEImage = 1;
+        g_settings.opts().ollyIgnoreBadPeImage = 1;
     }
     else
-        g_settings.opts().ignoreBadPEImage = 0;
+        g_settings.opts().ollyIgnoreBadPeImage = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDGOTO), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().advancedGoto = 1;
+        g_settings.opts().ollyAdvancedGoto = 1;
     }
     else
-        g_settings.opts().advancedGoto = 0;
+        g_settings.opts().ollyAdvancedGoto = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDANALYZE), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().skipCompressedDoAnalyze = 1;
+        g_settings.opts().ollySkipCompressedDoAnalyze = 1;
     }
     else
-        g_settings.opts().skipCompressedDoAnalyze = 0;
+        g_settings.opts().ollySkipCompressedDoAnalyze = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_COMPRESSEDNOTHING), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().skipCompressedDoNothing = 1;
+        g_settings.opts().ollySkipCompressedDoNothing = 1;
     }
     else
-        g_settings.opts().skipCompressedDoNothing = 0;
+        g_settings.opts().ollySkipCompressedDoNothing = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_LOADDLLLOAD), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().skipLoadDllDoLoad = 1;
+        g_settings.opts().ollySkipLoadDllDoLoad = 1;
     }
     else
-        g_settings.opts().skipLoadDllDoLoad = 0;
+        g_settings.opts().ollySkipLoadDllDoLoad = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_LOADDLLNOTHING), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().skipLoadDllDoNothing = 1;
+        g_settings.opts().ollySkipLoadDllDoNothing = 1;
     }
     else
-        g_settings.opts().skipLoadDllDoNothing = 0;
+        g_settings.opts().ollySkipLoadDllDoNothing = 0;
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_ADVANCEDINFOBAR), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().advancedInfobar = 1;
+        g_settings.opts().ollyAdvancedInfobar = 1;
     }
     else
-        g_settings.opts().advancedInfobar = 0;
+        g_settings.opts().ollyAdvancedInfobar = 0;
 #elif __IDP__
     if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_AUTOSTARTSERVER), BM_GETCHECK, 0, 0))
     {
-        g_settings.opts().autostartServer = 1;
+        g_settings.opts().idaAutoStartServer = 1;
     }
     else
-        g_settings.opts().autostartServer = 0;
+        g_settings.opts().idaAutoStartServer = 0;
 
-    g_settings.opts().serverPort = scl::GetDlgItemTextW(hWnd, IDC_SERVERPORT);
+    g_settings.opts().idaServerPort = scl::GetDlgItemTextW(hWnd, IDC_SERVERPORT);
 #endif
 
 #ifdef OLLY1
-    g_settings.opts().ollyTitle = scl::GetDlgItemTextW(hWnd, IDC_OLLYTITLE);
-    SetWindowTextW(hwmain, g_settings.opts().ollyTitle.c_str());
+    g_settings.opts().ollyWindowTitle = scl::GetDlgItemTextW(hWnd, IDC_OLLYTITLE);
+    SetWindowTextW(hwmain, g_settings.opts().ollyWindowTitle.c_str());
 #elif OLLY2
-    g_settings.opts().ollyTitle = scl::GetDlgItemTextW(hWnd, IDC_OLLYTITLE);
-    SetWindowTextW(hwollymain, g_settings.opts().ollyTitle.c_str());
+    g_settings.opts().ollyWindowTitle = scl::GetDlgItemTextW(hWnd, IDC_OLLYTITLE);
+    SetWindowTextW(hwollymain, g_settings.opts().ollyWindowTitle.c_str());
 #endif
 
     //save all options
@@ -893,22 +893,22 @@ INT_PTR CALLBACK OptionsProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         {   //DLL injection options need to be updated on-the-fly coz the injection button is ON the options window
             if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLSTEALTH), BM_GETCHECK, 0, 0))
             {
-                g_settings.opts().DLLStealth = 1;
+                g_settings.opts().dllStealth = 1;
             }
             else
-                g_settings.opts().DLLStealth = 0;
+                g_settings.opts().dllStealth = 0;
             if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLNORMAL), BM_GETCHECK, 0, 0))
             {
-                g_settings.opts().DLLNormal = 1;
+                g_settings.opts().dllNormal = 1;
             }
             else
-                g_settings.opts().DLLNormal = 0;
+                g_settings.opts().dllNormal = 0;
             if (BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DLLUNLOAD), BM_GETCHECK, 0, 0))
             {
-                g_settings.opts().DLLUnload = 1;
+                g_settings.opts().dllUnload = 1;
             }
             else
-                g_settings.opts().DLLUnload = 0;
+                g_settings.opts().dllUnload = 0;
 
 
             break;

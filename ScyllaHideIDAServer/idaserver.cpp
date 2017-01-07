@@ -191,40 +191,40 @@ static bool bHooked = false;
 
 void MapSettings()
 {
-    g_settings.opts().DLLUnload = idaExchange.UnloadDllAfterInjection;
-    g_settings.opts().DLLNormal = idaExchange.DllInjectNormal;
-    g_settings.opts().DLLStealth = idaExchange.DllInjectStealth;
-    g_settings.opts().KiUserExceptionDispatcher = idaExchange.EnableKiUserExceptionDispatcherHook;
-    g_settings.opts().NtClose = idaExchange.EnableNtCloseHook;
-    g_settings.opts().NtContinue = idaExchange.EnableNtCloseHook;
-    g_settings.opts().NtCreateThreadEx = idaExchange.EnableNtCreateThreadExHook;
-    g_settings.opts().NtGetContextThread = idaExchange.EnableNtGetContextThreadHook;
-    g_settings.opts().NtQueryInformationProcess = idaExchange.EnableNtQueryInformationProcessHook;
-    g_settings.opts().NtQueryObject = idaExchange.EnableNtQueryObjectHook;
-    g_settings.opts().NtQuerySystemInformation = idaExchange.EnableNtQuerySystemInformationHook;
-    g_settings.opts().NtSetContextThread = idaExchange.EnableNtSetContextThreadHook;
-    g_settings.opts().NtSetDebugFilterState = idaExchange.EnableNtSetDebugFilterStateHook;
-    g_settings.opts().NtSetInformationThread = idaExchange.EnableNtSetInformationThreadHook;
-    g_settings.opts().NtUserBuildHwndList = idaExchange.EnableNtUserBuildHwndListHook;
-    g_settings.opts().NtUserFindWindowEx = idaExchange.EnableNtUserFindWindowExHook;
-    g_settings.opts().NtUserQueryWindow = idaExchange.EnableNtUserQueryWindowHook;
-    g_settings.opts().NtYieldExecution = idaExchange.EnableNtYieldExecutionHook;
+    g_settings.opts().dllUnload = idaExchange.UnloadDllAfterInjection;
+    g_settings.opts().dllNormal = idaExchange.DllInjectNormal;
+    g_settings.opts().dllStealth = idaExchange.DllInjectStealth;
+    g_settings.opts().hookKiUserExceptionDispatcher = idaExchange.EnableKiUserExceptionDispatcherHook;
+    g_settings.opts().hookNtClose = idaExchange.EnableNtCloseHook;
+    g_settings.opts().hookNtContinue = idaExchange.EnableNtCloseHook;
+    g_settings.opts().hookNtCreateThreadEx = idaExchange.EnableNtCreateThreadExHook;
+    g_settings.opts().hookNtGetContextThread = idaExchange.EnableNtGetContextThreadHook;
+    g_settings.opts().hookNtQueryInformationProcess = idaExchange.EnableNtQueryInformationProcessHook;
+    g_settings.opts().hookNtQueryObject = idaExchange.EnableNtQueryObjectHook;
+    g_settings.opts().hookNtQuerySystemInformation = idaExchange.EnableNtQuerySystemInformationHook;
+    g_settings.opts().hookNtSetContextThread = idaExchange.EnableNtSetContextThreadHook;
+    g_settings.opts().hookNtSetDebugFilterState = idaExchange.EnableNtSetDebugFilterStateHook;
+    g_settings.opts().hookNtSetInformationThread = idaExchange.EnableNtSetInformationThreadHook;
+    g_settings.opts().hookNtUserBuildHwndList = idaExchange.EnableNtUserBuildHwndListHook;
+    g_settings.opts().hookNtUserFindWindowEx = idaExchange.EnableNtUserFindWindowExHook;
+    g_settings.opts().hookNtUserQueryWindow = idaExchange.EnableNtUserQueryWindowHook;
+    g_settings.opts().hookNtYieldExecution = idaExchange.EnableNtYieldExecutionHook;
     g_settings.opts().preventThreadCreation = idaExchange.EnablePreventThreadCreation;
-    g_settings.opts().OutputDebugStringA = idaExchange.EnableOutputDebugStringHook;
-    g_settings.opts().BlockInput = idaExchange.EnableBlockInputHook;
-    g_settings.opts().NtSetInformationProcess = idaExchange.EnableNtSetInformationProcessHook;
+    g_settings.opts().hookOutputDebugStringA = idaExchange.EnableOutputDebugStringHook;
+    g_settings.opts().hookBlockInput = idaExchange.EnableBlockInputHook;
+    g_settings.opts().hookNtSetInformationProcess = idaExchange.EnableNtSetInformationProcessHook;
 
-    g_settings.opts().GetTickCount = idaExchange.EnableGetTickCountHook;
-    g_settings.opts().GetTickCount64 = idaExchange.EnableGetTickCount64Hook;
-    g_settings.opts().GetLocalTime = idaExchange.EnableGetLocalTimeHook;
-    g_settings.opts().GetSystemTime = idaExchange.EnableGetSystemTimeHook;
-    g_settings.opts().NtQuerySystemTime = idaExchange.EnableNtQuerySystemTimeHook;
-    g_settings.opts().NtQueryPerformanceCounter = idaExchange.EnableNtQueryPerformanceCounterHook;
+    g_settings.opts().hookGetTickCount = idaExchange.EnableGetTickCountHook;
+    g_settings.opts().hookGetTickCount64 = idaExchange.EnableGetTickCount64Hook;
+    g_settings.opts().hookGetLocalTime = idaExchange.EnableGetLocalTimeHook;
+    g_settings.opts().hookGetSystemTime = idaExchange.EnableGetSystemTimeHook;
+    g_settings.opts().hookNtQuerySystemTime = idaExchange.EnableNtQuerySystemTimeHook;
+    g_settings.opts().hookNtQueryPerformanceCounter = idaExchange.EnableNtQueryPerformanceCounterHook;
 
-    g_settings.opts().PEBBeingDebugged = idaExchange.EnablePebBeingDebugged;
-    g_settings.opts().PEBHeapFlags = idaExchange.EnablePebHeapFlags;
-    g_settings.opts().PEBNtGlobalFlag = idaExchange.EnablePebNtGlobalFlag;
-    g_settings.opts().PEBStartupInfo = idaExchange.EnablePebStartupInfo;
+    g_settings.opts().fixPebBeingDebugged = idaExchange.EnablePebBeingDebugged;
+    g_settings.opts().fixPebHeapFlags = idaExchange.EnablePebHeapFlags;
+    g_settings.opts().fixPebNtGlobalFlag = idaExchange.EnablePebNtGlobalFlag;
+    g_settings.opts().fixPebStartupInfo = idaExchange.EnablePebStartupInfo;
 
     g_settings.opts().malwareRunpeUnpacker = idaExchange.EnableMalwareRunPeUnpacker;
 }

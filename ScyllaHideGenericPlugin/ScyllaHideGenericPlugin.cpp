@@ -57,7 +57,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
     else
         status = hookStatusMap[pid];
 
-    if (g_settings.opts().PEBHeapFlags)
+    if (g_settings.opts().fixPebHeapFlags)
     {
         if (status.specialPebFix)
         {

@@ -111,7 +111,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 	_Addtolist(0, 0, "%s Plugin v%s Copyright (C) 2014 Aguila / cypher", SCYLLA_HIDE_NAME_A, SCYLLA_HIDE_VERSION_STRING_A);
 
 	//do some Olly fixes
-	if(g_settings.opts().fixOllyBugs) {
+	if(g_settings.opts().ollyFixBugs) {
 		fixBadPEBugs();
 		fixForegroundWindow();
 		fixFPUBug();
@@ -119,10 +119,10 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 		fixNTSymbols();
 		fixFaultyHandleOnExit();
 	}
-    if (g_settings.opts().x64Fix && scl::IsWindows64()) {
+    if (g_settings.opts().ollyX64Fix && scl::IsWindows64()) {
 		fixX64Bug();
 	}
-    if (g_settings.opts().skipEPOutsideCode) {
+    if (g_settings.opts().ollySkipEpOutsideCode) {
 		patchEPOutsideCode();
 	}
 
@@ -130,19 +130,19 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 		InstallAntiAttachHook();
 	}
 
-    if (g_settings.opts().ignoreBadPEImage) {
+    if (g_settings.opts().ollyIgnoreBadPeImage) {
 		fixBadPEImage();
 	}
 
-    if (g_settings.opts().advancedGoto) {
+    if (g_settings.opts().ollyAdvancedGoto) {
 		advcancedCtrlG();
 	};
 
-    if (g_settings.opts().skipCompressedDoAnalyze || g_settings.opts().skipCompressedDoNothing) {
+    if (g_settings.opts().ollySkipCompressedDoAnalyze || g_settings.opts().ollySkipCompressedDoNothing) {
 		skipCompressedCode();
 	}
 
-    if (g_settings.opts().skipLoadDllDoLoad || g_settings.opts().skipLoadDllDoNothing) {
+    if (g_settings.opts().ollySkipLoadDllDoLoad || g_settings.opts().ollySkipLoadDllDoNothing) {
 		skipLoadDll();
 	}
 	return 0;
@@ -177,7 +177,7 @@ extern "C" int __declspec(dllexport) _ODBG_Pluginmenu(int origin,char data[4096]
             strncpy(data, ssMenu.str().c_str(), min(4096, ssMenu.str().size()));
 
 			//also patch olly title
-            SetWindowTextW(hwmain, g_settings.opts().ollyTitle.c_str());
+            SetWindowTextW(hwmain, g_settings.opts().ollyWindowTitle.c_str());
 			return 1;
 		}
 	case PM_THREADS:
@@ -290,7 +290,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 	if(!debugevent)
 		return;
 
-    if (g_settings.opts().PEBHeapFlags)
+    if (g_settings.opts().fixPebHeapFlags)
 	{
 		if (specialPebFix)
 		{
@@ -348,7 +348,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 			ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
 			//change olly caption again !
-            SetWindowTextW(hwmain, g_settings.opts().ollyTitle.c_str());
+            SetWindowTextW(hwmain, g_settings.opts().ollyWindowTitle.c_str());
 
 			if(!bHookedDumpProc) {
 				hookOllyWindowProcs();
@@ -362,7 +362,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 		{
 			if (bHooked)
 			{
-                if (g_settings.opts().fixOllyBugs && scl::IsWindows64()) {
+                if (g_settings.opts().ollyFixBugs && scl::IsWindows64()) {
 					MarkSystemDllsOnx64();
 				}
 

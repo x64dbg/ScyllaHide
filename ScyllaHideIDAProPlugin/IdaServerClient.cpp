@@ -40,42 +40,42 @@ bool SendEventToServer(unsigned long notif_code, unsigned long ProcessId)
 	idaExchange.notif_code = notif_code;
 	idaExchange.ProcessId = ProcessId;
 
-    idaExchange.EnablePebBeingDebugged = g_settings.opts().PEBBeingDebugged;
-    idaExchange.EnablePebHeapFlags = g_settings.opts().PEBHeapFlags;
-    idaExchange.EnablePebNtGlobalFlag = g_settings.opts().PEBNtGlobalFlag;
-    idaExchange.EnablePebStartupInfo = g_settings.opts().PEBStartupInfo;
-    idaExchange.EnableBlockInputHook = g_settings.opts().BlockInput;
-    idaExchange.EnableOutputDebugStringHook = g_settings.opts().OutputDebugStringA;
-    idaExchange.EnableNtSetInformationThreadHook = g_settings.opts().NtSetInformationThread;
-    idaExchange.EnableNtQueryInformationProcessHook = g_settings.opts().NtQueryInformationProcess;
-    idaExchange.EnableNtQuerySystemInformationHook = g_settings.opts().NtQuerySystemInformation;
-    idaExchange.EnableNtQueryObjectHook = g_settings.opts().NtQueryObject;
-    idaExchange.EnableNtYieldExecutionHook = g_settings.opts().NtYieldExecution;
-    idaExchange.EnableNtCloseHook = g_settings.opts().NtClose;
-    idaExchange.EnableNtCreateThreadExHook = g_settings.opts().NtCreateThreadEx;
+    idaExchange.EnablePebBeingDebugged = g_settings.opts().fixPebBeingDebugged;
+    idaExchange.EnablePebHeapFlags = g_settings.opts().fixPebHeapFlags;
+    idaExchange.EnablePebNtGlobalFlag = g_settings.opts().fixPebNtGlobalFlag;
+    idaExchange.EnablePebStartupInfo = g_settings.opts().fixPebStartupInfo;
+    idaExchange.EnableBlockInputHook = g_settings.opts().hookBlockInput;
+    idaExchange.EnableOutputDebugStringHook = g_settings.opts().hookOutputDebugStringA;
+    idaExchange.EnableNtSetInformationThreadHook = g_settings.opts().hookNtSetInformationThread;
+    idaExchange.EnableNtQueryInformationProcessHook = g_settings.opts().hookNtQueryInformationProcess;
+    idaExchange.EnableNtQuerySystemInformationHook = g_settings.opts().hookNtQuerySystemInformation;
+    idaExchange.EnableNtQueryObjectHook = g_settings.opts().hookNtQueryObject;
+    idaExchange.EnableNtYieldExecutionHook = g_settings.opts().hookNtYieldExecution;
+    idaExchange.EnableNtCloseHook = g_settings.opts().hookNtClose;
+    idaExchange.EnableNtCreateThreadExHook = g_settings.opts().hookNtCreateThreadEx;
     idaExchange.EnablePreventThreadCreation = g_settings.opts().preventThreadCreation;
 
-    idaExchange.EnableNtGetContextThreadHook = g_settings.opts().NtGetContextThread;
-    idaExchange.EnableNtSetContextThreadHook = g_settings.opts().NtSetContextThread;
-    idaExchange.EnableNtContinueHook = g_settings.opts().NtContinue;
-    idaExchange.EnableKiUserExceptionDispatcherHook = g_settings.opts().KiUserExceptionDispatcher;
-    idaExchange.EnableNtSetInformationProcessHook = g_settings.opts().NtSetInformationProcess;
+    idaExchange.EnableNtGetContextThreadHook = g_settings.opts().hookNtGetContextThread;
+    idaExchange.EnableNtSetContextThreadHook = g_settings.opts().hookNtSetContextThread;
+    idaExchange.EnableNtContinueHook = g_settings.opts().hookNtContinue;
+    idaExchange.EnableKiUserExceptionDispatcherHook = g_settings.opts().hookKiUserExceptionDispatcher;
+    idaExchange.EnableNtSetInformationProcessHook = g_settings.opts().hookNtSetInformationProcess;
     idaExchange.EnableMalwareRunPeUnpacker = g_settings.opts().malwareRunpeUnpacker;
 
-    idaExchange.EnableGetTickCountHook = g_settings.opts().GetTickCount;
-    idaExchange.EnableGetTickCount64Hook = g_settings.opts().GetTickCount64;
-    idaExchange.EnableGetLocalTimeHook = g_settings.opts().GetLocalTime;
-    idaExchange.EnableGetSystemTimeHook = g_settings.opts().GetSystemTime;
-    idaExchange.EnableNtQuerySystemTimeHook = g_settings.opts().NtQuerySystemTime;
-    idaExchange.EnableNtQueryPerformanceCounterHook = g_settings.opts().NtQueryPerformanceCounter;
+    idaExchange.EnableGetTickCountHook = g_settings.opts().hookGetTickCount;
+    idaExchange.EnableGetTickCount64Hook = g_settings.opts().hookGetTickCount64;
+    idaExchange.EnableGetLocalTimeHook = g_settings.opts().hookGetLocalTime;
+    idaExchange.EnableGetSystemTimeHook = g_settings.opts().hookGetSystemTime;
+    idaExchange.EnableNtQuerySystemTimeHook = g_settings.opts().hookNtQuerySystemTime;
+    idaExchange.EnableNtQueryPerformanceCounterHook = g_settings.opts().hookNtQueryPerformanceCounter;
 
-    idaExchange.EnableNtUserFindWindowExHook = g_settings.opts().NtUserFindWindowEx;
-    idaExchange.EnableNtUserBuildHwndListHook = g_settings.opts().NtUserBuildHwndList;
-    idaExchange.EnableNtUserQueryWindowHook = g_settings.opts().NtUserQueryWindow;
-    idaExchange.EnableNtSetDebugFilterStateHook = g_settings.opts().NtSetDebugFilterState;
-    idaExchange.DllInjectNormal = g_settings.opts().DLLNormal;
-    idaExchange.DllInjectStealth = g_settings.opts().DLLStealth;
-    idaExchange.UnloadDllAfterInjection = g_settings.opts().DLLUnload;
+    idaExchange.EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
+    idaExchange.EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
+    idaExchange.EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;
+    idaExchange.EnableNtSetDebugFilterStateHook = g_settings.opts().hookNtSetDebugFilterState;
+    idaExchange.DllInjectNormal = g_settings.opts().dllNormal;
+    idaExchange.DllInjectStealth = g_settings.opts().dllStealth;
+    idaExchange.UnloadDllAfterInjection = g_settings.opts().dllUnload;
 
 	wcscpy_s(idaExchange.DllPathForInjection, DllPathForInjection);
 

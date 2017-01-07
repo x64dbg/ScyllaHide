@@ -182,7 +182,7 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
 {
     PLUG_CB_DEBUGEVENT* d = (PLUG_CB_DEBUGEVENT*)callbackInfo;
 
-    if (g_settings.opts().PEBHeapFlags)
+    if (g_settings.opts().fixPebHeapFlags)
     {
         if (specialPebFix)
         {

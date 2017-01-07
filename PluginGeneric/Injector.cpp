@@ -103,10 +103,10 @@ bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     DllExchangeLoader.EnableProtectProcessId = TRUE;
 
     DWORD enableFlags = 0x0;
-    if (g_settings.opts().PEBBeingDebugged) enableFlags |= PEB_PATCH_BeingDebugged;
-    if (g_settings.opts().PEBHeapFlags) enableFlags |= PEB_PATCH_HeapFlags;
-    if (g_settings.opts().PEBNtGlobalFlag) enableFlags |= PEB_PATCH_NtGlobalFlag;
-    if (g_settings.opts().PEBStartupInfo) enableFlags |= PEB_PATCH_StartUpInfo;
+    if (g_settings.opts().fixPebBeingDebugged) enableFlags |= PEB_PATCH_BeingDebugged;
+    if (g_settings.opts().fixPebHeapFlags) enableFlags |= PEB_PATCH_HeapFlags;
+    if (g_settings.opts().fixPebNtGlobalFlag) enableFlags |= PEB_PATCH_NtGlobalFlag;
+    if (g_settings.opts().fixPebStartupInfo) enableFlags |= PEB_PATCH_StartUpInfo;
 
     ApplyPEBPatch(&DllExchangeLoader, hProcess, enableFlags);
 
@@ -298,12 +298,12 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
 
         if (entryPoint) LogWrap(L"[ScyllaHide] DLL entry point (DllMain) RVA %X!", entryPoint);
 
-        if (g_settings.opts().DLLStealth)
+        if (g_settings.opts().dllStealth)
         {
             LogWrap(L"[ScyllaHide] Starting Stealth DLL Injection!");
             remoteImage = StealthDllInjection(hProcess, dllPath, dllMemory);
         }
-        else if (g_settings.opts().DLLNormal)
+        else if (g_settings.opts().dllNormal)
         {
             LogWrap(L"[ScyllaHide] Starting Normal DLL Injection!");
             remoteImage = NormalDllInjection(hProcess, dllPath);
@@ -317,11 +317,11 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
         {
             LogWrap(L"[ScyllaHide] DLL INJECTION: Injection of %s successful, Imagebase %p", dllPath, remoteImage);
 
-            if (g_settings.opts().DLLUnload)
+            if (g_settings.opts().dllUnload)
             {
                 LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p", remoteImage);
 
-                if (g_settings.opts().DLLNormal)
+                if (g_settings.opts().dllNormal)
                 {
                     HANDLE hThread = CreateRemoteThread(hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)FreeLibrary, remoteImage, CREATE_SUSPENDED, 0);
                     if (hThread)
@@ -335,7 +335,7 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
                         LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p FAILED", remoteImage);
                     }
                 }
-                else if (g_settings.opts().DLLStealth)
+                else if (g_settings.opts().dllStealth)
                 {
                     VirtualFreeEx(hProcess, remoteImage, 0, MEM_RELEASE);
                     LogWrap(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
@@ -394,36 +394,36 @@ void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
     data->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
     data->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
 
-    data->EnablePebBeingDebugged = g_settings.opts().PEBBeingDebugged;
-    data->EnablePebHeapFlags = g_settings.opts().PEBHeapFlags;
-    data->EnablePebNtGlobalFlag = g_settings.opts().PEBNtGlobalFlag;
-    data->EnablePebStartupInfo = g_settings.opts().PEBStartupInfo;
-    data->EnableBlockInputHook = g_settings.opts().BlockInput;
-    data->EnableOutputDebugStringHook = g_settings.opts().OutputDebugStringA;
-    data->EnableNtSetInformationThreadHook = g_settings.opts().NtSetInformationThread;
-    data->EnableNtQueryInformationProcessHook = g_settings.opts().NtQueryInformationProcess;
-    data->EnableNtQuerySystemInformationHook = g_settings.opts().NtQuerySystemInformation;
-    data->EnableNtQueryObjectHook = g_settings.opts().NtQueryObject;
-    data->EnableNtYieldExecutionHook = g_settings.opts().NtYieldExecution;
-    data->EnableNtCloseHook = g_settings.opts().NtClose;
-    data->EnableNtCreateThreadExHook = g_settings.opts().NtCreateThreadEx;
+    data->EnablePebBeingDebugged = g_settings.opts().fixPebBeingDebugged;
+    data->EnablePebHeapFlags = g_settings.opts().fixPebHeapFlags;
+    data->EnablePebNtGlobalFlag = g_settings.opts().fixPebNtGlobalFlag;
+    data->EnablePebStartupInfo = g_settings.opts().fixPebStartupInfo;
+    data->EnableBlockInputHook = g_settings.opts().hookBlockInput;
+    data->EnableOutputDebugStringHook = g_settings.opts().hookOutputDebugStringA;
+    data->EnableNtSetInformationThreadHook = g_settings.opts().hookNtSetInformationThread;
+    data->EnableNtQueryInformationProcessHook = g_settings.opts().hookNtQueryInformationProcess;
+    data->EnableNtQuerySystemInformationHook = g_settings.opts().hookNtQuerySystemInformation;
+    data->EnableNtQueryObjectHook = g_settings.opts().hookNtQueryObject;
+    data->EnableNtYieldExecutionHook = g_settings.opts().hookNtYieldExecution;
+    data->EnableNtCloseHook = g_settings.opts().hookNtClose;
+    data->EnableNtCreateThreadExHook = g_settings.opts().hookNtCreateThreadEx;
     data->EnablePreventThreadCreation = g_settings.opts().preventThreadCreation;
-    data->EnableNtUserFindWindowExHook = g_settings.opts().NtUserFindWindowEx;
-    data->EnableNtUserBuildHwndListHook = g_settings.opts().NtUserBuildHwndList;
-    data->EnableNtUserQueryWindowHook = g_settings.opts().NtUserQueryWindow;
-    data->EnableNtSetDebugFilterStateHook = g_settings.opts().NtSetDebugFilterState;
-    data->EnableGetTickCountHook = g_settings.opts().GetTickCount;
-    data->EnableGetTickCount64Hook = g_settings.opts().GetTickCount64;
-    data->EnableGetLocalTimeHook = g_settings.opts().GetLocalTime;
-    data->EnableGetSystemTimeHook = g_settings.opts().GetSystemTime;
-    data->EnableNtQuerySystemTimeHook = g_settings.opts().NtQuerySystemTime;
-    data->EnableNtQueryPerformanceCounterHook = g_settings.opts().NtQueryPerformanceCounter;
-    data->EnableNtSetInformationProcessHook = g_settings.opts().NtSetInformationProcess;
+    data->EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
+    data->EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
+    data->EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;
+    data->EnableNtSetDebugFilterStateHook = g_settings.opts().hookNtSetDebugFilterState;
+    data->EnableGetTickCountHook = g_settings.opts().hookGetTickCount;
+    data->EnableGetTickCount64Hook = g_settings.opts().hookGetTickCount64;
+    data->EnableGetLocalTimeHook = g_settings.opts().hookGetLocalTime;
+    data->EnableGetSystemTimeHook = g_settings.opts().hookGetSystemTime;
+    data->EnableNtQuerySystemTimeHook = g_settings.opts().hookNtQuerySystemTime;
+    data->EnableNtQueryPerformanceCounterHook = g_settings.opts().hookNtQueryPerformanceCounter;
+    data->EnableNtSetInformationProcessHook = g_settings.opts().hookNtSetInformationProcess;
 
-    data->EnableNtGetContextThreadHook = g_settings.opts().NtGetContextThread;
-    data->EnableNtSetContextThreadHook = g_settings.opts().NtSetContextThread;
-    data->EnableNtContinueHook = g_settings.opts().NtContinue | g_settings.opts().killAntiAttach;
-    data->EnableKiUserExceptionDispatcherHook = g_settings.opts().KiUserExceptionDispatcher;
+    data->EnableNtGetContextThreadHook = g_settings.opts().hookNtGetContextThread;
+    data->EnableNtSetContextThreadHook = g_settings.opts().hookNtSetContextThread;
+    data->EnableNtContinueHook = g_settings.opts().hookNtContinue | g_settings.opts().killAntiAttach;
+    data->EnableKiUserExceptionDispatcherHook = g_settings.opts().hookKiUserExceptionDispatcher;
     data->EnableMalwareRunPeUnpacker = g_settings.opts().malwareRunpeUnpacker;
 
     data->isKernel32Hooked = FALSE;
