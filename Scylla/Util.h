@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Windows.h>
+#include <codecvt>
+#include <locale>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -18,6 +20,8 @@ namespace scl
     std::wstring GetDlgItemTextW(HWND hDlg, int nIDDlgItem);
 
     bool FileExistsW(const wchar_t *wszPath);
+
+    bool GetFileDialogW(wchar_t *buffer, DWORD buffer_size);
 
     std::vector<std::wstring> IniLoadSectionNames(const wchar_t *file);
 
@@ -65,4 +69,6 @@ namespace scl
 
         return IniSaveString(file, section, key, ss.str().c_str());
     }
+
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> &wstr_conv();
 };

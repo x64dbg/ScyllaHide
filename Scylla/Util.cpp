@@ -85,6 +85,25 @@ bool scl::FileExistsW(const wchar_t *wszPath)
     return (dwAttrib != INVALID_FILE_ATTRIBUTES) && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
+bool scl::GetFileDialogW(wchar_t *buffer, DWORD buffer_size)
+{
+    OPENFILENAMEW sOpenFileName = { 0 };
+    const wchar_t szFilterString[] = L"DLL \0*.dll\0\0";
+    const wchar_t szDialogTitle[] = L"ScyllaHide";
+
+    buffer[0] = 0;
+
+    sOpenFileName.lStructSize = sizeof(sOpenFileName);
+    sOpenFileName.lpstrFilter = szFilterString;
+    sOpenFileName.lpstrFile = buffer;
+    sOpenFileName.nMaxFile = buffer_size;
+    sOpenFileName.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_HIDEREADONLY;
+    sOpenFileName.lpstrTitle = szDialogTitle;
+
+    return (TRUE == GetOpenFileNameW(&sOpenFileName));
+}
+
+
 std::vector<std::wstring> scl::IniLoadSectionNames(const wchar_t *file)
 {
     std::wstring buf;
@@ -120,4 +139,10 @@ std::wstring scl::IniLoadString(const wchar_t *file, const wchar_t *section, con
 bool scl::IniSaveString(const wchar_t *file, const wchar_t *section, const wchar_t *key, const wchar_t *value)
 {
     return WritePrivateProfileStringW(section, key, value, file) == TRUE;
+}
+
+std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> &scl::wstr_conv()
+{
+    static std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+    return conv;
 }

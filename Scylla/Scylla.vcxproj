@@ -23,6 +23,7 @@
     <ClCompile Include="OsInfo.cpp" />
     <ClCompile Include="Peb.cpp" />
     <ClCompile Include="Util.cpp" />
+    <ClCompile Include="Version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dbghelp.h" />

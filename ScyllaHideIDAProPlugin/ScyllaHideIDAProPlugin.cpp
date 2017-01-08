@@ -136,7 +136,7 @@ void idaapi IDAP_term(void)
 //called when user clicks in plugin menu or presses hotkey
 void idaapi IDAP_run(int arg)
 {
-    DialogBox(hinst, MAKEINTRESOURCE(IDD_OPTIONS), (HWND)callui(ui_get_hwnd).vptr, &OptionsProc);
+    DialogBoxW(hinst, MAKEINTRESOURCE(IDD_OPTIONS), (HWND)callui(ui_get_hwnd).vptr, &OptionsDlgProc);
 
     return;
 }

@@ -2,6 +2,7 @@
 #include <codecvt>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
+#include <Scylla/Util.h>
 #include <Scylla/Version.h>
 
 #include "..\PluginGeneric\Injector.h"
@@ -78,14 +79,14 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
     {
     case MENU_OPTIONS:
     {
-        DialogBox(hinst, MAKEINTRESOURCE(IDD_OPTIONS), hwndDlg, &OptionsProc);
+        DialogBoxW(hinst, MAKEINTRESOURCE(IDD_OPTIONS), hwndDlg, &OptionsDlgProc);
         break;
     }
     case MENU_INJECTDLL:
     {
         if (ProcessId) {
             wchar_t dllPath[MAX_PATH] = {};
-            if (GetFileDialog(dllPath))
+            if (scl::GetFileDialogW(dllPath, _countof(dllPath)))
                 injectDll(ProcessId, dllPath);
         }
         break;
@@ -97,7 +98,7 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
     }
     case MENU_ABOUT:
     {
-        ShowAbout(hwndDlg);
+        scl::ShowAboutBox(hwndDlg);
 
         break;
     }

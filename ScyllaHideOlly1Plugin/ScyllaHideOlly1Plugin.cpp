@@ -3,6 +3,7 @@
 #include <sstream>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
+#include <Scylla/Util.h>
 #include <Scylla/Version.h>
 
 #include "..\PluginGeneric\Injector.h"
@@ -202,12 +203,12 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 		{
 		case 0:
 			{
-				DialogBox(hinst, MAKEINTRESOURCE(IDD_OPTIONS), hwmain, &OptionsProc);
+				DialogBoxW(hinst, MAKEINTRESOURCE(IDD_OPTIONS), hwmain, &OptionsDlgProc);
 				break;
 			}
 		case 1:
 			{
-				ShowAbout(hwmain);
+				scl::ShowAboutBox(hwmain);
 
 				break;
 			}
@@ -215,7 +216,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 			{
 				if(ProcessId) {
 					wchar_t dllPath[MAX_PATH] = {};
-					if(GetFileDialog(dllPath))
+                    if (scl::GetFileDialogW(dllPath, _countof(dllPath)))
 						injectDll(ProcessId, dllPath);
 				}
 				break;
