@@ -1,128 +1,44 @@
 #include <Windows.h>
 #include <cstdio>
-#include <Scylla/DbgHelp.h>
+#include <Scylla/NtApiLoader.h>
 #include <Scylla/Util.h>
-#include <Scylla/OsInfo.h>
 
-static const wchar_t *wszFunctionNames[] = {
-    L"NtUserQueryWindow",
-    L"NtUserBuildHwndList",
-    L"NtUserFindWindowEx",
-    L"NtUserInternalGetWindowText",
-    L"NtUserGetClassName"
-};
-
-static ULONG64 GetFunctionAddressPDB(HMODULE hModule, const wchar_t *wszSymbolName)
+static void logger(const wchar_t *msg)
 {
-    static ULONG64 buffer[(sizeof(SYMBOL_INFOW) + MAX_SYM_NAME * sizeof(wchar_t) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
-    auto pSymbol = (PSYMBOL_INFOW)buffer;
-
-    pSymbol->SizeOfStruct = sizeof(SYMBOL_INFOW);
-    pSymbol->MaxNameLen = MAX_SYM_NAME;
-    pSymbol->ModBase = (ULONG64)hModule;
-
-    if (!SymFromNameW(GetCurrentProcess(), wszSymbolName, pSymbol))
-    {
-        return 0;
-    }
-
-    return pSymbol->Address;
-}
-
-static BOOL CALLBACK SymServCallbackLogger(HANDLE hProcess, ULONG uActionCode, ULONG64 pCallbackData, ULONG64 pUserContext)
-{
-    switch (uActionCode)
-    {
-    case CBA_EVENT: {
-        auto evt = (PIMAGEHLP_CBA_EVENT)pCallbackData;
-        wprintf(L"%s", (const wchar_t *)evt->desc);
-        return TRUE;
-    }
-    case CBA_DEBUG_INFO:
-        wprintf(L"%s", (const wchar_t *)pCallbackData);
-        return TRUE;
-    default:
-        return FALSE;
-    }
-}
-
-static bool InitSymServ(const wchar_t *wszSymbolPath)
-{
-    auto hProc = GetCurrentProcess();
-    SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS | SYMOPT_FAVOR_COMPRESSED | SYMOPT_DEBUG);
-    if (SymInitializeW(hProc, wszSymbolPath, TRUE)) {
-        return SymRegisterCallbackW64(hProc, SymServCallbackLogger, 0) == TRUE;
-    }
-
-    return false;
+    fputws(msg, stdout);
 }
 
 int wmain(int argc, wchar_t* argv[])
 {
-    const auto osVerInfo = scl::GetVersionExW();
-    const auto osSysInfo = scl::GetNativeSystemInfo();
+    scl::NtApiLoader api_loader;
 
-    auto wstrPath = scl::GetModuleFileNameW();
-    wstrPath.resize(wstrPath.find_last_of(L"\\"));
+    auto ini_file = scl::GetModuleFileNameW();
+    ini_file.resize(ini_file.find_last_of(L"\\"));
+    ini_file += scl::NtApiLoader::kFileName;
 
-    auto wstrIniFile = wstrPath + L"\\NtApiCollection.ini";
-    auto wstrSymbolPath = scl::fmtw(L"srv*%s*http://msdl.microsoft.com/download/symbols", wstrPath.c_str());
+    wprintf(L"OS ID: %s\n", api_loader.GetOsId().c_str());
 
-    // Must be called before InitSymServ()
-    auto hUser32 = LoadLibraryW(L"user32.dll");
-    if (!hUser32)
+    auto res = api_loader.Resolve((scl::NtApiLoader::log_callback *)logger);
+    if (!res.first)
     {
-        fwprintf(stderr, L"Failed to get user32.dll module handle: %s\n", scl::FormatMessageW(GetLastError()).c_str());
+        fputws(res.second.c_str(), stdout);
         return EXIT_FAILURE;
     }
 
-    if (!InitSymServ(wstrSymbolPath.c_str()))
+    for (auto dll : api_loader.funs())
     {
-        fwprintf(stderr, L"Failed to initialize symbol server API: %s\n", scl::FormatMessageW(GetLastError()).c_str());
-        return EXIT_FAILURE;
-    }
-
-#ifdef _WIN64
-    const wchar_t wszArch[] = L"x64";
-#else
-    const wchar_t wszArch[] = L"x86";
-#endif
-
-    auto wstrOsId = scl::fmtw(L"%02X%02X%02X%02X%02X%02X_%s",
-        osVerInfo->dwMajorVersion, osVerInfo->dwMinorVersion,
-        osVerInfo->wServicePackMajor, osVerInfo->wServicePackMinor,
-        osVerInfo->wProductType, osSysInfo->wProcessorArchitecture, wszArch);
-
-    wprintf(L"OS MajorVersion %u MinorVersion %u\n", osVerInfo->dwMajorVersion, osVerInfo->dwMinorVersion);
-    wprintf(L"OS ID: %s\n", wstrOsId.c_str());
-
-    auto pDosUser = (PIMAGE_DOS_HEADER)hUser32;
-    auto pNtUser = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosUser + pDosUser->e_lfanew);
-    if (pNtUser->Signature != IMAGE_NT_SIGNATURE)
-    {
-        fwprintf(stderr, L"Invalid User32.dll NT Header\n");
-        return EXIT_FAILURE;
-    }
-
-    wprintf(L"User32 Base 0x%p\nFetching symbols...\n", hUser32);
-
-    auto wstrIniSection = scl::fmtw(L"%s_%08X", wstrOsId.c_str(), pNtUser->OptionalHeader.AddressOfEntryPoint);
-    for (size_t i = 0; i < _countof(wszFunctionNames); i++)
-    {
-        auto ulFunctionVA = GetFunctionAddressPDB(hUser32, wszFunctionNames[i]);
-        if (!ulFunctionVA)
+        for (auto fun : dll.second)
         {
-            fwprintf(stderr, L"Failed to get symbol info for %s: %s\n", wszFunctionNames[i], scl::FormatMessageW(GetLastError()).c_str());
-            continue;
+            wprintf(L"Resolved %s!%s = %llx\n", dll.first.c_str(), fun.first.c_str(), fun.second);
         }
-
-        auto ulFunctionRVA = ulFunctionVA - (ULONG64)hUser32;
-        wprintf(L"Name %s VA 0x%p RVA 0x%08llX\n", wszFunctionNames[i], (void *)ulFunctionVA, ulFunctionRVA);
-        scl::IniSaveNum<16>(wstrIniFile.c_str(), wstrIniSection.c_str(), wszFunctionNames[i], ulFunctionRVA);
     }
 
-    SymCleanup(GetCurrentProcess());
-    wprintf(L"Done!\n");
-    getchar();
+    res = api_loader.Save(ini_file.c_str());
+    if (!res.first)
+    {
+        fputws(res.second.c_str(), stdout);
+        return EXIT_FAILURE;
+    }
+
     return EXIT_SUCCESS;
 }

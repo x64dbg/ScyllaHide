@@ -3,6 +3,7 @@
 #include <TlHelp32.h>
 #include <cstdio>
 #include <cstring>
+#include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
 
@@ -11,9 +12,7 @@
 #include "RemoteHook.h"
 #include "RemotePebHider.h"
 #include "ApplyHooking.h"
-#include "ReadNtConfig.h"
-
-const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
+#include "../PluginGeneric/Injector.h"
 
 scl::Settings g_settings;
 
@@ -25,9 +24,8 @@ bool SetDebugPrivileges();
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase);
-void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data);
 
-HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
+extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 
 WCHAR NtApiIniPath[MAX_PATH] = { 0 };
 WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
@@ -46,7 +44,7 @@ int wmain(int argc, wchar_t* argv[])
     *temp = 0;
     wcscpy(ScyllaHideIniPath, NtApiIniPath);
     wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-    wcscat(NtApiIniPath, NtApiIniFilename);
+    wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
 
     ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
     SetDebugPrivileges();
@@ -85,9 +83,7 @@ int wmain(int argc, wchar_t* argv[])
     return 0;
 }
 
-
-
-bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
     DllExchangeLoader.dwProtectedProcessId = 0; //for olly plugins
     DllExchangeLoader.EnableProtectProcessId = FALSE;
@@ -154,71 +150,6 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath)
     {
         wprintf(L"Cannot open process handle %d\n", targetPid);
     }
-}
-
-void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
-{
-    HMODULE localKernel = GetModuleHandleW(L"kernel32.dll");
-    HMODULE localNtdll = GetModuleHandleW(L"ntdll.dll");
-
-    data->hNtdll = GetModuleBaseRemote(hProcess, L"ntdll.dll");
-    data->hkernel32 = GetModuleBaseRemote(hProcess, L"kernel32.dll");
-    data->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
-    data->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
-
-    //data->fLoadLibraryA = (t_LoadLibraryA)((DWORD_PTR)GetProcAddress(localKernel, "LoadLibraryA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-    //data->fGetModuleHandleA = (t_GetModuleHandleA)((DWORD_PTR)GetProcAddress(localKernel, "GetModuleHandleA") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-    //data->fGetProcAddress = (t_GetProcAddress)((DWORD_PTR)GetProcAddress(localKernel, "GetProcAddress") - (DWORD_PTR)localKernel + (DWORD_PTR)data->hkernel32);
-    //data->fLdrGetProcedureAddress = (t_LdrGetProcedureAddress)((DWORD_PTR)GetProcAddress(localNtdll, "LdrGetProcedureAddress") - (DWORD_PTR)localNtdll + (DWORD_PTR)data->hNtdll);
-
-    //data->EnablePebHiding = TRUE;
-
-    //data->EnableBlockInputHook = TRUE;
-    //data->EnableGetTickCountHook = TRUE;
-    //data->EnableOutputDebugStringHook = TRUE;
-
-    //data->EnableNtSetInformationThreadHook = TRUE;
-    //data->EnableNtQueryInformationProcessHook = TRUE;
-    //data->EnableNtQuerySystemInformationHook = TRUE;
-    //data->EnableNtQueryObjectHook = TRUE;
-    //data->EnableNtYieldExecutionHook = TRUE;
-
-    //data->EnableNtGetContextThreadHook = TRUE;
-    //data->EnableNtSetContextThreadHook = TRUE;
-    //data->EnableNtContinueHook = TRUE;
-    //data->EnableKiUserExceptionDispatcherHook = TRUE;
-}
-
-
-
-BYTE * ReadFileToMemory(const WCHAR * targetFilePath)
-{
-    HANDLE hFile;
-    DWORD dwBytesRead;
-    DWORD FileSize;
-    BYTE* FilePtr = 0;
-
-    hFile = CreateFileW(targetFilePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
-    if (hFile != INVALID_HANDLE_VALUE)
-    {
-        FileSize = GetFileSize(hFile, NULL);
-        if (FileSize > 0)
-        {
-            FilePtr = (BYTE*)calloc(FileSize + 1, 1);
-            if (FilePtr)
-            {
-                if (!ReadFile(hFile, (LPVOID)FilePtr, FileSize, &dwBytesRead, NULL))
-                {
-                    free(FilePtr);
-                    FilePtr = 0;
-                }
-
-            }
-        }
-        CloseHandle(hFile);
-    }
-
-    return FilePtr;
 }
 
 bool SetDebugPrivileges()

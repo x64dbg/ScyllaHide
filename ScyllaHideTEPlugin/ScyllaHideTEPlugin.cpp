@@ -1,9 +1,9 @@
 #include <Windows.h>
 #include <titan/TitanEngine.h>
+#include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Version.h>
 
-#include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\Injector.h"
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
@@ -16,8 +16,6 @@ const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
-
-const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
@@ -49,7 +47,7 @@ BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
             wcscpy(ScyllaHideIniPath, NtApiIniPath);
             wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-            wcscat(NtApiIniPath, NtApiIniFilename);
+            wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
 
             g_settings.Load(ScyllaHideIniPath);
 
