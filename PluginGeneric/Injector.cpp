@@ -1,6 +1,9 @@
 #include "Injector.h"
 #include <Psapi.h>
+#include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
+#include <Scylla/Util.h>
+#include <Scylla/Version.h>
 
 #include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\\ApplyHooking.h"
@@ -25,6 +28,38 @@ DWORD DbgUiRemoteBreakin_addr;
 BYTE* RemoteBreakinPatch;
 BYTE code[8];
 HANDLE hDebuggee;
+
+void ReadNtApiInformation(const wchar_t *file, HOOK_DLL_EXCHANGE *hde)
+{
+    scl::NtApiLoader api_loader;
+    auto res = api_loader.Load(file);
+    if (!res.first)
+    {
+        auto msg = scl::fmtw(L"Failed to load NT API addresses: %s", res.second);
+        MessageBoxW(HWND_DESKTOP, msg.c_str(), L"ERROR", MB_ICONERROR);
+        return;
+    }
+
+    hde->NtUserQueryWindowRVA = (DWORD)api_loader.get_fun(L"user32.dll", L"NtUserQueryWindow");
+    hde->NtUserBuildHwndListRVA = (DWORD)api_loader.get_fun(L"user32.dll", L"NtUserBuildHwndList");
+    hde->NtUserFindWindowExRVA = (DWORD)api_loader.get_fun(L"user32.dll", L"NtUserFindWindowEx");
+
+    LogWrap(L"[%s] Loaded RVA for user32.dll!NtUserQueryWindow = 0x%p", SCYLLA_HIDE_NAME_W, hde->NtUserQueryWindowRVA);
+    LogWrap(L"[%s] Loaded RVA for user32.dll!NtUserBuildHwndList = 0x%p", SCYLLA_HIDE_NAME_W, hde->NtUserBuildHwndListRVA);
+    LogWrap(L"[%s] Loaded RVA for user32.dll!NtUserFindWindowEx = 0x%p", SCYLLA_HIDE_NAME_W, hde->NtUserFindWindowExRVA);
+
+    if (!hde->NtUserQueryWindowRVA || !hde->NtUserBuildHwndListRVA || !hde->NtUserFindWindowExRVA)
+    {
+        auto msg = scl::fmtw(
+            L"NtUser* API Addresses are missing!\r\n"
+            L"File: %s\r\n"
+            L"Section: %s\r\n"
+            L"Please read the documentation to fix this problem!",
+            file, api_loader.GetOsId().c_str()
+        );
+        MessageBoxW(HWND_DESKTOP, msg.c_str(), SCYLLA_HIDE_NAME_W, MB_ICONWARNING);
+    }
+}
 
 #ifndef _WIN64
 void __declspec(naked) handleAntiAttach()

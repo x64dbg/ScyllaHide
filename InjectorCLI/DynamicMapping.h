@@ -1,5 +1,6 @@
-#include <windows.h>
+#pragma once
 
+#include <windows.h>
 
 typedef struct _SameTebFlags
 {

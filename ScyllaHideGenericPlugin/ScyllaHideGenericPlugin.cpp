@@ -1,11 +1,10 @@
 #include "ScyllaHideGenericPlugin.h"
 #include <string>
 #include <unordered_map>
+#include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
 
 #include "..\PluginGeneric\Injector.h"
-#include "..\InjectorCLI\ReadNtConfig.h"
-
 
 typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
@@ -17,8 +16,6 @@ const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
-
-const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
 WCHAR ScyllaHideDllPath[MAX_PATH] = { 0 };
 WCHAR NtApiIniPath[MAX_PATH] = { 0 };
@@ -196,7 +193,7 @@ DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory, LOGWRAPPER Logger, LOGWRA
         wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
         wcscpy(ScyllaHideIniPath, NtApiIniPath);
         wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-        wcscat(NtApiIniPath, NtApiIniFilename);
+        wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
     }
 
     g_settings.Load(ScyllaHideIniPath);

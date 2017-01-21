@@ -1,12 +1,13 @@
 #include "ScyllaHideX64DBGPlugin.h"
 #include <codecvt>
+#include <Scylla/NtApiLoader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
 #include <Scylla/Version.h>
 
 #include "..\PluginGeneric\Injector.h"
-#include "..\InjectorCLI\ReadNtConfig.h"
+
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
 
@@ -36,8 +37,6 @@ const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
-
-const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
 WCHAR ScyllaHideDllPath[MAX_PATH] = { 0 };
 WCHAR NtApiIniPath[MAX_PATH] = { 0 };
@@ -284,7 +283,7 @@ extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
             wcscpy(ScyllaHideIniPath, NtApiIniPath);
             wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-            wcscat(NtApiIniPath, NtApiIniFilename);
+            wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
         }
 
         hinst = hinstDLL;

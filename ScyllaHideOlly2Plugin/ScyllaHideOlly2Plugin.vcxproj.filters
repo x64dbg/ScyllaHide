@@ -27,9 +27,6 @@
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -54,9 +51,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\InjectorCLI\ReadNtConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\ApplyHooking.h">

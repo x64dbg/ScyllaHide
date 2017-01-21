@@ -24,9 +24,6 @@
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -62,9 +59,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\InjectorCLI\ReadNtConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\RemoteHook.h">

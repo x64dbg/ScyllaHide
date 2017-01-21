@@ -19,6 +19,7 @@
 #include <idasdk/dbg.hpp>
 #include <idasdk/loader.hpp>
 #include <idasdk/kernwin.hpp>
+#include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Version.h>
 
@@ -26,6 +27,7 @@
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "IdaServerClient.h"
 #include "resource.h"
+
 
 typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
@@ -38,7 +40,6 @@ bool SetDebugPrivileges();
 scl::Settings g_settings;
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
-const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 const WCHAR ScyllaHidex64ServerFilename[] = L"ScyllaHideIDASrvx64.exe";
 
 WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
@@ -82,7 +83,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
             wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
             wcscpy(ScyllaHidex64ServerPath, NtApiIniPath);
             wcscat(ScyllaHidex64ServerPath, ScyllaHidex64ServerFilename);
-            wcscat(NtApiIniPath, NtApiIniFilename);
+            wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
         }
 
         SetDebugPrivileges();

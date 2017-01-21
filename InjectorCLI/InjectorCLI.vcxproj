@@ -123,11 +123,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\PluginGeneric\Injector.cpp" />
     <ClCompile Include="ApplyHooking.cpp" />
     <ClCompile Include="DynamicMapping.cpp" />
     <ClCompile Include="CliMain.cpp" />
     <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="ReadNtConfig.cpp" />
     <ClCompile Include="RemoteHook.cpp" />
     <ClCompile Include="RemotePebHider.cpp" />
   </ItemGroup>
@@ -135,7 +135,6 @@
     <ClInclude Include="ApplyHooking.h" />
     <ClInclude Include="DynamicMapping.h" />
     <ClInclude Include="Logger.h" />
-    <ClInclude Include="ReadNtConfig.h" />
     <ClInclude Include="RemoteHook.h" />
     <ClInclude Include="RemotePebHider.h" />
     <ClInclude Include="resource.h" />

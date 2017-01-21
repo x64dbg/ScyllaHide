@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="NtApiLoader.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="OsInfo.cpp" />
     <ClCompile Include="Peb.cpp" />
@@ -27,6 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dbghelp.h" />
+    <ClInclude Include="NtApiLoader.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="OsInfo.h" />
     <ClInclude Include="Peb.h" />

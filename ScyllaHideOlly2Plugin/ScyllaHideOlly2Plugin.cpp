@@ -1,12 +1,12 @@
 #include "ScyllaHideOlly2Plugin.h"
 #include <cstdio>
+#include <Scylla/NtApiLoader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
 #include <Scylla/Version.h>
 
 #include "..\PluginGeneric\Injector.h"
-#include "..\InjectorCLI\ReadNtConfig.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
 
@@ -25,7 +25,6 @@ typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
 void AttachProcess(DWORD dwPID);
 
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
-const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
@@ -200,7 +199,7 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
             wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
             wcscpy(ScyllaHideIniPath, NtApiIniPath);
             wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-            wcscat(NtApiIniPath, NtApiIniFilename);
+            wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
         }
 
         hinst=hi;

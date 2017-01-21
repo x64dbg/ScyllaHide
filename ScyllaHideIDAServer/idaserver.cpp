@@ -1,4 +1,5 @@
 #include <WinSock2.h>
+#include <Scylla/NtApiLoader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
@@ -22,8 +23,6 @@ const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
 const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
-
-const WCHAR NtApiIniFilename[] = L"NtApiCollection.ini";
 
 WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
 WCHAR NtApiIniPath[MAX_PATH] = {0};
@@ -80,7 +79,7 @@ void checkPaths()
 		*temp = 0;
 		wcscpy(ScyllaHideDllPath, NtApiIniPath);
 		wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-		wcscat(NtApiIniPath, NtApiIniFilename);
+		wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
 	}
 
 	bool missing = false;

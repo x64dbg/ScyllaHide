@@ -73,7 +73,6 @@
     <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp" />
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
     <ClCompile Include="..\InjectorCLI\Logger.cpp" />
-    <ClCompile Include="..\InjectorCLI\ReadNtConfig.cpp" />
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
     <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
     <ClCompile Include="..\PluginGeneric\AttachDialog.cpp" />
@@ -84,7 +83,6 @@
   <ItemGroup>
     <ClInclude Include="..\InjectorCLI\ApplyHooking.h" />
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
-    <ClInclude Include="..\InjectorCLI\ReadNtConfig.h" />
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\InjectorCLI\RemotePebHider.h" />
     <ClInclude Include="..\PluginGeneric\AttachDialog.h" />
