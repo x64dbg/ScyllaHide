@@ -8,9 +8,9 @@
 #else
 
 #ifdef __GNUC__
-#include "dbghelp\dbghelp.h"
+#include "dbghelp/dbghelp.h"
 #else
-#include <scylla/dbghelp.h>
+#include <dbghelp.h>
 #endif // __GNUC__
 
 #ifndef deflen
@@ -19,6 +19,7 @@
 
 #include "bridgemain.h"
 #include "_dbgfunctions.h"
+#include "jansson/jansson.h"
 
 #endif // BUILD_DBG
 
