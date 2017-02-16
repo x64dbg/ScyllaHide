@@ -24,11 +24,11 @@ typedef int (__cdecl * t_Attachtoactiveprocess)(int newprocessid);
 typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
 void AttachProcess(DWORD dwPID);
 
-const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 
-WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
-WCHAR NtApiIniPath[MAX_PATH] = {0};
-WCHAR ScyllaHideIniPath[MAX_PATH] = {0};
+std::wstring g_scyllaHideDllPath;
+std::wstring g_ntApiCollectionIniPath;
+std::wstring g_scyllaHideIniPath;
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
@@ -71,7 +71,7 @@ static int Mprofiles(t_table *pt,wchar_t *name,ulong index,int mode)
 
         if (ProcessId)
         {
-            startInjection(ProcessId, ScyllaHideDllPath, true);
+            startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
             bHooked = true;
             MessageBoxA(hwollymain, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
         }
@@ -189,18 +189,13 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
         LogErrorWrap = LogErrorWrapper;
 
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
-        GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
-        WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
-        if (temp)
-        {
-            temp++;
-            *temp = 0;
-            wcscpy(ScyllaHideDllPath, NtApiIniPath);
-            wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-            wcscpy(ScyllaHideIniPath, NtApiIniPath);
-            wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-            wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
-        }
+
+        auto wstrPath = scl::GetModuleFileNameW(hi);
+        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
+
+        g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
+        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
+        g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
         hinst=hi;
     }
@@ -222,7 +217,7 @@ extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginnam
 //initialization happens in here
 extc int __cdecl ODBG2_Plugininit(void)
 {
-    g_settings.Load(ScyllaHideIniPath);
+    g_settings.Load(g_scyllaHideIniPath.c_str());
 
     Addtolist(0,0,L"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_W);
     Addtolist(0,2,L"  Copyright (C) 2014 Aguila / cypher");
@@ -311,7 +306,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
     {
         if (bHooked)
         {
-            startInjection(ProcessId, ScyllaHideDllPath, false);
+            startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
         }
         break;
     }
@@ -323,11 +318,10 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         {
             if (!bHooked)
             {
-                Message(0, L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
-                ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
+                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
 
                 bHooked = true;
-                startInjection(ProcessId, ScyllaHideDllPath, true);
+                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
             }
         }
         break;

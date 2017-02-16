@@ -3,6 +3,7 @@
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Version.h>
+#include <Scylla/Util.h>
 
 #include "..\PluginGeneric\Injector.h"
 
@@ -12,18 +13,18 @@ void LogWrapper(const WCHAR * format, ...);
 scl::Settings g_settings;
 
 #ifdef _WIN64
-const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
-const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
 
-WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
-WCHAR NtApiIniPath[MAX_PATH] = {0};
-WCHAR ScyllaHideIniPath[MAX_PATH] = {0};
+std::wstring g_scyllaHideDllPath;
+std::wstring g_ntApiCollectionIniPath;
+std::wstring g_scyllaHideIniPath;
 
 bool bHooked;
 DWORD ProcessId;
@@ -37,22 +38,16 @@ BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
         LogWrap = LogWrapper;
         LogErrorWrap = LogWrapper;
 
-        GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
-        WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
-        if (temp)
-        {
-            temp++;
-            *temp = 0;
-            wcscpy(ScyllaHideDllPath, NtApiIniPath);
-            wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-            wcscpy(ScyllaHideIniPath, NtApiIniPath);
-            wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-            wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
+        auto wstrPath = scl::GetModuleFileNameW(hi);
+        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
 
-            g_settings.Load(ScyllaHideIniPath);
+        g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
+        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
+        g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
-            SetDebugPrivileges(); //set debug privilege
-        }
+        g_settings.Load(g_scyllaHideIniPath.c_str());
+
+        SetDebugPrivileges(); //set debug privilege
     }
     return TRUE;
 }
@@ -110,7 +105,7 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
         {
             if (bHooked)
             {
-                startInjection(ProcessId, ScyllaHideDllPath, false);
+                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
             }
             break;
         }
@@ -122,10 +117,10 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
             {
                 if (!bHooked)
                 {
-                    ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
+                    ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
 
                     bHooked = true;
-                    startInjection(ProcessId, ScyllaHideDllPath, true);
+                    startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
                 }
                 break;
             }

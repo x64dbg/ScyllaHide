@@ -33,14 +33,14 @@ enum ScyllaMenuItems : int {
 scl::Settings g_settings;
 
 #ifdef _WIN64
-const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
-const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
-WCHAR ScyllaHideDllPath[MAX_PATH] = { 0 };
-WCHAR NtApiIniPath[MAX_PATH] = { 0 };
-WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
+std::wstring g_scyllaHideDllPath;
+std::wstring g_ntApiCollectionIniPath;
+std::wstring g_scyllaHideIniPath;
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
@@ -107,7 +107,7 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
 
         if (ProcessId)
         {
-            startInjection(ProcessId, ScyllaHideDllPath, true);
+            startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
             bHooked = true;
             MessageBoxA(hwndDlg, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
         }
@@ -125,7 +125,7 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
     hwndDlg = setupStruct->hwndDlg;
     hMenu = setupStruct->hMenu;
 
-    g_settings.Load(ScyllaHideIniPath);
+    g_settings.Load(g_scyllaHideIniPath.c_str());
 
     _plugin_logprintf("%s Plugin v%s Copyright (C) 2014 Aguila / cypher\n", SCYLLA_HIDE_NAME_A, SCYLLA_HIDE_VERSION_STRING_A);
 
@@ -227,7 +227,7 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
     {
         if (bHooked)
         {
-            startInjection(ProcessId, ScyllaHideDllPath, false);
+            startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
         }
         break;
     }
@@ -239,11 +239,10 @@ void cbDebugloop(CBTYPE cbType, void* callbackInfo)
         {
             if (!bHooked)
             {
-                _plugin_logprintf("[ScyllaHide] Reading NT API Information %S\n", NtApiIniPath);
-                ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
+                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
 
                 bHooked = true;
-                startInjection(ProcessId, ScyllaHideDllPath, true);
+                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
             }
 
             break;
@@ -273,18 +272,13 @@ extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
         LogErrorWrap = LogErrorWrapper;
 
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
-        GetModuleFileNameW(hinstDLL, NtApiIniPath, _countof(NtApiIniPath));
-        WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
-        if (temp)
-        {
-            temp++;
-            *temp = 0;
-            wcscpy(ScyllaHideDllPath, NtApiIniPath);
-            wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-            wcscpy(ScyllaHideIniPath, NtApiIniPath);
-            wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-            wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
-        }
+
+        auto wstrPath = scl::GetModuleFileNameW(hinstDLL);
+        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
+
+        g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
+        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
+        g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
         hinst = hinstDLL;
     }

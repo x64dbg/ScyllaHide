@@ -32,7 +32,7 @@ bool __cdecl IsAddressBreakpoint(DWORD_PTR address);
 
 scl::Settings g_settings;
 
-const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 
 //globals
 HINSTANCE hinst;
@@ -43,9 +43,9 @@ static bool bEPBreakRemoved = false;
 HWND hwmain; // Handle of main OllyDbg window
 bool bHookedDumpProc = false;
 
-WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
-WCHAR NtApiIniPath[MAX_PATH] = {0};
-WCHAR ScyllaHideIniPath[MAX_PATH] = {0};
+std::wstring g_scyllaHideDllPath;
+std::wstring g_ntApiCollectionIniPath;
+std::wstring g_scyllaHideIniPath;
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
@@ -73,18 +73,15 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
 		LogErrorWrap = LogErrorWrapper;
 		_IsAddressBreakpoint = IsAddressBreakpoint;
 		hNtdllModule = GetModuleHandleW(L"ntdll.dll");
-		GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
-		WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
-		if (temp)
-		{
-			temp++;
-			*temp = 0;
-			wcscpy(ScyllaHideDllPath, NtApiIniPath);
-			wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-			wcscpy(ScyllaHideIniPath, NtApiIniPath);
-            wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-			wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
-		}
+
+        hNtdllModule = GetModuleHandleW(L"ntdll.dll");
+
+        auto wstrPath = scl::GetModuleFileNameW(hi);
+        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
+
+        g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
+        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
+        g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
 		hinst=hi;
 	}
@@ -106,7 +103,7 @@ extern "C" int __declspec(dllexport) _ODBG_Plugininit(int ollydbgversion,HWND hw
 
 	hwmain=hw;
 
-    g_settings.Load(ScyllaHideIniPath);
+    g_settings.Load(g_scyllaHideIniPath.c_str());
 
 	_Addtolist(0, 0, "%s Plugin v%s Copyright (C) 2014 Aguila / cypher", SCYLLA_HIDE_NAME_A, SCYLLA_HIDE_VERSION_STRING_A);
 
@@ -237,7 +234,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginaction(int origin,int action,v
 
 			if (ProcessId)
 			{
-				startInjection(ProcessId, ScyllaHideDllPath, true);
+				startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
 				bHooked = true;
 				MessageBoxA(hwmain, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
 			}
@@ -366,7 +363,7 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 					MarkSystemDllsOnx64();
 				}
 
-				startInjection(ProcessId, ScyllaHideDllPath, false);
+				startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
 			}
 			break;
 		}
@@ -380,11 +377,10 @@ extern "C" void __declspec(dllexport) _ODBG_Pluginmainloop(DEBUG_EVENT *debugeve
 				{
 					if (!bHooked)
 					{
-						_Message(0, "[ScyllaHide] Reading NT API Information %S", NtApiIniPath);
-						ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
+						ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
 
 						bHooked = true;
-						startInjection(ProcessId, ScyllaHideDllPath, true);
+						startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
 					}
 
 					break;

@@ -41,7 +41,7 @@
 
 extern scl::Settings g_settings;
 
-extern WCHAR ScyllaHideDllPath[MAX_PATH];
+extern std::wstring g_scyllaHideDllPath;
 extern DWORD ProcessId;
 extern bool bHooked;
 
@@ -665,10 +665,10 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             {
 #ifdef __IDP__
 #ifndef BUILD_IDA_64BIT
-                startInjection(ProcessId, ScyllaHideDllPath, true);
+                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
 #endif
 #else
-                startInjection(ProcessId, ScyllaHideDllPath, true);
+                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
 #endif
                 bHooked = true;
                 MessageBoxW(hDlg, L"Applied changes! Restarting target is NOT necessary!", L"[ScyllaHide Options]", MB_ICONINFORMATION);

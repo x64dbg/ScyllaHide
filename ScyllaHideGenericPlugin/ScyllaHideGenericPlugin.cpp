@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
+#include <Scylla/Util.h>
 
 #include "..\PluginGeneric\Injector.h"
 
@@ -12,14 +13,14 @@ typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 scl::Settings g_settings;
 
 #ifdef _WIN64
-const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx64.dll";
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
-const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
-WCHAR ScyllaHideDllPath[MAX_PATH] = { 0 };
-WCHAR NtApiIniPath[MAX_PATH] = { 0 };
-WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
+std::wstring g_scyllaHideDllPath;
+std::wstring g_ntApiCollectionIniPath;
+std::wstring g_scyllaHideIniPath;
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
@@ -96,7 +97,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
     {
         if (status.bHooked)
         {
-            startInjection(status.ProcessId, ScyllaHideDllPath, false);
+            startInjection(status.ProcessId, g_scyllaHideDllPath.c_str(), false);
         }
 
         break;
@@ -110,11 +111,10 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
         {
             if (!status.bHooked)
             {
-                LogWrap(L"[ScyllaHide] Reading NT API Information %s", NtApiIniPath);
-                ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
+                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
 
                 status.bHooked = true;
-                startInjection(status.ProcessId, ScyllaHideDllPath, true);
+                startInjection(status.ProcessId, g_scyllaHideDllPath.c_str(), true);
             }
 
             break;
@@ -176,25 +176,23 @@ DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory, LOGWRAPPER Logger, LOGWRA
 
     //Load paths
     hNtdllModule = GetModuleHandleW(L"ntdll.dll");
-    if (!Directory)
-        GetModuleFileNameW(GetModuleHandleA(0), NtApiIniPath, _countof(NtApiIniPath));
-    else
+
+    std::wstring wstrPath;
+
+    if (Directory)
     {
-        wcscpy_s(NtApiIniPath, Directory);
-        if (NtApiIniPath[wcslen(NtApiIniPath) - 1] != L'\\')
-            wcscat_s(NtApiIniPath, L"\\");
-    }
-    WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
-    if (temp)
+        wstrPath = Directory;
+        if (wstrPath.back() != L'\\')
+            wstrPath += L'\\';
+    } else
     {
-        temp++;
-        *temp = 0;
-        wcscpy(ScyllaHideDllPath, NtApiIniPath);
-        wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-        wcscpy(ScyllaHideIniPath, NtApiIniPath);
-        wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-        wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
+        wstrPath = scl::GetModuleFileNameW();
+        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
     }
 
-    g_settings.Load(ScyllaHideIniPath);
+    g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
+    g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
+    g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
+
+    g_settings.Load(g_scyllaHideIniPath.c_str());
 }

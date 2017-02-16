@@ -22,6 +22,7 @@
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Version.h>
+#include <Scylla/Util.h>
 
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\OptionsDialog.h"
@@ -39,13 +40,13 @@ bool SetDebugPrivileges();
 
 scl::Settings g_settings;
 
-const WCHAR ScyllaHideDllFilename[] = L"HookLibraryx86.dll";
-const WCHAR ScyllaHidex64ServerFilename[] = L"ScyllaHideIDASrvx64.exe";
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
+const WCHAR g_scyllaHidex64ServerFilename[] = L"ScyllaHideIDASrvx64.exe";
 
-WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
-WCHAR ScyllaHideDllPath[MAX_PATH] = {0};
-WCHAR NtApiIniPath[MAX_PATH] = {0};
-WCHAR ScyllaHidex64ServerPath[MAX_PATH] = {0};
+std::wstring g_scyllaHideDllPath;
+std::wstring g_ntApiCollectionIniPath;
+std::wstring g_scyllaHideIniPath;
+std::wstring g_scyllaHidex64ServerPath;
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
@@ -71,24 +72,18 @@ BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
         LogErrorWrap = LogErrorWrapper;
 
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
-        GetModuleFileNameW(hi, NtApiIniPath, _countof(NtApiIniPath));
-        WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
-        if (temp)
-        {
-            temp++;
-            *temp = 0;
-            wcscpy(ScyllaHideDllPath, NtApiIniPath);
-            wcscat(ScyllaHideDllPath, ScyllaHideDllFilename);
-            wcscpy(ScyllaHideIniPath, NtApiIniPath);
-            wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-            wcscpy(ScyllaHidex64ServerPath, NtApiIniPath);
-            wcscat(ScyllaHidex64ServerPath, ScyllaHidex64ServerFilename);
-            wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
-        }
+
+        auto wstrPath = scl::GetModuleFileNameW(hi);
+        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
+
+        g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
+        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
+        g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
+        g_scyllaHidex64ServerPath = wstrPath + g_scyllaHidex64ServerFilename;
 
         SetDebugPrivileges();
 
-        g_settings.Load(ScyllaHideIniPath);
+        g_settings.Load(g_scyllaHideIniPath.c_str());
 
         if (!StartWinsock())
         {
@@ -246,7 +241,7 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                 if (!bHooked)
                 {
                     bHooked = true;
-                    startInjection(ProcessId, ScyllaHideDllPath, true);
+                    startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
                 }
 #else
 				msg("[ScyllaHide] Error IDA_64BIT please contact ScyllaHide developers!\n");
@@ -287,7 +282,7 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 #ifndef BUILD_IDA_64BIT
             if (bHooked)
             {
-                startInjection(ProcessId, ScyllaHideDllPath, false);
+                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
             }
 #endif
         }
