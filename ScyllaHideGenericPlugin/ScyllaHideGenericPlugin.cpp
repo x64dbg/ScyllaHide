@@ -7,28 +7,6 @@
 
 #include "..\PluginGeneric\Injector.h"
 
-typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
-typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
-
-scl::Settings g_settings;
-
-#ifdef _WIN64
-const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
-#else
-const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
-#endif
-
-std::wstring g_scyllaHideDllPath;
-std::wstring g_ntApiCollectionIniPath;
-std::wstring g_scyllaHideIniPath;
-
-extern HOOK_DLL_EXCHANGE DllExchangeLoader;
-extern t_LogWrapper LogWrap;
-extern t_LogWrapper LogErrorWrap;
-
-//globals
-static HMODULE hNtdllModule = 0;
-
 struct HookStatus
 {
     HookStatus()
@@ -43,7 +21,55 @@ struct HookStatus
     bool specialPebFix;
 };
 
+typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
+
+extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+extern t_LogWrapper LogWrap;
+extern t_LogWrapper LogErrorWrap;
+
+#ifdef _WIN64
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
+#else
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
+#endif
+
+scl::Settings g_settings;
+std::wstring g_scyllaHideDllPath;
+std::wstring g_ntApiCollectionIniPath;
+std::wstring g_scyllaHideIniPath;
+
+//globals
+static HMODULE hNtdllModule = 0;
 static std::unordered_map<DWORD, HookStatus> hookStatusMap;
+
+static void LogErrorWrapper(const WCHAR * format, ...)
+{
+    WCHAR text[2000];
+    CHAR textA[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
+
+    wvsprintfW(text, format, va_alist);
+
+    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
+
+    printf("%s\n", textA);
+}
+
+static void LogWrapper(const WCHAR * format, ...)
+{
+    WCHAR text[2000];
+    CHAR textA[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
+
+    wvsprintfW(text, format, va_alist);
+
+    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
+
+    printf("%s\n", textA);
+}
 
 DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
 {
@@ -132,34 +158,6 @@ DLL_EXPORT void ScyllaHideReset()
 {
     ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
     hookStatusMap.clear();
-}
-
-static void LogErrorWrapper(const WCHAR * format, ...)
-{
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
-
-    wvsprintfW(text, format, va_alist);
-
-    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
-
-    printf("%s\n", textA);
-}
-
-static void LogWrapper(const WCHAR * format, ...)
-{
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
-
-    wvsprintfW(text, format, va_alist);
-
-    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
-
-    printf("%s\n", textA);
 }
 
 DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory, LOGWRAPPER Logger, LOGWRAPPER ErrorLogger)

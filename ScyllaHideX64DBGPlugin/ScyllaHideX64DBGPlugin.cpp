@@ -1,13 +1,12 @@
-#include "ScyllaHideX64DBGPlugin.h"
 #include <codecvt>
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
 #include <Scylla/Version.h>
+#include <x64dbg/_plugins.h>
 
 #include "..\PluginGeneric\Injector.h"
-
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
 
@@ -21,6 +20,13 @@
 #pragma comment(lib, "x64dbg\\x32bridge.lib")
 #endif
 
+#ifndef DLL_EXPORT
+#define DLL_EXPORT __declspec(dllexport)
+#endif
+
+typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
+
 enum ScyllaMenuItems : int {
     MENU_OPTIONS = 0,
     MENU_PROFILES,
@@ -30,14 +36,13 @@ enum ScyllaMenuItems : int {
     MENU_MAX
 };
 
-scl::Settings g_settings;
-
 #ifdef _WIN64
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
+scl::Settings g_settings;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
@@ -57,21 +62,47 @@ DWORD ProcessId = 0;
 bool bHooked = false;
 ICONDATA mainIconData = { 0 };
 
-DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct)
+static void LogErrorWrapper(const WCHAR * format, ...)
 {
-    initStruct->pluginVersion = (SCYLLA_HIDE_VERSION_MAJOR * 100) + (SCYLLA_HIDE_VERSION_MINOR * 10) + SCYLLA_HIDE_VERSION_PATCH;
-    initStruct->sdkVersion = PLUG_SDKVERSION;
-    strncpy(initStruct->pluginName, SCYLLA_HIDE_NAME_A, sizeof(initStruct->pluginName));
-    pluginHandle = initStruct->pluginHandle;
+    WCHAR text[2000];
+    CHAR textA[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
 
-    _plugin_registercallback(pluginHandle, CB_MENUENTRY, cbMenuEntry);
-    _plugin_registercallback(pluginHandle, CB_DEBUGEVENT, cbDebugloop);
-    _plugin_registercallback(pluginHandle, CB_STOPDEBUG, cbReset);
+    wvsprintfW(text, format, va_alist);
 
-    return true;
+    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
+
+    _plugin_logprintf("%s\n", textA);
 }
 
-void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
+static void LogWrapper(const WCHAR * format, ...)
+{
+    WCHAR text[2000];
+    CHAR textA[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
+
+    wvsprintfW(text, format, va_alist);
+
+    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
+
+    _plugin_logprintf("%s\n", textA);
+}
+
+static void AttachProcess(DWORD dwPID)
+{
+    char cmd[30] = { 0 };
+    wsprintfA(cmd, "attach %x", dwPID);
+    if (!DbgCmdExec(cmd))
+    {
+        MessageBoxW(hwndDlg,
+            L"Can't attach to that process !",
+            L"ScyllaHide Plugin", MB_OK | MB_ICONERROR);
+    }
+}
+
+static void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
 {
     PLUG_CB_MENUENTRY* info = (PLUG_CB_MENUENTRY*)callbackInfo;
     switch (info->hEntry)
@@ -120,7 +151,101 @@ void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
     }
 }
 
-DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
+static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
+{
+    PLUG_CB_DEBUGEVENT* d = (PLUG_CB_DEBUGEVENT*)callbackInfo;
+
+    if (g_settings.opts().fixPebHeapFlags)
+    {
+        if (specialPebFix)
+        {
+            StartFixBeingDebugged(ProcessId, false);
+            specialPebFix = false;
+        }
+
+        if (d->DebugEvent->u.LoadDll.lpBaseOfDll == hNtdllModule)
+        {
+            StartFixBeingDebugged(ProcessId, true);
+            specialPebFix = true;
+        }
+    }
+
+    switch (d->DebugEvent->dwDebugEventCode)
+    {
+    case CREATE_PROCESS_DEBUG_EVENT:
+    {
+        ProcessId = d->DebugEvent->dwProcessId;
+        bHooked = false;
+        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+
+        if (d->DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
+        {
+            //ATTACH
+            if (g_settings.opts().killAntiAttach)
+            {
+                if (!ApplyAntiAntiAttach(ProcessId))
+                {
+                    MessageBoxW(hwndDlg, L"Anti-Anti-Attach failed", L"Error", MB_ICONERROR);
+                }
+            }
+        }
+
+        break;
+    }
+    case LOAD_DLL_DEBUG_EVENT:
+    {
+        if (bHooked)
+        {
+            startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
+        }
+        break;
+    }
+    case EXCEPTION_DEBUG_EVENT:
+    {
+        switch (d->DebugEvent->u.Exception.ExceptionRecord.ExceptionCode)
+        {
+        case STATUS_BREAKPOINT:
+        {
+            if (!bHooked)
+            {
+                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
+
+                bHooked = true;
+                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
+            }
+
+            break;
+        }
+
+        }
+
+        break;
+    }
+    }
+}
+
+static void cbReset(CBTYPE cbType, void* callbackInfo)
+{
+    ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+    bHooked = false;
+    ProcessId = 0;
+}
+
+extern "C" DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct)
+{
+    initStruct->pluginVersion = (SCYLLA_HIDE_VERSION_MAJOR * 100) + (SCYLLA_HIDE_VERSION_MINOR * 10) + SCYLLA_HIDE_VERSION_PATCH;
+    initStruct->sdkVersion = PLUG_SDKVERSION;
+    strncpy(initStruct->pluginName, SCYLLA_HIDE_NAME_A, sizeof(initStruct->pluginName));
+    pluginHandle = initStruct->pluginHandle;
+
+    _plugin_registercallback(pluginHandle, CB_MENUENTRY, cbMenuEntry);
+    _plugin_registercallback(pluginHandle, CB_DEBUGEVENT, cbDebugloop);
+    _plugin_registercallback(pluginHandle, CB_STOPDEBUG, cbReset);
+
+    return true;
+}
+
+extern "C" DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
 {
     hwndDlg = setupStruct->hwndDlg;
     hMenu = setupStruct->hMenu;
@@ -178,92 +303,7 @@ DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
     }
 }
 
-void cbDebugloop(CBTYPE cbType, void* callbackInfo)
-{
-    PLUG_CB_DEBUGEVENT* d = (PLUG_CB_DEBUGEVENT*)callbackInfo;
-
-    if (g_settings.opts().fixPebHeapFlags)
-    {
-        if (specialPebFix)
-        {
-            StartFixBeingDebugged(ProcessId, false);
-            specialPebFix = false;
-        }
-
-        if (d->DebugEvent->u.LoadDll.lpBaseOfDll == hNtdllModule)
-        {
-            StartFixBeingDebugged(ProcessId, true);
-            specialPebFix = true;
-        }
-    }
-
-    //char text[1000];
-    //wsprintfA(text, "dwDebugEventCode %X dwProcessId %X dwThreadId %X ExceptionCode %X ExceptionFlags %X",d->DebugEvent->dwDebugEventCode, d->DebugEvent->dwProcessId, d->DebugEvent->dwThreadId, d->DebugEvent->u.Exception.ExceptionRecord.ExceptionCode,d->DebugEvent->u.Exception.ExceptionRecord.ExceptionFlags);
-    //MessageBoxA(0,text,text,0);
-
-    switch (d->DebugEvent->dwDebugEventCode)
-    {
-    case CREATE_PROCESS_DEBUG_EVENT:
-    {
-        ProcessId = d->DebugEvent->dwProcessId;
-        bHooked = false;
-        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
-
-        if (d->DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
-        {
-            //ATTACH
-            if (g_settings.opts().killAntiAttach)
-            {
-                if (!ApplyAntiAntiAttach(ProcessId))
-                {
-                    MessageBoxW(hwndDlg, L"Anti-Anti-Attach failed", L"Error", MB_ICONERROR);
-                }
-            }
-        }
-
-        break;
-    }
-    case LOAD_DLL_DEBUG_EVENT:
-    {
-        if (bHooked)
-        {
-            startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
-        }
-        break;
-    }
-    case EXCEPTION_DEBUG_EVENT:
-    {
-        switch (d->DebugEvent->u.Exception.ExceptionRecord.ExceptionCode)
-        {
-        case STATUS_BREAKPOINT:
-        {
-            if (!bHooked)
-            {
-                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
-
-                bHooked = true;
-                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
-            }
-
-            break;
-        }
-
-        }
-
-        break;
-    }
-    }
-
-}
-
-void cbReset(CBTYPE cbType, void* callbackInfo)
-{
-    ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
-    bHooked = false;
-    ProcessId = 0;
-}
-
-extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
@@ -273,55 +313,15 @@ extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
 
-        auto wstrPath = scl::GetModuleFileNameW(hinstDLL);
+        auto wstrPath = scl::GetModuleFileNameW(hInstDLL);
         wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
 
         g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
         g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
         g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
-        hinst = hinstDLL;
+        hinst = hInstDLL;
     }
 
     return TRUE;
-}
-
-void LogErrorWrapper(const WCHAR * format, ...)
-{
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
-
-    wvsprintfW(text, format, va_alist);
-
-    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
-
-    _plugin_logprintf("%s\n", textA);
-}
-
-void LogWrapper(const WCHAR * format, ...)
-{
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
-
-    wvsprintfW(text, format, va_alist);
-
-    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
-
-    _plugin_logprintf("%s\n", textA);
-}
-
-void AttachProcess(DWORD dwPID)
-{
-    char cmd[30] = { 0 };
-    wsprintfA(cmd, "attach %x", dwPID);
-    if (!DbgCmdExec(cmd))
-    {
-        MessageBoxW(hwndDlg,
-            L"Can't attach to that process !",
-            L"ScyllaHide Plugin", MB_OK | MB_ICONERROR);
-    }
 }

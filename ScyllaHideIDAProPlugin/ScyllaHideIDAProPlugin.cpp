@@ -29,129 +29,119 @@
 #include "IdaServerClient.h"
 #include "resource.h"
 
-
-typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
-typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
-void LogWrapper(const WCHAR * format, ...);
-void LogErrorWrapper(const WCHAR * format, ...);
-void __cdecl AttachProcess(DWORD dwPID);
-int idaapi debug_mainloop(void *user_data, int notif_code, va_list va);
-bool SetDebugPrivileges();
-
-scl::Settings g_settings;
-
-const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
-const WCHAR g_scyllaHidex64ServerFilename[] = L"ScyllaHideIDASrvx64.exe";
-
-std::wstring g_scyllaHideDllPath;
-std::wstring g_ntApiCollectionIniPath;
-std::wstring g_scyllaHideIniPath;
-std::wstring g_scyllaHidex64ServerPath;
+typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
 extern t_AttachProcess _AttachProcess;
 
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
+const WCHAR g_scyllaHidex64ServerFilename[] = L"ScyllaHideIDASrvx64.exe";
+
+scl::Settings g_settings;
+std::wstring g_scyllaHideDllPath;
+std::wstring g_ntApiCollectionIniPath;
+std::wstring g_scyllaHideIniPath;
+std::wstring g_scyllaHidex64ServerPath;
+
 //globals
 HINSTANCE hinst;
 DWORD ProcessId = 0;
 bool bHooked = false;
 HMODULE hNtdllModule = 0;
-PROCESS_INFORMATION ServerProcessInfo = {0};
-STARTUPINFO ServerStartupInfo = {0};
-
-BOOL FileExists(LPCWSTR szPath);
-
-BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
-{
-    if (reason==DLL_PROCESS_ATTACH)
-    {
-        _AttachProcess = AttachProcess;
-        LogWrap = LogWrapper;
-        LogErrorWrap = LogErrorWrapper;
-
-        hNtdllModule = GetModuleHandleW(L"ntdll.dll");
-
-        auto wstrPath = scl::GetModuleFileNameW(hi);
-        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
-
-        g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
-        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
-        g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
-        g_scyllaHidex64ServerPath = wstrPath + g_scyllaHidex64ServerFilename;
-
-        SetDebugPrivileges();
-
-        g_settings.Load(g_scyllaHideIniPath.c_str());
-
-        if (!StartWinsock())
-        {
-            MessageBoxA(0,"Failed to start Winsock!", "Error", MB_ICONERROR);
-        }
-
-        hinst=hi;
-    }
-
-    return TRUE;
-};
-
-//init the plugin
-int idaapi IDAP_init(void)
-{
-    //ensure target is PE executable
-    if (inf.filetype != f_PE) return PLUGIN_SKIP;
-
-    //install hook for debug mainloop
-    if (!hook_to_notification_point(HT_DBG, debug_mainloop, NULL))
-    {
-        msg("[ScyllaHide] Error hooking notification point\n");
-        return PLUGIN_SKIP;
-    }
-
-    msg("##################################################\n");
-    msg("# ScyllaHide v" SCYLLA_HIDE_VERSION_STRING_A " Copyright 2014 Aguila / cypher #\n");
-    msg("##################################################\n");
-
-    bHooked = false;
-    ProcessId = 0;
-    ZeroMemory(&ServerStartupInfo, sizeof(ServerStartupInfo));
-    ZeroMemory(&ServerProcessInfo, sizeof(ServerProcessInfo));
-
-    return PLUGIN_KEEP;
-}
-
-//cleanup on plugin unload
-void idaapi IDAP_term(void)
-{
-    unhook_from_notification_point(HT_DBG, debug_mainloop, NULL);
-
-    return;
-}
-
-//called when user clicks in plugin menu or presses hotkey
-void idaapi IDAP_run(int arg)
-{
-    DialogBoxW(hinst, MAKEINTRESOURCE(IDD_OPTIONS), (HWND)callui(ui_get_hwnd).vptr, &OptionsDlgProc);
-
-    return;
-}
-
+PROCESS_INFORMATION ServerProcessInfo = { 0 };
+STARTUPINFO ServerStartupInfo = { 0 };
 bool isAttach = false;
 
+static void LogWrapper(const WCHAR * format, ...)
+{
+    WCHAR text[2000];
+    CHAR textA[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
+
+    wvsprintfW(text, format, va_alist);
+
+    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
+
+    msg("%s", textA);
+    msg("\n");
+}
+
+static void LogErrorWrapper(const WCHAR * format, ...)
+{
+    WCHAR text[2000];
+    CHAR textA[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
+
+    wvsprintfW(text, format, va_alist);
+
+    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
+
+    msg(textA);
+    msg("\n");
+}
+
+static void AttachProcess(DWORD dwPID)
+{
+    int res = attach_process((pid_t)dwPID);
+
+    switch (res) {
+    case -1:
+    {
+        MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
+            "Can't attach to that process !",
+            "ScyllaHide Plugin", MB_OK | MB_ICONERROR);
+        break;
+    }
+    case -2:
+    {
+        MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
+            "Can't find that PID !",
+            "ScyllaHide Plugin", MB_OK | MB_ICONERROR);
+        break;
+    }
+    }
+}
+
+static bool SetDebugPrivileges()
+{
+    TOKEN_PRIVILEGES Debug_Privileges;
+    bool retVal = false;
+
+    if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
+    {
+        HANDLE hToken = 0;
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+        {
+            Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+            Debug_Privileges.PrivilegeCount = 1;
+
+            retVal = AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL) != FALSE;
+
+            CloseHandle(hToken);
+        }
+    }
+
+    return retVal;
+}
+
 //callback for various debug events
-int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
+static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 {
     switch (notif_code)
     {
     case dbg_process_attach:
-		{
-			isAttach = true;
-			break; //attaching not supported
-		}
+    {
+        isAttach = true;
+        break; //attaching not supported
+    }
     case dbg_process_start:
     {
-		isAttach = false;
+        isAttach = false;
 
         const debug_event_t* dbgEvent = va_arg(va, const debug_event_t*);
 
@@ -170,8 +160,8 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
             if (dbg->is_remote())
             {
                 qstring hoststring;
-                char host[200] = {0};
-                char port[6] = {0};
+                char host[200] = { 0 };
+                char port[6] = { 0 };
                 wcstombs(port, g_settings.opts().idaServerPort.c_str(), _countof(port));
 
                 get_process_options(NULL, NULL, NULL, &hoststring, NULL, NULL);
@@ -244,7 +234,7 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                     startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
                 }
 #else
-				msg("[ScyllaHide] Error IDA_64BIT please contact ScyllaHide developers!\n");
+                msg("[ScyllaHide] Error IDA_64BIT please contact ScyllaHide developers!\n");
 #endif
             }
         }
@@ -309,89 +299,52 @@ int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
     return 0;
 }
 
-bool SetDebugPrivileges()
+//cleanup on plugin unload
+static void idaapi IDAP_term(void)
 {
-    TOKEN_PRIVILEGES Debug_Privileges;
-    bool retVal = false;
-
-    if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Debug_Privileges.Privileges[0].Luid))
-    {
-        HANDLE hToken = 0;
-        if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
-        {
-            Debug_Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-            Debug_Privileges.PrivilegeCount = 1;
-
-            retVal = AdjustTokenPrivileges(hToken, FALSE, &Debug_Privileges, 0, NULL, NULL) != FALSE;
-
-            CloseHandle(hToken);
-        }
-    }
-
-    return retVal;
+    unhook_from_notification_point(HT_DBG, debug_mainloop, NULL);
 }
 
-void LogErrorWrapper(const WCHAR * format, ...)
+//called when user clicks in plugin menu or presses hotkey
+static void idaapi IDAP_run(int arg)
 {
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
-
-    wvsprintfW(text, format, va_alist);
-
-    WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
-
-    msg(textA);
-    msg("\n");
+    DialogBoxW(hinst, MAKEINTRESOURCE(IDD_OPTIONS), (HWND)callui(ui_get_hwnd).vptr, &OptionsDlgProc);
 }
 
-void LogWrapper(const WCHAR * format, ...)
+//init the plugin
+static int idaapi IDAP_init(void)
 {
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
+    //ensure target is PE executable
+    if (inf.filetype != f_PE) return PLUGIN_SKIP;
 
-    wvsprintfW(text, format, va_alist);
-
-    WideCharToMultiByte(CP_ACP,0,text,-1,textA, _countof(textA), 0,0);
-
-    msg("%s",textA);
-    msg("\n");
-}
-
-void AttachProcess(DWORD dwPID)
-{
-    int res = attach_process((pid_t)dwPID);
-
-    switch(res) {
-    case -1:
+    //install hook for debug mainloop
+    if (!hook_to_notification_point(HT_DBG, debug_mainloop, NULL))
     {
-        MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
-                    "Can't attach to that process !",
-                    "ScyllaHide Plugin",MB_OK|MB_ICONERROR);
-        break;
+        msg("[ScyllaHide] Error hooking notification point\n");
+        return PLUGIN_SKIP;
     }
-    case -2:
-    {
-        MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
-                    "Can't find that PID !",
-                    "ScyllaHide Plugin",MB_OK|MB_ICONERROR);
-        break;
-    }
-    }
+
+    msg("##################################################\n");
+    msg("# " SCYLLA_HIDE_NAME_A " v" SCYLLA_HIDE_VERSION_STRING_A " Copyright 2014 Aguila / cypher #\n");
+    msg("##################################################\n");
+
+    bHooked = false;
+    ProcessId = 0;
+    ZeroMemory(&ServerStartupInfo, sizeof(ServerStartupInfo));
+    ZeroMemory(&ServerProcessInfo, sizeof(ServerProcessInfo));
+
+    return PLUGIN_KEEP;
 }
 
 // There isn't much use for these yet, but I set them anyway.
-static char IDAP_comment[] 	= "ScyllaHide usermode Anti-Anti-Debug Plugin";
-static char IDAP_help[] 		= "ScyllaHide";
+static char IDAP_comment[] = SCYLLA_HIDE_NAME_A " usermode Anti-Anti-Debug Plugin";
+static char IDAP_help[] = SCYLLA_HIDE_NAME_A;
 
 // The name of the plug-in displayed in the Edit->Plugins menu
-static char IDAP_name[] 		= "ScyllaHide";
+static char IDAP_name[] = SCYLLA_HIDE_NAME_A;
 
 // The hot-key the user can use to run your plug-in.
-static char IDAP_hotkey[] 	= "Alt-X";
+static char IDAP_hotkey[] = "Alt-X";
 
 // The all-important exported PLUGIN object
 idaman ida_module_data plugin_t PLUGIN =
@@ -406,3 +359,36 @@ idaman ida_module_data plugin_t PLUGIN =
     IDAP_name,
     IDAP_hotkey
 };
+
+BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD dwReason, LPVOID lpReserved)
+{
+    if (dwReason == DLL_PROCESS_ATTACH)
+    {
+        _AttachProcess = AttachProcess;
+        LogWrap = LogWrapper;
+        LogErrorWrap = LogErrorWrapper;
+
+        hNtdllModule = GetModuleHandleW(L"ntdll.dll");
+
+        auto wstrPath = scl::GetModuleFileNameW(hInstDll);
+        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
+
+        g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
+        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
+        g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
+        g_scyllaHidex64ServerPath = wstrPath + g_scyllaHidex64ServerFilename;
+
+        SetDebugPrivileges();
+
+        g_settings.Load(g_scyllaHideIniPath.c_str());
+
+        if (!StartWinsock())
+        {
+            MessageBoxW(0, L"Failed to start Winsock!", L"Error", MB_ICONERROR);
+        }
+
+        hinst = hInstDll;
+    }
+
+    return TRUE;
+}

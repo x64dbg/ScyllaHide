@@ -1,5 +1,8 @@
-#include "ScyllaHideOlly2Plugin.h"
+#include <windows.h>
 #include <cstdio>
+#pragma pack(push)
+#include <ollydbg2/plugin.h>
+#pragma pack(pop)
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
@@ -14,41 +17,89 @@
 
 #pragma comment(lib, "ollydbg2\\ollydbg.lib")
 
-scl::Settings g_settings;
-
-typedef int (__cdecl * t_Attachtoactiveprocess)(int newprocessid);
 #define OLLY201_Attachtoactiveprocess_VA 0x44B108
-//PUSH EBP
-#define OLLY201_Attachtoactiveprocess_CHECKVALUE 0x55
+#define OLLY201_Attachtoactiveprocess_CHECKVALUE 0x55 // PUSH EBP
 
-typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
-void AttachProcess(DWORD dwPID);
+#define MAX_PROFILES 128
 
-const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
-
-std::wstring g_scyllaHideDllPath;
-std::wstring g_ntApiCollectionIniPath;
-std::wstring g_scyllaHideIniPath;
+typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+typedef int(__cdecl * t_Attachtoactiveprocess)(int newprocessid);
+typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 extern t_LogWrapper LogWrap;
 extern t_LogWrapper LogErrorWrap;
 extern t_AttachProcess _AttachProcess;
 
-//globals
-HINSTANCE hinst;
+const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 
+scl::Settings g_settings;
+std::wstring g_scyllaHideDllPath;
+std::wstring g_ntApiCollectionIniPath;
+std::wstring g_scyllaHideIniPath;
+
+HINSTANCE hinst;
 HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
 DWORD ProcessId = 0;
 bool bHooked = false;
 
-//Menu->Options
-static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
+static t_menu profilemenu[MAX_PROFILES];
+
+static void LogErrorWrapper(const WCHAR * format, ...)
 {
-    if (mode==MENU_VERIFY)
+    WCHAR text[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
+
+    wvsprintfW(text, format, va_alist);
+
+    Error(L"%s", text);
+}
+
+static void LogWrapper(const WCHAR * format, ...)
+{
+    WCHAR text[2000];
+    va_list va_alist;
+    va_start(va_alist, format);
+
+    wvsprintfW(text, format, va_alist);
+
+    Message(0, L"%s", text);
+}
+
+static void AttachProcess(DWORD dwPID)
+{
+    t_Attachtoactiveprocess _Attachtoactiveprocess = (t_Attachtoactiveprocess)OLLY201_Attachtoactiveprocess_VA;
+    BYTE * pCheck = (BYTE *)OLLY201_Attachtoactiveprocess_VA;
+
+    if (*pCheck == OLLY201_Attachtoactiveprocess_CHECKVALUE)
+    {
+        int result = _Attachtoactiveprocess((int)dwPID);
+        if (result == 0)
+        {
+            Setstatus(STAT_ATTACHING);
+        }
+        else
+        {
+            //Olly displays an error message
+            //MessageBoxW(hwollymain,
+            //	L"Can't attach to that process !",
+            //	L"ScyllaHide Plugin",MB_OK|MB_ICONERROR);
+        }
+    }
+    else
+    {
+        MessageBoxW(hwollymain, L"Your Olly Version is not supported! Please use version 201 http://www.ollydbg.de/odbg201.zip", L"ERROR", MB_ICONERROR);
+    }
+}
+
+//Menu->Options
+static int Moptions(t_table *pt, wchar_t *name, ulong index, int mode)
+{
+    if (mode == MENU_VERIFY)
         return MENU_NORMAL;
-    else if (mode==MENU_EXECUTE)
+    else if (mode == MENU_EXECUTE)
     {
         DialogBoxW(hinst, MAKEINTRESOURCE(IDD_OPTIONS), hwollymain, &OptionsDlgProc);
         return MENU_REDRAW;
@@ -57,15 +108,15 @@ static int Moptions(t_table *pt,wchar_t *name,ulong index,int mode)
 }
 
 //Menu->Load Profile
-static int Mprofiles(t_table *pt,wchar_t *name,ulong index,int mode)
+static int Mprofiles(t_table *pt, wchar_t *name, ulong index, int mode)
 {
-    if (mode==MENU_VERIFY) {
+    if (mode == MENU_VERIFY) {
         if (name == g_settings.profile_name())
             return MENU_CHECKED;
 
         return MENU_NORMAL;
     }
-    else if (mode==MENU_EXECUTE)
+    else if (mode == MENU_EXECUTE)
     {
         g_settings.SetProfile(g_settings.profile_names()[index].c_str());
 
@@ -86,12 +137,12 @@ static int Mprofiles(t_table *pt,wchar_t *name,ulong index,int mode)
 }
 
 //Menu->Inject DLL
-static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode)
+static int MinjectDll(t_table *pt, wchar_t *name, ulong index, int mode)
 {
-    if (mode==MENU_VERIFY)
-        if(!ProcessId) return MENU_GRAYED;
+    if (mode == MENU_VERIFY)
+        if (!ProcessId) return MENU_GRAYED;
         else return MENU_NORMAL;
-    else if (mode==MENU_EXECUTE)
+    else if (mode == MENU_EXECUTE)
     {
         wchar_t dllPath[MAX_PATH] = {};
         if (scl::GetFileDialogW(dllPath, _countof(dllPath)))
@@ -103,11 +154,11 @@ static int MinjectDll(t_table *pt,wchar_t *name,ulong index,int mode)
 }
 
 //Menu->Attach Process
-static int MattachProcess(t_table *pt,wchar_t *name,ulong index,int mode)
+static int MattachProcess(t_table *pt, wchar_t *name, ulong index, int mode)
 {
-    if (mode==MENU_VERIFY)
+    if (mode == MENU_VERIFY)
         return MENU_NORMAL;
-    else if (mode==MENU_EXECUTE)
+    else if (mode == MENU_EXECUTE)
     {
         DialogBox(hinst, MAKEINTRESOURCE(IDD_ATTACH), hwollymain, &AttachProc);
         return MENU_REDRAW;
@@ -116,40 +167,40 @@ static int MattachProcess(t_table *pt,wchar_t *name,ulong index,int mode)
 }
 
 //Context Menu in Thread window -> Suspend/Resume all Threads
-static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode)
+static int Mthreads(t_table *pt, wchar_t *name, ulong index, int mode)
 {
-    if (mode==MENU_VERIFY)
+    if (mode == MENU_VERIFY)
         return MENU_NORMAL;
-    else if (mode==MENU_EXECUTE)
+    else if (mode == MENU_EXECUTE)
     {
         t_table threadWindow = thread;
         int threadCount = threadWindow.sorted.n;
         int threadSize = threadWindow.sorted.itemsize;
         t_thread* threadData = (t_thread*)threadWindow.sorted.data;
 
-        switch(index)
+        switch (index)
         {
         case 0:
         {
             //Resumeallthreads(); doesnt work as expected
-            for(int i=0; i<threadCount; i++) {
+            for (int i = 0; i < threadCount; i++) {
                 ResumeThread(threadData->thread);
 
                 //yup this is super-hacky-pointer-kungfu but threadData++ wont work coz there
                 //is 0x20bytes extra data between thread elements
-                threadData = reinterpret_cast<t_thread*>((DWORD)threadData+threadSize);
+                threadData = reinterpret_cast<t_thread*>((DWORD)threadData + threadSize);
             }
             break;
         }
         case 1:
         {
             //Suspendallthreads(); doesnt work as expected
-            for(int i=0; i<threadCount; i++) {
+            for (int i = 0; i < threadCount; i++) {
                 SuspendThread(threadData->thread);
 
                 //yup this is super-hacky-pointer-kungfu but threadData++ wont work coz there
                 //is 0x20bytes extra data between thread elements
-                threadData = reinterpret_cast<t_thread*>((DWORD)threadData+threadSize);
+                threadData = reinterpret_cast<t_thread*>((DWORD)threadData + threadSize);
             }
             break;
         }
@@ -160,11 +211,11 @@ static int Mthreads(t_table *pt,wchar_t *name,ulong index,int mode)
 }
 
 //Menu->About
-static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode)
+static int Mabout(t_table *pt, wchar_t *name, ulong index, int mode)
 {
-    if (mode==MENU_VERIFY)
+    if (mode == MENU_VERIFY)
         return MENU_NORMAL;
-    else if (mode==MENU_EXECUTE)
+    else if (mode == MENU_EXECUTE)
     {
         // Debuggee should continue execution while message box is displayed.
         Resumeallthreads();
@@ -178,49 +229,71 @@ static int Mabout(t_table *pt,wchar_t *name,ulong index,int mode)
     };
     return MENU_ABSENT;
 }
-//menus
 
-BOOL WINAPI DllMain(HINSTANCE hi,DWORD reason,LPVOID reserved)
+static t_menu mainmenu[] =
 {
-    if (reason==DLL_PROCESS_ATTACH)
     {
-		_AttachProcess = AttachProcess;
-        LogWrap = LogWrapper;
-        LogErrorWrap = LogErrorWrapper;
+        L"Options",
+        L"Select Hiding Options",
+        K_NONE, Moptions, NULL, 0
+    },
+    {
+        L"Load Profile",
+        L"Load a saved profile",
+        K_NONE, NULL, profilemenu, 0
+    },
+    {
+        L"|Inject DLL",
+        L"Inject a DLL into the debugged process",
+        K_NONE, MinjectDll, NULL, 0
+    },
+    {
+        L"|Attach process",
+        L"Attach to a process by window finder or PID",
+        K_NONE, MattachProcess, NULL, 0
+    },
+    {
+        L"|About",
+        L"About ScyllaHide plugin",
+        K_NONE, Mabout, NULL, 0
+    },
+    { NULL, NULL, K_NONE, NULL, NULL, 0 }
+};
 
-        hNtdllModule = GetModuleHandleW(L"ntdll.dll");
-
-        auto wstrPath = scl::GetModuleFileNameW(hi);
-        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
-
-        g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
-        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
-        g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
-
-        hinst=hi;
-    }
-    return TRUE;
+static t_menu threadmenu[] =
+{
+    {
+        L"Resume all Threads",
+        L"Resume all Threads",
+        K_NONE, Mthreads, NULL, 0
+    },
+    {
+        L"Suspend all Threads",
+        L"Suspend all Threads",
+        K_NONE, Mthreads, NULL, 1
+    },
+    { NULL, NULL, K_NONE, NULL, NULL, 0 }
 };
 
 //register plugin
-extc int ODBG2_Pluginquery(int ollydbgversion,ulong *features, wchar_t pluginname[SHORTNAME],wchar_t pluginversion[SHORTNAME])
+extc int ODBG2_Pluginquery(int ollydbgversion, ulong *features, wchar_t pluginname[SHORTNAME], wchar_t pluginversion[SHORTNAME])
 {
-    if (ollydbgversion<201)
+    if (ollydbgversion < 201)
         return 0;
 
-    wcscpy(pluginname,PLUGINNAME);
-    wcscpy(pluginversion,SCYLLA_HIDE_VERSION_STRING_W);
+    wcscpy(pluginname, SCYLLA_HIDE_NAME_W);
+    wcscpy(pluginversion, SCYLLA_HIDE_VERSION_STRING_W);
 
     return PLUGIN_VERSION;
 };
 
 //initialization happens in here
-extc int __cdecl ODBG2_Plugininit(void)
+extc int ODBG2_Plugininit(void)
 {
     g_settings.Load(g_scyllaHideIniPath.c_str());
 
-    Addtolist(0,0,L"ScyllaHide Plugin v" SCYLLA_HIDE_VERSION_STRING_W);
-    Addtolist(0,2,L"  Copyright (C) 2014 Aguila / cypher");
+    Addtolist(0, 0, SCYLLA_HIDE_NAME_W L" Plugin v" SCYLLA_HIDE_VERSION_STRING_W);
+    Addtolist(0, 2, L"  Copyright (C) 2014 Aguila / cypher");
     Addtolist(0, 2, L"  Operating System: %S", scl::GetWindowsVersionNameA());
 
     //change olly caption
@@ -236,7 +309,7 @@ extc int __cdecl ODBG2_Plugininit(void)
 //setup menus
 extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
 {
-    if (wcscmp(type,PWM_MAIN)==0) {
+    if (wcscmp(type, PWM_MAIN) == 0) {
         // add profiles to menu
         for (size_t i = 0; i < g_settings.profile_names().size(); i++)
         {
@@ -244,22 +317,21 @@ extc t_menu* ODBG2_Pluginmenu(wchar_t *type)
                 (wchar_t *)&g_settings.profile_names()[i][0], (wchar_t *)&g_settings.profile_names()[i][0], K_NONE, Mprofiles, NULL, { i }
             };
         }
-        t_menu menu_end = {NULL, NULL, K_NONE, NULL, NULL, 0};
+        t_menu menu_end = { NULL, NULL, K_NONE, NULL, NULL, 0 };
         profilemenu[g_settings.profile_names().size()] = menu_end;
 
         return mainmenu;
     }
-    else if(wcscmp(type, PWM_THREADS)==0)
+    else if (wcscmp(type, PWM_THREADS) == 0)
         return threadmenu;
 
     return NULL;
-};
+}
 
 //called for every debugloop pass
 extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
 {
-
-    if(!debugevent)
+    if (!debugevent)
         return;
 
 
@@ -278,7 +350,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         }
     }
 
-    switch(debugevent->dwDebugEventCode)
+    switch (debugevent->dwDebugEventCode)
     {
     case CREATE_PROCESS_DEBUG_EVENT:
     {
@@ -286,17 +358,17 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         bHooked = false;
         ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
 
-		if (debugevent->u.CreateProcessInfo.lpStartAddress == NULL)
-		{
-			//ATTACH
+        if (debugevent->u.CreateProcessInfo.lpStartAddress == NULL)
+        {
+            //ATTACH
             if (g_settings.opts().killAntiAttach)
-			{
-				if (!ApplyAntiAntiAttach(ProcessId))
-				{
-					MessageBoxW(hwollymain, L"Anti-Anti-Attach failed", L"Error", MB_ICONERROR);
-				}
-			}
-		}
+            {
+                if (!ApplyAntiAntiAttach(ProcessId))
+                {
+                    MessageBoxW(hwollymain, L"Anti-Anti-Attach failed", L"Error", MB_ICONERROR);
+                }
+            }
+        }
 
         //change olly caption again !
         SetWindowTextW(hwollymain, g_settings.opts().ollyWindowTitle.c_str());
@@ -312,7 +384,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
     }
     case EXCEPTION_DEBUG_EVENT:
     {
-        switch(debugevent->u.Exception.ExceptionRecord.ExceptionCode)
+        switch (debugevent->u.Exception.ExceptionRecord.ExceptionCode)
         {
         case STATUS_BREAKPOINT:
         {
@@ -338,50 +410,24 @@ extc void ODBG2_Pluginreset(void)
     ProcessId = 0;
 }
 
-void LogErrorWrapper(const WCHAR * format, ...)
+BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
 {
-    WCHAR text[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
+    if (reason == DLL_PROCESS_ATTACH)
+    {
+        _AttachProcess = AttachProcess;
+        LogWrap = LogWrapper;
+        LogErrorWrap = LogErrorWrapper;
 
-    wvsprintfW(text, format, va_alist);
+        hNtdllModule = GetModuleHandleW(L"ntdll.dll");
 
-    Error(L"%s",text);
-}
+        auto wstrPath = scl::GetModuleFileNameW(hi);
+        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
 
-void LogWrapper(const WCHAR * format, ...)
-{
-    WCHAR text[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
+        g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
+        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
+        g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
-    wvsprintfW(text, format, va_alist);
-
-    Message(0,L"%s", text);
-}
-
-void AttachProcess(DWORD dwPID)
-{
-	t_Attachtoactiveprocess _Attachtoactiveprocess = (t_Attachtoactiveprocess)OLLY201_Attachtoactiveprocess_VA;
-	BYTE * pCheck = (BYTE *)OLLY201_Attachtoactiveprocess_VA;
-
-	if (*pCheck == OLLY201_Attachtoactiveprocess_CHECKVALUE)
-	{
-		int result = _Attachtoactiveprocess((int)dwPID);
-		if (result == 0)
-		{
-			Setstatus(STAT_ATTACHING);
-		}
-		else
-		{
-			//Olly displays an error message
-			//MessageBoxW(hwollymain,
-			//	L"Can't attach to that process !",
-			//	L"ScyllaHide Plugin",MB_OK|MB_ICONERROR);
-		}
-	}
-	else
-	{
-		MessageBoxW(hwollymain, L"Your Olly Version is not supported! Please use version 201 http://www.ollydbg.de/odbg201.zip", L"ERROR", MB_ICONERROR);
-	}
-}
+        hinst = hi;
+    }
+    return TRUE;
+};

@@ -90,7 +90,6 @@
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
     <ClInclude Include="olly2patches.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="ScyllaHideOlly2Plugin.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScyllaHideOlly2Plugin.rc" />

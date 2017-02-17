@@ -143,7 +143,6 @@
     <ClInclude Include="..\PluginGeneric\Injector.h" />
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="ScyllaHideX64DBGPlugin.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScyllaHideX64DBGPlugin.rc" />

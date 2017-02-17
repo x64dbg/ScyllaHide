@@ -1,16 +1,21 @@
 #include <Windows.h>
-#include <titan/TitanEngine.h>
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Version.h>
 #include <Scylla/Util.h>
+#include <titan/TitanEngine.h>
 
 #include "..\PluginGeneric\Injector.h"
 
-typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
-void LogWrapper(const WCHAR * format, ...);
+#ifndef DLL_EXPORT
+#define DLL_EXPORT __declspec(dllexport)
+#endif
 
-scl::Settings g_settings;
+typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
+
+extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+extern t_LogWrapper LogWrap;
+extern t_LogWrapper LogErrorWrap;
 
 #ifdef _WIN64
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -18,10 +23,7 @@ const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
-extern HOOK_DLL_EXCHANGE DllExchangeLoader;
-extern t_LogWrapper LogWrap;
-extern t_LogWrapper LogErrorWrap;
-
+scl::Settings g_settings;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
@@ -29,30 +31,7 @@ std::wstring g_scyllaHideIniPath;
 bool bHooked;
 DWORD ProcessId;
 
-bool SetDebugPrivileges();
-
-BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
-{
-    if (reason == DLL_PROCESS_ATTACH)
-    {
-        LogWrap = LogWrapper;
-        LogErrorWrap = LogWrapper;
-
-        auto wstrPath = scl::GetModuleFileNameW(hi);
-        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
-
-        g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
-        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
-        g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
-
-        g_settings.Load(g_scyllaHideIniPath.c_str());
-
-        SetDebugPrivileges(); //set debug privilege
-    }
-    return TRUE;
-}
-
-void LogWrapper(const WCHAR * format, ...)
+static void LogWrapper(const WCHAR * format, ...)
 {
     //WCHAR text[2000];
     //va_list va_alist;
@@ -63,7 +42,7 @@ void LogWrapper(const WCHAR * format, ...)
     //Message(0, text);
 }
 
-bool SetDebugPrivileges()
+static bool SetDebugPrivileges()
 {
     TOKEN_PRIVILEGES Debug_Privileges;
     bool retVal = false;
@@ -85,7 +64,7 @@ bool SetDebugPrivileges()
     return retVal;
 }
 
-extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debugEvent, int CallReason)
+extern "C" DLL_EXPORT void TitanDebuggingCallBack(LPDEBUG_EVENT debugEvent, int CallReason)
 {
     switch(CallReason)
     {
@@ -136,7 +115,7 @@ extern "C" __declspec(dllexport) void TitanDebuggingCallBack(LPDEBUG_EVENT debug
     }
 }
 
-extern "C" __declspec(dllexport) bool TitanRegisterPlugin(char* szPluginName, DWORD* titanPluginMajorVersion, DWORD* titanPluginMinorVersion)
+extern "C" DLL_EXPORT bool TitanRegisterPlugin(char* szPluginName, DWORD* titanPluginMajorVersion, DWORD* titanPluginMinorVersion)
 {
     if(titanPluginMajorVersion && titanPluginMinorVersion)
     {
@@ -146,4 +125,25 @@ extern "C" __declspec(dllexport) bool TitanRegisterPlugin(char* szPluginName, DW
         return true;
     }
     return false;
+}
+
+BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD dwReason, LPVOID lpReserved)
+{
+    if (dwReason == DLL_PROCESS_ATTACH)
+    {
+        LogWrap = LogWrapper;
+        LogErrorWrap = LogWrapper;
+
+        auto wstrPath = scl::GetModuleFileNameW(hInstDll);
+        wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
+
+        g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
+        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
+        g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
+
+        g_settings.Load(g_scyllaHideIniPath.c_str());
+
+        SetDebugPrivileges();
+    }
+    return TRUE;
 }

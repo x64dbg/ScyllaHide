@@ -44,9 +44,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ScyllaHideX64DBGPlugin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>

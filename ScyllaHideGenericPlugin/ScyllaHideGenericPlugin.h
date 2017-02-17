@@ -7,7 +7,7 @@
 #define DLL_EXPORT extern "C" __declspec(dllexport)
 #else
 #define DLL_EXPORT extern "C" __declspec(dllimport)
-#endif //SCYLLAHIDEGENERICPLUGIN_EXPORTS
+#endif
 
 typedef void(__cdecl * LOGWRAPPER)(const WCHAR * format, ...);
 

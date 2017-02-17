@@ -56,9 +56,6 @@
     <ClInclude Include="..\InjectorCLI\ApplyHooking.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ScyllaHideOlly2Plugin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
