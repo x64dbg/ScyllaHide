@@ -290,12 +290,11 @@ extern "C" int DLL_EXPORT _ODBG_Pluginmenu(int origin, char data[4096], void *it
     {
     case PM_MAIN:
     {
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> wstr2str;
         std::stringstream ssMenu;
         ssMenu << "0 & Options, 4 & Load Profile{";
         for (size_t i = 0; i < g_settings.profile_names().size(); i++)
         {
-            ssMenu << (i + MENU_PROFILES_OFFSET) << ' ' << wstr2str.to_bytes(g_settings.profile_names()[i].c_str()) << ",";
+            ssMenu << (i + MENU_PROFILES_OFFSET) << ' ' << scl::wstr_conv().to_bytes(g_settings.profile_names()[i].c_str()) << ",";
         }
         ssMenu << "},|2 &Inject DLL|5 &Attach process, 6 &Detach process|1 &About";
         strncpy(data, ssMenu.str().c_str(), min(4096, ssMenu.str().size()));

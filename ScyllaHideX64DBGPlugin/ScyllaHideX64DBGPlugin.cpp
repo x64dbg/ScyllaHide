@@ -243,10 +243,9 @@ extern "C" DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct)
     int hProfile = _plugin_menuadd(hMenu, "&Load Profile");
 
     //add profiles to menu
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> wstr2str;
     for (size_t i = 0; i < g_settings.profile_names().size(); i++)
     {
-        auto mbstrName = wstr2str.to_bytes(g_settings.profile_names()[i].c_str());
+        auto mbstrName = scl::wstr_conv().to_bytes(g_settings.profile_names()[i].c_str());
         _plugin_menuaddentry(hProfile, (int)i + MENU_MAX, mbstrName.c_str());
     }
 
