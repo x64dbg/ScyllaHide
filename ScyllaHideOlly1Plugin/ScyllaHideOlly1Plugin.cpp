@@ -59,30 +59,28 @@ DEBUG_EVENT *currentDebugEvent;
 
 static void LogErrorWrapper(const WCHAR * format, ...)
 {
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
+    va_list ap;
 
-    wvsprintfW(text, format, va_alist);
+    va_start(ap, format);
+    auto strw = scl::vfmtw(format, ap);
+    va_end(ap);
 
-    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
+    auto stra = scl::wstr_conv().to_bytes(strw);
 
-    _Error("%s", textA);
+    _Error("%s", stra.c_str());
 }
 
 static void LogWrapper(const WCHAR * format, ...)
 {
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
+    va_list ap;
 
-    wvsprintfW(text, format, va_alist);
+    va_start(ap, format);
+    auto strw = scl::vfmtw(format, ap);
+    va_end(ap);
 
-    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
+    auto stra = scl::wstr_conv().to_bytes(strw);
 
-    _Message(0, "%s", textA);
+    _Message(0, "%s", stra.c_str());
 }
 
 static void AttachProcess(DWORD dwPID)

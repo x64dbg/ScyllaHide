@@ -57,32 +57,15 @@ bool isAttach = false;
 
 static void LogWrapper(const WCHAR * format, ...)
 {
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
+    va_list ap;
 
-    wvsprintfW(text, format, va_alist);
+    va_start(ap, format);
+    auto strw = scl::vfmtw(format, ap);
+    va_end(ap);
 
-    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
+    auto stra = scl::wstr_conv().to_bytes(strw);
 
-    msg("%s", textA);
-    msg("\n");
-}
-
-static void LogErrorWrapper(const WCHAR * format, ...)
-{
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
-
-    wvsprintfW(text, format, va_alist);
-
-    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
-
-    msg(textA);
-    msg("\n");
+    msg("%s\n", stra.c_str());
 }
 
 static void AttachProcess(DWORD dwPID)
@@ -366,7 +349,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD dwReason, LPVOID lpReserved)
     {
         _AttachProcess = AttachProcess;
         LogWrap = LogWrapper;
-        LogErrorWrap = LogErrorWrapper;
+        LogErrorWrap = LogWrapper;
 
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
 

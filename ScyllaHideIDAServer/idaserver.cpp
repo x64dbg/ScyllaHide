@@ -34,14 +34,13 @@ bool bHooked = false;
 
 static void LogWrapper(const WCHAR * format, ...)
 {
-    WCHAR text[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
+    va_list ap;
 
-    wvsprintfW(text, format, va_alist);
+    va_start(ap, format);
+    vwprintf(format, ap);
+    va_end(ap);
 
-    wprintf(L"%s", text);
-    wprintf(L"\n");
+    _putws(L"\n");
 }
 
 static void checkPaths()

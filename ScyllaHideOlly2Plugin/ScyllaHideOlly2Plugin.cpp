@@ -48,24 +48,24 @@ static t_menu profilemenu[MAX_PROFILES];
 
 static void LogErrorWrapper(const WCHAR * format, ...)
 {
-    WCHAR text[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
+    va_list ap;
 
-    wvsprintfW(text, format, va_alist);
+    va_start(ap, format);
+    auto strw = scl::vfmtw(format, ap);
+    va_end(ap);
 
-    Error(L"%s", text);
+    Error(L"%s", strw.c_str());
 }
 
 static void LogWrapper(const WCHAR * format, ...)
 {
-    WCHAR text[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
+    va_list ap;
 
-    wvsprintfW(text, format, va_alist);
+    va_start(ap, format);
+    auto strw = scl::vfmtw(format, ap);
+    va_end(ap);
 
-    Message(0, L"%s", text);
+    Message(0, L"%s", strw.c_str());
 }
 
 static void AttachProcess(DWORD dwPID)

@@ -43,32 +43,15 @@ std::wstring g_scyllaHideIniPath;
 static HMODULE hNtdllModule = 0;
 static std::unordered_map<DWORD, HookStatus> hookStatusMap;
 
-static void LogErrorWrapper(const WCHAR * format, ...)
-{
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
-
-    wvsprintfW(text, format, va_alist);
-
-    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
-
-    printf("%s\n", textA);
-}
-
 static void LogWrapper(const WCHAR * format, ...)
 {
-    WCHAR text[2000];
-    CHAR textA[2000];
-    va_list va_alist;
-    va_start(va_alist, format);
+    va_list ap;
 
-    wvsprintfW(text, format, va_alist);
+    va_start(ap, format);
+    vwprintf(format, ap);
+    va_end(ap);
 
-    WideCharToMultiByte(CP_ACP, 0, text, -1, textA, _countof(textA), 0, 0);
-
-    printf("%s\n", textA);
+    _putws(L"\n");
 }
 
 DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
@@ -167,8 +150,9 @@ DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory, LOGWRAPPER Logger, LOGWRA
         LogWrap = LogWrapper;
     else
         LogWrap = Logger;
+
     if (!ErrorLogger)
-        LogErrorWrap = LogErrorWrapper;
+        LogErrorWrap = LogWrapper;
     else
         LogErrorWrap = ErrorLogger;
 

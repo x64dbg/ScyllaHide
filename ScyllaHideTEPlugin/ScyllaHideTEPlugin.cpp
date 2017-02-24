@@ -33,13 +33,6 @@ DWORD ProcessId;
 
 static void LogWrapper(const WCHAR * format, ...)
 {
-    //WCHAR text[2000];
-    //va_list va_alist;
-    //va_start(va_alist, format);
-
-    //wvsprintfW(text, format, va_alist);
-
-    //Message(0, text);
 }
 
 static bool SetDebugPrivileges()
