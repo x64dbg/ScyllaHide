@@ -59,12 +59,12 @@ DEBUG_EVENT *currentDebugEvent;
 
 static void LogCallback(const char *msg)
 {
-    _Message(0, "%s", msg);
+    _Message(0, "[%s] %s", SCYLLA_HIDE_NAME_A, msg);
 }
 
 static void LogErrorCallback(const char *msg)
 {
-    _Error("%s", msg);
+    _Error("[%s] %s", SCYLLA_HIDE_NAME_A, msg);
 }
 
 static void AttachProcess(DWORD dwPID)

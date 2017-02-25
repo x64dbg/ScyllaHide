@@ -47,12 +47,12 @@ static t_menu profilemenu[MAX_PROFILES];
 
 static void LogCallback(const wchar_t *msg)
 {
-    Message(0, L"%s", msg);
+    Message(0, L"[%s] %s", SCYLLA_HIDE_NAME_W, msg);
 }
 
 static void LogErrorCallback(const wchar_t *msg)
 {
-    Error(L"%s", msg);
+    Error(L"[%s] %s", SCYLLA_HIDE_NAME_W, msg);
 }
 
 static void AttachProcess(DWORD dwPID)

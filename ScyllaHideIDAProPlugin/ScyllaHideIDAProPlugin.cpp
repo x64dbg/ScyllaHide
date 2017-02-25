@@ -56,7 +56,7 @@ bool isAttach = false;
 
 static void LogCallback(const char *message)
 {
-    msg("%s\n", message);
+    msg("[%s] %s\n", SCYLLA_HIDE_NAME_A, message);
 }
 
 static void AttachProcess(DWORD dwPID)
@@ -177,11 +177,11 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                         ServerStartupInfo.cb = sizeof(ServerStartupInfo);
                         if (!CreateProcessW(0, commandline, NULL, NULL, FALSE, 0, NULL, NULL, &ServerStartupInfo, &ServerProcessInfo))
                         {
-                            msg("[ScyllaHide] Cannot start server, error %d\n", GetLastError());
+                            g_log.LogError(L"Cannot start server, error %d\n", GetLastError());
                         }
                         else
                         {
-                            msg("[ScyllaHide] Started IDA Server successfully\n");
+                            g_log.LogInfo(L"Started IDA Server successfully\n");
                         }
                     }
                 }
@@ -190,12 +190,12 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                 {
                     if (!SendEventToServer(notif_code, ProcessId))
                     {
-                        msg("[ScyllaHide] SendEventToServer failed\n");
+                        g_log.LogError(L"SendEventToServer failed\n");
                     }
                 }
                 else
                 {
-                    msg("[ScyllaHide] Cannot connect to host %s\n", host);
+                    g_log.LogError(L"Cannot connect to host %s\n", host);
                 }
             }
             else
@@ -208,7 +208,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                     startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
                 }
 #else
-                msg("[ScyllaHide] Error IDA_64BIT please contact ScyllaHide developers!\n");
+                g_log.LogError("Error IDA_64BIT please contact ScyllaHide developers!\n");
 #endif
             }
         }
@@ -221,7 +221,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
         {
             if (!SendEventToServer(notif_code, ProcessId))
             {
-                msg("[ScyllaHide] SendEventToServer failed\n");
+                g_log.LogError(L"SendEventToServer failed\n");
             }
 
             CloseServerSocket();
@@ -238,7 +238,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
         {
             if (!SendEventToServer(notif_code, ProcessId))
             {
-                msg("[ScyllaHide] SendEventToServer failed\n");
+                g_log.LogError(L"SendEventToServer failed\n");
             }
         }
         else if (!isAttach)
@@ -294,7 +294,7 @@ static int idaapi IDAP_init(void)
     //install hook for debug mainloop
     if (!hook_to_notification_point(HT_DBG, debug_mainloop, NULL))
     {
-        msg("[ScyllaHide] Error hooking notification point\n");
+        g_log.LogError(L"Error hooking notification point");
         return PLUGIN_SKIP;
     }
 

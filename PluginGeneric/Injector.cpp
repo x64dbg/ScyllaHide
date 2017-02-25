@@ -43,9 +43,9 @@ void ReadNtApiInformation(const wchar_t *file, HOOK_DLL_EXCHANGE *hde)
     hde->NtUserBuildHwndListRVA = (DWORD)api_loader.get_fun(L"user32.dll", L"NtUserBuildHwndList");
     hde->NtUserFindWindowExRVA = (DWORD)api_loader.get_fun(L"user32.dll", L"NtUserFindWindowEx");
 
-    g_log.LogInfo(L"[%s] Loaded RVA for user32.dll!NtUserQueryWindow = 0x%p", SCYLLA_HIDE_NAME_W, hde->NtUserQueryWindowRVA);
-    g_log.LogInfo(L"[%s] Loaded RVA for user32.dll!NtUserBuildHwndList = 0x%p", SCYLLA_HIDE_NAME_W, hde->NtUserBuildHwndListRVA);
-    g_log.LogInfo(L"[%s] Loaded RVA for user32.dll!NtUserFindWindowEx = 0x%p", SCYLLA_HIDE_NAME_W, hde->NtUserFindWindowExRVA);
+    g_log.LogInfo(L"Loaded RVA for user32.dll!NtUserQueryWindow = 0x%p", hde->NtUserQueryWindowRVA);
+    g_log.LogInfo(L"Loaded RVA for user32.dll!NtUserBuildHwndList = 0x%p", hde->NtUserBuildHwndListRVA);
+    g_log.LogInfo(L"Loaded RVA for user32.dll!NtUserFindWindowEx = 0x%p", hde->NtUserFindWindowExRVA);
 
     if (!hde->NtUserQueryWindowRVA || !hde->NtUserBuildHwndListRVA || !hde->NtUserFindWindowExRVA)
     {
@@ -154,7 +154,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 
     if (newProcess == false)
     {
-        //g_log.Log(L"[ScyllaHide] Apply hooks again");
+        //g_log.Log(L"Apply hooks again");
         if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
         {
             WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
@@ -179,16 +179,16 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 
             if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
             {
-                g_log.LogInfo(L"[ScyllaHide] Hook Injection successful, Imagebase %p", remoteImageBase);
+                g_log.LogInfo(L"Hook Injection successful, Imagebase %p", remoteImageBase);
             }
             else
             {
-                g_log.LogInfo(L"[ScyllaHide] Failed to write exchange struct");
+                g_log.LogInfo(L"Failed to write exchange struct");
             }
         }
         else
         {
-            g_log.LogInfo(L"[ScyllaHide] Failed to map image!");
+            g_log.LogInfo(L"Failed to map image!");
         }
     }
 }
@@ -206,13 +206,13 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
         }
         else
         {
-            g_log.LogError(L"[ScyllaHide] Cannot find %s", dllPath);
+            g_log.LogError(L"Cannot find %s", dllPath);
         }
         CloseHandle(hProcess);
     }
     else
     {
-        g_log.LogError(L"[ScyllaHide] Cannot open process handle %d", targetPid);
+        g_log.LogError(L"Cannot open process handle %d", targetPid);
     }
 }
 
@@ -234,7 +234,7 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
 
     if (!remoteMemory)
     {
-        g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: VirtualAllocEx failed!");
+        g_log.LogInfo(L"DLL INJECTION: VirtualAllocEx failed!");
         return 0;
     }
 
@@ -249,19 +249,19 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
 
             if (!hModule)
             {
-                g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Failed load library!");
+                g_log.LogInfo(L"DLL INJECTION: Failed load library!");
             }
 
             CloseHandle(hThread);
         }
         else
         {
-            g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Failed to start thread %d!", GetLastError());
+            g_log.LogInfo(L"DLL INJECTION: Failed to start thread %d!", GetLastError());
         }
     }
     else
     {
-        g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Failed WriteProcessMemory!");
+        g_log.LogInfo(L"DLL INJECTION: Failed WriteProcessMemory!");
     }
 
     VirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
@@ -294,7 +294,7 @@ LPVOID StealthDllInjection(HANDLE hProcess, const WCHAR * dllPath, BYTE * dllMem
             {
                 DWORD_PTR dllMain = entryPoint + (DWORD_PTR)remoteImageBaseOfInjectedDll;
 
-                g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Starting thread at RVA %p VA %p!", entryPoint, dllMain);
+                g_log.LogInfo(L"DLL INJECTION: Starting thread at RVA %p VA %p!", entryPoint, dllMain);
 
                 HANDLE hThread = CreateRemoteThread(hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)dllMain, remoteImageBaseOfInjectedDll, CREATE_SUSPENDED, 0);
                 if (hThread)
@@ -305,13 +305,13 @@ LPVOID StealthDllInjection(HANDLE hProcess, const WCHAR * dllPath, BYTE * dllMem
                 }
                 else
                 {
-                    g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Failed to start thread %d!", GetLastError());
+                    g_log.LogInfo(L"DLL INJECTION: Failed to start thread %d!", GetLastError());
                 }
             }
         }
         else
         {
-            g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Failed to map image of %s!", dllPath);
+            g_log.LogInfo(L"DLL INJECTION: Failed to map image of %s!", dllPath);
         }
         free(dllMemory);
     }
@@ -330,30 +330,30 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
 
         DWORD entryPoint = (DWORD)GetAddressOfEntryPoint(dllMemory);
 
-        if (entryPoint) g_log.LogInfo(L"[ScyllaHide] DLL entry point (DllMain) RVA %X!", entryPoint);
+        if (entryPoint) g_log.LogInfo(L"DLL entry point (DllMain) RVA %X!", entryPoint);
 
         if (g_settings.opts().dllStealth)
         {
-            g_log.LogInfo(L"[ScyllaHide] Starting Stealth DLL Injection!");
+            g_log.LogInfo(L"Starting Stealth DLL Injection!");
             remoteImage = StealthDllInjection(hProcess, dllPath, dllMemory);
         }
         else if (g_settings.opts().dllNormal)
         {
-            g_log.LogInfo(L"[ScyllaHide] Starting Normal DLL Injection!");
+            g_log.LogInfo(L"Starting Normal DLL Injection!");
             remoteImage = NormalDllInjection(hProcess, dllPath);
         }
         else
         {
-            g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: No injection type selected!");
+            g_log.LogInfo(L"DLL INJECTION: No injection type selected!");
         }
 
         if (remoteImage)
         {
-            g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Injection of %s successful, Imagebase %p", dllPath, remoteImage);
+            g_log.LogInfo(L"DLL INJECTION: Injection of %s successful, Imagebase %p", dllPath, remoteImage);
 
             if (g_settings.opts().dllUnload)
             {
-                g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p", remoteImage);
+                g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p", remoteImage);
 
                 if (g_settings.opts().dllNormal)
                 {
@@ -362,17 +362,17 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
                     {
                         DoThreadMagic(hThread);
                         CloseHandle(hThread);
-                        g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
+                        g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
                     }
                     else
                     {
-                        g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p FAILED", remoteImage);
+                        g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p FAILED", remoteImage);
                     }
                 }
                 else if (g_settings.opts().dllStealth)
                 {
                     VirtualFreeEx(hProcess, remoteImage, 0, MEM_RELEASE);
-                    g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
+                    g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
                 }
             }
         }
@@ -382,8 +382,8 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
     }
     else
     {
-        if (!hProcess) g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Cannot open process handle %d", targetPid);
-        if (!dllMemory) g_log.LogInfo(L"[ScyllaHide] DLL INJECTION: Failed to read file %s!", dllPath);
+        if (!hProcess) g_log.LogInfo(L"DLL INJECTION: Cannot open process handle %d", targetPid);
+        if (!dllMemory) g_log.LogInfo(L"DLL INJECTION: Failed to read file %s!", dllPath);
     }
 }
 

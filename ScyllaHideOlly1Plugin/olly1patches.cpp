@@ -2,11 +2,14 @@
 #include <Windows.h>
 #include <TlHelp32.h>
 #include <string>
+#include <Scylla/Logger.h>
 #include <Scylla/Settings.h>
 
 #include "resource.h"
 
+
 extern scl::Settings g_settings;
+extern scl::Logger g_log;
 
 extern HINSTANCE hinst;
 extern LPVOID ImageBase;
@@ -273,13 +276,13 @@ void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage)
     {
         if (pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress)
         {
-            //_Message(0, "[ScyllaHide] TLS directory %X found", pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
+            //g_log.LogDebug("TLS directory %X found", pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
 
             ReadProcessMemory(hProcess, (PVOID)((DWORD_PTR)baseofImage + pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress), &tlsDir, sizeof(IMAGE_TLS_DIRECTORY), 0);
 
             if (tlsDir.AddressOfCallBacks)
             {
-                //_Message(0, "[ScyllaHide] TLS AddressOfCallBacks %X found", tlsDir.AddressOfCallBacks);
+                //g_log.LogDebug("TLS AddressOfCallBacks %X found", tlsDir.AddressOfCallBacks);
 
                 ReadProcessMemory(hProcess, (PVOID)tlsDir.AddressOfCallBacks, callbacks, sizeof(callbacks), 0);
 
@@ -287,7 +290,7 @@ void ReadTlsAndSetBreakpoints(DWORD dwProcessId, LPVOID baseofImage)
                 {
                     if (callbacks[i])
                     {
-                        _Message(0, "[ScyllaHide] TLS callback found: Index %d Address %X", i, callbacks[i]);
+                        g_log.LogInfo(L"TLS callback found: Index %d Address %X", i, callbacks[i]);
                         _Tempbreakpoint((DWORD)callbacks[i], TY_ONESHOT);
 
 						sprintf(label, "TLS_CALLBACK_%d", i+1);

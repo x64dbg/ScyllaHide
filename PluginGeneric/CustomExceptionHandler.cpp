@@ -31,19 +31,19 @@ void handleOutputDebugString( LPDEBUG_EVENT lpDebugEvent )
 				ZeroMemory(OutputDebugStringBuffer, sizeof(OutputDebugStringBuffer));
 				if (ReadProcessMemory(hProcess, lpDebugEvent->u.DebugString.lpDebugStringData, OutputDebugStringBuffer, lpDebugEvent->u.DebugString.nDebugStringLength, NULL))
 				{
-					g_log.LogInfo(L"[ScyllaHide] Debug String: %S", OutputDebugStringBuffer);
+					g_log.LogInfo(L"Debug String: %S", OutputDebugStringBuffer);
 				}
 			}
 			else
 			{
-                g_log.LogInfo(L"[ScyllaHide] Debug String is too long: %d", lpDebugEvent->u.DebugString.nDebugStringLength);
+                g_log.LogInfo(L"Debug String is too long: %d", lpDebugEvent->u.DebugString.nDebugStringLength);
 			}
 			CloseHandle(hProcess);
 		}
 	}
 	else
 	{
-        g_log.LogInfo(L"[ScyllaHide] Detected possible Anti-Debug method - OUTPUT_DEBUG_STRING");
+        g_log.LogInfo(L"Detected possible Anti-Debug method - OUTPUT_DEBUG_STRING");
 	}
 }
 
@@ -51,25 +51,25 @@ void handleRipEvent( LPDEBUG_EVENT lpDebugEvent )
 {
 	if (lpDebugEvent->u.RipInfo.dwError == 0)
 	{
-        g_log.LogInfo(L"[ScyllaHide] Detected possible Anti-Debug method - RIP Exception");
+        g_log.LogInfo(L"Detected possible Anti-Debug method - RIP Exception");
 		return;
 	}
 
 	if (lpDebugEvent->u.RipInfo.dwType == 0)
 	{
-        g_log.LogInfo(L"[ScyllaHide] RIP Exception: Error 0x%X Type NONE", lpDebugEvent->u.RipInfo.dwError);
+        g_log.LogInfo(L"RIP Exception: Error 0x%X Type NONE", lpDebugEvent->u.RipInfo.dwError);
 	}
 	else if (lpDebugEvent->u.RipInfo.dwType == SLE_ERROR)
 	{
-        g_log.LogInfo(L"[ScyllaHide] RIP Exception: Error 0x%X Type SLE_ERROR", lpDebugEvent->u.RipInfo.dwError);
+        g_log.LogInfo(L"RIP Exception: Error 0x%X Type SLE_ERROR", lpDebugEvent->u.RipInfo.dwError);
 	}
 	else if (lpDebugEvent->u.RipInfo.dwType == SLE_MINORERROR)
 	{
-        g_log.LogInfo(L"[ScyllaHide] RIP Exception: Error 0x%X Type SLE_MINORERROR", lpDebugEvent->u.RipInfo.dwError);
+        g_log.LogInfo(L"RIP Exception: Error 0x%X Type SLE_MINORERROR", lpDebugEvent->u.RipInfo.dwError);
 	}
 	else if (lpDebugEvent->u.RipInfo.dwType == SLE_WARNING)
 	{
-        g_log.LogInfo(L"[ScyllaHide] RIP Exception: Error 0x%X Type SLE_WARNING", lpDebugEvent->u.RipInfo.dwError);
+        g_log.LogInfo(L"RIP Exception: Error 0x%X Type SLE_WARNING", lpDebugEvent->u.RipInfo.dwError);
 	}
 
 }
@@ -119,22 +119,22 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 	{
         if (g_settings.opts().handleExceptionIllegalInstruction != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ILLEGAL_INSTRUCTION)
 		{
-            g_log.LogInfo(L"[ScyllaHide] Illegal Instruction %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+            g_log.LogInfo(L"Illegal Instruction %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
         else if (g_settings.opts().handleExceptionInvalidLockSequence != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_INVALID_LOCK_SEQUENCE)
 		{
-            g_log.LogInfo(L"[ScyllaHide] Invalid Lock Sequence %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+            g_log.LogInfo(L"Invalid Lock Sequence %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
         else if (g_settings.opts().handleExceptionNoncontinuableException != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
 		{
-            g_log.LogInfo(L"[ScyllaHide] Non-continuable Exception %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+            g_log.LogInfo(L"Non-continuable Exception %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
         else if (g_settings.opts().handleExceptionAssertionFailure != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ASSERTION_FAILURE)
 		{
-            g_log.LogInfo(L"[ScyllaHide] Assertion Failure %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+            g_log.LogInfo(L"Assertion Failure %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
         else if (g_settings.opts().handleExceptionBreakpoint != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT)
@@ -144,7 +144,7 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 				//system breakpoint?
 				if (IsNotInsideKernelOrNtdll(lpDebugEvent->dwProcessId, (DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress))
 				{
-                    g_log.LogInfo(L"[ScyllaHide] Breakpoint %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+                    g_log.LogInfo(L"Breakpoint %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 					return true;
 				}
 			}
@@ -156,14 +156,14 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 				//system breakpoint?
 				if (IsNotInsideKernelOrNtdll(lpDebugEvent->dwProcessId, (DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress))
 				{
-                    g_log.LogInfo(L"[ScyllaHide] Wx86 Breakpoint %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+                    g_log.LogInfo(L"Wx86 Breakpoint %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 					return true;
 				}
 			}
 		}
         else if (g_settings.opts().handleExceptionGuardPageViolation != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_GUARD_PAGE_VIOLATION)
 		{
-            g_log.LogInfo(L"[ScyllaHide] Guard Page Violation %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
+            g_log.LogInfo(L"Guard Page Violation %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
 	}

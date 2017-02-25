@@ -304,18 +304,18 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
     // We're "borrowing" another api's code as a template, the ret must match
     if (bSpecialSyscallStructure)
     {
-        //LogDebug("[ScyllaHide 0x33] NtQueryInformationProcess Windows 10 detected");
+        //g_log.LogDebug(L"NtQueryInformationProcess Windows 10 detected");
 
         BYTE syscallAddressBytes[5];	// save syscall id eg. Mov eax, 0x19
 
         memcpy(syscallAddressBytes, originalBytes, sizeof(syscallAddressBytes));			// Copy the syscall id bytes
 
-        //LogDebug(L"syscallAddressBytes: %x", syscallAddressBytes);
+        //g_log.LogDebug(L"syscallAddressBytes: %x", syscallAddressBytes);
 
         // This is a "normal" function and both have a ret 14
         DWORD ntQueryKey = (DWORD)GetProcAddress(GetModuleHandleA("ntdll"), "NtQueryKey");
 
-        //LogDebug(L"NtQueryKey address: %x", ntQueryKey);
+        //g_log.LogDebug(L"NtQueryKey address: %x", ntQueryKey);
 
         ReadProcessMemory(hProcess, (LPCVOID)ntQueryKey, &originalBytes, sizeof(originalBytes), 0);
         ReadProcessMemory(hProcess, (LPCVOID)ntQueryKey, &changedBytes, sizeof(originalBytes), 0);
@@ -352,7 +352,7 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
     // The code below adjusts the sysWowSpecialJmpAddress for windows 10
     if ((*(BYTE*)sysWowSpecialJmpAddress != 0xEA) && (*(BYTE*)sysWowSpecialJmpAddress != 0xFF))
     {
-        //LogDebug("[ScyllaHide 0x33] Adjusting address for Windows 10 gateway ");
+        //g_log.LogDebug(L"Adjusting address for Windows 10 gateway ");
 
         // Windows 10 specific
         BYTE sysWowGatewayOriginalBytes[100] = { 0 };

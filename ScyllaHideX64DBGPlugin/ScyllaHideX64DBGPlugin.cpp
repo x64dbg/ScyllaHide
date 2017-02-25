@@ -64,7 +64,7 @@ ICONDATA mainIconData = { 0 };
 
 static void LogCallback(const char *msg)
 {
-    _plugin_logputs(msg);
+    _plugin_logprintf("[%s] %s", SCYLLA_HIDE_NAME_A, msg);
 }
 
 static void AttachProcess(DWORD dwPID)
