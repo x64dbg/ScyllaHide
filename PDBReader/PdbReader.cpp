@@ -13,7 +13,7 @@ int wmain(int argc, wchar_t* argv[])
     scl::NtApiLoader api_loader;
 
     auto ini_file = scl::GetModuleFileNameW();
-    ini_file.resize(ini_file.find_last_of(L"\\"));
+    ini_file.resize(ini_file.find_last_of(L"\\") + 1);
     ini_file += scl::NtApiLoader::kFileName;
 
     wprintf(L"OS ID: %s\n", api_loader.GetOsId().c_str());
