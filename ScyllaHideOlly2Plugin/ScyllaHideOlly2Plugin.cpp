@@ -3,6 +3,7 @@
 #pragma pack(push)
 #include <ollydbg2/plugin.h>
 #pragma pack(pop)
+#include <Scylla/Logger.h>
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
@@ -22,18 +23,16 @@
 
 #define MAX_PROFILES 128
 
-typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef int(__cdecl * t_Attachtoactiveprocess)(int newprocessid);
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
-extern t_LogWrapper LogWrap;
-extern t_LogWrapper LogErrorWrap;
 extern t_AttachProcess _AttachProcess;
 
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 
 scl::Settings g_settings;
+scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
@@ -46,26 +45,14 @@ bool bHooked = false;
 
 static t_menu profilemenu[MAX_PROFILES];
 
-static void LogErrorWrapper(const WCHAR * format, ...)
+static void LogCallback(const wchar_t *msg)
 {
-    va_list ap;
-
-    va_start(ap, format);
-    auto strw = scl::vfmtw(format, ap);
-    va_end(ap);
-
-    Error(L"%s", strw.c_str());
+    Message(0, L"%s", msg);
 }
 
-static void LogWrapper(const WCHAR * format, ...)
+static void LogErrorCallback(const wchar_t *msg)
 {
-    va_list ap;
-
-    va_start(ap, format);
-    auto strw = scl::vfmtw(format, ap);
-    va_end(ap);
-
-    Message(0, L"%s", strw.c_str());
+    Error(L"%s", msg);
 }
 
 static void AttachProcess(DWORD dwPID)
@@ -414,10 +401,8 @@ BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
+        hinst = hi;
         _AttachProcess = AttachProcess;
-        LogWrap = LogWrapper;
-        LogErrorWrap = LogErrorWrapper;
-
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
 
         auto wstrPath = scl::GetModuleFileNameW(hi);
@@ -427,7 +412,10 @@ BOOL WINAPI DllMain(HINSTANCE hi, DWORD reason, LPVOID reserved)
         g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
         g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
-        hinst = hi;
+        auto log_file = wstrPath + scl::Logger::kFileName;
+        g_log.SetLogFile(log_file.c_str());
+        g_log.SetLogCb(scl::Logger::Info, LogCallback);
+        g_log.SetLogCb(scl::Logger::Error, LogErrorCallback);
     }
     return TRUE;
 };

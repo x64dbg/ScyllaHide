@@ -3,6 +3,7 @@
 #include <TlHelp32.h>
 #include <cstdio>
 #include <cstring>
+#include <Scylla/Logger.h>
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
@@ -17,6 +18,7 @@
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
 
 scl::Settings g_settings;
+scl::Logger g_log;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
 
@@ -31,6 +33,11 @@ bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase);
 
 #define PREFIX_PATH L"C:\\Users\\Admin\\Documents\\Visual Studio 2010\\Projects\\ScyllaHide"
 
+static void LogCallback(const wchar_t *msg)
+{
+    _putws(msg);
+}
+
 int wmain(int argc, wchar_t* argv[])
 {
     DWORD targetPid = 0;
@@ -41,6 +48,11 @@ int wmain(int argc, wchar_t* argv[])
 
     g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
     g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
+
+    auto log_file = wstrPath + scl::Logger::kFileName;
+    g_log.SetLogFile(log_file.c_str());
+    g_log.SetLogCb(scl::Logger::Info, LogCallback);
+    g_log.SetLogCb(scl::Logger::Error, LogCallback);
 
     ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
     SetDebugPrivileges();

@@ -1,6 +1,7 @@
 #include <codecvt>
 #include <locale>
 #include <sstream>
+#include <Scylla/Logger.h>
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
@@ -15,6 +16,7 @@
 #include "resource.h"
 #include "olly1patches.h"
 
+
 #pragma comment(lib, "ollydbg1\\ollydbg.lib")
 
 #ifndef DLL_EXPORT
@@ -24,13 +26,10 @@
 #define MENU_PROFILES_OFFSET 10
 
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
-typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void(__cdecl * t_SetDebuggerBreakpoint)(DWORD_PTR address);
 typedef bool(__cdecl * t_IsAddressBreakpoint)(DWORD_PTR address);
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
-extern t_LogWrapper LogWrap;
-extern t_LogWrapper LogErrorWrap;
 extern t_AttachProcess _AttachProcess;
 extern t_SetDebuggerBreakpoint _SetDebuggerBreakpoint;
 extern t_IsAddressBreakpoint _IsAddressBreakpoint;
@@ -38,6 +37,7 @@ extern t_IsAddressBreakpoint _IsAddressBreakpoint;
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 
 scl::Settings g_settings;
+scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
@@ -57,30 +57,14 @@ LPVOID ImageBase = 0;
 bool executeOnce = false;
 DEBUG_EVENT *currentDebugEvent;
 
-static void LogErrorWrapper(const WCHAR * format, ...)
+static void LogCallback(const char *msg)
 {
-    va_list ap;
-
-    va_start(ap, format);
-    auto strw = scl::vfmtw(format, ap);
-    va_end(ap);
-
-    auto stra = scl::wstr_conv().to_bytes(strw);
-
-    _Error("%s", stra.c_str());
+    _Message(0, "%s", msg);
 }
 
-static void LogWrapper(const WCHAR * format, ...)
+static void LogErrorCallback(const char *msg)
 {
-    va_list ap;
-
-    va_start(ap, format);
-    auto strw = scl::vfmtw(format, ap);
-    va_end(ap);
-
-    auto stra = scl::wstr_conv().to_bytes(strw);
-
-    _Message(0, "%s", stra.c_str());
+    _Error("%s", msg);
 }
 
 static void AttachProcess(DWORD dwPID)
@@ -538,12 +522,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD dwReason, LPVOID lpReserved)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
+        hinst = hInstDll;
         _AttachProcess = AttachProcess;
-        LogWrap = LogWrapper;
-        LogErrorWrap = LogErrorWrapper;
         _IsAddressBreakpoint = IsAddressBreakpoint;
-        hNtdllModule = GetModuleHandleW(L"ntdll.dll");
-
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
 
         auto wstrPath = scl::GetModuleFileNameW(hInstDll);
@@ -553,7 +534,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD dwReason, LPVOID lpReserved)
         g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
         g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
-        hinst = hInstDll;
+        auto log_file = wstrPath + scl::Logger::kFileName;
+        g_log.SetLogFile(log_file.c_str());
+        g_log.SetLogCb(scl::Logger::Info, LogCallback);
+        g_log.SetLogCb(scl::Logger::Error, LogErrorCallback);
     }
 
     return TRUE;

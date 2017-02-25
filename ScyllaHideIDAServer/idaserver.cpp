@@ -1,4 +1,5 @@
 #include <WinSock2.h>
+#include <Scylla/Logger.h>
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
@@ -9,11 +10,7 @@
 #include "IdaServerExchange.h"
 #include "..\PluginGeneric\Injector.h"
 
-typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
-
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
-extern t_LogWrapper LogWrap;
-extern t_LogWrapper LogErrorWrap;
 
 #ifdef _WIN64
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -22,6 +19,7 @@ const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
 scl::Settings g_settings;
+scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 
@@ -32,22 +30,13 @@ IDA_SERVER_EXCHANGE idaExchange = { 0 };
 DWORD ProcessId = 0;
 bool bHooked = false;
 
-static void LogWrapper(const WCHAR * format, ...)
+static void LogCallback(const wchar_t * msg)
 {
-    va_list ap;
-
-    va_start(ap, format);
-    vwprintf(format, ap);
-    va_end(ap);
-
-    _putws(L"\n");
+    _putws(msg);
 }
 
-static void checkPaths()
+static void checkPaths(const std::wstring & wstrPath)
 {
-    auto wstrPath = scl::GetModuleFileNameW();
-    wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
-
     g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
     g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
 
@@ -351,14 +340,19 @@ static bool SetDebugPrivileges()
 
 int main(int argc, char *argv[])
 {
-    LogWrap = LogWrapper;
-    LogErrorWrap = LogWrapper;
+    auto wstrPath = scl::GetModuleFileNameW();
+    wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
+
+    auto log_file = wstrPath + L"scylla_hide_idaserver.log";
+    g_log.SetLogFile(log_file.c_str());
+    g_log.SetLogCb(scl::Logger::Info, LogCallback);
+    g_log.SetLogCb(scl::Logger::Error, LogCallback);
 
     SetDebugPrivileges();
 
     printf("%s IDA Server v%s\n", SCYLLA_HIDE_NAME_A, SCYLLA_HIDE_VERSION_STRING_A);
 
-    checkPaths();
+    checkPaths(wstrPath);
 
     if (argc > 1)
     {

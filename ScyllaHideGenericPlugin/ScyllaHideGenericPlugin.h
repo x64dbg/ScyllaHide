@@ -9,7 +9,7 @@
 #define DLL_EXPORT extern "C" __declspec(dllimport)
 #endif
 
-typedef void(__cdecl * LOGWRAPPER)(const WCHAR * format, ...);
+typedef void(__cdecl * LOGWRAPPER)(const wchar_t *msg);
 
 DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory = NULL, LOGWRAPPER Logger = NULL, LOGWRAPPER ErrorLogger = NULL);
 DLL_EXPORT void ScyllaHideReset();

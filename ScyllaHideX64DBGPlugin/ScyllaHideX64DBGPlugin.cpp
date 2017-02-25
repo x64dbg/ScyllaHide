@@ -1,4 +1,5 @@
 #include <codecvt>
+#include <Scylla/Logger.h>
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
@@ -12,6 +13,7 @@
 
 #include "resource.h"
 
+
 #ifdef _WIN64
 #pragma comment(lib, "x64dbg\\x64dbg.lib")
 #pragma comment(lib, "x64dbg\\x64bridge.lib")
@@ -24,7 +26,6 @@
 #define DLL_EXPORT __declspec(dllexport)
 #endif
 
-typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
 enum ScyllaMenuItems : int {
@@ -43,13 +44,12 @@ const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
 scl::Settings g_settings;
+scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
-extern t_LogWrapper LogWrap;
-extern t_LogWrapper LogErrorWrap;
 extern t_AttachProcess _AttachProcess;
 
 HINSTANCE hinst;
@@ -62,17 +62,9 @@ DWORD ProcessId = 0;
 bool bHooked = false;
 ICONDATA mainIconData = { 0 };
 
-static void LogWrapper(const WCHAR * format, ...)
+static void LogCallback(const char *msg)
 {
-    va_list ap;
-
-    va_start(ap, format);
-    auto strw = scl::vfmtw(format, ap);
-    va_end(ap);
-
-    auto stra = scl::wstr_conv().to_bytes(strw);
-
-    _plugin_logputs(stra.c_str());
+    _plugin_logputs(msg);
 }
 
 static void AttachProcess(DWORD dwPID)
@@ -291,10 +283,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
+        hinst = hInstDLL;
         _AttachProcess = AttachProcess;
-        LogWrap = LogWrapper;
-        LogErrorWrap = LogWrapper;
-
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
 
         auto wstrPath = scl::GetModuleFileNameW(hInstDLL);
@@ -304,7 +294,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
         g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
         g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
-        hinst = hInstDLL;
+        auto log_file = wstrPath + scl::Logger::kFileName;
+        g_log.SetLogFile(log_file.c_str());
+        g_log.SetLogCb(scl::Logger::Info, LogCallback);
+        g_log.SetLogCb(scl::Logger::Error, LogCallback);
     }
 
     return TRUE;

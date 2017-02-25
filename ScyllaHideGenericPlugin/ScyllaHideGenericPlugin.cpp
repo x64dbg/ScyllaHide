@@ -1,6 +1,7 @@
 #include "ScyllaHideGenericPlugin.h"
 #include <string>
 #include <unordered_map>
+#include <Scylla/Logger.h>
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
@@ -21,12 +22,9 @@ struct HookStatus
     bool specialPebFix;
 };
 
-typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
-extern t_LogWrapper LogWrap;
-extern t_LogWrapper LogErrorWrap;
 
 #ifdef _WIN64
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -35,6 +33,7 @@ const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
 scl::Settings g_settings;
+scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
@@ -43,15 +42,9 @@ std::wstring g_scyllaHideIniPath;
 static HMODULE hNtdllModule = 0;
 static std::unordered_map<DWORD, HookStatus> hookStatusMap;
 
-static void LogWrapper(const WCHAR * format, ...)
+static void LogCallback(const wchar_t *msg)
 {
-    va_list ap;
-
-    va_start(ap, format);
-    vwprintf(format, ap);
-    va_end(ap);
-
-    _putws(L"\n");
+    _putws(msg);
 }
 
 DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
@@ -94,7 +87,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
             {
                 if (!ApplyAntiAntiAttach(status.ProcessId))
                 {
-                    LogWrap(L"Anti-Anti-Attach failed");
+                    g_log.LogError(L"Anti-Anti-Attach failed");
                 }
             }
         }
@@ -145,18 +138,6 @@ DLL_EXPORT void ScyllaHideReset()
 
 DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory, LOGWRAPPER Logger, LOGWRAPPER ErrorLogger)
 {
-    //Set log functions
-    if (!Logger)
-        LogWrap = LogWrapper;
-    else
-        LogWrap = Logger;
-
-    if (!ErrorLogger)
-        LogErrorWrap = LogWrapper;
-    else
-        LogErrorWrap = ErrorLogger;
-
-    //Load paths
     hNtdllModule = GetModuleHandleW(L"ntdll.dll");
 
     std::wstring wstrPath;
@@ -175,6 +156,14 @@ DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory, LOGWRAPPER Logger, LOGWRA
     g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
     g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
     g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
+
+    auto log_file = wstrPath + scl::Logger::kFileName;
+    g_log.SetLogFile(log_file.c_str());
+
+    auto log_cb = Logger ? Logger : LogCallback;
+    auto log_err_cb = ErrorLogger ? ErrorLogger : LogCallback;
+    g_log.SetLogCb(scl::Logger::Info, log_cb);
+    g_log.SetLogCb(scl::Logger::Error, log_err_cb);
 
     g_settings.Load(g_scyllaHideIniPath.c_str());
 }

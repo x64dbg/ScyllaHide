@@ -45,9 +45,6 @@
     <ClCompile Include="..\PluginGeneric\CustomExceptionHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\InjectorCLI\Logger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h">
@@ -78,9 +75,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\CustomExceptionHandler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\InjectorCLI\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

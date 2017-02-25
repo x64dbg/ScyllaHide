@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="NtApiLoader.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="OsInfo.cpp" />
@@ -28,6 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dbghelp.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="NtApiLoader.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="OsInfo.h" />

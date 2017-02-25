@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <Scylla/Logger.h>
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Version.h>
@@ -11,11 +12,7 @@
 #define DLL_EXPORT __declspec(dllexport)
 #endif
 
-typedef void (__cdecl * t_LogWrapper)(const WCHAR * format, ...);
-
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
-extern t_LogWrapper LogWrap;
-extern t_LogWrapper LogErrorWrap;
 
 #ifdef _WIN64
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -24,6 +21,7 @@ const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
 scl::Settings g_settings;
+scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
@@ -31,7 +29,7 @@ std::wstring g_scyllaHideIniPath;
 bool bHooked;
 DWORD ProcessId;
 
-static void LogWrapper(const WCHAR * format, ...)
+static void LogCallback(const wchar_t *msg)
 {
 }
 
@@ -124,15 +122,17 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD dwReason, LPVOID lpReserved)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
-        LogWrap = LogWrapper;
-        LogErrorWrap = LogWrapper;
-
         auto wstrPath = scl::GetModuleFileNameW(hInstDll);
         wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
 
         g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
         g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
         g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
+
+        auto log_file = wstrPath + scl::Logger::kFileName;
+        g_log.SetLogFile(log_file.c_str());
+        g_log.SetLogCb(scl::Logger::Info, LogCallback);
+        g_log.SetLogCb(scl::Logger::Error, LogCallback);
 
         g_settings.Load(g_scyllaHideIniPath.c_str());
 

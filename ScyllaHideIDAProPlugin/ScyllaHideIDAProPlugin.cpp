@@ -19,6 +19,7 @@
 #include <idasdk/dbg.hpp>
 #include <idasdk/loader.hpp>
 #include <idasdk/kernwin.hpp>
+#include <Scylla/Logger.h>
 #include <Scylla/NtApiLoader.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Version.h>
@@ -29,18 +30,16 @@
 #include "IdaServerClient.h"
 #include "resource.h"
 
-typedef void(__cdecl * t_LogWrapper)(const WCHAR * format, ...);
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
 extern HOOK_DLL_EXCHANGE DllExchangeLoader;
-extern t_LogWrapper LogWrap;
-extern t_LogWrapper LogErrorWrap;
 extern t_AttachProcess _AttachProcess;
 
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 const WCHAR g_scyllaHidex64ServerFilename[] = L"ScyllaHideIDASrvx64.exe";
 
 scl::Settings g_settings;
+scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
@@ -55,17 +54,9 @@ PROCESS_INFORMATION ServerProcessInfo = { 0 };
 STARTUPINFO ServerStartupInfo = { 0 };
 bool isAttach = false;
 
-static void LogWrapper(const WCHAR * format, ...)
+static void LogCallback(const char *message)
 {
-    va_list ap;
-
-    va_start(ap, format);
-    auto strw = scl::vfmtw(format, ap);
-    va_end(ap);
-
-    auto stra = scl::wstr_conv().to_bytes(strw);
-
-    msg("%s\n", stra.c_str());
+    msg("%s\n", message);
 }
 
 static void AttachProcess(DWORD dwPID)
@@ -347,10 +338,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD dwReason, LPVOID lpReserved)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
+        hinst = hInstDll;
         _AttachProcess = AttachProcess;
-        LogWrap = LogWrapper;
-        LogErrorWrap = LogWrapper;
-
         hNtdllModule = GetModuleHandleW(L"ntdll.dll");
 
         auto wstrPath = scl::GetModuleFileNameW(hInstDll);
@@ -361,16 +350,19 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD dwReason, LPVOID lpReserved)
         g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
         g_scyllaHidex64ServerPath = wstrPath + g_scyllaHidex64ServerFilename;
 
-        SetDebugPrivileges();
+        auto log_file = wstrPath + scl::Logger::kFileName;
+        g_log.SetLogFile(log_file.c_str());
+        g_log.SetLogCb(scl::Logger::Info, LogCallback);
+        g_log.SetLogCb(scl::Logger::Error, LogCallback);
 
         g_settings.Load(g_scyllaHideIniPath.c_str());
+
+        SetDebugPrivileges();
 
         if (!StartWinsock())
         {
             MessageBoxW(0, L"Failed to start Winsock!", L"Error", MB_ICONERROR);
         }
-
-        hinst = hInstDll;
     }
 
     return TRUE;
