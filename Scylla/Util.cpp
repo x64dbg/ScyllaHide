@@ -36,7 +36,7 @@ std::wstring scl::GetModuleFileNameW(HMODULE hModule)
     DWORD copied = 0;
     do {
         wstrFileName.resize(wstrFileName.size() + MAX_PATH);
-        copied = ::GetModuleFileNameW(0, &wstrFileName[0], (DWORD)wstrFileName.size());
+        copied = ::GetModuleFileNameW(hModule, &wstrFileName[0], (DWORD)wstrFileName.size());
     } while (copied >= wstrFileName.size());
 
     wstrFileName.resize(copied);
