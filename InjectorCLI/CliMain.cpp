@@ -14,7 +14,11 @@
 #include "ApplyHooking.h"
 #include "../PluginGeneric/Injector.h"
 
+extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+
 scl::Settings g_settings;
+std::wstring g_ntApiCollectionIniPath;
+std::wstring g_scyllaHideIniPath;
 
 void ChangeBadWindowText();
 void ReadSettings();
@@ -25,11 +29,6 @@ BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase);
 
-extern HOOK_DLL_EXCHANGE DllExchangeLoader;
-
-WCHAR NtApiIniPath[MAX_PATH] = { 0 };
-WCHAR ScyllaHideIniPath[MAX_PATH] = { 0 };
-
 #define PREFIX_PATH L"C:\\Users\\Admin\\Documents\\Visual Studio 2010\\Projects\\ScyllaHide"
 
 int wmain(int argc, wchar_t* argv[])
@@ -37,19 +36,16 @@ int wmain(int argc, wchar_t* argv[])
     DWORD targetPid = 0;
     WCHAR * dllPath = 0;
 
-    GetModuleFileNameW(0, NtApiIniPath, _countof(NtApiIniPath));
+    auto wstrPath = scl::GetModuleFileNameW();
+    wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
 
-    WCHAR *temp = wcsrchr(NtApiIniPath, L'\\');
-    temp++;
-    *temp = 0;
-    wcscpy(ScyllaHideIniPath, NtApiIniPath);
-    wcscat(ScyllaHideIniPath, scl::Settings::kFileName);
-    wcscat(NtApiIniPath, scl::NtApiLoader::kFileName);
+    g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
+    g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
-    ReadNtApiInformation(NtApiIniPath, &DllExchangeLoader);
+    ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
     SetDebugPrivileges();
     //ChangeBadWindowText();
-    g_settings.Load(ScyllaHideIniPath);
+    g_settings.Load(g_scyllaHideIniPath.c_str());
     ReadSettings();
 
     if (argc >= 3)
