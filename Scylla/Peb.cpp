@@ -1,5 +1,5 @@
 #include "Peb.h"
-#include <ntdll/ntdll.h>
+#include <Scylla/NtApiShim.h>
 #include <Scylla/OsInfo.h>
 
 #ifdef _WIN64
@@ -10,7 +10,7 @@
 
 scl::PEB *scl::GetPebAddress(HANDLE hProcess)
 {
-    PROCESS_BASIC_INFORMATION pbi = { 0 };
+    ::PROCESS_BASIC_INFORMATION pbi = { 0 };
 
     auto status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr);
 
@@ -22,11 +22,15 @@ scl::PEB64* scl::GetPeb64Address(HANDLE hProcess)
 #ifndef _WIN64
     if (IsWow64Process(hProcess))
     {
-        auto peb32 = GetPebAddress(hProcess);
-        if (!peb32)
+        auto _NtWow64QueryInformationProcess64 = (t_NtWow64QueryInformationProcess64)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtWow64QueryInformationProcess64");
+        if (!_NtWow64QueryInformationProcess64)
             return nullptr;
 
-        return (PEB64 *)((BYTE*)peb32 + 0x1000);
+        PROCESS_BASIC_INFORMATION<DWORD64> pbi = { 0 };
+
+        auto status = _NtWow64QueryInformationProcess64(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr);
+
+        return NT_SUCCESS(status) ? (PEB64 *)pbi.PebBaseAddress : nullptr;
     }
 #endif
 

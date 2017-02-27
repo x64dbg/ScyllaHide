@@ -20,9 +20,12 @@ static bool Check_PEB_BeingDebugged()
         return false;
 
 #ifndef _WIN64
-    const auto peb64 = scl::GetPeb64Address(GetCurrentProcess());
-    if (peb64 && peb64->BeingDebugged)
-        return false;
+    if (scl::IsWow64Process(GetCurrentProcess()))
+    {
+        const auto peb64 = scl::GetPeb64Address(GetCurrentProcess());
+        if (!peb64 || peb64->BeingDebugged)
+            return false;
+    }
 #endif
 
     return true;
@@ -37,9 +40,12 @@ static bool Check_PEB_NtGlobalFlag()
         return false;
 
 #ifndef _WIN64
-    const auto peb64 = scl::GetPeb64Address(GetCurrentProcess());
-    if (peb64 && (peb64->NtGlobalFlag & debug_flags))
-        return false;
+    if (scl::IsWow64Process(GetCurrentProcess()))
+    {
+        const auto peb64 = scl::GetPeb64Address(GetCurrentProcess());
+        if (!peb64 || (peb64->NtGlobalFlag & debug_flags))
+            return false;
+    }
 #endif
 
     return true;
@@ -60,10 +66,12 @@ static bool Check_PEB_HeapFlags()
     if (flags & debug_flags)
         return false;
 
-    const auto peb64 = scl::GetPeb64Address(GetCurrentProcess());
-    if (peb64)
-    {
-        flags = *(DWORD*)((BYTE*)peb->ProcessHeap + scl::GetHeapFlagsOffset(true));
+    if (scl::IsWow64Process(GetCurrentProcess())) {
+        const auto peb64 = scl::GetPeb64Address(GetCurrentProcess());
+        if (!peb64)
+            return false;
+
+        flags = *(DWORD*)((BYTE*)peb64->ProcessHeap + scl::GetHeapFlagsOffset(true));
         if (flags & debug_flags)
             return false;
     }
@@ -87,10 +95,12 @@ static bool Check_PEB_HeapForceFlags()
     if (flags & debug_flags)
         return false;
 
-    const auto peb64 = scl::GetPeb64Address(GetCurrentProcess());
-    if (peb64)
-    {
-        flags = *(DWORD*)((BYTE*)peb->ProcessHeap + scl::GetHeapForceFlagsOffset(true));
+    if (scl::IsWow64Process(GetCurrentProcess())) {
+        const auto peb64 = scl::GetPeb64Address(GetCurrentProcess());
+        if (!peb64)
+            return false;
+
+        flags = *(DWORD*)((BYTE*)peb64->ProcessHeap + scl::GetHeapForceFlagsOffset(true));
         if (flags & debug_flags)
             return false;
     }

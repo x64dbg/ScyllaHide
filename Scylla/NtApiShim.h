@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ntdll/ntdll.h>
+
 #ifndef FLG_HEAP_ENABLE_TAIL_CHECK
 #define FLG_HEAP_ENABLE_TAIL_CHECK 0x10
 #endif
@@ -19,3 +21,19 @@
 #ifndef HEAP_VALIDATE_PARAMETERS_ENABLED
 #define HEAP_VALIDATE_PARAMETERS_ENABLED 0x40000000
 #endif
+
+typedef NTSTATUS(WINAPI *t_NtWow64QueryInformationProcess64)(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength);
+
+namespace scl
+{
+    template<typename PTR>
+    struct PROCESS_BASIC_INFORMATION
+    {
+        DWORD ExitStatus;
+        PTR PebBaseAddress;
+        PTR AffinityMask;
+        DWORD BasePriority;
+        PTR UniqueProcessId;
+        PTR InheritedFromUniqueProcessId;
+    };
+}
