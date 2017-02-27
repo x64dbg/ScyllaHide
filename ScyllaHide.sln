@@ -61,6 +61,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scylla", "Scylla\Scylla.vcx
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaTest", "ScyllaTest\ScyllaTest.vcxproj", "{5EEACDD3-61B9-4E6A-BB47-5F37C03973C3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E468DA07-48EA-40EB-A845-FA69C39D3396} = {E468DA07-48EA-40EB-A845-FA69C39D3396}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

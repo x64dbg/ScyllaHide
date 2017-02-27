@@ -8,41 +8,7 @@
 //ForceFlags field exists at offset 0x10 in the heap on the 32-bit versions of Windows NT, Windows 2000, and Windows XP; and at offset 0x44 on the 32-bit versions of Windows Vista and later.
 //ForceFlags field exists at offset 0x18 in the heap on the 64-bit versions of Windows XP, and at offset 0x74 in the heap on the 64-bit versions of Windows Vista and later.
 
-static int getHeapFlagsOffset(bool x64)
-{
-    if (x64) //x64 offsets
-    {
-        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
-            return 0x70;
-        else
-            return 0x14;
-    }
-    else //x86 offsets
-    {
-        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
-            return 0x40;
-        else
-            return 0x0C;
-    }
-}
 
-static int getHeapForceFlagsOffset(bool x64)
-{
-    if (x64) //x64 offsets
-    {
-        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
-            return 0x74;
-        else
-            return 0x18;
-    }
-    else //x86 offsets
-    {
-        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
-            return 0x44;
-        else
-            return 0x10;
-    }
-}
 
 //some debuggers manipulate StartUpInfo to start the debugged process and therefore can be detected...
 bool FixStartUpInfo(scl::PEB* myPEB, HANDLE hProcess)
@@ -70,8 +36,8 @@ void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase, bool isDefaultHeap)
     heapFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapFlagsOffset(true));
     heapForceFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapForceFlagsOffset(true));
 #else
-    heapFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapFlagsOffset(false));
-    heapForceFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapForceFlagsOffset(false));
+    heapFlagsAddress = (void *)((LONG_PTR)heapBase + scl::GetHeapFlagsOffset(false));
+    heapForceFlagsAddress = (void *)((LONG_PTR)heapBase + scl::GetHeapForceFlagsOffset(false));
 #endif //_WIN64
 
     if (ReadProcessMemory(hProcess, heapFlagsAddress, &heapFlags, sizeof(DWORD), 0))

@@ -46,8 +46,8 @@ const OSVERSIONINFOEXW* scl::GetVersionExW()
         auto peb = GetPebAddress(GetCurrentProcess());
         if (peb)
         {
-            osVerInfo.dwMajorVersion = peb->OsMajorVersion;
-            osVerInfo.dwMinorVersion = peb->OsMinorVersion;
+            osVerInfo.dwMajorVersion = peb->OSMajorVersion;
+            osVerInfo.dwMinorVersion = peb->OSMinorVersion;
         }
         cached = true;
     }

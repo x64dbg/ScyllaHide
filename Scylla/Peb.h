@@ -3,10 +3,9 @@
 #include <windows.h>
 #include <memory>
 
-/**
- * Evolution of Process Environment Block (PEB) http://blog.rewolf.pl/blog/?p=573
- * March 2, 2013 / ReWolf posted in programming, reverse engineering, source code, x64 /
- */
+//
+// http://terminus.rewolf.pl/terminus/structures/ntdll/_PEB_combined.html
+//
 
 namespace scl {
 
@@ -14,8 +13,8 @@ namespace scl {
     template <typename T>
     struct LIST_ENTRY
     {
-        struct LIST_ENTRY *Flink;
-        struct LIST_ENTRY *Blink;
+        T Flink;
+        T Blink;
     };
 
     template <typename T>
@@ -25,12 +24,12 @@ namespace scl {
         {
             struct
             {
-                USHORT Length;
-                USHORT MaximumLength;
+                WORD Length;
+                WORD MaximumLength;
             };
             T dummy;
         };
-        PWSTR Buffer;
+        T _Buffer;
     };
 
     template <typename T, typename NGF, int A>
@@ -88,16 +87,15 @@ namespace scl {
         DWORD NumberOfHeaps;
         DWORD MaximumNumberOfHeaps;
         T ProcessHeaps;
-
         T GdiSharedHandleTable;
         T ProcessStarterHelper;
-        T GdiDcAttributeList;
+        T GdiDCAttributeList;
         T LoaderLock;
-        DWORD OsMajorVersion;
-        DWORD OsMinorVersion;
-        WORD OsBuildNumber;
-        WORD OsCsdVersion;
-        DWORD OsPlatformId;
+        DWORD OSMajorVersion;
+        DWORD OSMinorVersion;
+        WORD OSBuildNumber;
+        WORD OSCSDVersion;
+        DWORD OSPlatformId;
         DWORD ImageSubsystem;
         DWORD ImageSubsystemMajorVersion;
         T ImageSubsystemMinorVersion;
@@ -115,7 +113,7 @@ namespace scl {
         ULARGE_INTEGER AppCompatFlagsUser;
         T pShimData;
         T AppCompatInfo;
-        UNICODE_STRING<T> CsdVersion;
+        UNICODE_STRING<T> CSDVersion;
         T ActivationContextData;
         T ProcessAssemblyStorageMap;
         T SystemDefaultActivationContextData;
@@ -141,4 +139,7 @@ namespace scl {
 
     bool SetPeb(HANDLE hProcess, const PEB *pPeb);
     bool SetPeb64(HANDLE hProcess, const PEB64 *pPeb64);
-}
+
+    DWORD GetHeapFlagsOffset(bool x64);
+    DWORD GetHeapForceFlagsOffset(bool x64);
+    }

@@ -1,5 +1,5 @@
 #include "Peb.h"
-#include <Winternl.h>
+#include <ntdll/ntdll.h>
 #include <Scylla/OsInfo.h>
 
 #ifdef _WIN64
@@ -10,7 +10,7 @@
 
 scl::PEB *scl::GetPebAddress(HANDLE hProcess)
 {
-    PROCESS_BASIC_INFORMATION pbi = { nullptr };
+    PROCESS_BASIC_INFORMATION pbi = { 0 };
 
     auto status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr);
 
@@ -87,4 +87,40 @@ bool scl::SetPeb64(HANDLE hProcess, const PEB64 *pPeb64)
     }
 
     return WriteProcessMemory(hProcess, pPeb64Ptr, pPeb64, sizeof(*pPeb64), nullptr) == TRUE;
+}
+
+DWORD scl::GetHeapFlagsOffset(bool x64)
+{
+    if (x64)
+    {
+        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
+            return 0x70;
+        else
+            return 0x14;
+    }
+    else
+    {
+        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
+            return 0x40;
+        else
+            return 0x0C;
+    }
+}
+
+DWORD scl::GetHeapForceFlagsOffset(bool x64)
+{
+    if (x64)
+    {
+        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
+            return 0x74;
+        else
+            return 0x18;
+    }
+    else
+    {
+        if (scl::GetWindowsVersion() >= scl::OS_WIN_VISTA)
+            return 0x44;
+        else
+            return 0x10;
+    }
 }

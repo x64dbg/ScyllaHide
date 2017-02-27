@@ -31,6 +31,7 @@
     <ClInclude Include="dbghelp.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="NtApiLoader.h" />
+    <ClInclude Include="NtApiShim.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="OsInfo.h" />
     <ClInclude Include="Peb.h" />
