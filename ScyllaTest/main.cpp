@@ -33,17 +33,17 @@ static bool Check_PEB_BeingDebugged()
 
 static bool Check_PEB_NtGlobalFlag()
 {
-    const DWORD debug_flags = FLG_HEAP_ENABLE_TAIL_CHECK | FLG_HEAP_ENABLE_FREE_CHECK | FLG_HEAP_VALIDATE_PARAMETERS;
+    const DWORD bad_flags = FLG_HEAP_ENABLE_TAIL_CHECK | FLG_HEAP_ENABLE_FREE_CHECK | FLG_HEAP_VALIDATE_PARAMETERS;
 
     const auto peb = scl::GetPebAddress(GetCurrentProcess());
-    if (peb->NtGlobalFlag & debug_flags)
+    if (peb->NtGlobalFlag & bad_flags)
         return false;
 
 #ifndef _WIN64
     if (scl::IsWow64Process(GetCurrentProcess()))
     {
         const auto peb64 = scl::GetPeb64Address(GetCurrentProcess());
-        if (!peb64 || (peb64->NtGlobalFlag & debug_flags))
+        if (!peb64 || (peb64->NtGlobalFlag & bad_flags))
             return false;
     }
 #endif
@@ -53,56 +53,41 @@ static bool Check_PEB_NtGlobalFlag()
 
 static bool Check_PEB_HeapFlags()
 {
-    const DWORD debug_flags = HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED | HEAP_SKIP_VALIDATION_CHECKS | HEAP_VALIDATE_PARAMETERS_ENABLED;
-    const auto peb = scl::GetPebAddress(GetCurrentProcess());
+    const DWORD bad_flags = HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED | HEAP_SKIP_VALIDATION_CHECKS | HEAP_VALIDATE_PARAMETERS_ENABLED;
 #ifdef _WIN64
-    DWORD flags = *(DWORD*)((BYTE*)peb->ProcessHeap + scl::GetHeapFlagsOffset(true));
-
-    if (flags & debug_flags)
-        return false;
+    const auto is_x64 = true;
 #else
-    DWORD flags = *(DWORD*)((BYTE*)peb->ProcessHeap + scl::GetHeapFlagsOffset(false));
-
-    if (flags & debug_flags)
-        return false;
-
-    if (scl::IsWow64Process(GetCurrentProcess())) {
-        const auto peb64 = scl::GetPeb64Address(GetCurrentProcess());
-        if (!peb64)
-            return false;
-
-        flags = *(DWORD*)((BYTE*)peb64->ProcessHeap + scl::GetHeapFlagsOffset(true));
-        if (flags & debug_flags)
-            return false;
-    }
+    const auto is_x64 = false;
 #endif
 
-    return true;
-}
-
-static bool Check_PEB_HeapForceFlags()
-{
-    const DWORD debug_flags = HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED | HEAP_SKIP_VALIDATION_CHECKS | HEAP_VALIDATE_PARAMETERS_ENABLED;
     const auto peb = scl::GetPebAddress(GetCurrentProcess());
-#ifdef _WIN64
-    DWORD flags = *(DWORD*)((BYTE*)peb->ProcessHeap + scl::GetHeapForceFlagsOffset(true));
 
-    if (flags & debug_flags)
-        return false;
-#else
-    DWORD flags = *(DWORD*)((BYTE*)peb->ProcessHeap + scl::GetHeapForceFlagsOffset(false));
+    auto heaps = (void **)peb->ProcessHeaps;
+    for(DWORD i = 0; i < peb->NumberOfHeaps; i++)
+    {
+        auto flags = *(DWORD *)((BYTE *)heaps[i] + scl::GetHeapFlagsOffset(is_x64));
+        auto force_flags = *(DWORD *)((BYTE *)heaps[i] + scl::GetHeapForceFlagsOffset(is_x64));
 
-    if (flags & debug_flags)
-        return false;
+        if ((flags & bad_flags) || (force_flags & bad_flags))
+            return false;
+    }
 
-    if (scl::IsWow64Process(GetCurrentProcess())) {
+#if 0
+    if (scl::IsWow64Process(GetCurrentProcess()))
+    {
         const auto peb64 = scl::GetPeb64Address(GetCurrentProcess());
         if (!peb64)
             return false;
 
-        flags = *(DWORD*)((BYTE*)peb64->ProcessHeap + scl::GetHeapForceFlagsOffset(true));
-        if (flags & debug_flags)
-            return false;
+        auto heaps64 = (DWORD64 *)peb64->ProcessHeaps;
+        for (DWORD i = 0; i < peb->NumberOfHeaps; i++)
+        {
+            auto flags = *(DWORD *)((BYTE *)heaps64[i] + scl::GetHeapFlagsOffset(true));
+            auto force_flags = *(DWORD *)((BYTE *)heaps64[i] + scl::GetHeapFlagsOffset(true));
+
+            if ((flags & bad_flags) || (force_flags & bad_flags))
+                return false;
+        }
     }
 #endif
 
@@ -198,7 +183,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     ANTI_TEST(PEB_BeingDebugged, true);
     ANTI_TEST(PEB_NtGlobalFlag, true);
     ANTI_TEST(PEB_HeapFlags, true);
-    ANTI_TEST(PEB_HeapForceFlags, true);
     ANTI_TEST(IsDebuggerPresent, true);
     ANTI_TEST(CheckRemoteDebuggerPresent, true);
     ANTI_TEST(OutputDebugStringA_LastError, ver < scl::OS_WIN_VISTA);
