@@ -63,7 +63,7 @@ static bool Check_PEB_HeapFlags()
     const auto peb = scl::GetPebAddress(GetCurrentProcess());
 
     auto heaps = (void **)peb->ProcessHeaps;
-    for(DWORD i = 0; i < peb->NumberOfHeaps; i++)
+    for (DWORD i = 0; i < peb->NumberOfHeaps; i++)
     {
         auto flags = *(DWORD *)((BYTE *)heaps[i] + scl::GetHeapFlagsOffset(is_x64));
         auto force_flags = *(DWORD *)((BYTE *)heaps[i] + scl::GetHeapForceFlagsOffset(is_x64));
@@ -90,6 +90,18 @@ static bool Check_PEB_HeapFlags()
         }
     }
 #endif
+
+    return true;
+}
+
+static bool Check_PEB_ProcessParameters()
+{
+    const auto peb = scl::GetPebAddress(GetCurrentProcess());
+
+    auto rupp = (RTL_USER_PROCESS_PARAMETERS *)peb->ProcessParameters;
+
+    if (!(rupp->Flags & 0x4000))
+        return false;
 
     return true;
 }
@@ -183,6 +195,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     ANTI_TEST(PEB_BeingDebugged, true);
     ANTI_TEST(PEB_NtGlobalFlag, true);
     ANTI_TEST(PEB_HeapFlags, true);
+    ANTI_TEST(PEB_ProcessParameters, true);
     ANTI_TEST(IsDebuggerPresent, true);
     ANTI_TEST(CheckRemoteDebuggerPresent, true);
     ANTI_TEST(OutputDebugStringA_LastError, ver < scl::OS_WIN_VISTA);

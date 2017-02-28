@@ -1,14 +1,7 @@
 #include "RemotePebHider.h"
+#include <Scylla/NtApiShim.h>
 #include <Scylla/Peb.h>
 #include <Scylla/OsInfo.h>
-
-//Quote from The Ultimate Anti-Debugging Reference by Peter Ferrie
-//Flags field exists at offset 0x0C in the heap on the 32-bit versions of Windows NT, Windows 2000, and Windows XP; and at offset 0x40 on the 32-bit versions of Windows Vista and later.
-//Flags field exists at offset 0x14 in the heap on the 64-bit versions of Windows XP, and at offset 0x70 in the heap on the 64-bit versions of Windows Vista and later.
-//ForceFlags field exists at offset 0x10 in the heap on the 32-bit versions of Windows NT, Windows 2000, and Windows XP; and at offset 0x44 on the 32-bit versions of Windows Vista and later.
-//ForceFlags field exists at offset 0x18 in the heap on the 64-bit versions of Windows XP, and at offset 0x74 in the heap on the 64-bit versions of Windows Vista and later.
-
-
 
 //some debuggers manipulate StartUpInfo to start the debugged process and therefore can be detected...
 bool FixStartUpInfo(scl::PEB* myPEB, HANDLE hProcess)

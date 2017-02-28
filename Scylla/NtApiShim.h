@@ -24,6 +24,47 @@
 
 typedef NTSTATUS(WINAPI *t_NtWow64QueryInformationProcess64)(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength);
 
+typedef struct _CURDIR {
+    UNICODE_STRING DosPath;
+    HANDLE Handle;
+} CURDIR, *PCURDIR;
+
+typedef struct _RTL_USER_PROCESS_PARAMETERS {
+    ULONG MaximumLength;
+    ULONG Length;
+
+    ULONG Flags;
+    ULONG DebugFlags;
+
+    HANDLE ConsoleHandle;
+    ULONG  ConsoleFlags;
+    HANDLE StandardInput;
+    HANDLE StandardOutput;
+    HANDLE StandardError;
+
+    CURDIR CurrentDirectory;        // ProcessParameters
+    UNICODE_STRING DllPath;         // ProcessParameters
+    UNICODE_STRING ImagePathName;   // ProcessParameters
+    UNICODE_STRING CommandLine;     // ProcessParameters
+    PVOID Environment;              // NtAllocateVirtualMemory
+
+    ULONG StartingX;
+    ULONG StartingY;
+    ULONG CountX;
+    ULONG CountY;
+    ULONG CountCharsX;
+    ULONG CountCharsY;
+    ULONG FillAttribute;
+
+    ULONG WindowFlags;
+    ULONG ShowWindowFlags;
+    UNICODE_STRING WindowTitle;     // ProcessParameters
+    UNICODE_STRING DesktopInfo;     // ProcessParameters
+    UNICODE_STRING ShellInfo;       // ProcessParameters
+    UNICODE_STRING RuntimeData;     // ProcessParameters
+
+} RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
+
 namespace scl
 {
     template<typename PTR>
