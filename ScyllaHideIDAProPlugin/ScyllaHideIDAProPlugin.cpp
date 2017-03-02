@@ -177,11 +177,11 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                         ServerStartupInfo.cb = sizeof(ServerStartupInfo);
                         if (!CreateProcessW(0, commandline, NULL, NULL, FALSE, 0, NULL, NULL, &ServerStartupInfo, &ServerProcessInfo))
                         {
-                            g_log.LogError(L"Cannot start server, error %d\n", GetLastError());
+                            g_log.LogError(L"Cannot start server, error %d", GetLastError());
                         }
                         else
                         {
-                            g_log.LogInfo(L"Started IDA Server successfully\n");
+                            g_log.LogInfo(L"Started IDA Server successfully");
                         }
                     }
                 }
@@ -190,12 +190,12 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                 {
                     if (!SendEventToServer(notif_code, ProcessId))
                     {
-                        g_log.LogError(L"SendEventToServer failed\n");
+                        g_log.LogError(L"SendEventToServer failed");
                     }
                 }
                 else
                 {
-                    g_log.LogError(L"Cannot connect to host %s\n", host);
+                    g_log.LogError(L"Cannot connect to host %s", host);
                 }
             }
             else
@@ -208,7 +208,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                     startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
                 }
 #else
-                g_log.LogError("Error IDA_64BIT please contact ScyllaHide developers!\n");
+                g_log.LogError("Error IDA_64BIT please contact ScyllaHide developers!");
 #endif
             }
         }
@@ -221,7 +221,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
         {
             if (!SendEventToServer(notif_code, ProcessId))
             {
-                g_log.LogError(L"SendEventToServer failed\n");
+                g_log.LogError(L"SendEventToServer failed");
             }
 
             CloseServerSocket();
@@ -238,7 +238,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
         {
             if (!SendEventToServer(notif_code, ProcessId))
             {
-                g_log.LogError(L"SendEventToServer failed\n");
+                g_log.LogError(L"SendEventToServer failed");
             }
         }
         else if (!isAttach)
