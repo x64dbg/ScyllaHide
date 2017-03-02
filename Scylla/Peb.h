@@ -3,6 +3,8 @@
 #include <windows.h>
 #include <memory>
 
+#include "NtApiShim.h"
+
 //
 // http://terminus.rewolf.pl/terminus/structures/ntdll/_PEB_combined.html
 //
@@ -15,21 +17,6 @@ namespace scl {
     {
         T Flink;
         T Blink;
-    };
-
-    template <typename T>
-    struct UNICODE_STRING
-    {
-        union
-        {
-            struct
-            {
-                WORD Length;
-                WORD MaximumLength;
-            };
-            T dummy;
-        };
-        T _Buffer;
     };
 
     template <typename T, typename NGF, int A>
@@ -132,7 +119,7 @@ namespace scl {
 #endif
 
     PEB *GetPebAddress(HANDLE hProcess);
-    PEB64 *GetPeb64Address(HANDLE hProcess);
+    PVOID64 GetPeb64Address(HANDLE hProcess);
 
     std::shared_ptr<PEB> GetPeb(HANDLE hProcess);
     std::shared_ptr<PEB64> GetPeb64(HANDLE hProcess);

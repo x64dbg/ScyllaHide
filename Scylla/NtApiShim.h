@@ -22,51 +22,38 @@
 #define HEAP_VALIDATE_PARAMETERS_ENABLED 0x40000000
 #endif
 
+#ifndef DBG_PRINTEXCEPTION_WIDE_C
+#define DBG_PRINTEXCEPTION_WIDE_C ((DWORD)0x4001000A)
+#endif
+
 typedef NTSTATUS(WINAPI *t_NtWow64QueryInformationProcess64)(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength);
+typedef NTSTATUS(WINAPI *t_NtWow64ReadVirtualMemory64)(HANDLE ProcessHandle, PVOID64 BaseAddress, PVOID Buffer, ULONGLONG BufferSize, PULONGLONG *NumberOfBytesRead);
+typedef NTSTATUS(WINAPI *t_NtWow64WriteVirtualMemory64)(HANDLE ProcessHandle, PVOID64 BaseAddress, LPCVOID Buffer, ULONGLONG BufferSize, PULONGLONG *NumberOfBytesWritten);
 
-typedef struct _CURDIR {
-    UNICODE_STRING DosPath;
-    HANDLE Handle;
-} CURDIR, *PCURDIR;
-
-typedef struct _RTL_USER_PROCESS_PARAMETERS {
-    ULONG MaximumLength;
-    ULONG Length;
-
-    ULONG Flags;
-    ULONG DebugFlags;
-
-    HANDLE ConsoleHandle;
-    ULONG  ConsoleFlags;
-    HANDLE StandardInput;
-    HANDLE StandardOutput;
-    HANDLE StandardError;
-
-    CURDIR CurrentDirectory;        // ProcessParameters
-    UNICODE_STRING DllPath;         // ProcessParameters
-    UNICODE_STRING ImagePathName;   // ProcessParameters
-    UNICODE_STRING CommandLine;     // ProcessParameters
-    PVOID Environment;              // NtAllocateVirtualMemory
-
-    ULONG StartingX;
-    ULONG StartingY;
-    ULONG CountX;
-    ULONG CountY;
-    ULONG CountCharsX;
-    ULONG CountCharsY;
-    ULONG FillAttribute;
-
-    ULONG WindowFlags;
-    ULONG ShowWindowFlags;
-    UNICODE_STRING WindowTitle;     // ProcessParameters
-    UNICODE_STRING DesktopInfo;     // ProcessParameters
-    UNICODE_STRING ShellInfo;       // ProcessParameters
-    UNICODE_STRING RuntimeData;     // ProcessParameters
-
-} RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
 
 namespace scl
 {
+    template <typename PTR>
+    struct UNICODE_STRING
+    {
+        union
+        {
+            struct
+            {
+                WORD Length;
+                WORD MaximumLength;
+            };
+            PTR dummy;
+        };
+        PTR _Buffer;
+    };
+
+    template<typename PTR>
+    struct CURDIR {
+        UNICODE_STRING<PTR> DosPath;
+        PTR Handle;
+    };
+
     template<typename PTR>
     struct PROCESS_BASIC_INFORMATION
     {
@@ -76,5 +63,41 @@ namespace scl
         DWORD BasePriority;
         PTR UniqueProcessId;
         PTR InheritedFromUniqueProcessId;
+    };
+
+    template<typename PTR>
+    struct RTL_USER_PROCESS_PARAMETERS {
+        ULONG MaximumLength;
+        ULONG Length;
+
+        ULONG Flags;
+        ULONG DebugFlags;
+
+        PTR ConsoleHandle;
+        ULONG  ConsoleFlags;
+        PTR StandardInput;
+        PTR StandardOutput;
+        PTR StandardError;
+
+        CURDIR<PTR> CurrentDirectory;
+        UNICODE_STRING<PTR> DllPath;
+        UNICODE_STRING<PTR> ImagePathName;
+        UNICODE_STRING<PTR> CommandLine;
+        PTR Environment;
+
+        ULONG StartingX;
+        ULONG StartingY;
+        ULONG CountX;
+        ULONG CountY;
+        ULONG CountCharsX;
+        ULONG CountCharsY;
+        ULONG FillAttribute;
+
+        ULONG WindowFlags;
+        ULONG ShowWindowFlags;
+        UNICODE_STRING<PTR> WindowTitle;
+        UNICODE_STRING<PTR> DesktopInfo;
+        UNICODE_STRING<PTR> ShellInfo;
+        UNICODE_STRING<PTR> RuntimeData;
     };
 }

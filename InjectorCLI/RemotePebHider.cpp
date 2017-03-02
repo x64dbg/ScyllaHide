@@ -6,7 +6,7 @@
 //some debuggers manipulate StartUpInfo to start the debugged process and therefore can be detected...
 bool FixStartUpInfo(scl::PEB* myPEB, HANDLE hProcess)
 {
-    RTL_USER_PROCESS_PARAMETERS * rtlProcessParam = (RTL_USER_PROCESS_PARAMETERS *)myPEB->ProcessParameters;
+    auto rtlProcessParam = (scl::RTL_USER_PROCESS_PARAMETERS<DWORD_PTR> *)myPEB->ProcessParameters;
 
     DWORD_PTR startOffset = (DWORD_PTR)&rtlProcessParam->StartingX;
     DWORD_PTR patchSize = (DWORD_PTR)&rtlProcessParam->WindowFlags - (DWORD_PTR)&rtlProcessParam->StartingX;
@@ -26,8 +26,8 @@ void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase, bool isDefaultHeap)
     void * heapForceFlagsAddress = 0;
     DWORD heapForceFlags = 0;
 #ifdef _WIN64
-    heapFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapFlagsOffset(true));
-    heapForceFlagsAddress = (void *)((LONG_PTR)heapBase + getHeapForceFlagsOffset(true));
+    heapFlagsAddress = (void *)((LONG_PTR)heapBase + scl::GetHeapFlagsOffset(true));
+    heapForceFlagsAddress = (void *)((LONG_PTR)heapBase + scl::GetHeapForceFlagsOffset(true));
 #else
     heapFlagsAddress = (void *)((LONG_PTR)heapBase + scl::GetHeapFlagsOffset(false));
     heapForceFlagsAddress = (void *)((LONG_PTR)heapBase + scl::GetHeapForceFlagsOffset(false));
