@@ -34,8 +34,7 @@ void ReadNtApiInformation(const wchar_t *file, HOOK_DLL_EXCHANGE *hde)
     auto res = api_loader.Load(file);
     if (!res.first)
     {
-        auto msg = scl::fmtw(L"Failed to load NT API addresses: %s", res.second);
-        MessageBoxW(HWND_DESKTOP, msg.c_str(), L"ERROR", MB_ICONERROR);
+        g_log.LogError(L"Failed to load NT API addresses: %s", res.second);
         return;
     }
 
@@ -49,14 +48,13 @@ void ReadNtApiInformation(const wchar_t *file, HOOK_DLL_EXCHANGE *hde)
 
     if (!hde->NtUserQueryWindowRVA || !hde->NtUserBuildHwndListRVA || !hde->NtUserFindWindowExRVA)
     {
-        auto msg = scl::fmtw(
-            L"NtUser* API Addresses are missing!\r\n"
-            L"File: %s\r\n"
-            L"Section: %s\r\n"
+        g_log.LogError(
+            L"NtUser* API Addresses are missing!\n"
+            L"File: %s\n"
+            L"Section: %s\n"
             L"Please read the documentation to fix this problem!",
             file, api_loader.GetOsId().c_str()
         );
-        MessageBoxW(HWND_DESKTOP, msg.c_str(), SCYLLA_HIDE_NAME_W, MB_ICONWARNING);
     }
 }
 
