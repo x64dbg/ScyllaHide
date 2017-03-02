@@ -36,6 +36,9 @@
     <ClCompile Include="Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PebHider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Util.h">
@@ -63,6 +66,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NtApiShim.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PebHider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -5,13 +5,13 @@
 #include <cstring>
 #include <Scylla/Logger.h>
 #include <Scylla/NtApiLoader.h>
+#include <Scylla/PebHider.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
 
 #include "DynamicMapping.h"
 #include "..\HookLibrary\HookMain.h"
 #include "RemoteHook.h"
-#include "RemotePebHider.h"
 #include "ApplyHooking.h"
 #include "../PluginGeneric/Injector.h"
 

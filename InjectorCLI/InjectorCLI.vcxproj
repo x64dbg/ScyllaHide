@@ -128,13 +128,11 @@
     <ClCompile Include="DynamicMapping.cpp" />
     <ClCompile Include="CliMain.cpp" />
     <ClCompile Include="RemoteHook.cpp" />
-    <ClCompile Include="RemotePebHider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplyHooking.h" />
     <ClInclude Include="DynamicMapping.h" />
     <ClInclude Include="RemoteHook.h" />
-    <ClInclude Include="RemotePebHider.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

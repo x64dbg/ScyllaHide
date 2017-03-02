@@ -129,7 +129,6 @@
     <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp" />
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
-    <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp" />
     <ClCompile Include="..\PluginGeneric\Injector.cpp" />
     <ClCompile Include="ScyllaHideGenericPlugin.cpp" />
   </ItemGroup>

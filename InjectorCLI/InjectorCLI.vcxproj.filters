@@ -24,9 +24,6 @@
     <ClCompile Include="RemoteHook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RemotePebHider.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ApplyHooking.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -39,9 +36,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RemoteHook.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RemotePebHider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ApplyHooking.h">

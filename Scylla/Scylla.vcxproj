@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="NtApiLoader.cpp" />
+    <ClCompile Include="PebHider.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="OsInfo.cpp" />
     <ClCompile Include="Peb.cpp" />
@@ -32,6 +33,7 @@
     <ClInclude Include="Logger.h" />
     <ClInclude Include="NtApiLoader.h" />
     <ClInclude Include="NtApiShim.h" />
+    <ClInclude Include="PebHider.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="OsInfo.h" />
     <ClInclude Include="Peb.h" />

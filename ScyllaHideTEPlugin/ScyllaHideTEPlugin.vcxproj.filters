@@ -24,9 +24,6 @@
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

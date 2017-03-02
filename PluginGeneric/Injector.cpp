@@ -2,11 +2,11 @@
 #include <Psapi.h>
 #include "Scylla/Logger.h"
 #include <Scylla/NtApiLoader.h>
+#include <Scylla/PebHider.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
 #include <Scylla/Version.h>
 
-#include "..\InjectorCLI\RemotePebHider.h"
 #include "..\InjectorCLI\\ApplyHooking.h"
 
 extern scl::Settings g_settings;

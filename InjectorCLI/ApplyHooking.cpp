@@ -1,9 +1,9 @@
 #include <Scylla/Logger.h>
 #include <Scylla/OsInfo.h>
+#include <Scylla/PebHider.h>
 
 #include "ApplyHooking.h"
 #include "DynamicMapping.h"
-#include "RemotePebHider.h"
 #include "RemoteHook.h"
 
 #define HOOK(name) dllexchange->d##name = (t_##name)DetourCreateRemote(hProcess,_##name, Hooked##name, true, &dllexchange->##name##BackupSize)

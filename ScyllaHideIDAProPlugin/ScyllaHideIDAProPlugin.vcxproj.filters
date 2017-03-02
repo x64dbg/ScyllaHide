@@ -27,9 +27,6 @@
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\InjectorCLI\RemotePebHider.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="IdaServerClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -59,9 +56,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\InjectorCLI\RemoteHook.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\InjectorCLI\RemotePebHider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IdaServerClient.h">
