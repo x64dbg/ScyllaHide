@@ -10,8 +10,6 @@
 #include "IdaServerExchange.h"
 #include "..\PluginGeneric\Injector.h"
 
-extern HOOK_DLL_DATA HookDllData;
-
 #ifdef _WIN64
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
@@ -22,6 +20,8 @@ scl::Settings g_settings;
 scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
+
+HOOK_DLL_DATA g_hdd;
 
 WSADATA wsaData;
 char * ListenPortString = IDA_SERVER_DEFAULT_PORT_TEXT;
@@ -238,7 +238,7 @@ static void handleClient(SOCKET ClientSocket)
 
                 ProcessId = idaExchange.ProcessId;
                 bHooked = false;
-                ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
+                ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
 
                 if (!once)
                 {
@@ -249,7 +249,7 @@ static void handleClient(SOCKET ClientSocket)
                 if (!bHooked)
                 {
                     bHooked = true;
-                    startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
+                    startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
                 }
 
                 break;
@@ -265,7 +265,7 @@ static void handleClient(SOCKET ClientSocket)
 
                 if (bHooked)
                 {
-                    startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
+                    startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
                 }
                 break;
             }

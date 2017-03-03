@@ -29,7 +29,6 @@ typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 typedef void(__cdecl * t_SetDebuggerBreakpoint)(DWORD_PTR address);
 typedef bool(__cdecl * t_IsAddressBreakpoint)(DWORD_PTR address);
 
-extern HOOK_DLL_DATA HookDllData;
 extern t_AttachProcess _AttachProcess;
 extern t_SetDebuggerBreakpoint _SetDebuggerBreakpoint;
 extern t_IsAddressBreakpoint _IsAddressBreakpoint;
@@ -41,6 +40,8 @@ scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
+
+HOOK_DLL_DATA g_hdd;
 
 //globals
 HINSTANCE hinst;
@@ -344,7 +345,7 @@ extern "C" void DLL_EXPORT _ODBG_Pluginaction(int origin, int action, void *item
 
             if (ProcessId)
             {
-                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
+                startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
                 bHooked = true;
                 MessageBoxA(hwmain, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
             }
@@ -453,7 +454,7 @@ extern "C" void DLL_EXPORT _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
             }
         }
 
-        ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
+        ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
 
         //change olly caption again !
         SetWindowTextW(hwmain, g_settings.opts().ollyWindowTitle.c_str());
@@ -474,7 +475,7 @@ extern "C" void DLL_EXPORT _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
                 MarkSystemDllsOnx64();
             }
 
-            startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
+            startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
         }
         break;
     }
@@ -488,10 +489,10 @@ extern "C" void DLL_EXPORT _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
         {
             if (!bHooked)
             {
-                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &HookDllData);
+                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &g_hdd);
 
                 bHooked = true;
-                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
+                startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
             }
 
             break;
@@ -512,7 +513,7 @@ extern "C" void DLL_EXPORT _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
 //reset variables. new target started or restarted
 extern "C" void DLL_EXPORT _ODBG_Pluginreset(void)
 {
-    ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
+    ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
     bHooked = false;
     bEPBreakRemoved = false;
     ProcessId = 0;

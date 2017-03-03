@@ -32,7 +32,6 @@
 
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
-extern HOOK_DLL_DATA HookDllData;
 extern t_AttachProcess _AttachProcess;
 
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
@@ -44,6 +43,8 @@ std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
 std::wstring g_scyllaHidex64ServerPath;
+
+HOOK_DLL_DATA g_hdd;
 
 //globals
 HINSTANCE hinst;
@@ -121,7 +122,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
         ProcessId = dbgEvent->pid;
         bHooked = false;
-        ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
+        ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
 
         if (dbg != 0)
         {
@@ -205,7 +206,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                 if (!bHooked)
                 {
                     bHooked = true;
-                    startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
+                    startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
                 }
 #else
                 g_log.LogError("Error IDA_64BIT please contact ScyllaHide developers!");
@@ -246,7 +247,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 #ifndef BUILD_IDA_64BIT
             if (bHooked)
             {
-                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
+                startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
             }
 #endif
         }

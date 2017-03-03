@@ -12,8 +12,6 @@
 extern scl::Settings g_settings;
 extern scl::Logger g_log;
 
-HOOK_DLL_DATA HookDllData = { 0 };
-
 static LPVOID remoteImageBase = 0;
 
 typedef void(__cdecl * t_SetDebuggerBreakpoint)(DWORD_PTR address);
@@ -146,10 +144,10 @@ bool StartFixBeingDebugged(DWORD targetPid, bool setToNull)
     return true;
 }
 
-bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+bool StartHooking(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-    HookDllData.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
-    HookDllData.EnableProtectProcessId = TRUE;
+    hdd->dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
+    hdd->EnableProtectProcessId = TRUE;
 
     DWORD peb_flags = 0;
     if (g_settings.opts().fixPebBeingDebugged) peb_flags |= PEB_PATCH_BeingDebugged;
@@ -159,10 +157,10 @@ bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 
     ApplyPEBPatch(hProcess, peb_flags);
 
-    return ApplyHook(&HookDllData, hProcess, dllMemory, imageBase);
+    return ApplyHook(hdd, hProcess, dllMemory, imageBase);
 }
 
-void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
+void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, bool newProcess)
 {
     DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
     DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
@@ -170,9 +168,9 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
     if (newProcess == false)
     {
         //g_log.Log(L"Apply hooks again");
-        if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
+        if (StartHooking(hProcess, hdd, dllMemory, (DWORD_PTR)remoteImageBase))
         {
-            WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &HookDllData, sizeof(HOOK_DLL_DATA), 0);
+            WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), hdd, sizeof(HOOK_DLL_DATA), 0);
         }
     }
     else
@@ -182,17 +180,17 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
             RemoveDebugPrivileges(hProcess);
         }
 
-        RestoreHooks(&HookDllData, hProcess);
+        RestoreHooks(hdd, hProcess);
 
         remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
         if (remoteImageBase)
         {
-            FillHookDllData(hProcess, &HookDllData);
+            FillHookDllData(hProcess, hdd);
 
 
-            StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
+            StartHooking(hProcess, hdd, dllMemory, (DWORD_PTR)remoteImageBase);
 
-            if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &HookDllData, sizeof(HOOK_DLL_DATA), 0))
+            if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), hdd, sizeof(HOOK_DLL_DATA), 0))
             {
                 g_log.LogInfo(L"Hook Injection successful, Imagebase %p", remoteImageBase);
             }
@@ -208,7 +206,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
     }
 }
 
-void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
+void startInjection(DWORD targetPid, HOOK_DLL_DATA *hdd, const WCHAR * dllPath, bool newProcess)
 {
     HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
     if (hProcess)
@@ -216,7 +214,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess)
         BYTE * dllMemory = ReadFileToMemory(dllPath);
         if (dllMemory)
         {
-            startInjectionProcess(hProcess, dllMemory, newProcess);
+            startInjectionProcess(hProcess, hdd, dllMemory, newProcess);
             free(dllMemory);
         }
         else

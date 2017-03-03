@@ -26,7 +26,6 @@
 typedef int(__cdecl * t_Attachtoactiveprocess)(int newprocessid);
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
-extern HOOK_DLL_DATA HookDllData;
 extern t_AttachProcess _AttachProcess;
 
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
@@ -36,6 +35,8 @@ scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
+
+HOOK_DLL_DATA g_hdd;
 
 HINSTANCE hinst;
 HMODULE hNtdllModule = 0;
@@ -109,7 +110,7 @@ static int Mprofiles(t_table *pt, wchar_t *name, ulong index, int mode)
 
         if (ProcessId)
         {
-            startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
+            startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
             bHooked = true;
             MessageBoxA(hwollymain, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
         }
@@ -343,7 +344,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
     {
         ProcessId = debugevent->dwProcessId;
         bHooked = false;
-        ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
+        ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
 
         if (debugevent->u.CreateProcessInfo.lpStartAddress == NULL)
         {
@@ -365,7 +366,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
     {
         if (bHooked)
         {
-            startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
+            startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
         }
         break;
     }
@@ -377,10 +378,10 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         {
             if (!bHooked)
             {
-                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &HookDllData);
+                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &g_hdd);
 
                 bHooked = true;
-                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
+                startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
             }
         }
         break;

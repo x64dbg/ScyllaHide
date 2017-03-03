@@ -34,6 +34,7 @@
     <ClInclude Include="NtApiLoader.h" />
     <ClInclude Include="NtApiShim.h" />
     <ClInclude Include="PebHider.h" />
+    <ClInclude Include="Resource.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="OsInfo.h" />
     <ClInclude Include="Peb.h" />

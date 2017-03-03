@@ -12,8 +12,6 @@
 #define DLL_EXPORT __declspec(dllexport)
 #endif
 
-extern HOOK_DLL_DATA HookDllData;
-
 #ifdef _WIN64
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
@@ -25,6 +23,8 @@ scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
+
+HOOK_DLL_DATA g_hdd;
 
 bool bHooked;
 DWORD ProcessId;
@@ -67,7 +67,7 @@ extern "C" DLL_EXPORT void TitanDebuggingCallBack(LPDEBUG_EVENT debugEvent, int 
         {
             ProcessId=debugEvent->dwProcessId;
             bHooked = false;
-            ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
+            ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
             break;
         }
 
@@ -75,7 +75,7 @@ extern "C" DLL_EXPORT void TitanDebuggingCallBack(LPDEBUG_EVENT debugEvent, int 
         {
             if (bHooked)
             {
-                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
+                startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
             }
             break;
         }
@@ -87,10 +87,10 @@ extern "C" DLL_EXPORT void TitanDebuggingCallBack(LPDEBUG_EVENT debugEvent, int 
             {
                 if (!bHooked)
                 {
-                    ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &HookDllData);
+                    ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &g_hdd);
 
                     bHooked = true;
-                    startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
+                    startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
                 }
                 break;
             }

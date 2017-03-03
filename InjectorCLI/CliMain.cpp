@@ -15,12 +15,13 @@
 #include "ApplyHooking.h"
 #include "../PluginGeneric/Injector.h"
 
-extern HOOK_DLL_DATA HookDllData;
-
 scl::Settings g_settings;
 scl::Logger g_log;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
+
+HOOK_DLL_DATA g_hdd;
+
 
 void ChangeBadWindowText();
 void ReadSettings();
@@ -54,7 +55,7 @@ int wmain(int argc, wchar_t* argv[])
     g_log.SetLogCb(scl::Logger::Info, LogCallback);
     g_log.SetLogCb(scl::Logger::Error, LogCallback);
 
-    ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &HookDllData);
+    ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &g_hdd);
     SetDebugPrivileges();
     //ChangeBadWindowText();
     g_settings.Load(g_scyllaHideIniPath.c_str());
@@ -93,13 +94,13 @@ int wmain(int argc, wchar_t* argv[])
 
 static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-    HookDllData.dwProtectedProcessId = 0; //for olly plugins
-    HookDllData.EnableProtectProcessId = FALSE;
+    g_hdd.dwProtectedProcessId = 0; //for olly plugins
+    g_hdd.EnableProtectProcessId = FALSE;
 
     DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_ProcessParameters;
     ApplyPEBPatch(hProcess, enableEverything);
 
-    return ApplyHook(&HookDllData, hProcess, dllMemory, imageBase);
+    return ApplyHook(&g_hdd, hProcess, dllMemory, imageBase);
 }
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
@@ -107,7 +108,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
     LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
     if (remoteImageBase)
     {
-        FillHookDllData(hProcess, &HookDllData);
+        FillHookDllData(hProcess, &g_hdd);
         //DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
         DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
 
@@ -115,7 +116,7 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 
 
 
-        if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &HookDllData, sizeof(HOOK_DLL_DATA), 0))
+        if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &g_hdd, sizeof(HOOK_DLL_DATA), 0))
         {
             //DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
 
@@ -218,35 +219,35 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 
 void ReadSettings()
 {
-    HookDllData.EnableBlockInputHook = g_settings.opts().hookBlockInput;
-    HookDllData.EnableGetLocalTimeHook = g_settings.opts().hookGetLocalTime;
-    HookDllData.EnableGetSystemTimeHook = g_settings.opts().hookGetSystemTime;
-    HookDllData.EnableGetTickCount64Hook = g_settings.opts().hookGetTickCount64;
-    HookDllData.EnableGetTickCountHook = g_settings.opts().hookGetTickCount;
-    HookDllData.EnableKiUserExceptionDispatcherHook = g_settings.opts().hookKiUserExceptionDispatcher;
-    HookDllData.EnableNtCloseHook = g_settings.opts().hookNtClose;
-    HookDllData.EnableNtContinueHook = g_settings.opts().hookNtContinue;
-    HookDllData.EnableNtCreateThreadExHook = g_settings.opts().hookNtCreateThreadEx;
-    HookDllData.EnableNtGetContextThreadHook = g_settings.opts().hookNtGetContextThread;
-    HookDllData.EnableNtQueryInformationProcessHook = g_settings.opts().hookNtQueryInformationProcess;
-    HookDllData.EnableNtQueryObjectHook = g_settings.opts().hookNtQueryObject;
-    HookDllData.EnableNtQueryPerformanceCounterHook = g_settings.opts().hookNtQueryPerformanceCounter;
-    HookDllData.EnableNtQuerySystemInformationHook = g_settings.opts().hookNtQuerySystemInformation;
-    HookDllData.EnableNtQuerySystemTimeHook = g_settings.opts().hookNtQuerySystemTime;
-    HookDllData.EnableNtSetContextThreadHook = g_settings.opts().hookNtSetContextThread;
-    HookDllData.EnableNtSetDebugFilterStateHook = g_settings.opts().hookNtSetDebugFilterState;
-    HookDllData.EnableNtSetInformationThreadHook = g_settings.opts().hookNtSetInformationThread;
-    HookDllData.EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
-    HookDllData.EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
-    HookDllData.EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;
-    HookDllData.EnableNtYieldExecutionHook = g_settings.opts().hookNtYieldExecution;
-    HookDllData.EnableOutputDebugStringHook = g_settings.opts().hookOutputDebugStringA;
-    HookDllData.EnablePebBeingDebugged = g_settings.opts().fixPebBeingDebugged;
-    HookDllData.EnablePebHeapFlags = g_settings.opts().fixPebHeapFlags;
-    HookDllData.EnablePebNtGlobalFlag = g_settings.opts().fixPebNtGlobalFlag;
-    HookDllData.EnablePebStartupInfo = g_settings.opts().fixPebStartupInfo;
-    HookDllData.EnablePreventThreadCreation = g_settings.opts().preventThreadCreation;
-    HookDllData.EnableProtectProcessId = g_settings.opts().protectProcessId;
+    g_hdd.EnableBlockInputHook = g_settings.opts().hookBlockInput;
+    g_hdd.EnableGetLocalTimeHook = g_settings.opts().hookGetLocalTime;
+    g_hdd.EnableGetSystemTimeHook = g_settings.opts().hookGetSystemTime;
+    g_hdd.EnableGetTickCount64Hook = g_settings.opts().hookGetTickCount64;
+    g_hdd.EnableGetTickCountHook = g_settings.opts().hookGetTickCount;
+    g_hdd.EnableKiUserExceptionDispatcherHook = g_settings.opts().hookKiUserExceptionDispatcher;
+    g_hdd.EnableNtCloseHook = g_settings.opts().hookNtClose;
+    g_hdd.EnableNtContinueHook = g_settings.opts().hookNtContinue;
+    g_hdd.EnableNtCreateThreadExHook = g_settings.opts().hookNtCreateThreadEx;
+    g_hdd.EnableNtGetContextThreadHook = g_settings.opts().hookNtGetContextThread;
+    g_hdd.EnableNtQueryInformationProcessHook = g_settings.opts().hookNtQueryInformationProcess;
+    g_hdd.EnableNtQueryObjectHook = g_settings.opts().hookNtQueryObject;
+    g_hdd.EnableNtQueryPerformanceCounterHook = g_settings.opts().hookNtQueryPerformanceCounter;
+    g_hdd.EnableNtQuerySystemInformationHook = g_settings.opts().hookNtQuerySystemInformation;
+    g_hdd.EnableNtQuerySystemTimeHook = g_settings.opts().hookNtQuerySystemTime;
+    g_hdd.EnableNtSetContextThreadHook = g_settings.opts().hookNtSetContextThread;
+    g_hdd.EnableNtSetDebugFilterStateHook = g_settings.opts().hookNtSetDebugFilterState;
+    g_hdd.EnableNtSetInformationThreadHook = g_settings.opts().hookNtSetInformationThread;
+    g_hdd.EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
+    g_hdd.EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
+    g_hdd.EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;
+    g_hdd.EnableNtYieldExecutionHook = g_settings.opts().hookNtYieldExecution;
+    g_hdd.EnableOutputDebugStringHook = g_settings.opts().hookOutputDebugStringA;
+    g_hdd.EnablePebBeingDebugged = g_settings.opts().fixPebBeingDebugged;
+    g_hdd.EnablePebHeapFlags = g_settings.opts().fixPebHeapFlags;
+    g_hdd.EnablePebNtGlobalFlag = g_settings.opts().fixPebNtGlobalFlag;
+    g_hdd.EnablePebStartupInfo = g_settings.opts().fixPebStartupInfo;
+    g_hdd.EnablePreventThreadCreation = g_settings.opts().preventThreadCreation;
+    g_hdd.EnableProtectProcessId = g_settings.opts().protectProcessId;
 }
 
 //BOOL CALLBACK MyEnumChildProc(

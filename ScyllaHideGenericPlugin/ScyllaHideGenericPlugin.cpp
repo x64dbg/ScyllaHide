@@ -24,8 +24,6 @@ struct HookStatus
 
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
-extern HOOK_DLL_DATA HookDllData;
-
 #ifdef _WIN64
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
@@ -37,6 +35,8 @@ scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
+
+HOOK_DLL_DATA g_hdd;
 
 //globals
 static HMODULE hNtdllModule = 0;
@@ -78,7 +78,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
     {
         status.ProcessId = DebugEvent->dwProcessId;
         status.bHooked = false;
-        ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
+        ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
 
         if (DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
         {
@@ -99,7 +99,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
     {
         if (status.bHooked)
         {
-            startInjection(status.ProcessId, g_scyllaHideDllPath.c_str(), false);
+            startInjection(status.ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
         }
 
         break;
@@ -113,10 +113,10 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
         {
             if (!status.bHooked)
             {
-                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &HookDllData);
+                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &g_hdd);
 
                 status.bHooked = true;
-                startInjection(status.ProcessId, g_scyllaHideDllPath.c_str(), true);
+                startInjection(status.ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
             }
 
             break;
@@ -132,7 +132,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
 
 DLL_EXPORT void ScyllaHideReset()
 {
-    ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
+    ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
     hookStatusMap.clear();
 }
 

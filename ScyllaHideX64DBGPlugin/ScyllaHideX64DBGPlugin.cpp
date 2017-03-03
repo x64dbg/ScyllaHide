@@ -37,6 +37,8 @@ enum ScyllaMenuItems : int {
     MENU_MAX
 };
 
+extern t_AttachProcess _AttachProcess;
+
 #ifdef _WIN64
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
@@ -49,8 +51,7 @@ std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
 
-extern HOOK_DLL_DATA HookDllData;
-extern t_AttachProcess _AttachProcess;
+HOOK_DLL_DATA g_hdd = { 0 };
 
 HINSTANCE hinst;
 HMODULE hNtdllModule = 0;
@@ -115,7 +116,7 @@ static void cbMenuEntry(CBTYPE cbType, void* callbackInfo)
 
         if (ProcessId)
         {
-            startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
+            startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
             bHooked = true;
             MessageBoxA(hwndDlg, "Applied changes! Restarting target is NOT necessary!", "[ScyllaHide Options]", MB_OK | MB_ICONINFORMATION);
         }
@@ -153,7 +154,7 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
     {
         ProcessId = d->DebugEvent->dwProcessId;
         bHooked = false;
-        ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
+        ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
 
         if (d->DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
         {
@@ -173,7 +174,7 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
     {
         if (bHooked)
         {
-            startInjection(ProcessId, g_scyllaHideDllPath.c_str(), false);
+            startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
         }
         break;
     }
@@ -185,10 +186,10 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
         {
             if (!bHooked)
             {
-                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &HookDllData);
+                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &g_hdd);
 
                 bHooked = true;
-                startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
+                startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
             }
 
             break;
@@ -203,7 +204,7 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
 
 static void cbReset(CBTYPE cbType, void* callbackInfo)
 {
-    ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
+    ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
     bHooked = false;
     ProcessId = 0;
 }
