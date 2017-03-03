@@ -120,25 +120,27 @@ void InstallAntiAttachHook()
 
 bool StartFixBeingDebugged(DWORD targetPid, bool setToNull)
 {
-    auto hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
-    if (!hProcess)
+    scl::Handle hProcess(OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid));
+    if (!hProcess.get())
         return false;
 
-    auto peb = scl::GetPeb(hProcess);
+    auto peb = scl::GetPeb(hProcess.get());
     if (!peb)
         return false;
 
     peb->BeingDebugged = setToNull ? FALSE : TRUE;
-    scl::SetPeb(hProcess, peb.get());
+    if (!scl::SetPeb(hProcess.get(), peb.get()))
+        return false;
 
-    if (scl::IsWow64Process(hProcess))
+    if (scl::IsWow64Process(hProcess.get()))
     {
-        auto peb64 = scl::Wow64GetPeb64(hProcess);
+        auto peb64 = scl::Wow64GetPeb64(hProcess.get());
         if (!peb64)
             return false;
 
         peb->BeingDebugged = setToNull ? FALSE : TRUE;
-        scl::Wow64SetPeb64(hProcess, peb64.get());
+        if (!scl::Wow64SetPeb64(hProcess.get(), peb64.get()))
+            return false;
     }
 
     return true;

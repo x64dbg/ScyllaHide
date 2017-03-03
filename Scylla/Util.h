@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "Resource.h"
 #include "NtApiShim.h"
 
 namespace scl
