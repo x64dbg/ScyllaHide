@@ -29,7 +29,7 @@ typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 typedef void(__cdecl * t_SetDebuggerBreakpoint)(DWORD_PTR address);
 typedef bool(__cdecl * t_IsAddressBreakpoint)(DWORD_PTR address);
 
-extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+extern HOOK_DLL_DATA HookDllData;
 extern t_AttachProcess _AttachProcess;
 extern t_SetDebuggerBreakpoint _SetDebuggerBreakpoint;
 extern t_IsAddressBreakpoint _IsAddressBreakpoint;
@@ -453,7 +453,7 @@ extern "C" void DLL_EXPORT _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
             }
         }
 
-        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+        ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
 
         //change olly caption again !
         SetWindowTextW(hwmain, g_settings.opts().ollyWindowTitle.c_str());
@@ -488,7 +488,7 @@ extern "C" void DLL_EXPORT _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
         {
             if (!bHooked)
             {
-                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
+                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &HookDllData);
 
                 bHooked = true;
                 startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
@@ -512,7 +512,7 @@ extern "C" void DLL_EXPORT _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
 //reset variables. new target started or restarted
 extern "C" void DLL_EXPORT _ODBG_Pluginreset(void)
 {
-    ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+    ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
     bHooked = false;
     bEPBreakRemoved = false;
     ProcessId = 0;

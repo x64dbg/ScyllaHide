@@ -27,7 +27,7 @@ typedef struct _HOOK_NATIVE_CALL32 {
     PVOID hookedFunction;
 } HOOK_NATIVE_CALL32;
 
-typedef struct _HOOK_DLL_EXCHANGE {
+typedef struct _HOOK_DLL_DATA {
     HMODULE hDllImage;
     HMODULE hNtdll;
     HMODULE hkernel32;
@@ -162,7 +162,7 @@ typedef struct _HOOK_DLL_EXCHANGE {
     HOOK_NATIVE_CALL32 HookNative[MAX_NATIVE_HOOKS];
     PVOID NativeCallContinue;
 #endif
-} HOOK_DLL_EXCHANGE;
+} HOOK_DLL_DATA;
 #pragma pack(pop)
 
 #define HOOK_ERROR_SUCCESS 0

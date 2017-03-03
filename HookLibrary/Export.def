@@ -1,6 +1,6 @@
 LIBRARY
 EXPORTS
-DllExchange
+HookDllData
 HookedBlockInput
 HookedGetLocalTime
 HookedGetSystemTime

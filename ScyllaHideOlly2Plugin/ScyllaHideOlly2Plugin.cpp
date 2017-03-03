@@ -26,7 +26,7 @@
 typedef int(__cdecl * t_Attachtoactiveprocess)(int newprocessid);
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
-extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+extern HOOK_DLL_DATA HookDllData;
 extern t_AttachProcess _AttachProcess;
 
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
@@ -343,7 +343,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
     {
         ProcessId = debugevent->dwProcessId;
         bHooked = false;
-        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+        ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
 
         if (debugevent->u.CreateProcessInfo.lpStartAddress == NULL)
         {
@@ -377,7 +377,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         {
             if (!bHooked)
             {
-                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
+                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &HookDllData);
 
                 bHooked = true;
                 startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);

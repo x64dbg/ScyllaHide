@@ -32,7 +32,7 @@
 
 typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 
-extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+extern HOOK_DLL_DATA HookDllData;
 extern t_AttachProcess _AttachProcess;
 
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
@@ -121,7 +121,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
         ProcessId = dbgEvent->pid;
         bHooked = false;
-        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+        ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
 
         if (dbg != 0)
         {

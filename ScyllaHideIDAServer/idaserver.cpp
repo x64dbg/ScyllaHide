@@ -10,7 +10,7 @@
 #include "IdaServerExchange.h"
 #include "..\PluginGeneric\Injector.h"
 
-extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+extern HOOK_DLL_DATA HookDllData;
 
 #ifdef _WIN64
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
@@ -238,7 +238,7 @@ static void handleClient(SOCKET ClientSocket)
 
                 ProcessId = idaExchange.ProcessId;
                 bHooked = false;
-                ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+                ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
 
                 if (!once)
                 {

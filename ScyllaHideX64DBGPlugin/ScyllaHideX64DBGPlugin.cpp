@@ -49,7 +49,7 @@ std::wstring g_scyllaHideDllPath;
 std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
 
-extern HOOK_DLL_EXCHANGE DllExchangeLoader;
+extern HOOK_DLL_DATA HookDllData;
 extern t_AttachProcess _AttachProcess;
 
 HINSTANCE hinst;
@@ -153,7 +153,7 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
     {
         ProcessId = d->DebugEvent->dwProcessId;
         bHooked = false;
-        ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+        ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
 
         if (d->DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
         {
@@ -185,7 +185,7 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
         {
             if (!bHooked)
             {
-                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &DllExchangeLoader);
+                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &HookDllData);
 
                 bHooked = true;
                 startInjection(ProcessId, g_scyllaHideDllPath.c_str(), true);
@@ -203,7 +203,7 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
 
 static void cbReset(CBTYPE cbType, void* callbackInfo)
 {
-    ZeroMemory(&DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE));
+    ZeroMemory(&HookDllData, sizeof(HOOK_DLL_DATA));
     bHooked = false;
     ProcessId = 0;
 }

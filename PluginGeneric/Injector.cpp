@@ -12,7 +12,7 @@
 extern scl::Settings g_settings;
 extern scl::Logger g_log;
 
-HOOK_DLL_EXCHANGE DllExchangeLoader = { 0 };
+HOOK_DLL_DATA HookDllData = { 0 };
 
 static LPVOID remoteImageBase = 0;
 
@@ -28,7 +28,7 @@ BYTE* RemoteBreakinPatch;
 BYTE code[8];
 HANDLE hDebuggee;
 
-void ReadNtApiInformation(const wchar_t *file, HOOK_DLL_EXCHANGE *hde)
+void ReadNtApiInformation(const wchar_t *file, HOOK_DLL_DATA *hde)
 {
     scl::NtApiLoader api_loader;
     auto res = api_loader.Load(file);
@@ -146,8 +146,8 @@ bool StartFixBeingDebugged(DWORD targetPid, bool setToNull)
 
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-    DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
-    DllExchangeLoader.EnableProtectProcessId = TRUE;
+    HookDllData.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
+    HookDllData.EnableProtectProcessId = TRUE;
 
     DWORD peb_flags = 0;
     if (g_settings.opts().fixPebBeingDebugged) peb_flags |= PEB_PATCH_BeingDebugged;
@@ -157,20 +157,20 @@ bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 
     ApplyPEBPatch(hProcess, peb_flags);
 
-    return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
+    return ApplyHook(&HookDllData, hProcess, dllMemory, imageBase);
 }
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
 {
     DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
-    DWORD exchangeDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "DllExchange");
+    DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
 
     if (newProcess == false)
     {
         //g_log.Log(L"Apply hooks again");
         if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
         {
-            WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0);
+            WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &HookDllData, sizeof(HOOK_DLL_DATA), 0);
         }
     }
     else
@@ -180,23 +180,23 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory, bool newProcess)
             RemoveDebugPrivileges(hProcess);
         }
 
-        RestoreHooks(&DllExchangeLoader, hProcess);
+        RestoreHooks(&HookDllData, hProcess);
 
         remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
         if (remoteImageBase)
         {
-            FillExchangeStruct(hProcess, &DllExchangeLoader);
+            FillHookDllData(hProcess, &HookDllData);
 
 
             StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
 
-            if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)exchangeDataAddressRva + (DWORD_PTR)remoteImageBase), &DllExchangeLoader, sizeof(HOOK_DLL_EXCHANGE), 0))
+            if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &HookDllData, sizeof(HOOK_DLL_DATA), 0))
             {
                 g_log.LogInfo(L"Hook Injection successful, Imagebase %p", remoteImageBase);
             }
             else
             {
-                g_log.LogInfo(L"Failed to write exchange struct");
+                g_log.LogInfo(L"Failed to write hook dll data");
             }
         }
         else
@@ -430,52 +430,52 @@ BYTE * ReadFileToMemory(const WCHAR * targetFilePath)
     return FilePtr;
 }
 
-void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data)
+void FillHookDllData(HANDLE hProcess, HOOK_DLL_DATA *hdd)
 {
     HMODULE localKernel = GetModuleHandleW(L"kernel32.dll");
     HMODULE localKernelbase = GetModuleHandleW(L"kernelbase.dll");
     HMODULE localNtdll = GetModuleHandleW(L"ntdll.dll");
 
-    data->hNtdll = GetModuleBaseRemote(hProcess, L"ntdll.dll");
-    data->hkernel32 = GetModuleBaseRemote(hProcess, L"kernel32.dll");
-    data->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
-    data->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
+    hdd->hNtdll = GetModuleBaseRemote(hProcess, L"ntdll.dll");
+    hdd->hkernel32 = GetModuleBaseRemote(hProcess, L"kernel32.dll");
+    hdd->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
+    hdd->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
 
-    data->EnablePebBeingDebugged = g_settings.opts().fixPebBeingDebugged;
-    data->EnablePebHeapFlags = g_settings.opts().fixPebHeapFlags;
-    data->EnablePebNtGlobalFlag = g_settings.opts().fixPebNtGlobalFlag;
-    data->EnablePebStartupInfo = g_settings.opts().fixPebStartupInfo;
-    data->EnableBlockInputHook = g_settings.opts().hookBlockInput;
-    data->EnableOutputDebugStringHook = g_settings.opts().hookOutputDebugStringA;
-    data->EnableNtSetInformationThreadHook = g_settings.opts().hookNtSetInformationThread;
-    data->EnableNtQueryInformationProcessHook = g_settings.opts().hookNtQueryInformationProcess;
-    data->EnableNtQuerySystemInformationHook = g_settings.opts().hookNtQuerySystemInformation;
-    data->EnableNtQueryObjectHook = g_settings.opts().hookNtQueryObject;
-    data->EnableNtYieldExecutionHook = g_settings.opts().hookNtYieldExecution;
-    data->EnableNtCloseHook = g_settings.opts().hookNtClose;
-    data->EnableNtCreateThreadExHook = g_settings.opts().hookNtCreateThreadEx;
-    data->EnablePreventThreadCreation = g_settings.opts().preventThreadCreation;
-    data->EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
-    data->EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
-    data->EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;
-    data->EnableNtSetDebugFilterStateHook = g_settings.opts().hookNtSetDebugFilterState;
-    data->EnableGetTickCountHook = g_settings.opts().hookGetTickCount;
-    data->EnableGetTickCount64Hook = g_settings.opts().hookGetTickCount64;
-    data->EnableGetLocalTimeHook = g_settings.opts().hookGetLocalTime;
-    data->EnableGetSystemTimeHook = g_settings.opts().hookGetSystemTime;
-    data->EnableNtQuerySystemTimeHook = g_settings.opts().hookNtQuerySystemTime;
-    data->EnableNtQueryPerformanceCounterHook = g_settings.opts().hookNtQueryPerformanceCounter;
-    data->EnableNtSetInformationProcessHook = g_settings.opts().hookNtSetInformationProcess;
+    hdd->EnablePebBeingDebugged = g_settings.opts().fixPebBeingDebugged;
+    hdd->EnablePebHeapFlags = g_settings.opts().fixPebHeapFlags;
+    hdd->EnablePebNtGlobalFlag = g_settings.opts().fixPebNtGlobalFlag;
+    hdd->EnablePebStartupInfo = g_settings.opts().fixPebStartupInfo;
+    hdd->EnableBlockInputHook = g_settings.opts().hookBlockInput;
+    hdd->EnableOutputDebugStringHook = g_settings.opts().hookOutputDebugStringA;
+    hdd->EnableNtSetInformationThreadHook = g_settings.opts().hookNtSetInformationThread;
+    hdd->EnableNtQueryInformationProcessHook = g_settings.opts().hookNtQueryInformationProcess;
+    hdd->EnableNtQuerySystemInformationHook = g_settings.opts().hookNtQuerySystemInformation;
+    hdd->EnableNtQueryObjectHook = g_settings.opts().hookNtQueryObject;
+    hdd->EnableNtYieldExecutionHook = g_settings.opts().hookNtYieldExecution;
+    hdd->EnableNtCloseHook = g_settings.opts().hookNtClose;
+    hdd->EnableNtCreateThreadExHook = g_settings.opts().hookNtCreateThreadEx;
+    hdd->EnablePreventThreadCreation = g_settings.opts().preventThreadCreation;
+    hdd->EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
+    hdd->EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
+    hdd->EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;
+    hdd->EnableNtSetDebugFilterStateHook = g_settings.opts().hookNtSetDebugFilterState;
+    hdd->EnableGetTickCountHook = g_settings.opts().hookGetTickCount;
+    hdd->EnableGetTickCount64Hook = g_settings.opts().hookGetTickCount64;
+    hdd->EnableGetLocalTimeHook = g_settings.opts().hookGetLocalTime;
+    hdd->EnableGetSystemTimeHook = g_settings.opts().hookGetSystemTime;
+    hdd->EnableNtQuerySystemTimeHook = g_settings.opts().hookNtQuerySystemTime;
+    hdd->EnableNtQueryPerformanceCounterHook = g_settings.opts().hookNtQueryPerformanceCounter;
+    hdd->EnableNtSetInformationProcessHook = g_settings.opts().hookNtSetInformationProcess;
 
-    data->EnableNtGetContextThreadHook = g_settings.opts().hookNtGetContextThread;
-    data->EnableNtSetContextThreadHook = g_settings.opts().hookNtSetContextThread;
-    data->EnableNtContinueHook = g_settings.opts().hookNtContinue | g_settings.opts().killAntiAttach;
-    data->EnableKiUserExceptionDispatcherHook = g_settings.opts().hookKiUserExceptionDispatcher;
-    data->EnableMalwareRunPeUnpacker = g_settings.opts().malwareRunpeUnpacker;
+    hdd->EnableNtGetContextThreadHook = g_settings.opts().hookNtGetContextThread;
+    hdd->EnableNtSetContextThreadHook = g_settings.opts().hookNtSetContextThread;
+    hdd->EnableNtContinueHook = g_settings.opts().hookNtContinue | g_settings.opts().killAntiAttach;
+    hdd->EnableKiUserExceptionDispatcherHook = g_settings.opts().hookKiUserExceptionDispatcher;
+    hdd->EnableMalwareRunPeUnpacker = g_settings.opts().malwareRunpeUnpacker;
 
-    data->isKernel32Hooked = FALSE;
-    data->isNtdllHooked = FALSE;
-    data->isUser32Hooked = FALSE;
+    hdd->isKernel32Hooked = FALSE;
+    hdd->isNtdllHooked = FALSE;
+    hdd->isUser32Hooked = FALSE;
 }
 
 bool RemoveDebugPrivileges(HANDLE hProcess)

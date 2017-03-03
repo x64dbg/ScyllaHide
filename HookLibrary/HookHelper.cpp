@@ -56,7 +56,7 @@ const WCHAR * BadWindowClassList[] =
 	L"tgrzoom"
 };
 
-extern HOOK_DLL_EXCHANGE DllExchange;
+extern HOOK_DLL_DATA HookDllData;
 extern SAVE_DEBUG_REGISTERS ArrayDebugRegister[100];
 
 bool IsProcessBad(PUNICODE_STRING process)
@@ -244,9 +244,9 @@ void * GetPEBRemote(HANDLE hProcess)
 {
 	PROCESS_BASIC_INFORMATION pbi;
 
-	if (DllExchange.dNtQueryInformationProcess)
+	if (HookDllData.dNtQueryInformationProcess)
 	{
-		if (DllExchange.dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
+		if (HookDllData.dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
 		{
 			return pbi.PebBaseAddress;
 		}
@@ -269,9 +269,9 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 {
 	PROCESS_BASIC_INFORMATION pbi;
 
-	if (DllExchange.dNtQueryInformationProcess)
+	if (HookDllData.dNtQueryInformationProcess)
 	{
-		if (DllExchange.dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
+		if (HookDllData.dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
 		{
 			return (DWORD)pbi.UniqueProcessId;
 		}

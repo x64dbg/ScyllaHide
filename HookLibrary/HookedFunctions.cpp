@@ -3,7 +3,7 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-HOOK_DLL_EXCHANGE DllExchange = { 0 };
+HOOK_DLL_DATA HookDllData = { 0 };
 
 #include "HookedFunctions.h"
 #include "HookHelper.h"
@@ -28,14 +28,14 @@ NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS
             return STATUS_SUCCESS;
         }
     }
-    return DllExchange.dNtSetInformationThread(ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
+    return HookDllData.dNtSetInformationThread(ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
 }
 
 NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
 {
     if (SystemInformationClass == SystemKernelDebuggerInformation || SystemInformationClass == SystemProcessInformation)
     {
-        NTSTATUS ntStat = DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
+        NTSTATUS ntStat = HookDllData.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
         if (NT_SUCCESS(ntStat) && SystemInformation != 0 && SystemInformationLength != 0)
         {
             if (SystemInformationClass == SystemKernelDebuggerInformation)
@@ -52,7 +52,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
 
         return ntStat;
     }
-    return DllExchange.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
+    return HookDllData.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
 }
 
 static ULONG ValueProcessBreakOnTermination = FALSE;
@@ -60,14 +60,14 @@ static ULONG ValueProcessDebugFlags = PROCESS_DEBUG_INHERIT; // actual value is 
 static bool IsProcessHandleTracingEnabled = false;
 
 #ifndef STATUS_INVALID_PARAMETER
-#define STATUS_INVALID_PARAMETER         ((DWORD   )0xC000000DL) 
+#define STATUS_INVALID_PARAMETER         ((DWORD   )0xC000000DL)
 #endif
 
 NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength)
 {
     if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
     {
-        NTSTATUS ntStat = DllExchange.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
+        NTSTATUS ntStat = HookDllData.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
 
         if (NT_SUCCESS(ntStat) && ProcessInformation != 0 && ProcessInformationLength != 0)
         {
@@ -107,7 +107,7 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
 
         return ntStat;
     }
-    return DllExchange.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
+    return HookDllData.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
 }
 
 NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength)
@@ -177,7 +177,7 @@ NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCL
 				{
 					return STATUS_INFO_LENGTH_MISMATCH;
 				}
-				
+
 				// NtSetInformationProcess will happily dereference this pointer
 				if (ProcessInformation == NULL)
 				{
@@ -195,12 +195,12 @@ NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCL
 			return STATUS_SUCCESS;
 		}
     }
-    return DllExchange.dNtSetInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength);
+    return HookDllData.dNtSetInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength);
 }
 
 NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS ObjectInformationClass, PVOID ObjectInformation, ULONG ObjectInformationLength, PULONG ReturnLength)
 {
-    NTSTATUS ntStat = DllExchange.dNtQueryObject(Handle, ObjectInformationClass, ObjectInformation, ObjectInformationLength, ReturnLength);
+    NTSTATUS ntStat = HookDllData.dNtQueryObject(Handle, ObjectInformationClass, ObjectInformation, ObjectInformationLength, ReturnLength);
 
     if (NT_SUCCESS(ntStat) && ObjectInformation)
     {
@@ -219,7 +219,7 @@ NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS Objec
 
 NTSTATUS NTAPI HookedNtYieldExecution()
 {
-    DllExchange.dNtYieldExecution();
+    HookDllData.dNtYieldExecution();
     return STATUS_ACCESS_DENIED; //better than STATUS_SUCCESS or STATUS_NO_YIELD_PERFORMED
 }
 
@@ -235,7 +235,7 @@ NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
         }
     }
 
-    NTSTATUS ntStat = DllExchange.dNtGetContextThread(ThreadHandle, ThreadContext);
+    NTSTATUS ntStat = HookDllData.dNtGetContextThread(ThreadHandle, ThreadContext);
 
     if (ContextBackup)
     {
@@ -256,7 +256,7 @@ NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
         }
     }
 
-    NTSTATUS ntStat = DllExchange.dNtSetContextThread(ThreadHandle, ThreadContext);
+    NTSTATUS ntStat = HookDllData.dNtSetContextThread(ThreadHandle, ThreadContext);
 
     if (ContextBackup)
     {
@@ -297,11 +297,11 @@ VOID NAKED NTAPI HookedKiUserExceptionDispatcher()// (PEXCEPTION_RECORD pExcptRe
         PUSH EAX
         PUSH ECX
         CALL HandleKiUserExceptionDispatcher
-        jmp DllExchange.dKiUserExceptionDispatcher
+        jmp HookDllData.dKiUserExceptionDispatcher
     }
 #endif
 
-    //return DllExchange.dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
+    //return HookDllData.dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
 }
 
 static DWORD_PTR KiUserExceptionDispatcherAddress = 0;
@@ -311,7 +311,7 @@ NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert) //re
     DWORD_PTR retAddress = (DWORD_PTR)_ReturnAddress();
     if (!KiUserExceptionDispatcherAddress)
     {
-        KiUserExceptionDispatcherAddress = (DWORD_PTR)GetProcAddress(DllExchange.hNtdll, "KiUserExceptionDispatcher");
+        KiUserExceptionDispatcherAddress = (DWORD_PTR)GetProcAddress(HookDllData.hNtdll, "KiUserExceptionDispatcher");
     }
 
     if (ThreadContext)
@@ -337,26 +337,26 @@ NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert) //re
         }
     }
 
-    return DllExchange.dNtContinue(ThreadContext, RaiseAlert);
+    return HookDllData.dNtContinue(ThreadContext, RaiseAlert);
 }
 
 #ifndef _WIN64
 PVOID NTAPI HandleNativeCallInternal(DWORD eaxValue, DWORD ecxValue)
 {
-    for (int i = 0; i < _countof(DllExchange.HookNative); i++)
+    for (int i = 0; i < _countof(HookDllData.HookNative); i++)
     {
-        if (DllExchange.HookNative[i].eaxValue == eaxValue)
+        if (HookDllData.HookNative[i].eaxValue == eaxValue)
         {
-            if (DllExchange.HookNative[i].ecxValue)
+            if (HookDllData.HookNative[i].ecxValue)
             {
-                if (DllExchange.HookNative[i].ecxValue == ecxValue)
+                if (HookDllData.HookNative[i].ecxValue == ecxValue)
                 {
-                    return DllExchange.HookNative[i].hookedFunction;
+                    return HookDllData.HookNative[i].hookedFunction;
                 }
             }
             else
             {
-                return DllExchange.HookNative[i].hookedFunction;
+                return HookDllData.HookNative[i].hookedFunction;
             }
         }
     }
@@ -384,7 +384,7 @@ void NAKED NTAPI HookedNativeCallInternal()
         jmp eax
         NoHook:
         POPAD
-        jmp DllExchange.NativeCallContinue
+        jmp HookDllData.NativeCallContinue
     }
 #endif
 }
@@ -401,7 +401,7 @@ NTSTATUS NTAPI HookedNtClose(HANDLE Handle)
             return STATUS_HANDLE_NOT_CLOSABLE;
         }
 
-        return DllExchange.dNtClose(Handle);
+        return HookDllData.dNtClose(Handle);
     }
     else
     {
@@ -419,7 +419,7 @@ DWORD WINAPI HookedGetTickCount(void)
 {
     if (!OneTickCount)
     {
-        OneTickCount = DllExchange.dGetTickCount();
+        OneTickCount = HookDllData.dGetTickCount();
     }
     else
     {
@@ -432,9 +432,9 @@ ULONGLONG WINAPI HookedGetTickCount64(void) //yes we can use DWORD
 {
 	if (!OneTickCount)
 	{
-		if (DllExchange.dGetTickCount)
+		if (HookDllData.dGetTickCount)
 		{
-			OneTickCount = DllExchange.dGetTickCount();
+			OneTickCount = HookDllData.dGetTickCount();
 		}
 		else
 		{
@@ -455,18 +455,18 @@ void WINAPI HookedGetLocalTime(LPSYSTEMTIME lpSystemTime)
 {
 	if (!OneLocalTime.wYear)
 	{
-		DllExchange.dGetLocalTime(&OneLocalTime);
+		HookDllData.dGetLocalTime(&OneLocalTime);
 
-		if (DllExchange.dGetSystemTime)
+		if (HookDllData.dGetSystemTime)
 		{
-			DllExchange.dGetSystemTime(&OneSystemTime);
+			HookDllData.dGetSystemTime(&OneSystemTime);
 		}
 	}
 	else
 	{
 		IncreaseSystemTime(&OneLocalTime);
 
-		if (DllExchange.dGetSystemTime)
+		if (HookDllData.dGetSystemTime)
 		{
 			IncreaseSystemTime(&OneSystemTime);
 		}
@@ -482,18 +482,18 @@ void WINAPI HookedGetSystemTime(LPSYSTEMTIME lpSystemTime)
 {
 	if (!OneSystemTime.wYear)
 	{
-		DllExchange.dGetSystemTime(&OneSystemTime);
+		HookDllData.dGetSystemTime(&OneSystemTime);
 
-		if (DllExchange.dGetLocalTime)
+		if (HookDllData.dGetLocalTime)
 		{
-			DllExchange.dGetLocalTime(&OneLocalTime);
+			HookDllData.dGetLocalTime(&OneLocalTime);
 		}
 	}
 	else
 	{
 		IncreaseSystemTime(&OneSystemTime);
 
-		if (DllExchange.dGetLocalTime)
+		if (HookDllData.dGetLocalTime)
 		{
 			IncreaseSystemTime(&OneLocalTime);
 		}
@@ -511,14 +511,14 @@ NTSTATUS WINAPI HookedNtQuerySystemTime(PLARGE_INTEGER SystemTime)
 {
 	if (!OneNativeSysTime.QuadPart)
 	{
-		DllExchange.dNtQuerySystemTime(&OneNativeSysTime);
+		HookDllData.dNtQuerySystemTime(&OneNativeSysTime);
 	}
 	else
 	{
 		OneNativeSysTime.QuadPart++;
 	}
 
-	NTSTATUS ntStat = DllExchange.dNtQuerySystemTime(SystemTime);
+	NTSTATUS ntStat = HookDllData.dNtQuerySystemTime(SystemTime);
 
 	if (ntStat == STATUS_SUCCESS)
 	{
@@ -538,14 +538,14 @@ NTSTATUS NTAPI HookedNtQueryPerformanceCounter(PLARGE_INTEGER PerformanceCounter
 {
 	if (!OnePerformanceCounter.QuadPart)
 	{
-		DllExchange.dNtQueryPerformanceCounter(&OnePerformanceCounter, &OnePerformanceFrequency);
+		HookDllData.dNtQueryPerformanceCounter(&OnePerformanceCounter, &OnePerformanceFrequency);
 	}
 	else
 	{
 		OnePerformanceCounter.QuadPart++;
 	}
 
-	NTSTATUS ntStat = DllExchange.dNtQueryPerformanceCounter(PerformanceCounter, PerformanceFrequency);
+	NTSTATUS ntStat = HookDllData.dNtQueryPerformanceCounter(PerformanceCounter, PerformanceFrequency);
 
 	if (ntStat == STATUS_SUCCESS)
 	{
@@ -607,7 +607,7 @@ DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString) //Worst anti-debug 
 
 HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICODE_STRING lpszClass, PUNICODE_STRING lpszWindow, DWORD dwType)
 {
-    HWND resultHwnd = DllExchange.dNtUserFindWindowEx(hWndParent, hWndChildAfter, lpszClass, lpszWindow, dwType);
+    HWND resultHwnd = HookDllData.dNtUserFindWindowEx(hWndParent, hWndChildAfter, lpszClass, lpszWindow, dwType);
     if (resultHwnd)
     {
         if (IsWindowClassBad(lpszClass) || IsWindowNameBad(lpszWindow))
@@ -615,19 +615,19 @@ HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICO
             return 0;
         }
 
-		if (DllExchange.EnableProtectProcessId == TRUE)
+		if (HookDllData.EnableProtectProcessId == TRUE)
 		{
 			DWORD dwProcessId;
-			if (DllExchange.dNtUserQueryWindow)
+			if (HookDllData.dNtUserQueryWindow)
 			{
-				dwProcessId = (DWORD)DllExchange.dNtUserQueryWindow(resultHwnd, WindowProcess);
+				dwProcessId = (DWORD)HookDllData.dNtUserQueryWindow(resultHwnd, WindowProcess);
 			}
 			else
 			{
-				dwProcessId = (DWORD)DllExchange.NtUserQueryWindow(resultHwnd, WindowProcess);
+				dwProcessId = (DWORD)HookDllData.NtUserQueryWindow(resultHwnd, WindowProcess);
 			}
 
-			if (dwProcessId == DllExchange.dwProtectedProcessId)
+			if (dwProcessId == HookDllData.dwProtectedProcessId)
 			{
 				return 0;
 			}
@@ -645,22 +645,22 @@ void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
 {
     DWORD dwProcessId = 0;
 
-    if (DllExchange.EnableProtectProcessId == TRUE)
+    if (HookDllData.EnableProtectProcessId == TRUE)
     {
         for (UINT i = 0; i < *pcHwndNeeded; i++)
         {
             if (phwndFirst[i] != 0)
             {
                 //GetWindowThreadProcessId(phwndFirst[i], &dwProcessId);
-				if (DllExchange.dNtUserQueryWindow)
+				if (HookDllData.dNtUserQueryWindow)
 				{
-					dwProcessId = (DWORD)DllExchange.dNtUserQueryWindow(phwndFirst[i], WindowProcess);
+					dwProcessId = (DWORD)HookDllData.dNtUserQueryWindow(phwndFirst[i], WindowProcess);
 				}
 				else
 				{
-					dwProcessId = (DWORD)DllExchange.NtUserQueryWindow(phwndFirst[i], WindowProcess);
+					dwProcessId = (DWORD)HookDllData.NtUserQueryWindow(phwndFirst[i], WindowProcess);
 				}
-                if (dwProcessId == DllExchange.dwProtectedProcessId)
+                if (dwProcessId == HookDllData.dwProtectedProcessId)
                 {
                     if (i == 0)
                     {
@@ -679,7 +679,7 @@ void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
 
 NTSTATUS NTAPI HookedNtUserBuildHwndList(HDESK hdesk, HWND hwndNext, BOOL fEnumChildren, DWORD idThread, UINT cHwndMax, HWND *phwndFirst, PUINT pcHwndNeeded)
 {
-    NTSTATUS ntStat = DllExchange.dNtUserBuildHwndList(hdesk, hwndNext, fEnumChildren, idThread, cHwndMax, phwndFirst, pcHwndNeeded);
+    NTSTATUS ntStat = HookDllData.dNtUserBuildHwndList(hdesk, hwndNext, fEnumChildren, idThread, cHwndMax, phwndFirst, pcHwndNeeded);
 
     if (NT_SUCCESS(ntStat) && pcHwndNeeded != 0 && phwndFirst != 0)
     {
@@ -691,13 +691,13 @@ NTSTATUS NTAPI HookedNtUserBuildHwndList(HDESK hdesk, HWND hwndNext, BOOL fEnumC
 
 HANDLE NTAPI HookedNtUserQueryWindow(HWND hwnd, WINDOWINFOCLASS WindowInfo)
 {
-	HANDLE hHandle = DllExchange.dNtUserQueryWindow(hwnd, WindowInfo);
+	HANDLE hHandle = HookDllData.dNtUserQueryWindow(hwnd, WindowInfo);
 
 	if (hHandle)
 	{
-		if(DllExchange.EnableProtectProcessId == TRUE)
+		if(HookDllData.EnableProtectProcessId == TRUE)
 		{
-			if (hHandle == (HANDLE)DllExchange.dwProtectedProcessId)
+			if (hHandle == (HANDLE)HookDllData.dwProtectedProcessId)
 			{
 				return (HANDLE)((DWORD_PTR)hHandle + 1);
 			}
@@ -714,13 +714,13 @@ NTSTATUS NTAPI HookedNtCreateThread(PHANDLE ThreadHandle,ACCESS_MASK DesiredAcce
     {
         return STATUS_INSUFFICIENT_RESOURCES;//STATUS_INVALID_PARAMETER STATUS_INVALID_HANDLE STATUS_INSUFFICIENT_RESOURCES
     }
-    return DllExchange.dNtCreateThread(ThreadHandle, DesiredAccess, ObjectAttributes, ProcessHandle, ClientId,ThreadContext, InitialTeb,CreateSuspended);
+    return HookDllData.dNtCreateThread(ThreadHandle, DesiredAccess, ObjectAttributes, ProcessHandle, ClientId,ThreadContext, InitialTeb,CreateSuspended);
 }
 
 //WIN 7: CreateThread -> CreateRemoteThreadEx -> NtCreateThreadEx
 NTSTATUS NTAPI HookedNtCreateThreadEx(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PVOID StartRoutine,PVOID Argument,ULONG CreateFlags,ULONG_PTR ZeroBits,SIZE_T StackSize,SIZE_T MaximumStackSize,PPS_ATTRIBUTE_LIST AttributeList)
 {
-    if (DllExchange.EnableNtCreateThreadExHook == TRUE) //prevent hide from debugger
+    if (HookDllData.EnableNtCreateThreadExHook == TRUE) //prevent hide from debugger
     {
         if (CreateFlags & THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER)
         {
@@ -728,7 +728,7 @@ NTSTATUS NTAPI HookedNtCreateThreadEx(PHANDLE ThreadHandle,ACCESS_MASK DesiredAc
         }
     }
 
-    if (DllExchange.EnablePreventThreadCreation == TRUE)
+    if (HookDllData.EnablePreventThreadCreation == TRUE)
     {
         if (ProcessHandle == NtCurrentProcess)
         {
@@ -736,7 +736,7 @@ NTSTATUS NTAPI HookedNtCreateThreadEx(PHANDLE ThreadHandle,ACCESS_MASK DesiredAc
         }
     }
 
-    return DllExchange.dNtCreateThreadEx(ThreadHandle, DesiredAccess, ObjectAttributes, ProcessHandle, StartRoutine, Argument, CreateFlags, ZeroBits, StackSize, MaximumStackSize,AttributeList);
+    return HookDllData.dNtCreateThreadEx(ThreadHandle, DesiredAccess, ObjectAttributes, ProcessHandle, StartRoutine, Argument, CreateFlags, ZeroBits, StackSize, MaximumStackSize,AttributeList);
 }
 
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes)
@@ -829,7 +829,7 @@ void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo)
 
     while (TRUE)
     {
-        if (IsProcessBad(&pInfo->ImageName) || ((DllExchange.EnableProtectProcessId == TRUE) && (pInfo->UniqueProcessId == (HANDLE)DllExchange.dwProtectedProcessId)))
+        if (IsProcessBad(&pInfo->ImageName) || ((HookDllData.EnableProtectProcessId == TRUE) && (pInfo->UniqueProcessId == (HANDLE)HookDllData.dwProtectedProcessId)))
         {
             if (pInfo->ImageName.Buffer)
                 ZeroMemory(pInfo->ImageName.Buffer, pInfo->ImageName.Length);
@@ -872,6 +872,6 @@ NTSTATUS NTAPI HookedNtResumeThread(HANDLE ThreadHandle, PULONG PreviousSuspendC
 	}
 	else
 	{
-		return DllExchange.dNtResumeThread(ThreadHandle, PreviousSuspendCount);
+		return HookDllData.dNtResumeThread(ThreadHandle, PreviousSuspendCount);
 	}
 }
