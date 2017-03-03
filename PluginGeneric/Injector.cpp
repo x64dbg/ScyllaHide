@@ -133,12 +133,12 @@ bool StartFixBeingDebugged(DWORD targetPid, bool setToNull)
 
     if (scl::IsWow64Process(hProcess))
     {
-        auto peb64 = scl::GetPeb64(hProcess);
+        auto peb64 = scl::Wow64GetPeb64(hProcess);
         if (!peb64)
             return false;
 
         peb->BeingDebugged = setToNull ? FALSE : TRUE;
-        scl::SetPeb64(hProcess, peb64.get());
+        scl::Wow64SetPeb64(hProcess, peb64.get());
     }
 
     return true;

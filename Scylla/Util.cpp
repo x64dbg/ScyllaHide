@@ -148,6 +148,15 @@ std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> &scl::wstr_conv()
     return conv;
 }
 
+bool scl::Wow64QueryInformationProcess64(HANDLE hProcess, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength)
+{
+    auto _NtWow64QueryInformationProcess64 = (t_NtWow64QueryInformationProcess64)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtWow64QueryInformationProcess64");
+    if (!_NtWow64QueryInformationProcess64)
+        return false;
+
+    return NT_SUCCESS(_NtWow64QueryInformationProcess64(hProcess, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength));
+}
+
 bool scl::Wow64ReadProcessMemory64(HANDLE hProcess, PVOID64 address, PVOID buffer, ULONGLONG buffer_size, PULONGLONG bytes_read)
 {
 #ifndef _WIN64

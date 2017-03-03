@@ -32,9 +32,9 @@ static ScyllaTestResult Check_PEB_BeingDebugged()
     return SCYLLA_TEST_CHECK(peb->BeingDebugged == 0);
 }
 
-static ScyllaTestResult Check_PEB64_BeingDebugged()
+static ScyllaTestResult Check_Wow64PEB64_BeingDebugged()
 {
-    const auto peb64 = scl::GetPeb64(g_proc_handle);
+    const auto peb64 = scl::Wow64GetPeb64(g_proc_handle);
     SCYLLA_TEST_FAIL_IF(!peb64);
 
     return SCYLLA_TEST_CHECK(peb64->BeingDebugged == 0);
@@ -48,10 +48,10 @@ static ScyllaTestResult Check_PEB_NtGlobalFlag()
     return SCYLLA_TEST_CHECK((peb->NtGlobalFlag & bad_flags) == 0);
 }
 
-static ScyllaTestResult Check_PEB64_NtGlobalFlag()
+static ScyllaTestResult Check_Wow64PEB64_NtGlobalFlag()
 {
     const DWORD bad_flags = FLG_HEAP_ENABLE_TAIL_CHECK | FLG_HEAP_ENABLE_FREE_CHECK | FLG_HEAP_VALIDATE_PARAMETERS;
-    const auto peb64 = scl::GetPeb64(g_proc_handle);
+    const auto peb64 = scl::Wow64GetPeb64(g_proc_handle);
     SCYLLA_TEST_FAIL_IF(!peb64);
     return SCYLLA_TEST_CHECK((peb64->NtGlobalFlag & bad_flags) == 0);
 }
@@ -81,25 +81,22 @@ static ScyllaTestResult Check_PEB_HeapFlags()
     return ScyllaTestOk;
 }
 
-static ScyllaTestResult Check_PEB64_HeapFlags()
+static ScyllaTestResult Check_Wow64PEB64_HeapFlags()
 {
     const DWORD bad_flags = HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED | HEAP_SKIP_VALIDATION_CHECKS | HEAP_VALIDATE_PARAMETERS_ENABLED;
-    const auto peb64 = scl::GetPeb64(g_proc_handle);
+    const auto peb64 = scl::Wow64GetPeb64(g_proc_handle);
     SCYLLA_TEST_FAIL_IF(!peb64);
-
-    auto _NtWow64ReadVirtualMemory64 = (t_NtWow64ReadVirtualMemory64)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtWow64ReadVirtualMemory64");
-    SCYLLA_TEST_FAIL_IF(!_NtWow64ReadVirtualMemory64);
 
     std::basic_string<PVOID64> heaps64;
     heaps64.resize(peb64->NumberOfHeaps);
 
-    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(_NtWow64ReadVirtualMemory64(g_proc_handle, (PVOID64)peb64->ProcessHeaps, (PVOID)heaps64.data(), heaps64.size()*sizeof(PVOID64), nullptr)));
+    SCYLLA_TEST_FAIL_IF(!scl::Wow64ReadProcessMemory64(g_proc_handle, (PVOID64)peb64->ProcessHeaps, (PVOID)heaps64.data(), heaps64.size()*sizeof(PVOID64), nullptr));
 
     std::basic_string<uint8_t> heap;
     heap.resize(0x100); // hacky
     for (DWORD i = 0; i < peb64->NumberOfHeaps; i++)
     {
-        SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(_NtWow64ReadVirtualMemory64(g_proc_handle, heaps64[i], (PVOID)heap.data(), heap.size(), nullptr)));
+        SCYLLA_TEST_FAIL_IF(!scl::Wow64ReadProcessMemory64(g_proc_handle, heaps64[i], (PVOID)heap.data(), heap.size(), nullptr));
 
         auto flags = *(DWORD *)(heap.data() + scl::GetHeapFlagsOffset(true));
         auto force_flags = *(DWORD *)(heap.data() + scl::GetHeapFlagsOffset(true));
@@ -121,18 +118,14 @@ static ScyllaTestResult Check_PEB_ProcessParameters()
     return SCYLLA_TEST_CHECK((rupp->Flags & 0x4000) != 0);
 }
 
-static ScyllaTestResult Check_PEB64_ProcessParameters()
+static ScyllaTestResult Check_Wow64PEB64_ProcessParameters()
 {
     const auto peb64 = scl::GetPebAddress(g_proc_handle);
     SCYLLA_TEST_FAIL_IF(!peb64);
 
     scl::RTL_USER_PROCESS_PARAMETERS<DWORD64> rupp;
 
-    auto _NtWow64ReadVirtualMemory64 = (t_NtWow64ReadVirtualMemory64)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtWow64ReadVirtualMemory64");
-    SCYLLA_TEST_FAIL_IF(!_NtWow64ReadVirtualMemory64);
-
-    auto status = _NtWow64ReadVirtualMemory64(g_proc_handle, (PVOID64)peb64->ProcessParameters, (PVOID)&rupp, sizeof(rupp), nullptr);
-    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(status));
+    SCYLLA_TEST_FAIL_IF(!scl::Wow64ReadProcessMemory64(g_proc_handle, (PVOID64)peb64->ProcessParameters, (PVOID)&rupp, sizeof(rupp), nullptr));
 
     return SCYLLA_TEST_CHECK((rupp.Flags & 0x4000) != 0);
 }
@@ -257,13 +250,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     if (!(stmt)) { printf("SKIP\n"); } else { auto ret = Check_ ## x(); printf("%s\n", ScyllaTestResultAsStr(ret)); }
 
     SCYLLA_TEST(PEB_BeingDebugged, true);
-    SCYLLA_TEST(PEB64_BeingDebugged, is_wow64);
+    SCYLLA_TEST(Wow64PEB64_BeingDebugged, is_wow64);
     SCYLLA_TEST(PEB_NtGlobalFlag, true);
-    SCYLLA_TEST(PEB64_NtGlobalFlag, is_wow64);
+    SCYLLA_TEST(Wow64PEB64_NtGlobalFlag, is_wow64);
     SCYLLA_TEST(PEB_HeapFlags, true);
-    SCYLLA_TEST(PEB64_HeapFlags, is_wow64);
+    SCYLLA_TEST(Wow64PEB64_HeapFlags, is_wow64);
     SCYLLA_TEST(PEB_ProcessParameters, true);
-    SCYLLA_TEST(PEB64_ProcessParameters, is_wow64);
+    SCYLLA_TEST(Wow64PEB64_ProcessParameters, is_wow64);
     SCYLLA_TEST(IsDebuggerPresent, true);
     SCYLLA_TEST(CheckRemoteDebuggerPresent, true);
     SCYLLA_TEST(OutputDebugStringA_LastError, ver < scl::OS_WIN_VISTA);

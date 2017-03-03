@@ -1,6 +1,7 @@
 #include "Peb.h"
 #include <Scylla/NtApiShim.h>
 #include <Scylla/OsInfo.h>
+#include "Util.h"
 
 #ifdef _WIN64
 #pragma comment(lib, "ntdll\\ntdll_x64.lib")
@@ -23,21 +24,14 @@ scl::PEB *scl::GetPebAddress(HANDLE hProcess)
 PVOID64 scl::GetPeb64Address(HANDLE hProcess)
 {
 #ifndef _WIN64
-    if (IsWow64Process(hProcess))
-    {
-        auto _NtWow64QueryInformationProcess64 = (t_NtWow64QueryInformationProcess64)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtWow64QueryInformationProcess64");
-        if (!_NtWow64QueryInformationProcess64)
-            return nullptr;
+    PROCESS_BASIC_INFORMATION<DWORD64> pbi = { 0 };
 
-        PROCESS_BASIC_INFORMATION<DWORD64> pbi = { 0 };
+    auto status = Wow64QueryInformationProcess64(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr);
 
-        auto status = _NtWow64QueryInformationProcess64(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr);
-
-        return NT_SUCCESS(status) ? (PVOID64)pbi.PebBaseAddress : nullptr;
-    }
+    return NT_SUCCESS(status) ? (PVOID64)pbi.PebBaseAddress : nullptr;
 #endif
 
-    return 0;
+    return nullptr;
 }
 
 std::shared_ptr<scl::PEB> scl::GetPeb(HANDLE hProcess)
@@ -56,24 +50,18 @@ std::shared_ptr<scl::PEB> scl::GetPeb(HANDLE hProcess)
 /**
  * @remark Use only real process handles.
  */
-std::shared_ptr<scl::PEB64> scl::GetPeb64(HANDLE hProcess)
+std::shared_ptr<scl::PEB64> scl::Wow64GetPeb64(HANDLE hProcess)
 {
+#ifndef _WIN64
     auto peb64_addr = GetPeb64Address(hProcess);
     if (!peb64_addr)
         return nullptr;
 
     auto peb64 = std::make_shared<PEB64>();
 
-    auto _NtWow64ReadVirtualMemory64 = (t_NtWow64ReadVirtualMemory64)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtWow64ReadVirtualMemory64");
-    if (_NtWow64ReadVirtualMemory64) {
-        auto status = _NtWow64ReadVirtualMemory64(hProcess, peb64_addr, peb64.get(), sizeof(PEB64), nullptr);
-        return NT_SUCCESS(status) ? peb64 : nullptr;
-    }
-    else if (peb64_addr < (PVOID64)0xffffffff)
-    {
-        auto ok = ReadProcessMemory(hProcess, (PVOID)peb64_addr, peb64.get(), sizeof(PEB64), nullptr);
-        return ok ? peb64 : nullptr;
-    }
+    if (Wow64ReadProcessMemory64(hProcess, peb64_addr, peb64.get(), sizeof(PEB64), nullptr))
+        return peb64;
+#endif
 
     return nullptr;
 }
@@ -90,17 +78,17 @@ bool scl::SetPeb(HANDLE hProcess, const PEB *pPeb)
 /**
  * @remark Use only real process handles.
  */
-bool scl::SetPeb64(HANDLE hProcess, const PEB64 *pPeb64)
+bool scl::Wow64SetPeb64(HANDLE hProcess, const PEB64 *pPeb64)
 {
+#ifndef _WIN64
     auto peb64_addr = GetPeb64Address(hProcess);
     if (!peb64_addr)
         return false;
 
-    auto _NtWow64WriteVirtualMemory64 = (t_NtWow64WriteVirtualMemory64)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtWow64WriteVirtualMemory64");
-    if (!_NtWow64WriteVirtualMemory64)
-        return false;
+    return NT_SUCCESS(Wow64WriteProcessMemory64(hProcess, peb64_addr, pPeb64, sizeof(*pPeb64), nullptr));
+#endif
 
-    return NT_SUCCESS(_NtWow64WriteVirtualMemory64(hProcess, peb64_addr, pPeb64, sizeof(*pPeb64), nullptr));
+    return false;
 }
 
 DWORD scl::GetHeapFlagsOffset(bool x64)

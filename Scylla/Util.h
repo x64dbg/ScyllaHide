@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "NtApiShim.h"
 
 namespace scl
 {
@@ -71,6 +72,8 @@ namespace scl
     }
 
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> &wstr_conv();
+
+    bool Wow64QueryInformationProcess64(HANDLE hProcess, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength);
 
     bool Wow64ReadProcessMemory64(HANDLE hProcess, PVOID64 address, PVOID buffer, ULONGLONG buffer_size, PULONGLONG bytes_read);
     bool Wow64WriteProcessMemory64(HANDLE hProcess, PVOID64 address, LPCVOID buffer, ULONGLONG buffer_size, PULONGLONG bytes_written);

@@ -122,10 +122,10 @@ namespace scl {
     PVOID64 GetPeb64Address(HANDLE hProcess);
 
     std::shared_ptr<PEB> GetPeb(HANDLE hProcess);
-    std::shared_ptr<PEB64> GetPeb64(HANDLE hProcess);
+    std::shared_ptr<PEB64> Wow64GetPeb64(HANDLE hProcess);
 
     bool SetPeb(HANDLE hProcess, const PEB *pPeb);
-    bool SetPeb64(HANDLE hProcess, const PEB64 *pPeb64);
+    bool Wow64SetPeb64(HANDLE hProcess, const PEB64 *pPeb64);
 
     DWORD GetHeapFlagsOffset(bool x64);
     DWORD GetHeapForceFlagsOffset(bool x64);

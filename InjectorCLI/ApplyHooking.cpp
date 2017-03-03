@@ -436,7 +436,7 @@ void ApplyPEBPatch(HANDLE hProcess, DWORD flags)
     if (!scl::IsWow64Process(hProcess))
         return;
 
-    auto peb64 = scl::GetPeb64(hProcess);
+    auto peb64 = scl::Wow64GetPeb64(hProcess);
     if (!peb64) {
         g_log.LogError(L"Failed to read PEB64 from remote process");
     }
@@ -458,7 +458,7 @@ void ApplyPEBPatch(HANDLE hProcess, DWORD flags)
                 g_log.LogError(L"Failed to patch flags in PEB64!ProcessHeaps");
         }
 
-        if (!scl::SetPeb64(hProcess, peb64.get()))
+        if (!scl::Wow64SetPeb64(hProcess, peb64.get()))
             g_log.LogError(L"Failed to write PEB64 to remote process");
     }
 #endif
