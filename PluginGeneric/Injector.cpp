@@ -2,10 +2,10 @@
 #include <Psapi.h>
 #include "Scylla/Logger.h"
 #include <Scylla/NtApiLoader.h>
+#include <Scylla/OsInfo.h>
 #include <Scylla/PebHider.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
-#include <Scylla/Version.h>
 
 #include "..\InjectorCLI\\ApplyHooking.h"
 
@@ -118,15 +118,30 @@ void InstallAntiAttachHook()
 #endif
 }
 
-
-void StartFixBeingDebugged(DWORD targetPid, bool setToNull)
+bool StartFixBeingDebugged(DWORD targetPid, bool setToNull)
 {
-    HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
-    if (hProcess)
+    auto hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
+    if (!hProcess)
+        return false;
+
+    auto peb = scl::GetPeb(hProcess);
+    if (!peb)
+        return false;
+
+    peb->BeingDebugged = setToNull ? FALSE : TRUE;
+    scl::SetPeb(hProcess, peb.get());
+
+    if (scl::IsWow64Process(hProcess))
     {
-        FixPebBeingDebugged(hProcess, setToNull);
-        CloseHandle(hProcess);
+        auto peb64 = scl::GetPeb64(hProcess);
+        if (!peb64)
+            return false;
+
+        peb->BeingDebugged = setToNull ? FALSE : TRUE;
+        scl::SetPeb64(hProcess, peb64.get());
     }
+
+    return true;
 }
 
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
@@ -134,13 +149,13 @@ bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     DllExchangeLoader.dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
     DllExchangeLoader.EnableProtectProcessId = TRUE;
 
-    DWORD enableFlags = 0x0;
-    if (g_settings.opts().fixPebBeingDebugged) enableFlags |= PEB_PATCH_BeingDebugged;
-    if (g_settings.opts().fixPebHeapFlags) enableFlags |= PEB_PATCH_HeapFlags;
-    if (g_settings.opts().fixPebNtGlobalFlag) enableFlags |= PEB_PATCH_NtGlobalFlag;
-    if (g_settings.opts().fixPebStartupInfo) enableFlags |= PEB_PATCH_StartUpInfo;
+    DWORD peb_flags = 0;
+    if (g_settings.opts().fixPebBeingDebugged) peb_flags |= PEB_PATCH_BeingDebugged;
+    if (g_settings.opts().fixPebHeapFlags) peb_flags |= PEB_PATCH_HeapFlags;
+    if (g_settings.opts().fixPebNtGlobalFlag) peb_flags |= PEB_PATCH_NtGlobalFlag;
+    if (g_settings.opts().fixPebStartupInfo) peb_flags |= PEB_PATCH_ProcessParameters;
 
-    ApplyPEBPatch(&DllExchangeLoader, hProcess, enableFlags);
+    ApplyPEBPatch(hProcess, peb_flags);
 
     return ApplyHook(&DllExchangeLoader, hProcess, dllMemory, imageBase);
 }

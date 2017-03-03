@@ -403,22 +403,65 @@ void ApplyWin32uHook(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, BYTE * dl
     dllexchange->isWin32uHooked = TRUE;
 }
 
-bool ApplyPEBPatch(HOOK_DLL_EXCHANGE * dllexchange, HANDLE hProcess, DWORD enableFlags)
+void ApplyPEBPatch(HANDLE hProcess, DWORD flags)
 {
-    if (hProcess && dllexchange)
+    auto peb = scl::GetPeb(hProcess);
+    if (!peb) {
+        g_log.LogError(L"Failed to read PEB from remote process");
+    }
+    else
     {
-        //DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_StartUpInfo;
-        if (dllexchange->EnablePebBeingDebugged ||
-            dllexchange->EnablePebHeapFlags ||
-            dllexchange->EnablePebNtGlobalFlag ||
-            dllexchange->EnablePebStartupInfo)
-        {
-            return FixPebInProcess(hProcess, enableFlags);
+        if (flags & PEB_PATCH_BeingDebugged)
+            peb->BeingDebugged = FALSE;
+        if (flags & PEB_PATCH_NtGlobalFlag)
+            peb->NtGlobalFlag &= ~0x70;
+
+        if (flags & PEB_PATCH_ProcessParameters) {
+            if (!scl::PebPatchProcessParameters(peb.get(), hProcess))
+                g_log.LogError(L"Failed to patch PEB!ProcessParameters");
         }
-        return true;
+
+        if (flags & PEB_PATCH_HeapFlags)
+        {
+            if (!scl::PebPatchHeapFlags(peb.get(), hProcess))
+                g_log.LogError(L"Failed to patch flags in PEB!ProcessHeaps");
+        }
+
+        if (!scl::SetPeb(hProcess, peb.get()))
+            g_log.LogError(L"Failed to write PEB to remote process");
+
     }
 
-    return false;
+#ifndef _WIN64
+    if (!scl::IsWow64Process(hProcess))
+        return;
+
+    auto peb64 = scl::GetPeb64(hProcess);
+    if (!peb64) {
+        g_log.LogError(L"Failed to read PEB64 from remote process");
+    }
+    else
+    {
+        if (flags & PEB_PATCH_BeingDebugged)
+            peb64->BeingDebugged = FALSE;
+        if (flags & PEB_PATCH_NtGlobalFlag)
+            peb64->NtGlobalFlag &= ~0x70;
+
+        if (flags & PEB_PATCH_ProcessParameters) {
+            if (!scl::Wow64Peb64PatchProcessParameters(peb64.get(), hProcess))
+                g_log.LogError(L"Failed to patch PEB64!ProcessParameters");
+        }
+
+        if (flags & PEB_PATCH_HeapFlags)
+        {
+            if (!scl::Wow64Peb64PatchHeapFlags(peb64.get(), hProcess))
+                g_log.LogError(L"Failed to patch flags in PEB64!ProcessHeaps");
+        }
+
+        if (!scl::SetPeb64(hProcess, peb64.get()))
+            g_log.LogError(L"Failed to write PEB64 to remote process");
+    }
+#endif
 }
 
 void RestoreMemory(HANDLE hProcess, DWORD_PTR address, void * buffer, int bufferSize)

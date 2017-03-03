@@ -10,7 +10,7 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath, bool newProcess);
 void injectDll(DWORD targetPid, const WCHAR * dllPath);
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
 void FillExchangeStruct(HANDLE hProcess, HOOK_DLL_EXCHANGE * data);
-void StartFixBeingDebugged(DWORD targetPid, bool setToNull);
+bool StartFixBeingDebugged(DWORD targetPid, bool setToNull);
 bool ApplyAntiAntiAttach(DWORD targetPid);
 
 DWORD_PTR GetAddressOfEntryPoint(BYTE * dllMemory);

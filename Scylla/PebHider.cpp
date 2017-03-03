@@ -1,139 +1,126 @@
 #include "PebHider.h"
+#include <vector>
 #include <Scylla/NtApiShim.h>
 #include <Scylla/Peb.h>
 #include <Scylla/OsInfo.h>
+#include <Scylla/Util.h>
 
-//some debuggers manipulate StartUpInfo to start the debugged process and therefore can be detected...
-bool FixStartUpInfo(scl::PEB* myPEB, HANDLE hProcess)
+bool scl::PebPatchProcessParameters(PEB* peb, HANDLE hProcess)
 {
-    auto rtlProcessParam = (scl::RTL_USER_PROCESS_PARAMETERS<DWORD_PTR> *)myPEB->ProcessParameters;
+    RTL_USER_PROCESS_PARAMETERS<DWORD_PTR> rupp;
 
-    DWORD_PTR startOffset = (DWORD_PTR)&rtlProcessParam->StartingX;
-    DWORD_PTR patchSize = (DWORD_PTR)&rtlProcessParam->WindowFlags - (DWORD_PTR)&rtlProcessParam->StartingX;
+    if (ReadProcessMemory(hProcess, (PVOID)peb->ProcessParameters, &rupp, sizeof(rupp), nullptr) == FALSE)
+        return false;
 
-    LPVOID memoryZero = calloc(patchSize, 1);
+    // Some debuggers manipulate StartUpInfo to start the debugged process and therefore can be detected...
+    auto patch_size = (DWORD_PTR)&rupp.WindowFlags - (DWORD_PTR)&rupp.StartingX;
+    ZeroMemory(&rupp.WindowFlags, patch_size);
 
-    bool retVal = (WriteProcessMemory(hProcess, (LPVOID)startOffset, memoryZero, patchSize, 0) != FALSE);
-    free(memoryZero);
+    // Magic flag.
+    rupp.Flags |= (ULONG)0x4000;
 
-    return retVal;
+    return (WriteProcessMemory(hProcess, (PVOID)peb->ProcessParameters, &rupp, sizeof(rupp), nullptr) == TRUE);
 }
 
-void FixHeapFlag(HANDLE hProcess, DWORD_PTR heapBase, bool isDefaultHeap)
+bool scl::Wow64Peb64PatchProcessParameters(PEB64* peb64, HANDLE hProcess)
 {
-    void * heapFlagsAddress = 0;
-    DWORD heapFlags = 0;
-    void * heapForceFlagsAddress = 0;
-    DWORD heapForceFlags = 0;
-#ifdef _WIN64
-    heapFlagsAddress = (void *)((LONG_PTR)heapBase + scl::GetHeapFlagsOffset(true));
-    heapForceFlagsAddress = (void *)((LONG_PTR)heapBase + scl::GetHeapForceFlagsOffset(true));
-#else
-    heapFlagsAddress = (void *)((LONG_PTR)heapBase + scl::GetHeapFlagsOffset(false));
-    heapForceFlagsAddress = (void *)((LONG_PTR)heapBase + scl::GetHeapForceFlagsOffset(false));
-#endif //_WIN64
+#ifndef _WIN64
+    scl::RTL_USER_PROCESS_PARAMETERS<DWORD64> rupp;
 
-    if (ReadProcessMemory(hProcess, heapFlagsAddress, &heapFlags, sizeof(DWORD), 0))
+    if (!scl::Wow64ReadProcessMemory64(hProcess, (PVOID64)peb64->ProcessParameters, (PVOID)&rupp, sizeof(rupp), nullptr))
+        return false;
+
+    // Some debuggers manipulate StartUpInfo to start the debugged process and therefore can be detected...
+    auto patch_size = (DWORD_PTR)&rupp.WindowFlags - (DWORD_PTR)&rupp.StartingX;
+    ZeroMemory(&rupp.WindowFlags, patch_size);
+
+    // Magic flag.
+    rupp.Flags |= (ULONG)0x4000;
+
+    return Wow64WriteProcessMemory64(hProcess, (PVOID)peb64->ProcessParameters, &rupp, sizeof(rupp), nullptr);
+#endif
+
+    return false;
+}
+
+bool scl::PebPatchHeapFlags(PEB* peb, HANDLE hProcess)
+{
+#ifdef _WIN64
+    const auto is_x64 = true;
+#else
+    const auto is_x64 = false;
+#endif
+
+    std::vector<PVOID> heaps;
+    heaps.resize(peb->NumberOfHeaps);
+
+    if (ReadProcessMemory(hProcess, (PVOID)peb->ProcessHeaps, (PVOID)heaps.data(), heaps.size()*sizeof(PVOID), nullptr) == FALSE)
+        return false;
+
+    std::basic_string<uint8_t> heap;
+    heap.resize(0x100); // hacky
+    for (DWORD i = 0; i < peb->NumberOfHeaps; i++)
     {
-        if (isDefaultHeap)
+        if (ReadProcessMemory(hProcess, heaps[i], (PVOID)heap.data(), heap.size(), nullptr) == FALSE)
+            return false;
+
+        auto flags = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(is_x64));
+        auto force_flags = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(is_x64));
+
+        if (i == 0)
         {
-            heapFlags &= HEAP_GROWABLE;
+            // Default heap.
+            *flags &= HEAP_GROWABLE;
         }
         else
         {
-            //user defined heaps with user defined flags
-            //flags from RtlCreateHeap/HeapCreate
-            heapFlags &= (HEAP_GROWABLE | HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_CREATE_ENABLE_EXECUTE);
+            // Flags from RtlCreateHeap/HeapCreate.
+            *flags &= (HEAP_GROWABLE | HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_CREATE_ENABLE_EXECUTE);
         }
-        WriteProcessMemory(hProcess, heapFlagsAddress, &heapFlags, sizeof(DWORD), 0);
+
+        *force_flags = 0;
+
+        if (WriteProcessMemory(hProcess, heaps[i], (PVOID)heap.data(), heap.size(), nullptr) == FALSE)
+            return false;
     }
-    if (ReadProcessMemory(hProcess, heapForceFlagsAddress, &heapForceFlags, sizeof(DWORD), 0))
-    {
-        heapForceFlags = 0;
-        WriteProcessMemory(hProcess, heapForceFlagsAddress, &heapForceFlags, sizeof(DWORD), 0);
-    }
-}
-
-bool FixPebBeingDebugged(HANDLE hProcess, bool SetToNull)
-{
-    auto peb = scl::GetPeb(hProcess);
-    if (!peb)
-        return false;
-
-    peb->BeingDebugged = SetToNull ? FALSE : TRUE;
-    if (!scl::SetPeb(hProcess, peb.get()))
-        return false;
-
-#ifndef _WIN64
-    auto peb64 = scl::GetPeb64(hProcess);
-    if (!peb64 && scl::IsWow64Process(hProcess))
-        return false;
-
-    if (peb64)
-    {
-        peb64->BeingDebugged = SetToNull ? FALSE : TRUE;
-        return scl::SetPeb64(hProcess, peb64.get());
-    }
-#endif
 
     return true;
 }
 
-bool FixPebInProcess(HANDLE hProcess, DWORD EnableFlags)
+bool scl::Wow64Peb64PatchHeapFlags(PEB64* peb, HANDLE hProcess)
 {
-    auto peb = scl::GetPeb(hProcess);
-    if (!peb)
+    std::vector<PVOID64> heaps;
+    heaps.resize(peb->NumberOfHeaps);
+
+    if (scl::Wow64ReadProcessMemory64(hProcess, (PVOID64)peb->ProcessHeaps, (PVOID)heaps.data(), heaps.size()*sizeof(PVOID64), nullptr) == FALSE)
         return false;
 
-#ifndef _WIN64
-    auto peb64 = scl::GetPeb64(hProcess);
-    if (!peb64 && scl::IsWow64Process(hProcess))
-        return false;
-#endif
-
-    if (EnableFlags & PEB_PATCH_StartUpInfo)
-        FixStartUpInfo(peb.get(), hProcess);
-
-    if (EnableFlags & PEB_PATCH_BeingDebugged) peb->BeingDebugged = FALSE;
-    if (EnableFlags & PEB_PATCH_NtGlobalFlag) peb->NtGlobalFlag &= ~0x70;
-
-#ifndef _WIN64
-    if (peb64)
+    std::basic_string<uint8_t> heap;
+    heap.resize(0x100); // hacky
+    for (DWORD i = 0; i < peb->NumberOfHeaps; i++)
     {
-        if (EnableFlags & PEB_PATCH_BeingDebugged) peb->BeingDebugged = FALSE;
-        if (EnableFlags & PEB_PATCH_NtGlobalFlag) peb->NtGlobalFlag &= ~0x70;
-    }
-#endif
+        if (Wow64ReadProcessMemory64(hProcess, (PVOID64)heaps[i], (PVOID)heap.data(), heap.size(), nullptr) == FALSE)
+            return false;
 
-    if (EnableFlags & PEB_PATCH_HeapFlags)
-    {
-        //handle to the default heap of the calling process
-        FixHeapFlag(hProcess, peb->ProcessHeap, true);
+        auto flags = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(true));
+        auto force_flags = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(true));
 
-        // first is always default heap
-        if (peb->NumberOfHeaps > 1)
+        if (i == 0)
         {
-            auto heapArray = (PVOID *)calloc(peb->NumberOfHeaps, sizeof(PVOID));
-            if (heapArray)
-            {
-                ReadProcessMemory(hProcess, (PVOID)peb->ProcessHeaps, heapArray, peb->NumberOfHeaps*sizeof(PVOID), 0);
-
-                //skip index 0 same as default heap myPEB.ProcessHeap
-                for (DWORD i = 1; i < peb->NumberOfHeaps; i++)
-                {
-                    FixHeapFlag(hProcess, (DWORD_PTR)heapArray[i], false);
-                }
-            }
-            free(heapArray);
+            // Default heap.
+            *flags &= HEAP_GROWABLE;
         }
-    }
+        else
+        {
+            // Flags from RtlCreateHeap/HeapCreate.
+            *flags &= (HEAP_GROWABLE | HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_CREATE_ENABLE_EXECUTE);
+        }
 
-    if (!scl::SetPeb(hProcess, peb.get()))
-        return false;
-#ifndef _WIN64
-    if (peb64 && !scl::SetPeb64(hProcess, peb64.get()))
-        return false;
-#endif
+        *force_flags = 0;
+
+        if (Wow64WriteProcessMemory64(hProcess, (PVOID64)heaps[i], (PVOID)heap.data(), heap.size(), nullptr) == FALSE)
+            return false;
+    }
 
     return true;
 }

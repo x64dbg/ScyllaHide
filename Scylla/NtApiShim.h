@@ -27,8 +27,8 @@
 #endif
 
 typedef NTSTATUS(WINAPI *t_NtWow64QueryInformationProcess64)(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength);
-typedef NTSTATUS(WINAPI *t_NtWow64ReadVirtualMemory64)(HANDLE ProcessHandle, PVOID64 BaseAddress, PVOID Buffer, ULONGLONG BufferSize, PULONGLONG *NumberOfBytesRead);
-typedef NTSTATUS(WINAPI *t_NtWow64WriteVirtualMemory64)(HANDLE ProcessHandle, PVOID64 BaseAddress, LPCVOID Buffer, ULONGLONG BufferSize, PULONGLONG *NumberOfBytesWritten);
+typedef NTSTATUS(WINAPI *t_NtWow64ReadVirtualMemory64)(HANDLE ProcessHandle, PVOID64 BaseAddress, PVOID Buffer, ULONGLONG BufferSize, PULONGLONG NumberOfBytesRead);
+typedef NTSTATUS(WINAPI *t_NtWow64WriteVirtualMemory64)(HANDLE ProcessHandle, PVOID64 BaseAddress, LPCVOID Buffer, ULONGLONG BufferSize, PULONGLONG NumberOfBytesWritten);
 
 
 namespace scl
