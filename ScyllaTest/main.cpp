@@ -99,7 +99,7 @@ static ScyllaTestResult Check_Wow64PEB64_HeapFlags()
         SCYLLA_TEST_FAIL_IF(!scl::Wow64ReadProcessMemory64(g_proc_handle, heaps64[i], (PVOID)heap.data(), heap.size(), nullptr));
 
         auto flags = *(DWORD *)(heap.data() + scl::GetHeapFlagsOffset(true));
-        auto force_flags = *(DWORD *)(heap.data() + scl::GetHeapFlagsOffset(true));
+        auto force_flags = *(DWORD *)(heap.data() + scl::GetHeapForceFlagsOffset(true));
 
         if ((flags & bad_flags) || (force_flags & bad_flags))
             return ScyllaTestDetected;

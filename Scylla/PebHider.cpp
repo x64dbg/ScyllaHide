@@ -65,7 +65,7 @@ bool scl::PebPatchHeapFlags(PEB* peb, HANDLE hProcess)
             return false;
 
         auto flags = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(is_x64));
-        auto force_flags = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(is_x64));
+        auto force_flags = (DWORD *)(heap.data() + scl::GetHeapForceFlagsOffset(is_x64));
 
         if (i == 0)
         {
@@ -103,7 +103,7 @@ bool scl::Wow64Peb64PatchHeapFlags(PEB64* peb, HANDLE hProcess)
             return false;
 
         auto flags = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(true));
-        auto force_flags = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(true));
+        auto force_flags = (DWORD *)(heap.data() + scl::GetHeapForceFlagsOffset(true));
 
         if (i == 0)
         {
