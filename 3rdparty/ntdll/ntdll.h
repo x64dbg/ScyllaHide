@@ -1406,6 +1406,24 @@ NtOpenProcess (
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
+NtOpenProcessToken (
+    __in HANDLE ProcessHandle,
+    __in ACCESS_MASK DesiredAccess,
+    __out PHANDLE TokenHandle
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtPrivilegeCheck (
+    __in HANDLE ClientToken,
+    __inout PPRIVILEGE_SET RequiredPrivileges,
+    __out PBOOLEAN Result
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
 NtTerminateProcess (
     __in_opt HANDLE ProcessHandle,
     __in NTSTATUS ExitStatus
@@ -1715,6 +1733,13 @@ NtTerminateThread (
     __in NTSTATUS ExitStatus
 );
 
+NTSYSAPI
+NTSTATUS
+NTAPI
+LdrDisableThreadCalloutsForDll (
+    IN PVOID DllHandle
+);
+
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -1974,6 +1999,7 @@ DbgPrint (
 
 NTSYSCALLAPI
 VOID
+NTAPI
 DbgBreakPoint (
 	void
 );
