@@ -31,6 +31,7 @@ bool SetDebugPrivileges();
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase);
+bool convertNumber(const wchar_t* str, unsigned long & result, int radix);
 
 #define PREFIX_PATH L"C:\\Users\\Admin\\Documents\\Visual Studio 2010\\Projects\\ScyllaHide"
 
@@ -63,7 +64,18 @@ int wmain(int argc, wchar_t* argv[])
 
     if (argc >= 3)
     {
-        targetPid = GetProcessIdByName(argv[1]);
+        if(_wcsnicmp(argv[1], L"pid:", 4) == 0 && argv[1][4])
+        {
+            auto pid = argv[1] + 4;
+            auto radix = 10;
+            if(wcsstr(pid, L"0x") == pid)
+                radix = 16, pid += 2;
+            if(!convertNumber(pid, targetPid, radix))
+                targetPid = 0;
+        }
+        else
+            targetPid = GetProcessIdByName(argv[1]);
+
         dllPath = argv[2];
     }
     else
@@ -85,7 +97,8 @@ int wmain(int argc, wchar_t* argv[])
     }
     else
     {
-        wprintf(L"Usage: %s <process name> <dll path>", argv[0]);
+        wprintf(L"Usage: %s <process name> <dll path>\n", argv[0]);
+        wprintf(L"Usage: %s pid:<process id> <dll path>", argv[0]);
     }
 
     getchar();
@@ -304,3 +317,17 @@ void ReadSettings()
 //{
 //	EnumWindows(MyEnumWindowsProc, 0);
 //}
+
+bool convertNumber(const wchar_t* str, unsigned long & result, int radix)
+{
+    errno = 0;
+    wchar_t* end;
+    result = wcstoul(str, &end, radix);
+    if(!result && end == str)
+        return false;
+    if(result == ULLONG_MAX && errno)
+        return false;
+    if(*end)
+        return false;
+    return true;
+}
