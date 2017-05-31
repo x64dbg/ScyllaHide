@@ -1,5 +1,6 @@
 #include "PebHider.h"
 #include <vector>
+#include <crtdbg.h>
 #include <Scylla/NtApiShim.h>
 #include <Scylla/Peb.h>
 #include <Scylla/OsInfo.h>
@@ -116,7 +117,8 @@ bool scl::Wow64Peb64PatchHeapFlags(PEB64* peb, HANDLE hProcess)
             *flags &= (HEAP_GROWABLE | HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_CREATE_ENABLE_EXECUTE);
         }
 
-        *force_flags = 0;
+        // Disable all force flags, except some specific ones only set by protectors/packers
+        *force_flags &= (_CRTDBG_CHECK_EVERY_16_DF | _CRTDBG_CHECK_EVERY_128_DF | _CRTDBG_CHECK_EVERY_1024_DF);
 
         if (Wow64WriteProcessMemory64(hProcess, (PVOID64)heaps[i], (PVOID)heap.data(), heap.size(), nullptr) == FALSE)
             return false;
