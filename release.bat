@@ -29,5 +29,3 @@ xcopy /S /Y build\Release\x64\*.exe Release
 copy /y /b build\Release\Win32\HookLibraryx86.dll Release
 copy /y /b build\Release\x64\HookLibraryx64.dll Release
 del /F /Q Release\PdbReader*.exe
-
-pause
