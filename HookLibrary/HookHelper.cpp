@@ -1,6 +1,7 @@
 #include "HookHelper.h"
 
 #include <tlhelp32.h>
+#include <ntdll/ntdll.h>
 #include <ntdllext/ntdllext.h>
 
 #include "HookedFunctions.h"
@@ -178,41 +179,37 @@ bool IsValidThreadHandle(HANDLE hThread)
 	}
 }
 
+static LUID ConvertLongToLuid(LONG value)
+{
+	LUID luid;
+	LARGE_INTEGER largeInt;
+	largeInt.QuadPart = value;
+	luid.LowPart = largeInt.LowPart;
+	luid.HighPart = largeInt.HighPart;
+	return luid;
+}
+
 bool HasDebugPrivileges(HANDLE hProcess)
 {
 	HANDLE hToken;
-	LUID luid;
-	if (!OpenProcessToken(hProcess, TOKEN_QUERY, &hToken))
-		return false;
-	if (!LookupPrivilegeValue(nullptr, SE_DEBUG_NAME, &luid))
+	NTSTATUS status = NtOpenProcessToken(hProcess, TOKEN_QUERY, &hToken);
+	if (!NT_SUCCESS(status))
 		return false;
 
-	DWORD size = 0;
-	bool hasDebugPrivileges = false;
-	void* wheresMalloc = NULL;
-	GetTokenInformation(hToken, TokenPrivileges, NULL, 0, &size);
+	const LONG SE_DEBUG_PRIVILEGE = 20;
+	const LUID SeDebugPrivilege = ConvertLongToLuid(SE_DEBUG_PRIVILEGE);
 
-	if (size > 0 && (wheresMalloc = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE)) != NULL)
-	{
-		TOKEN_PRIVILEGES* tokenPrivileges = (TOKEN_PRIVILEGES*)wheresMalloc;
-		if (GetTokenInformation(hToken, TokenPrivileges, tokenPrivileges, size, &size))
-		{
-			for (unsigned int i = 0; i < tokenPrivileges->PrivilegeCount; ++i)
-			{
-				LUID_AND_ATTRIBUTES luidAndAttributes = tokenPrivileges->Privileges[i];
-				if (luidAndAttributes.Luid.LowPart == luid.LowPart && luidAndAttributes.Luid.HighPart == luid.HighPart)
-				{
-					hasDebugPrivileges = ((luidAndAttributes.Attributes & SE_PRIVILEGE_ENABLED) != 0) ||
-										((luidAndAttributes.Attributes & SE_PRIVILEGE_ENABLED_BY_DEFAULT) != 0 &&
-										(luidAndAttributes.Attributes & SE_PRIVILEGE_REMOVED) == 0);
-				}
-			}
-		}
-		VirtualFree(tokenPrivileges, size, MEM_RELEASE);
-	}
+	PRIVILEGE_SET privilegeSet;
+	privilegeSet.PrivilegeCount = 1;
+	privilegeSet.Control = PRIVILEGE_SET_ALL_NECESSARY;
+	privilegeSet.Privilege[0].Luid = SeDebugPrivilege;
+	privilegeSet.Privilege[0].Attributes = 0;
 
-	CloseHandle(hToken);
-	return hasDebugPrivileges;
+	BOOLEAN hasDebugPrivileges = FALSE;
+	NtPrivilegeCheck(hToken, &privilegeSet, &hasDebugPrivileges);
+
+	NtClose(hToken);
+	return hasDebugPrivileges == TRUE;
 }
 
 OSVERSIONINFO versionInfo = { 0 };
