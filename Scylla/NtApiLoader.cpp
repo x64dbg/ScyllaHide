@@ -91,7 +91,7 @@ std::pair<bool, std::wstring> scl::NtApiLoader::Resolve(log_callback log_cb)
     auto curr_path = GetModuleFileNameW();
     curr_path.resize(curr_path.find_last_of(L"\\"));
 
-    auto symbols_path = scl::fmtw(L"srv*%s*http://msdl.microsoft.com/download/symbols", curr_path.c_str());
+    auto symbols_path = scl::fmtw(L"srv*%s*https://msdl.microsoft.com/download/symbols", curr_path.c_str());
 
     if (!InitSymServ(symbols_path.c_str(), log_cb))
         return std::make_pair(false, fmtw(L"Failed to initialize symbol server API: %s\n", FormatMessageW(::GetLastError()).c_str()));
