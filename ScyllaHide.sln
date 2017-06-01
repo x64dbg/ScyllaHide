@@ -9,9 +9,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InjectorCLI", "InjectorCLI\
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HookLibrary", "HookLibrary\HookLibrary.vcxproj", "{C36C2313-72A8-4583-B7D8-28E193D5287F}"
-	ProjectSection(ProjectDependencies) = postProject
-		{E468DA07-48EA-40EB-A845-FA69C39D3396} = {E468DA07-48EA-40EB-A845-FA69C39D3396}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideTEPlugin", "ScyllaHideTEPlugin\ScyllaHideTEPlugin.vcxproj", "{0520906F-4296-4BEC-BD5F-B370E1F7800A}"
 	ProjectSection(ProjectDependencies) = postProject
