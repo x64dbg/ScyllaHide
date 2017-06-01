@@ -2,14 +2,6 @@
 
 #include <windows.h>
 
-#ifndef _WIN64
-#pragma comment(lib, "ntdll\\ntdll_x86.lib")
-#pragma pack(push,8)
-#else
-#pragma comment(lib, "ntdll\\ntdll_x64.lib")
-#pragma pack(push,16)
-#endif
-
 #define NT_SUCCESS(Status)          ((NTSTATUS)(Status) >= 0)
 #define STATUS_SUCCESS              ((NTSTATUS)0x00000000L)
 #define STATUS_INVALID_INFO_CLASS   ((NTSTATUS)0xC0000003L)
@@ -1406,6 +1398,24 @@ NtOpenProcess (
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
+NtOpenProcessToken (
+    __in HANDLE ProcessHandle,
+    __in ACCESS_MASK DesiredAccess,
+    __out PHANDLE TokenHandle
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtPrivilegeCheck (
+    __in HANDLE ClientToken,
+    __inout PPRIVILEGE_SET RequiredPrivileges,
+    __out PBOOLEAN Result
+);
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
 NtTerminateProcess (
     __in_opt HANDLE ProcessHandle,
     __in NTSTATUS ExitStatus
@@ -1715,6 +1725,13 @@ NtTerminateThread (
     __in NTSTATUS ExitStatus
 );
 
+NTSYSAPI
+NTSTATUS
+NTAPI
+LdrDisableThreadCalloutsForDll (
+    IN PVOID DllHandle
+);
+
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -1974,6 +1991,7 @@ DbgPrint (
 
 NTSYSCALLAPI
 VOID
+NTAPI
 DbgBreakPoint (
 	void
 );
@@ -2027,8 +2045,6 @@ RtlNtPathNameToDosPathName(
 	__out_opt PULONG Disposition,
 	__inout_opt PWSTR* FilePart
 );
-
-#pragma pack(pop)
 
 #ifdef __cplusplus
 };

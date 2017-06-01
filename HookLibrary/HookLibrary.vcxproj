@@ -57,21 +57,25 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)Scylla\scylla.props" />
     <Import Project="$(SolutionDir)Scylla\scylla.debug.props" />
+    <Import Project="hook.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)Scylla\scylla.props" />
     <Import Project="$(SolutionDir)Scylla\scylla.debug.props" />
+    <Import Project="hook.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)Scylla\scylla.props" />
     <Import Project="$(SolutionDir)Scylla\scylla.release.props" />
+    <Import Project="hook.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)Scylla\scylla.props" />
     <Import Project="$(SolutionDir)Scylla\scylla.release.props" />
+    <Import Project="hook.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -138,7 +142,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Hook.cpp" />
     <ClCompile Include="HookedFunctions.cpp" />
     <ClCompile Include="HookHelper.cpp" />
     <ClCompile Include="DllMain.cpp" />
@@ -148,7 +151,6 @@
     <None Include="Export.def" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Hook.h" />
     <ClInclude Include="HookedFunctions.h" />
     <ClInclude Include="HookHelper.h" />
     <ClInclude Include="HookMain.h" />
