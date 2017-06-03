@@ -2,7 +2,11 @@
 
 #pragma warning(push)
 #pragma warning(disable: 4091)
-#include <DbgHelp.h>
+#include "../3rdparty/dbghelp/dbghelp.h"
 #pragma warning(pop)
 
-#pragma comment(lib,"dbghelp.lib")
+#ifdef _WIN64
+#pragma comment(lib,"../3rdparty/dbghelp/dbghelp_x64.lib")
+#else
+#pragma comment(lib,"../3rdparty/dbghelp/dbghelp_x86.lib")
+#endif
