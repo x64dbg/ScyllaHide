@@ -168,7 +168,7 @@ bool scl::Wow64ReadProcessMemory64(HANDLE hProcess, PVOID64 address, PVOID buffe
     else if ((((DWORD64)address + buffer_size) < (DWORD)(-1)) && (buffer_size <= (DWORD)(-1)))
     {
         SIZE_T bytes_read32 = 0;
-        auto ret = ReadProcessMemory(hProcess, (PVOID)address, buffer, (SIZE_T)buffer_size, &bytes_read32);
+        auto ret = ReadProcessMemory(hProcess, (PVOID)PtrToUlong(address), buffer, (SIZE_T)buffer_size, &bytes_read32);
         if (bytes_read)
             *bytes_read = bytes_read32;
         return ret == TRUE;
@@ -189,7 +189,7 @@ bool scl::Wow64WriteProcessMemory64(HANDLE hProcess, PVOID64 address, LPCVOID bu
     else if ((((DWORD64)address + buffer_size) < (DWORD)(-1)) && (buffer_size <= (DWORD)(-1)))
     {
         SIZE_T bytes_written32 = 0;
-        auto ret = WriteProcessMemory(hProcess, (PVOID)address, buffer, (SIZE_T)buffer_size, &bytes_written32);
+        auto ret = WriteProcessMemory(hProcess, (PVOID)PtrToUlong(address), buffer, (SIZE_T)buffer_size, &bytes_written32);
         if (bytes_written)
             *bytes_written = bytes_written32;
         return ret == TRUE;
