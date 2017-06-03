@@ -3,7 +3,7 @@
   <ImportGroup Label="PropertySheets" />
   <ItemDefinitionGroup>
     <Link>
-      <AdditionalDependencies>ntdll\ntdll_$(PlatformShortName).lib;kernel32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>ntdll\ntdllp_$(PlatformShortName).lib;kernel32.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Link>
     <ClCompile>
