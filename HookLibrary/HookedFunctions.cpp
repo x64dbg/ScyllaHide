@@ -86,7 +86,7 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
             }
             else if (ProcessInformationClass == ProcessBasicInformation) //Fake parent
             {
-                ((PPROCESS_BASIC_INFORMATION)ProcessInformation)->InheritedFromUniqueProcessId = (HANDLE)GetExplorerProcessId();
+                ((PPROCESS_BASIC_INFORMATION)ProcessInformation)->InheritedFromUniqueProcessId = ULongToHandle(GetExplorerProcessId());
             }
             else if (ProcessInformationClass == ProcessBreakOnTermination)
             {
@@ -620,11 +620,11 @@ HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICO
 			DWORD dwProcessId;
 			if (HookDllData.dNtUserQueryWindow)
 			{
-				dwProcessId = (DWORD)HookDllData.dNtUserQueryWindow(resultHwnd, WindowProcess);
+				dwProcessId = HandleToULong(HookDllData.dNtUserQueryWindow(resultHwnd, WindowProcess));
 			}
 			else
 			{
-				dwProcessId = (DWORD)HookDllData.NtUserQueryWindow(resultHwnd, WindowProcess);
+				dwProcessId = HandleToULong(HookDllData.NtUserQueryWindow(resultHwnd, WindowProcess));
 			}
 
 			if (dwProcessId == HookDllData.dwProtectedProcessId)
@@ -654,11 +654,11 @@ void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
                 //GetWindowThreadProcessId(phwndFirst[i], &dwProcessId);
 				if (HookDllData.dNtUserQueryWindow)
 				{
-					dwProcessId = (DWORD)HookDllData.dNtUserQueryWindow(phwndFirst[i], WindowProcess);
+					dwProcessId = HandleToULong(HookDllData.dNtUserQueryWindow(phwndFirst[i], WindowProcess));
 				}
 				else
 				{
-					dwProcessId = (DWORD)HookDllData.NtUserQueryWindow(phwndFirst[i], WindowProcess);
+					dwProcessId = HandleToULong(HookDllData.NtUserQueryWindow(phwndFirst[i], WindowProcess));
 				}
                 if (dwProcessId == HookDllData.dwProtectedProcessId)
                 {
@@ -697,7 +697,7 @@ HANDLE NTAPI HookedNtUserQueryWindow(HWND hwnd, WINDOWINFOCLASS WindowInfo)
 	{
 		if(HookDllData.EnableProtectProcessId == TRUE)
 		{
-			if (hHandle == (HANDLE)HookDllData.dwProtectedProcessId)
+			if (hHandle == ULongToHandle(HookDllData.dwProtectedProcessId))
 			{
 				return (HANDLE)((DWORD_PTR)hHandle + 1);
 			}
@@ -784,7 +784,7 @@ void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo)
                 {
                     if (!_wcsnicmp(pTemp->ImageName.Buffer, ExplorerProcessName, pTemp->ImageName.Length))
                     {
-                        dwExplorerPid = (DWORD)pTemp->UniqueProcessId;
+                        dwExplorerPid = HandleToULong(pTemp->UniqueProcessId);
                         break;
                     }
                 }
@@ -805,9 +805,9 @@ void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo)
     {
         while (TRUE)
         {
-            if (pInfo->UniqueProcessId == (HANDLE)GetCurrentProcessId())
+            if (HandleToULong(pInfo->UniqueProcessId) == GetCurrentProcessId())
             {
-                pInfo->InheritedFromUniqueProcessId = (HANDLE)dwExplorerPid;
+                pInfo->InheritedFromUniqueProcessId = ULongToHandle(dwExplorerPid);
                 break;
             }
 
@@ -829,7 +829,7 @@ void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo)
 
     while (TRUE)
     {
-        if (IsProcessBad(&pInfo->ImageName) || ((HookDllData.EnableProtectProcessId == TRUE) && (pInfo->UniqueProcessId == (HANDLE)HookDllData.dwProtectedProcessId)))
+        if (IsProcessBad(&pInfo->ImageName) || ((HookDllData.EnableProtectProcessId == TRUE) && (HandleToULong(pInfo->UniqueProcessId) == HookDllData.dwProtectedProcessId)))
         {
             if (pInfo->ImageName.Buffer)
                 ZeroMemory(pInfo->ImageName.Buffer, pInfo->ImageName.Length);

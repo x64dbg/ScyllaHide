@@ -897,7 +897,7 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 typedef struct _NAME_TOOLTIP {
     const WCHAR * name;
     WCHAR * tooltip;
-    int windowId;
+    ULONG_PTR windowId;
 } NAME_TOOLTIP;
 
 

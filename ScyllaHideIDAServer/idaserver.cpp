@@ -296,7 +296,7 @@ static void handleClient(SOCKET ClientSocket)
         }
         else
         {
-            printf("Something is wrong, unknown struct size %d\n", sizeof(IDA_SERVER_EXCHANGE));
+            printf("Something is wrong, unknown struct size %zd\n", sizeof(IDA_SERVER_EXCHANGE));
         }
     } while (iResult > 0);
 }

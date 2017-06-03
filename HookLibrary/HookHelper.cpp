@@ -269,7 +269,7 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 	{
 		if (HookDllData.dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
 		{
-			return (DWORD)pbi.UniqueProcessId;
+			return HandleToULong(pbi.UniqueProcessId);
 		}
 	}
 	else
@@ -277,7 +277,7 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 		//maybe not hooked
 		if (NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
 		{
-			return (DWORD)pbi.UniqueProcessId;
+			return HandleToULong(pbi.UniqueProcessId);
 		}
 	}
 
@@ -291,7 +291,7 @@ DWORD GetThreadIdByThreadHandle(HANDLE hThread)
 
 	if (NT_SUCCESS(NtQueryInformationThread(hThread, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0)))
 	{
-		return (DWORD)tbi.ClientId.UniqueThread;
+		return HandleToULong(tbi.ClientId.UniqueThread);
 	}
 
 	return 0;
@@ -303,7 +303,7 @@ DWORD GetProcessIdByThreadHandle(HANDLE hThread)
 
 	if (NT_SUCCESS(NtQueryInformationThread(hThread, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0)))
 	{
-		return (DWORD)tbi.ClientId.UniqueProcess;
+		return HandleToULong(tbi.ClientId.UniqueProcess);
 	}
 
 	return 0;
@@ -332,11 +332,6 @@ DWORD GetExplorerProcessId()
 		dwExplorerPid = GetProcessIdByName(ExplorerProcessName);
 	}
 	return dwExplorerPid;
-}
-
-DWORD GetCsrssProcessId()
-{
-	return GetProcessIdByName(L"csrss.exe");
 }
 
 DWORD GetProcessIdByName(const WCHAR * processName)

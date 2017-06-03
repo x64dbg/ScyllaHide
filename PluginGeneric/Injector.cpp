@@ -243,7 +243,7 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
     SIZE_T memorySize = (wcslen(dllPath) + 1) * sizeof(WCHAR);
 
     LPVOID remoteMemory = VirtualAllocEx(hProcess, NULL, memorySize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    DWORD hModule = 0;
+    LPVOID hModule = nullptr;
 
     if (!remoteMemory)
     {
@@ -258,7 +258,7 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
         {
             DoThreadMagic(hThread);
 
-            GetExitCodeThread(hThread, &hModule);
+            GetExitCodeThread(hThread, (LPDWORD)&hModule);
 
             if (!hModule)
             {
@@ -281,7 +281,7 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
 
 
 
-    return (LPVOID)hModule;
+    return hModule;
 }
 
 DWORD_PTR GetAddressOfEntryPoint(BYTE * dllMemory)
