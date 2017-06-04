@@ -16,7 +16,6 @@ void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded);
 SAVE_DEBUG_REGISTERS ArrayDebugRegister[100] = { 0 }; //Max 100 threads
 
 extern DWORD dwExplorerPid;
-extern WCHAR ExplorerProcessName[13];
 
 NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass, PVOID ThreadInformation, ULONG ThreadInformationLength)
 {
@@ -773,7 +772,7 @@ void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo)
 {
     if (!dwExplorerPid)
     {
-        const USHORT explorerNameLength = (USHORT)_wcslen(ExplorerProcessName);
+        const USHORT explorerNameLength = (sizeof(L"explorer.exe") / sizeof(WCHAR)) - 1;
         PSYSTEM_PROCESS_INFORMATION pTemp = pInfo;
         while (TRUE)
         {
@@ -782,7 +781,7 @@ void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo)
                 if (pTemp->ImageName.Length == explorerNameLength)
                 {
                     pTemp->ImageName.Buffer[pTemp->ImageName.Length] = L'\0';
-                    if (!_wcsicmp(pTemp->ImageName.Buffer, ExplorerProcessName, pTemp->ImageName.Length))
+                    if (!_wcsicmp(pTemp->ImageName.Buffer, L"explorer.exe"))
                     {
                         dwExplorerPid = HandleToULong(pTemp->UniqueProcessId);
                         break;

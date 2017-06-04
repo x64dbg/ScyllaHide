@@ -310,13 +310,12 @@ void TerminateProcessByProcessId(DWORD dwProcess)
 }
 
 DWORD dwExplorerPid = 0;
-WCHAR ExplorerProcessName[] = L"explorer.exe";
 
 DWORD GetExplorerProcessId()
 {
 	if (!dwExplorerPid)
 	{
-		dwExplorerPid = GetProcessIdByName(ExplorerProcessName);
+		dwExplorerPid = GetProcessIdByName(L"explorer.exe");
 	}
 	return dwExplorerPid;
 }
