@@ -411,7 +411,7 @@ void ThreadDebugContextRemoveEntry(const int index)
 
 void ThreadDebugContextSaveContext(const int index, const PCONTEXT ThreadContext)
 {
-	ArrayDebugRegister[index].dwThreadId = GetCurrentThreadId();
+	ArrayDebugRegister[index].dwThreadId = HandleToULong(NtCurrentTeb()->ClientId.UniqueThread);
 	ArrayDebugRegister[index].Dr0 = ThreadContext->Dr0;
 	ArrayDebugRegister[index].Dr1 = ThreadContext->Dr1;
 	ArrayDebugRegister[index].Dr2 = ThreadContext->Dr2;
@@ -426,7 +426,7 @@ int ThreadDebugContextFindExistingSlotIndex()
 	{
 		if (ArrayDebugRegister[i].dwThreadId != 0)
 		{
-			if (ArrayDebugRegister[i].dwThreadId == GetCurrentThreadId())
+			if (ArrayDebugRegister[i].dwThreadId == HandleToULong(NtCurrentTeb()->ClientId.UniqueThread))
 			{
 				return i;
 			}
