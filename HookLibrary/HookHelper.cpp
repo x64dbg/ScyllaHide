@@ -210,21 +210,6 @@ bool HasDebugPrivileges(HANDLE hProcess)
 	return hasDebugPrivileges == TRUE;
 }
 
-OSVERSIONINFO versionInfo = { 0 };
-
-bool IsAtleastVista()
-{
-	static bool isAtleastVista = false;
-	static bool isSet = false;
-	if (isSet)
-		return isAtleastVista;
-	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
-	GetVersionExW(&versionInfo);
-	isAtleastVista = versionInfo.dwMajorVersion >= 6;
-	isSet = true;
-	return isAtleastVista;
-}
-
 bool IsValidHandle(HANDLE hHandle)
 {
 	//return !!GetHandleInformation(hThread, &flags); //calls NtQueryObject ObjectHandleFlagInformation

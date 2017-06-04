@@ -593,7 +593,7 @@ NTSTATUS NTAPI HookedNtUserBlockInput(BOOL fBlockIt)
 //GetLastError() function might not change if a  debugger is present (it has never been the case that it is always set to zero).
 DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString) //Worst anti-debug ever
 {
-    if (IsAtleastVista())
+    if (RtlNtMajorVersion() >= 6) // Vista or later
     {
         return 0;
     }

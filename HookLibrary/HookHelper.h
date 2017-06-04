@@ -2,6 +2,11 @@
 
 #include <ntdll/ntdll.h>
 
+FORCEINLINE ULONG NTAPI RtlNtMajorVersion()
+{
+	return *(PULONG)(0x7FFE0000 + 0x26C);
+}
+
 FORCEINLINE ULONG NTAPI RtlGetTickCount()
 {
 	return (ULONG)(*(PULONG64)(0x7FFE0000 + 0x320) * *(PULONG)(0x7FFE0000 + 0x4) >> 24);
@@ -14,7 +19,6 @@ bool HasDebugPrivileges(HANDLE hProcess);
 DWORD GetExplorerProcessId();
 DWORD GetProcessIdByName(const WCHAR * processName);
 bool IsProcessBad(PUNICODE_STRING process);
-bool IsAtleastVista();
 
 DWORD GetProcessIdByProcessHandle(HANDLE hProcess);
 DWORD GetThreadIdByThreadHandle(HANDLE hThread);
