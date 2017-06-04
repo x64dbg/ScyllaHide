@@ -522,7 +522,8 @@ void DumpMalware(DWORD dwProcessId)
 						
 					WriteMalwareToDisk(tempMem, pNt->OptionalHeader.SizeOfImage, imagebase);
 
-					VirtualFree(tempMem, 0, MEM_RELEASE);
+					size = 0;
+					NtFreeVirtualMemory(NtCurrentProcess, &tempMem, &size, MEM_RELEASE);
 				}
 			}
 		}
