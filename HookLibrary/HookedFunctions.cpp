@@ -437,7 +437,7 @@ ULONGLONG WINAPI HookedGetTickCount64(void) //yes we can use DWORD
 		}
 		else
 		{
-			OneTickCount = GetTickCount();
+			OneTickCount = RtlGetTickCount();
 		}
 	}
 	else

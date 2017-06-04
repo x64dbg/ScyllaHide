@@ -2,6 +2,11 @@
 
 #include <ntdll/ntdll.h>
 
+FORCEINLINE ULONG NTAPI RtlGetTickCount()
+{
+	return (ULONG)(*(PULONG64)(0x7FFE0000 + 0x320) * *(PULONG)(0x7FFE0000 + 0x4) >> 24);
+}
+
 bool IsValidHandle(HANDLE hHandle);
 bool IsValidThreadHandle(HANDLE hThread);
 bool IsValidProcessHandle(HANDLE hProcess);
