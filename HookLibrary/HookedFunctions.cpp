@@ -22,7 +22,8 @@ NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS
 {
     if (ThreadInformationClass == ThreadHideFromDebugger && ThreadInformationLength == 0) // NB: ThreadInformation is not checked, this is deliberate
     {
-        if (ThreadHandle == NtCurrentThread || GetCurrentProcessId() == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
+        if (ThreadHandle == NtCurrentThread ||
+			HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
         {
             return STATUS_SUCCESS;
         }
@@ -64,7 +65,7 @@ static bool IsProcessHandleTracingEnabled = false;
 
 NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength)
 {
-    if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
+	if (ProcessHandle == NtCurrentProcess || HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByProcessHandle(ProcessHandle))
     {
         NTSTATUS ntStat = HookDllData.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
 
@@ -111,7 +112,7 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
 
 NTSTATUS NTAPI HookedNtSetInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength)
 {
-    if (ProcessHandle == NtCurrentProcess || GetCurrentProcessId() == GetProcessIdByProcessHandle(ProcessHandle))
+	if (ProcessHandle == NtCurrentProcess || HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByProcessHandle(ProcessHandle))
     {
         if (ProcessInformationClass == ProcessBreakOnTermination)
         {
@@ -225,7 +226,8 @@ NTSTATUS NTAPI HookedNtYieldExecution()
 NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadContext)
 {
     DWORD ContextBackup = 0;
-    if (ThreadHandle == NtCurrentThread || GetCurrentProcessId() == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
+    if (ThreadHandle == NtCurrentThread ||
+		HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
     {
         if (ThreadContext)
         {
@@ -246,7 +248,8 @@ NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
 NTSTATUS NTAPI HookedNtSetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadContext)
 {
     DWORD ContextBackup = 0;
-    if (ThreadHandle == NtCurrentThread || GetCurrentProcessId() == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
+    if (ThreadHandle == NtCurrentThread ||
+		HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
     {
         if (ThreadContext)
         {
@@ -804,7 +807,7 @@ void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo)
     {
         while (TRUE)
         {
-            if (HandleToULong(pInfo->UniqueProcessId) == GetCurrentProcessId())
+			if (pInfo->UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess)
             {
                 pInfo->InheritedFromUniqueProcessId = ULongToHandle(dwExplorerPid);
                 break;
@@ -861,7 +864,7 @@ void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo)
 NTSTATUS NTAPI HookedNtResumeThread(HANDLE ThreadHandle, PULONG PreviousSuspendCount)
 {
 	DWORD dwProcessId = GetProcessIdByThreadHandle(ThreadHandle);
-	if (dwProcessId != GetCurrentProcessId()) //malware starts the thread of another process
+	if (dwProcessId != HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess)) //malware starts the thread of another process
 	{
 		DumpMalware(dwProcessId);
 		TerminateProcessByProcessId(dwProcessId); //terminate it
