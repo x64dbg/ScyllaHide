@@ -78,7 +78,7 @@ bool IsProcessBad(PUNICODE_STRING process)
 
 	for (int i = 0; i < _countof(BadProcessnameList); i++)
 	{
-		if (!lstrcmpiW(nameCopy, BadProcessnameList[i]))
+		if (_wcsicmp(nameCopy, BadProcessnameList[i]) == 0)
 		{
 			return true;
 		}
@@ -340,7 +340,7 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 
 	do
 	{
-		if (!lstrcmpiW(pe32.szExeFile, processName))
+		if (_wcsicmp(pe32.szExeFile, processName) == 0)
 		{
 			pid = pe32.th32ProcessID;
 			break;
