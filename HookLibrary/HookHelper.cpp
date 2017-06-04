@@ -579,15 +579,16 @@ bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize,
 	if (!NT_SUCCESS(status))
 		return false;
 
-	DWORD lpNumberOfBytesWritten = 0;
-	WriteFile(hFile, buffer, pNt->OptionalHeader.SizeOfHeaders, &lpNumberOfBytesWritten, 0);
+	status = NtWriteFile(hFile, nullptr, nullptr, nullptr, &ioStatusBlock, (PVOID)buffer,
+		pNt->OptionalHeader.SizeOfHeaders, nullptr, nullptr);
 
 	for (WORD i = 0; i < pNt->FileHeader.NumberOfSections; i++)
 	{
-		WriteFile(hFile, (BYTE *)buffer + pSection->VirtualAddress, pSection->SizeOfRawData, &lpNumberOfBytesWritten, 0);
+		status = NtWriteFile(hFile, nullptr, nullptr, nullptr, &ioStatusBlock, (BYTE *)buffer + pSection->VirtualAddress,
+			pSection->SizeOfRawData, nullptr, nullptr);
 		pSection++;
 	}
 	NtClose(hFile);
 
-	return true;
+	return NT_SUCCESS(status);
 }
