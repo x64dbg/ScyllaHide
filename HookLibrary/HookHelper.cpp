@@ -513,8 +513,10 @@ void DumpMalware(DWORD dwProcessId)
 			PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
 			if (pNt->Signature == IMAGE_NT_SIGNATURE)
 			{
-				void *tempMem = VirtualAlloc(0, pNt->OptionalHeader.SizeOfImage, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
-				if (tempMem)
+				PVOID tempMem = nullptr;
+				SIZE_T size = pNt->OptionalHeader.SizeOfImage;
+				status = NtAllocateVirtualMemory(NtCurrentProcess, &tempMem, 0, &size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+				if (NT_SUCCESS(status))
 				{
 					ReadProcessMemory(hProcess,(void *)imagebase, tempMem, pNt->OptionalHeader.SizeOfImage, 0);
 						
