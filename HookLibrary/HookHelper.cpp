@@ -301,7 +301,7 @@ void TerminateProcessByProcessId(DWORD dwProcess)
 		if (hProcess)
 		{
 			TerminateProcess(hProcess, 0);
-			CloseHandle(hProcess);
+			NtClose(hProcess);
 		}
 	}
 }
@@ -332,7 +332,7 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 
 	if (!Process32First(hProcessSnap, &pe32))
 	{
-		CloseHandle(hProcessSnap);
+		NtClose(hProcessSnap);
 		return 0;
 	}
 
@@ -347,7 +347,7 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 		}
 	} while (Process32Next(hProcessSnap, &pe32));
 
-	CloseHandle(hProcessSnap);
+	NtClose(hProcessSnap);
 	return pid;
 }
 
@@ -520,7 +520,7 @@ void DumpMalware(DWORD dwProcessId)
 				}
 			}
 		}
-		CloseHandle(hProcess);
+		NtClose(hProcess);
 	}
 }
 
@@ -570,7 +570,7 @@ bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize,
 		}
 
 		ret = true;
-		CloseHandle(hFile);
+		NtClose(hFile);
 	}
 
 	return ret;
