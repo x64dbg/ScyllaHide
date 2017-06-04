@@ -503,9 +503,9 @@ void DumpMalware(DWORD dwProcessId)
 	if (peb)
 	{
 		DWORD_PTR imagebase = 0;
-		ReadProcessMemory(hProcess, (void *)&peb->ImageBaseAddress, &imagebase, sizeof(DWORD_PTR), 0);
+		NtReadVirtualMemory(hProcess, &peb->ImageBaseAddress, &imagebase, sizeof(DWORD_PTR), nullptr);
 
-		ReadProcessMemory(hProcess, (void *)imagebase, memory, sizeof(memory), 0);
+		NtReadVirtualMemory(hProcess, (PVOID)imagebase, memory, sizeof(memory), nullptr);
 
 		PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)memory;
 		if (pDos->e_magic == IMAGE_DOS_SIGNATURE)
@@ -518,7 +518,7 @@ void DumpMalware(DWORD dwProcessId)
 				status = NtAllocateVirtualMemory(NtCurrentProcess, &tempMem, 0, &size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 				if (NT_SUCCESS(status))
 				{
-					ReadProcessMemory(hProcess,(void *)imagebase, tempMem, pNt->OptionalHeader.SizeOfImage, 0);
+					NtReadVirtualMemory(hProcess, (PVOID)imagebase, tempMem, pNt->OptionalHeader.SizeOfImage, nullptr);
 						
 					WriteMalwareToDisk(tempMem, pNt->OptionalHeader.SizeOfImage, imagebase);
 
