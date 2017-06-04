@@ -557,22 +557,37 @@ bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize,
 
 	//pNt->OptionalHeader.ImageBase = imagebase;
 
-	bool ret = false;
-	HANDLE hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-	if (hFile != INVALID_HANDLE_VALUE)
+	UNICODE_STRING NtPath;
+	if (!RtlDosPathNameToNtPathName_U(filename, &NtPath, nullptr, nullptr))
+		return false;
+	OBJECT_ATTRIBUTES objectAttributes;
+	IO_STATUS_BLOCK ioStatusBlock;
+	InitializeObjectAttributes(&objectAttributes, &NtPath, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
+
+	HANDLE hFile;
+	NTSTATUS status = NtCreateFile(&hFile,
+								FILE_GENERIC_WRITE,
+								&objectAttributes,
+								&ioStatusBlock,
+								nullptr,
+								FILE_ATTRIBUTE_NORMAL,
+								FILE_SHARE_READ,
+								FILE_OVERWRITE_IF,
+								FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+								nullptr,
+								0);
+	if (!NT_SUCCESS(status))
+		return false;
+
+	DWORD lpNumberOfBytesWritten = 0;
+	WriteFile(hFile, buffer, pNt->OptionalHeader.SizeOfHeaders, &lpNumberOfBytesWritten, 0);
+
+	for (WORD i = 0; i < pNt->FileHeader.NumberOfSections; i++)
 	{
-		DWORD lpNumberOfBytesWritten = 0;
-		WriteFile(hFile, buffer, pNt->OptionalHeader.SizeOfHeaders, &lpNumberOfBytesWritten, 0);
-
-		for (WORD i = 0; i < pNt->FileHeader.NumberOfSections; i++)
-		{
-			WriteFile(hFile, (BYTE *)buffer + pSection->VirtualAddress, pSection->SizeOfRawData, &lpNumberOfBytesWritten, 0);
-			pSection++;
-		}
-
-		ret = true;
-		NtClose(hFile);
+		WriteFile(hFile, (BYTE *)buffer + pSection->VirtualAddress, pSection->SizeOfRawData, &lpNumberOfBytesWritten, 0);
+		pSection++;
 	}
+	NtClose(hFile);
 
-	return ret;
+	return true;
 }
