@@ -1,6 +1,5 @@
 #pragma once
 
-#include <windows.h>
 #include <ntdll/ntdll.h>
 
 typedef BOOL(WINAPI * t_DllMain)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
