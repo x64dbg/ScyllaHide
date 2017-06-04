@@ -320,34 +320,32 @@ DWORD GetExplorerProcessId()
 
 DWORD GetProcessIdByName(const WCHAR * processName)
 {
-	HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-
-	if (hProcessSnap == INVALID_HANDLE_VALUE)
-	{
+	ULONG size;
+	if (NtQuerySystemInformation(SystemProcessInformation, nullptr, 0, &size) != STATUS_INFO_LENGTH_MISMATCH)
 		return 0;
-	}
-
-	PROCESSENTRY32 pe32;
-	pe32.dwSize = sizeof(PROCESSENTRY32);
-
-	if (!Process32First(hProcessSnap, &pe32))
-	{
-		NtClose(hProcessSnap);
+	PSYSTEM_PROCESS_INFORMATION systemProcessInfo =
+		static_cast<PSYSTEM_PROCESS_INFORMATION>(RtlAllocateHeap(RtlProcessHeap(), 0, 2 * size));
+	NTSTATUS status = NtQuerySystemInformation(SystemProcessInformation,
+												systemProcessInfo,
+												2 * size,
+												nullptr);
+	if (!NT_SUCCESS(status))
 		return 0;
-	}
 
 	DWORD pid = 0;
-
-	do
+	PSYSTEM_PROCESS_INFORMATION process = systemProcessInfo;
+	while (process->NextEntryOffset != 0)
 	{
-		if (_wcsicmp(pe32.szExeFile, processName) == 0)
+		if (process->ImageName.Buffer != nullptr &&
+			_wcsicmp(process->ImageName.Buffer, processName) == 0)
 		{
-			pid = pe32.th32ProcessID;
+			pid = HandleToULong(process->UniqueProcessId);
 			break;
 		}
-	} while (Process32Next(hProcessSnap, &pe32));
+		process = (PSYSTEM_PROCESS_INFORMATION)((ULONG_PTR)process + process->NextEntryOffset);
+	}
 
-	NtClose(hProcessSnap);
+	RtlFreeHeap(RtlProcessHeap(), 0, systemProcessInfo);
 	return pid;
 }
 
