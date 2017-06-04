@@ -150,7 +150,6 @@
     <ClCompile Include="HookedFunctions.cpp" />
     <ClCompile Include="HookHelper.cpp" />
     <ClCompile Include="DllMain.cpp" />
-    <ClCompile Include="PebHider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Export.def" />
@@ -159,7 +158,6 @@
     <ClInclude Include="HookedFunctions.h" />
     <ClInclude Include="HookHelper.h" />
     <ClInclude Include="HookMain.h" />
-    <ClInclude Include="PebHider.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -5,7 +5,6 @@
 
 #include "HookedFunctions.h"
 #include "HookMain.h"
-#include "PebHider.h"
 
 const WCHAR * BadProcessnameList[] =
 {
@@ -510,7 +509,7 @@ void DumpMalware(DWORD dwProcessId)
 	HANDLE hProcess = OpenProcess(PROCESS_VM_READ|PROCESS_QUERY_INFORMATION, 0, dwProcessId);
 	if (hProcess)
 	{
-		PEB_CURRENT * peb = (PEB_CURRENT *)GetPEBRemote(hProcess);
+		PPEB peb = (PPEB)GetPEBRemote(hProcess);
 		if (peb)
 		{
 			DWORD_PTR imagebase = 0;
