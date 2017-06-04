@@ -531,13 +531,16 @@ bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize, DWORD_PTR imagebase)
 {
 	if (MalwareFile[0] == 0)
 	{
-		GetModuleFileNameW(0, MalwareFile, _countof(MalwareFile));
+		PUNICODE_STRING imagePath = &NtCurrentPeb()->ProcessParameters->ImagePathName;
+		ULONG size = MIN(sizeof(MalwareFile) - 1, imagePath->Length);
+		RtlCopyMemory(MalwareFile, imagePath->Buffer, size);
+		MalwareFile[size / sizeof(WCHAR)] = L'\0';
 
-		for (int i = (int)_wcslen(MalwareFile) - 1; i >= 0; i--)
+		for (int i = (int)(size / sizeof(WCHAR)) - 1; i >= 0; i--)
 		{
 			if (MalwareFile[i] == L'\\')
 			{
-				MalwareFile[i+1] = 0;
+				MalwareFile[i+1] = L'\0';
 				break;
 			}
 		}
