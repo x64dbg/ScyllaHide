@@ -295,14 +295,17 @@ DWORD GetProcessIdByThreadHandle(HANDLE hThread)
 
 void TerminateProcessByProcessId(DWORD dwProcess)
 {
-	if (dwProcess)
+	if (dwProcess == 0)
+		return;
+
+	OBJECT_ATTRIBUTES attributes = { sizeof(OBJECT_ATTRIBUTES) };
+	CLIENT_ID clientId = { ULongToHandle(dwProcess) };
+	HANDLE hProcess;
+	NTSTATUS status = NtOpenProcess(&hProcess, PROCESS_TERMINATE, &attributes, &clientId);
+	if (NT_SUCCESS(status))
 	{
-		HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, 0, dwProcess);
-		if (hProcess)
-		{
-			TerminateProcess(hProcess, 0);
-			NtClose(hProcess);
-		}
+		TerminateProcess(hProcess, 0);
+		NtClose(hProcess);
 	}
 }
 
@@ -489,37 +492,40 @@ BYTE memory[sizeof(IMAGE_NT_HEADERS) + 0x100] = {0};
 
 void DumpMalware(DWORD dwProcessId)
 {
-	HANDLE hProcess = OpenProcess(PROCESS_VM_READ|PROCESS_QUERY_INFORMATION, 0, dwProcessId);
-	if (hProcess)
+	OBJECT_ATTRIBUTES attributes = { sizeof(OBJECT_ATTRIBUTES) };
+	CLIENT_ID clientId = { ULongToHandle(dwProcessId) };
+	HANDLE hProcess;
+	NTSTATUS status = NtOpenProcess(&hProcess, PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, &attributes, &clientId);
+	if (!NT_SUCCESS(status))
+		return;
+
+	PPEB peb = (PPEB)GetPEBRemote(hProcess);
+	if (peb)
 	{
-		PPEB peb = (PPEB)GetPEBRemote(hProcess);
-		if (peb)
+		DWORD_PTR imagebase = 0;
+		ReadProcessMemory(hProcess, (void *)&peb->ImageBaseAddress, &imagebase, sizeof(DWORD_PTR), 0);
+
+		ReadProcessMemory(hProcess, (void *)imagebase, memory, sizeof(memory), 0);
+
+		PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)memory;
+		if (pDos->e_magic == IMAGE_DOS_SIGNATURE)
 		{
-			DWORD_PTR imagebase = 0;
-			ReadProcessMemory(hProcess, (void *)&peb->ImageBaseAddress, &imagebase, sizeof(DWORD_PTR), 0);
-
-			ReadProcessMemory(hProcess, (void *)imagebase, memory, sizeof(memory), 0);
-
-			PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)memory;
-			if (pDos->e_magic == IMAGE_DOS_SIGNATURE)
+			PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
+			if (pNt->Signature == IMAGE_NT_SIGNATURE)
 			{
-				PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
-				if (pNt->Signature == IMAGE_NT_SIGNATURE)
+				void *tempMem = VirtualAlloc(0, pNt->OptionalHeader.SizeOfImage, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+				if (tempMem)
 				{
-					void *tempMem = VirtualAlloc(0, pNt->OptionalHeader.SizeOfImage, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
-					if (tempMem)
-					{
-						ReadProcessMemory(hProcess,(void *)imagebase, tempMem, pNt->OptionalHeader.SizeOfImage, 0);
+					ReadProcessMemory(hProcess,(void *)imagebase, tempMem, pNt->OptionalHeader.SizeOfImage, 0);
 						
-						WriteMalwareToDisk(tempMem, pNt->OptionalHeader.SizeOfImage, imagebase);
+					WriteMalwareToDisk(tempMem, pNt->OptionalHeader.SizeOfImage, imagebase);
 
-						VirtualFree(tempMem, 0, MEM_RELEASE);
-					}
+					VirtualFree(tempMem, 0, MEM_RELEASE);
 				}
 			}
 		}
-		NtClose(hProcess);
 	}
+	NtClose(hProcess);
 }
 
 WCHAR MalwareFile[MAX_PATH] = {0};
