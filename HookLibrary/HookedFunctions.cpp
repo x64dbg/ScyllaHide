@@ -781,7 +781,8 @@ void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo)
             {
                 if (pTemp->ImageName.Length == explorerNameLength)
                 {
-                    if (!_wcsnicmp(pTemp->ImageName.Buffer, ExplorerProcessName, pTemp->ImageName.Length))
+                    pTemp->ImageName.Buffer[pTemp->ImageName.Length] = L'\0';
+                    if (!_wcsicmp(pTemp->ImageName.Buffer, ExplorerProcessName, pTemp->ImageName.Length))
                     {
                         dwExplorerPid = HandleToULong(pTemp->UniqueProcessId);
                         break;

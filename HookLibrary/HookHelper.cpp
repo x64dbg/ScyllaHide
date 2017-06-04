@@ -374,7 +374,7 @@ bool wcsistr(const wchar_t *s, const wchar_t *t)
 
 	for (int off = 0; off < (int)(l1 - l2); ++off)
 	{
-		if (!_wcsnicmp(s + off, t, l2))
+		if (!_wcsicmp(s + off, t))
 			return true;
 	}
 
