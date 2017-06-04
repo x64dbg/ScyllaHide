@@ -269,7 +269,7 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 	{
 		if (HookDllData.dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
 		{
-			return HandleToULong(pbi.UniqueProcessId);
+			return (ULONG)pbi.UniqueProcessId;
 		}
 	}
 	else
@@ -277,7 +277,7 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 		//maybe not hooked
 		if (NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
 		{
-			return HandleToULong(pbi.UniqueProcessId);
+			return (ULONG)pbi.UniqueProcessId;
 		}
 	}
 

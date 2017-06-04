@@ -1,5 +1,4 @@
 #include "HookMain.h"
-#include <intrin.h>
 
 #pragma intrinsic(_ReturnAddress)
 
@@ -86,7 +85,7 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
             }
             else if (ProcessInformationClass == ProcessBasicInformation) //Fake parent
             {
-                ((PPROCESS_BASIC_INFORMATION)ProcessInformation)->InheritedFromUniqueProcessId = ULongToHandle(GetExplorerProcessId());
+                ((PPROCESS_BASIC_INFORMATION)ProcessInformation)->InheritedFromUniqueProcessId = (ULONG_PTR)GetExplorerProcessId();
             }
             else if (ProcessInformationClass == ProcessBreakOnTermination)
             {
@@ -718,7 +717,7 @@ NTSTATUS NTAPI HookedNtCreateThread(PHANDLE ThreadHandle,ACCESS_MASK DesiredAcce
 }
 
 //WIN 7: CreateThread -> CreateRemoteThreadEx -> NtCreateThreadEx
-NTSTATUS NTAPI HookedNtCreateThreadEx(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PVOID StartRoutine,PVOID Argument,ULONG CreateFlags,ULONG_PTR ZeroBits,SIZE_T StackSize,SIZE_T MaximumStackSize,PPS_ATTRIBUTE_LIST AttributeList)
+NTSTATUS NTAPI HookedNtCreateThreadEx(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PUSER_THREAD_START_ROUTINE StartRoutine,PVOID Argument,ULONG CreateFlags,ULONG_PTR ZeroBits,SIZE_T StackSize,SIZE_T MaximumStackSize,PPS_ATTRIBUTE_LIST AttributeList)
 {
     if (HookDllData.EnableNtCreateThreadExHook == TRUE) //prevent hide from debugger
     {
