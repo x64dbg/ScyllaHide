@@ -304,7 +304,7 @@ void TerminateProcessByProcessId(DWORD dwProcess)
 	NTSTATUS status = NtOpenProcess(&hProcess, PROCESS_TERMINATE, &attributes, &clientId);
 	if (NT_SUCCESS(status))
 	{
-		TerminateProcess(hProcess, 0);
+		NtTerminateProcess(hProcess, STATUS_SUCCESS);
 		NtClose(hProcess);
 	}
 }
