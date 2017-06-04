@@ -313,11 +313,8 @@ NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert) //re
     DWORD_PTR retAddress = (DWORD_PTR)_ReturnAddress();
     if (!KiUserExceptionDispatcherAddress)
     {
-        UNICODE_STRING NtdllName = RTL_CONSTANT_STRING(L"ntdll.dll");
         ANSI_STRING KiUserExceptionDispatcherName = RTL_CONSTANT_ANSI_STRING("KiUserExceptionDispatcher");
-        PVOID ntdll = nullptr;
-        if (NT_SUCCESS(LdrGetDllHandle(nullptr, nullptr, &NtdllName, &ntdll)))
-            LdrGetProcedureAddress(ntdll, &KiUserExceptionDispatcherName, 0, (PVOID*)&KiUserExceptionDispatcherAddress);
+        LdrGetProcedureAddress(HookDllData.hNtdll, &KiUserExceptionDispatcherName, 0, (PVOID*)&KiUserExceptionDispatcherAddress);
     }
 
     if (ThreadContext)
