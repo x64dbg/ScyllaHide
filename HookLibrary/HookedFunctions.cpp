@@ -85,7 +85,7 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
             }
             else if (ProcessInformationClass == ProcessBasicInformation) //Fake parent
             {
-                ((PPROCESS_BASIC_INFORMATION)ProcessInformation)->InheritedFromUniqueProcessId = (ULONG_PTR)GetExplorerProcessId();
+                ((PPROCESS_BASIC_INFORMATION)ProcessInformation)->InheritedFromUniqueProcessId = ULongToHandle(GetExplorerProcessId());
             }
             else if (ProcessInformationClass == ProcessBreakOnTermination)
             {
