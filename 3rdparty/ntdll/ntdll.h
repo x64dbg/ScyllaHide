@@ -4471,11 +4471,13 @@ NtResumeProcess(
 	_In_ HANDLE ProcessHandle
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSCALLAPI
 ULONG
 NTAPI
 NtGetCurrentProcessorNumber(
 	);
+#endif
 
 NTSYSCALLAPI
 NTSTATUS
@@ -5811,6 +5813,7 @@ NtLoadKey2(
 	_In_ ULONG Flags
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -5824,6 +5827,7 @@ NtLoadKeyEx(
 	_Out_opt_ PHANDLE RootHandle,
 	_Out_opt_ PIO_STATUS_BLOCK IoStatus
 	);
+#endif
 
 NTSYSCALLAPI
 NTSTATUS
@@ -5876,6 +5880,7 @@ NtUnloadKey(
 	_In_ POBJECT_ATTRIBUTES TargetKey
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -5883,6 +5888,7 @@ NtUnloadKey2(
 	_In_ POBJECT_ATTRIBUTES TargetKey,
 	_In_ ULONG Flags
 	);
+#endif
 
 NTSYSCALLAPI
 NTSTATUS
@@ -5934,6 +5940,7 @@ NtQueryOpenSubKeys(
 	_Out_ PULONG HandleCount
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -5943,6 +5950,7 @@ NtQueryOpenSubKeysEx(
 	_Out_ PVOID Buffer,
 	_Out_ PULONG RequiredSize
 	);
+#endif
 
 NTSYSCALLAPI
 NTSTATUS
@@ -6263,17 +6271,6 @@ NtAccessCheckByTypeResultList(
 	_Inout_ PULONG PrivilegeSetLength,
 	_Out_ PACCESS_MASK GrantedAccess,
 	_Out_ PNTSTATUS AccessStatus
-	);
-
-NTSYSCALLAPI
-NTSTATUS
-NTAPI
-NtFilterBootOption(
-	_In_ FILTER_BOOT_OPTION_OPERATION FilterOperation,
-	_In_ ULONG ObjectType,
-	_In_ ULONG ElementType,
-	_In_ PVOID Data,
-	_In_ ULONG DataSize
 	);
 
 NTSYSCALLAPI
@@ -6968,6 +6965,7 @@ NtThawTransactions(
 	);
 #endif
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -7026,6 +7024,7 @@ NTAPI
 NtWorkerFactoryWorkerReady(
 	_In_ HANDLE WorkerFactoryHandle
 	);
+#endif
 
 #if NTDDI_VERSION >= NTDDI_VISTA
 #if NTDDI_VERSION >= NTDDI_WIN8 || defined(_WIN64)
@@ -7371,6 +7370,7 @@ LdrGetDllHandleEx(
 	_Out_opt_ PVOID *DllHandle
 	);
 
+#if NTDDI_VERSION >= NTDDI_WIN7
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -7379,7 +7379,6 @@ LdrGetDllHandleByMapping(
 	_Out_ PVOID *DllHandle
 	);
 
-#if NTDDI_VERSION >= NTDDI_WIN7
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -7400,6 +7399,7 @@ LdrGetProcedureAddress(
 	_Out_ PVOID *ProcedureAddress
 	);
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -7410,6 +7410,7 @@ LdrGetProcedureAddressEx(
 	_Out_ PVOID *ProcedureAddress,
 	_In_ ULONG Flags
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -7426,29 +7427,6 @@ NTAPI
 LdrUnlockLoaderLock(
 	_In_ ULONG Flags,
 	_Inout_ PVOID Cookie
-	);
-
-NTSYSAPI
-NTSTATUS
-NTAPI
-LdrRelocateImage(
-	_In_ PVOID NewBase,
-	_In_ PSTR LoaderName,
-	_In_ NTSTATUS Success,
-	_In_ NTSTATUS Conflict,
-	_In_ NTSTATUS Invalid
-	);
-
-NTSYSAPI
-NTSTATUS
-NTAPI
-LdrRelocateImageWithBias(
-	_In_ PVOID NewBase,
-	_In_ LONGLONG Bias,
-	_In_ PSTR LoaderName,
-	_In_ NTSTATUS Success,
-	_In_ NTSTATUS Conflict,
-	_In_ NTSTATUS Invalid
 	);
 
 NTSYSAPI
@@ -7475,6 +7453,7 @@ LdrDisableThreadCalloutsForDll(
 	_In_ PVOID DllHandle
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -7495,6 +7474,7 @@ LdrQueryImageFileKeyOption(
 	_In_ ULONG BufferSize,
 	_Out_opt_ PULONG ReturnedLength
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -7506,6 +7486,7 @@ LdrVerifyImageMatchesChecksum(
 	_Out_opt_ PUSHORT ImageCharacteristics
 	);
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -7513,15 +7494,7 @@ LdrVerifyImageMatchesChecksumEx(
 	_In_ HANDLE ImageFileHandle,
 	_Inout_ PLDR_VERIFY_IMAGE_INFO VerifyInfo
 	);
-
-NTSYSAPI
-BOOLEAN
-NTAPI
-LdrVerifyMappedImageMatchesChecksum(
-	_In_ PVOID BaseAddress,
-	_In_ SIZE_T NumberOfBytes,
-	_In_ ULONG FileLength
-	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -7565,14 +7538,6 @@ RtlAssert(
 	);
 
 NTSYSAPI
-BOOLEAN
-NTAPI
-RtlDispatchException(
-	_In_ PEXCEPTION_RECORD ExceptionRecord,
-	_In_ PCONTEXT ContextRecord
-	);
-
-NTSYSAPI
 DECLSPEC_NORETURN
 VOID
 NTAPI
@@ -7587,6 +7552,7 @@ RtlRaiseException(
 	_In_ PEXCEPTION_RECORD ExceptionRecord
 	);
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -7610,6 +7576,7 @@ NTSTATUS
 NTAPI
 RtlRegisterThreadWithCsrss(
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -7625,6 +7592,7 @@ RtlLeaveCriticalSection(
 	_Inout_ PRTL_CRITICAL_SECTION CriticalSection
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSAPI
 LOGICAL
 NTAPI
@@ -7645,6 +7613,7 @@ NTAPI
 RtlGetCriticalSectionRecursionCount(
 	_In_ PRTL_CRITICAL_SECTION CriticalSection
 	);
+#endif
 
 NTSYSAPI
 LOGICAL
@@ -7934,16 +7903,6 @@ RtlQueryTagHeap(
 	);
 
 NTSYSAPI
-NTSTATUS
-NTAPI
-RtlExtendHeap(
-	_In_ PVOID HeapHandle,
-	_In_ ULONG Flags,
-	_In_ PVOID Base,
-	_In_ SIZE_T Size
-	);
-
-NTSYSAPI
 SIZE_T
 NTAPI
 RtlCompactHeap(
@@ -8076,6 +8035,7 @@ RtlRestoreLastWin32Error(
 	_In_ LONG Win32Error
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSAPI
 ULONG
 NTAPI
@@ -8089,6 +8049,7 @@ RtlSetThreadErrorMode(
 	_In_ ULONG NewMode,
 	_Out_opt_ PULONG OldMode
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -8171,6 +8132,7 @@ RtlCreateEnvironment(
 	_Out_ PVOID *Environment
 	);
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -8179,6 +8141,7 @@ RtlCreateEnvironmentEx(
 	_Out_ PVOID *Environment,
 	_In_ ULONG Flags
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -8195,6 +8158,7 @@ RtlSetCurrentEnvironment(
 	_Out_opt_ PVOID *PreviousEnvironment
 	);
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -8205,6 +8169,7 @@ RtlSetEnvironmentVar(
 	_In_ PWSTR Value,
 	_In_ SIZE_T ValueLength
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -8215,6 +8180,7 @@ RtlSetEnvironmentVariable(
 	_In_ PUNICODE_STRING Value
 	);
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -8226,6 +8192,7 @@ RtlQueryEnvironmentVariable(
 	_In_ SIZE_T ValueLength,
 	_Out_ PSIZE_T ReturnLength
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -8236,6 +8203,7 @@ RtlQueryEnvironmentVariable_U(
 	_Out_ PUNICODE_STRING Value
 	);
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -8247,6 +8215,7 @@ RtlExpandEnvironmentStrings(
 	_In_ SIZE_T DstLength,
 	_Out_opt_ PSIZE_T ReturnLength
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -8258,6 +8227,7 @@ RtlExpandEnvironmentStrings_U(
 	_Out_opt_ PULONG ReturnedLength
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -8265,6 +8235,7 @@ RtlSetEnvironmentStrings(
 	_In_ PWCHAR NewEnvironment,
 	_In_ SIZE_T NewEnvironmentSize
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -8376,6 +8347,7 @@ RtlImageNtHeader(
 	_In_ PVOID ImageBase
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -8385,6 +8357,7 @@ RtlImageNtHeaderEx(
 	_In_ ULONG64 Size,
 	_Out_ PIMAGE_NT_HEADERS *OutHeaders
 	);
+#endif
 
 NTSYSAPI
 PVOID
@@ -8408,15 +8381,6 @@ NTSYSAPI
 PVOID
 NTAPI
 RtlAddressInSectionTable(
-	_In_ PIMAGE_NT_HEADERS NtHeaders,
-	_In_ PVOID BaseOfImage,
-	_In_ ULONG VirtualAddress
-	);
-
-NTSYSAPI
-PIMAGE_SECTION_HEADER
-NTAPI
-RtlSectionTableFromVirtualAddress(
 	_In_ PIMAGE_NT_HEADERS NtHeaders,
 	_In_ PVOID BaseOfImage,
 	_In_ ULONG VirtualAddress
@@ -8485,6 +8449,7 @@ RtlAdjustPrivilege(
 	_Out_ PBOOLEAN WasEnabled
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -8501,6 +8466,7 @@ NTAPI
 RtlReleasePrivilege(
 	_In_ PVOID StatePointer
 	);
+#endif
 
 NTSYSAPI
 ULONG
@@ -8522,6 +8488,7 @@ RtlDosPathNameToNtPathName_U(
 	_Reserved_ PVOID Reserved
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSAPI
 BOOLEAN
 NTAPI
@@ -8541,6 +8508,7 @@ RtlDosPathNameToRelativeNtPathName_U_WithStatus(
 	_Out_opt_ PWSTR *FilePart,
 	_Out_opt_ PRTL_RELATIVE_NAME_U RelativeName
 	);
+#endif
 
 NTSYSAPI
 RTL_PATH_TYPE
@@ -8549,6 +8517,7 @@ RtlDetermineDosPathNameType_U(
 	_In_ PCWSTR Path
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -8562,6 +8531,7 @@ RtlGetFullPathName_UstrEx(
 	_Out_ RTL_PATH_TYPE* PathType,
 	_Out_opt_ PSIZE_T LengthNeeded
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -8570,12 +8540,14 @@ RtlSetCurrentDirectory_U(
 	_In_ PUNICODE_STRING PathName
 	);
 
+#if NTDDI_VERSION >= NTDDI_WS03
 NTSYSAPI
 VOID
 NTAPI
 RtlReleaseRelativeName(
 	_In_ PRTL_RELATIVE_NAME_U RelativeName
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -8587,6 +8559,7 @@ RtlNtPathNameToDosPathName(
 	_Inout_opt_ PWSTR* FilePart
 	);
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSAPI
 VOID
 NTAPI
@@ -8621,7 +8594,9 @@ NTAPI
 RtlReleaseSRWLockShared(
 	_Inout_ PRTL_SRWLOCK SRWLock
 	);
+#endif
 
+#if NTDDI_VERSION >= NTDDI_WIN7
 NTSYSAPI
 BOOLEAN
 NTAPI
@@ -8642,6 +8617,7 @@ NTAPI
 RtlAcquireReleaseSRWLockExclusive(
 	_Inout_ PRTL_SRWLOCK SRWLock
 	);
+#endif
 
 NTSYSAPI
 ULONG
@@ -8803,14 +8779,6 @@ RtlClearAllBits(
 NTSYSAPI
 VOID
 NTAPI
-RtlClearBit(
-	_In_ PRTL_BITMAP BitMapHeader,
-	_In_ ULONG BitNumber
-	);
-
-NTSYSAPI
-VOID
-NTAPI
 RtlClearBits(
 	_In_ PRTL_BITMAP BitMapHeader,
 	_In_ ULONG StartingIndex,
@@ -8824,6 +8792,7 @@ RtlCreateSystemVolumeInformationFolder(
 	_In_ PCUNICODE_STRING VolumeRootPath
 	);
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSAPI
 LONG
 NTAPI
@@ -8831,6 +8800,7 @@ RtlCompareAltitudes(
 	_In_ PCUNICODE_STRING Altitude1,
 	_In_ PCUNICODE_STRING Altitude2
 	);
+#endif
 
 NTSYSAPI
 LONG
@@ -9329,14 +9299,6 @@ RtlSetAllBits(
 NTSYSAPI
 VOID
 NTAPI
-RtlSetBit(
-	_In_ PRTL_BITMAP BitMapHeader,
-	_In_ ULONG BitNumber
-	);
-
-NTSYSAPI
-VOID
-NTAPI
 RtlSetBits(
 	_In_ PRTL_BITMAP BitMapHeader,
 	_In_ ULONG StartingIndex,
@@ -9381,6 +9343,7 @@ RtlSetSaclSecurityDescriptor(
 	_In_opt_ BOOLEAN SaclDefaulted
 	);
 
+NTSYSAPI
 PRTL_SPLAY_LINKS
 NTAPI
 RtlSplay(
@@ -9424,6 +9387,7 @@ RtlSubtreeSuccessor(
 	_In_ PRTL_SPLAY_LINKS Links
 	);
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSAPI
 BOOLEAN
 NTAPI
@@ -9431,6 +9395,7 @@ RtlTestBit(
 	_In_ PRTL_BITMAP BitMapHeader,
 	_In_ ULONG BitNumber
 	);
+#endif
 
 NTSYSAPI
 VOID
@@ -9488,6 +9453,7 @@ VerSetConditionMask(
 	_In_ UCHAR Condition
 	);
 
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -9496,12 +9462,14 @@ TpAllocPool(
 	_Reserved_ PVOID Reserved
 	);
 
+#if NTDDI_VERSION >= NTDDI_WIN7
 NTSYSAPI
 NTSTATUS
 NTAPI
 TpDisablePoolCallbackChecks(
 	_Inout_ PTP_POOL Pool
 	);
+#endif
 
 NTSYSAPI
 VOID
@@ -9526,6 +9494,7 @@ TpSetPoolMinThreads(
 	_In_ LONG MinThreads
 	);
 
+#if NTDDI_VERSION >= NTDDI_WIN7
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -9541,6 +9510,7 @@ TpSetPoolStackInformation(
 	_Inout_ PTP_POOL Pool,
 	_In_ PTP_POOL_STACK_INFORMATION PoolStackInformation
 	);
+#endif
 
 NTSYSAPI
 NTSTATUS
@@ -9704,6 +9674,7 @@ TpAllocAlpcCompletion(
 	_In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron
 	);
 
+#if NTDDI_VERSION >= NTDDI_WIN7
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -9714,6 +9685,7 @@ TpAllocAlpcCompletionEx(
 	_Inout_opt_ PVOID Context,
 	_In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron
 	);
+#endif
 
 NTSYSAPI
 VOID
@@ -9728,7 +9700,9 @@ NTAPI
 TpWaitForAlpcCompletion(
 	_Inout_ PTP_ALPC Alpc
 	);
+#endif
 
+#if NTDDI_VERSION >= NTDDI_WIN7
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -9742,6 +9716,7 @@ NTAPI
 TpAlpcUnregisterCompletionList(
 	_Inout_ PTP_ALPC Alpc
 	);
+#endif
 
 #ifdef __cplusplus
 };
