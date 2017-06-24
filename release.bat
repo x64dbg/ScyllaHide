@@ -5,6 +5,7 @@ call "%VS120COMNTOOLS%vsvars32.bat"
 msbuild /m /property:Configuration=Release,Platform=Win32
 msbuild /m /property:Configuration=Release,Platform=x64
 
+rmdir /S /Q Release
 xcopy /S /Y ConfigCollection Release\
 
 @rem PDBReader tool
