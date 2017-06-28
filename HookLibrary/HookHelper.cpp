@@ -13,16 +13,21 @@ const WCHAR * BadProcessnameList[] =
 	L"idag64.exe",
 	L"idaw.exe",
 	L"idaw64.exe",
+	L"idaq.exe",
+	L"idaq64.exe",
+	L"idau.exe",
+	L"idau64.exe",
 	L"scylla.exe",
 	L"scylla_x64.exe",
 	L"scylla_x86.exe",
 	L"protection_id.exe",
 	L"x64dbg.exe",
-    L"x32dbg.exe",
+	L"x32dbg.exe",
 	L"windbg.exe",
 	L"reshacker.exe",
 	L"ImportREC.exe",
-	L"IMMUNITYDEBUGGER.EXE"
+	L"IMMUNITYDEBUGGER.EXE",
+	L"devenv.exe"
 };
 
 const WCHAR * BadWindowTextList[] =
