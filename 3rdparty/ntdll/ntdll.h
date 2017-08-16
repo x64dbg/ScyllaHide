@@ -2326,6 +2326,18 @@ typedef struct _SYSTEM_TIMEOFDAY_INFORMATION
 	ULONGLONG SleepTimeBias;
 } SYSTEM_TIMEOFDAY_INFORMATION, *PSYSTEM_TIMEOFDAY_INFORMATION;
 
+typedef struct _TIME_FIELDS
+{
+	SHORT Year;			// range [1601...]
+	SHORT Month;		// range [1..12]
+	SHORT Day;			// range [1..31]
+	SHORT Hour;			// range [0..23]
+	SHORT Minute;		// range [0..59]
+	SHORT Second;		// range [0..59]
+	SHORT Milliseconds;	// range [0..999]
+	SHORT Weekday;		// range [0..6] == [Sunday..Saturday]
+} TIME_FIELDS, *PTIME_FIELDS;
+
 typedef struct _SYSTEM_CONSOLE_INFORMATION
 {
 	ULONG DriverLoaded : 1;
@@ -7939,6 +7951,14 @@ NTAPI
 RtlEnumProcessHeaps(
 	_In_ PRTL_ENUM_HEAPS_ROUTINE EnumRoutine,
 	_In_ PVOID Parameter
+	);
+
+NTSYSAPI
+VOID
+NTAPI
+RtlTimeToTimeFields(
+	_In_ PLARGE_INTEGER Time,
+	_Out_ PTIME_FIELDS TimeFields
 	);
 
 NTSYSAPI
