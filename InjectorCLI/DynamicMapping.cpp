@@ -4,9 +4,8 @@
 
 #pragma comment(lib, "psapi.lib")
 
-LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory)
+LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory, bool wipeHeaders)
 {
-    DWORD_PTR dwDelta = 0;
     PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)dllMemory;
     PIMAGE_NT_HEADERS pNtHeader = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosHeader + pDosHeader->e_lfanew);
     PIMAGE_SECTION_HEADER pSecHeader = IMAGE_FIRST_SECTION(pNtHeader);
@@ -29,7 +28,7 @@ LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory)
         return 0;
     }
 
-    dwDelta = (DWORD_PTR)imageRemote - pNtHeader->OptionalHeader.ImageBase;
+    DWORD_PTR dwDelta = (DWORD_PTR)imageRemote - pNtHeader->OptionalHeader.ImageBase;
 
     memcpy((LPVOID)imageLocal, (LPVOID)pDosHeader, pNtHeader->OptionalHeader.SizeOfHeaders);
 
@@ -46,17 +45,19 @@ LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory)
 
     ResolveImports((PIMAGE_IMPORT_DESCRIPTOR)((DWORD_PTR)imageLocal + pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress), (DWORD_PTR)imageLocal);
 
-    if (WriteProcessMemory(hProcess, imageRemote, imageLocal, pNtHeader->OptionalHeader.SizeOfImage, 0))
+    SIZE_T skipBytes = wipeHeaders ? pNtHeader->OptionalHeader.SizeOfHeaders : 0;
+    if (WriteProcessMemory(hProcess, (PVOID)((ULONG_PTR)imageRemote + skipBytes), (PVOID)((ULONG_PTR)imageLocal + skipBytes),
+        pNtHeader->OptionalHeader.SizeOfImage - skipBytes, nullptr))
     {
         VirtualFree(imageLocal, 0, MEM_RELEASE);
-        return imageRemote;
     }
     else
     {
         VirtualFree(imageLocal, 0, MEM_RELEASE);
         VirtualFreeEx(hProcess, imageRemote, 0, MEM_RELEASE);
-        return 0;
+        imageRemote = nullptr;
     }
+    return imageRemote;
 }
 
 bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module)

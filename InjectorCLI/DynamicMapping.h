@@ -27,7 +27,7 @@ typedef struct _SameTebFlags
 #define TEB_OFFSET_SAME_TEB_FLAGS 0xFCA
 #endif
 
-LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory);
+LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory, bool wipeHeaders);
 void DoBaseRelocation(PIMAGE_BASE_RELOCATION relocation, DWORD_PTR memory, DWORD_PTR dwDelta);
 DWORD GetDllFunctionAddressRVA(BYTE * dllMemory, LPCSTR apiName);
 DWORD RVAToOffset(PIMAGE_NT_HEADERS pNtHdr, DWORD dwRVA);

@@ -118,7 +118,7 @@ static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 
 void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 {
-    LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
+    LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory, true);
     if (remoteImageBase)
     {
         FillHookDllData(hProcess, &g_hdd);

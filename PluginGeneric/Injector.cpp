@@ -182,7 +182,7 @@ void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory
 
         RestoreHooks(hdd, hProcess);
 
-        remoteImageBase = MapModuleToProcess(hProcess, dllMemory);
+        remoteImageBase = MapModuleToProcess(hProcess, dllMemory, true);
         if (remoteImageBase)
         {
             FillHookDllData(hProcess, hdd);
@@ -297,7 +297,7 @@ LPVOID StealthDllInjection(HANDLE hProcess, const WCHAR * dllPath, BYTE * dllMem
 
     if (dllMemory)
     {
-        remoteImageBaseOfInjectedDll = MapModuleToProcess(hProcess, dllMemory);
+        remoteImageBaseOfInjectedDll = MapModuleToProcess(hProcess, dllMemory, false);
         if (remoteImageBaseOfInjectedDll)
         {
 
