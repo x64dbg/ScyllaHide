@@ -39,10 +39,9 @@ const WCHAR * BadWindowTextList[] =
 	L"Debug",
 	L"[CPU",
 	L"Immunity",
-	L"Windbg",
+	L"WinDbg",
 	L"x32dbg",
 	L"x64dbg",
-	L"Windbg",
 	L"Import reconstructor"
 };
 
