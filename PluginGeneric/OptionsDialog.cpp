@@ -290,10 +290,13 @@ HWND CreateTooltips(HWND hDlg)
         },
         {
             IDC_NTQUERYSYSTEMINFORMATION,
-            L"The SYSTEM_INFORMATION_CLASS value SystemKernelDebuggerInformation\r\n"
-            L"can be used to detect kernel debuggers. The SYSTEM_INFORMATION_CLASS\r\n"
-            L"value SystemProcessInformation is used to get a process list. A debugger\r\n"
-            L"should be hidden in a process list and the debugee should have a good parent\r\n"
+            L"The SYSTEM_INFORMATION_CLASS values SystemKernelDebuggerInformation,\r\n"
+            L"SystemKernelDebuggerInformationEx and SystemKernelDebuggerFlags can be used\r\n"
+            L"to detect kernel debuggers. The SYSTEM_INFORMATION_CLASS values SystemProcessInformation\r\n"
+            L"and SystemExtendedProcessInformation are used to get a process list.\r\n"
+            L"The SYSTEM_INFORMATION_CLASS values SystemCodeIntegrityInformation and\r\n"
+            L"SystemCodeIntegrityUnlockInformation can be used to detect test signing mode.\r\n"
+            L"A debugger should be hidden in a process list and the debugee should have a good parent\r\n"
             L"process ID like the ID from explorer.exe."
         },
         {

@@ -32,20 +32,44 @@ NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS
 
 NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
 {
-    if (SystemInformationClass == SystemKernelDebuggerInformation || SystemInformationClass == SystemProcessInformation)
+    if (SystemInformationClass == SystemKernelDebuggerInformation ||
+        SystemInformationClass == SystemProcessInformation ||
+        SystemInformationClass == SystemExtendedProcessInformation ||   // Vista+
+        SystemInformationClass == SystemCodeIntegrityInformation ||     // Vista+
+        SystemInformationClass == SystemKernelDebuggerInformationEx ||  // 8.1+
+        SystemInformationClass == SystemKernelDebuggerFlags ||          // 10+
+        SystemInformationClass == SystemCodeIntegrityUnlockInformation) // 10+
     {
         NTSTATUS ntStat = HookDllData.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
-        if (NT_SUCCESS(ntStat) && SystemInformation != 0 && SystemInformationLength != 0)
+        if (NT_SUCCESS(ntStat) && SystemInformation != nullptr && SystemInformationLength != 0)
         {
             if (SystemInformationClass == SystemKernelDebuggerInformation)
             {
                 ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation)->KernelDebuggerEnabled = FALSE;
                 ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation)->KernelDebuggerNotPresent = TRUE;
             }
-            else if (SystemInformationClass == SystemProcessInformation)
+            else if (SystemInformationClass == SystemProcessInformation || SystemInformationClass == SystemExtendedProcessInformation)
             {
                 FilterProcess((PSYSTEM_PROCESS_INFORMATION)SystemInformation);
                 FakeCurrentParentProcessId((PSYSTEM_PROCESS_INFORMATION)SystemInformation);
+            }
+            else if (SystemInformationClass == SystemCodeIntegrityInformation)
+            {
+                ((PSYSTEM_CODEINTEGRITY_INFORMATION)SystemInformation)->CodeIntegrityOptions = CODEINTEGRITY_OPTION_ENABLED;
+            }
+            else if (SystemInformationClass == SystemKernelDebuggerInformationEx)
+            {
+                ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION_EX)SystemInformation)->DebuggerAllowed = FALSE;
+                ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION_EX)SystemInformation)->DebuggerEnabled = FALSE;
+                ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION_EX)SystemInformation)->DebuggerPresent = FALSE;
+            }
+            else if (SystemInformationClass == SystemKernelDebuggerFlags)
+            {
+                *(PUCHAR)SystemInformation = 0;
+            }
+            else if (SystemInformationClass == SystemCodeIntegrityUnlockInformation)
+            {
+                ((PSYSTEM_CODEINTEGRITY_UNLOCK_INFORMATION)SystemInformation)->Flags = 0;
             }
         }
 
