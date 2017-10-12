@@ -326,7 +326,6 @@ LPVOID StealthDllInjection(HANDLE hProcess, const WCHAR * dllPath, BYTE * dllMem
         {
             g_log.LogInfo(L"DLL INJECTION: Failed to map image of %s!", dllPath);
         }
-        free(dllMemory);
     }
 
     return remoteImageBaseOfInjectedDll;
