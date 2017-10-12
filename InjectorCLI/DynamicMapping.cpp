@@ -16,13 +16,15 @@ LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory, bool wipeHeaders)
     }
 
     IMAGE_DATA_DIRECTORY relocDir = pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
-    bool relocatable = pNtHeader->FileHeader.NumberOfSections >= IMAGE_DIRECTORY_ENTRY_BASERELOC && relocDir.VirtualAddress > 0 && relocDir.Size > 0;
-    if (!relocatable && (pNtHeader->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)) // A relocation dir is optional, but it must not have been stripped
+    bool relocatable = pNtHeader->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
+    bool hasRelocDir = pNtHeader->FileHeader.NumberOfSections >= IMAGE_DIRECTORY_ENTRY_BASERELOC && relocDir.VirtualAddress > 0 && relocDir.Size > 0;
+    if (!hasRelocDir && (pNtHeader->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)) // A relocation dir is optional, but it must not have been stripped
     {
         return nullptr;
     }
 
-    LPVOID preferredBase = relocatable ? nullptr : (LPVOID)pNtHeader->OptionalHeader.ImageBase;
+    ULONG_PTR headersBase = pNtHeader->OptionalHeader.ImageBase;
+    LPVOID preferredBase = relocatable ? nullptr : (LPVOID)headersBase;
     LPVOID imageRemote = VirtualAllocEx(hProcess, preferredBase, pNtHeader->OptionalHeader.SizeOfImage, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     LPVOID imageLocal = VirtualAlloc(nullptr, pNtHeader->OptionalHeader.SizeOfImage, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
@@ -31,12 +33,16 @@ LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory, bool wipeHeaders)
         return nullptr;
     }
 
+    // Update the headers to the relocated image base
+    if (relocatable && (ULONG_PTR)imageRemote != pNtHeader->OptionalHeader.ImageBase)
+        pNtHeader->OptionalHeader.ImageBase = (ULONG_PTR)imageRemote;
+
     memcpy((LPVOID)imageLocal, (LPVOID)pDosHeader, pNtHeader->OptionalHeader.SizeOfHeaders);
 
     SIZE_T imageSize = pNtHeader->OptionalHeader.SizeOfImage;
     for (WORD i = 0; i < pNtHeader->FileHeader.NumberOfSections; i++)
     {
-        if (relocatable && i == pNtHeader->FileHeader.NumberOfSections - 1 &&
+        if (hasRelocDir && i == pNtHeader->FileHeader.NumberOfSections - 1 &&
             pSecHeader->VirtualAddress == relocDir.VirtualAddress && (pSecHeader->Characteristics & IMAGE_SCN_MEM_DISCARDABLE))
             imageSize = pSecHeader->VirtualAddress; // Limit the maximum VA to copy to the process to exclude .reloc if it is the last section
 
@@ -44,9 +50,9 @@ LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory, bool wipeHeaders)
         pSecHeader++;
     }
 
-    if (relocatable)
+    if (hasRelocDir)
     {
-        DWORD_PTR dwDelta = (DWORD_PTR)imageRemote - pNtHeader->OptionalHeader.ImageBase;
+        DWORD_PTR dwDelta = (DWORD_PTR)imageRemote - headersBase;
         DoBaseRelocation(
             (PIMAGE_BASE_RELOCATION)((DWORD_PTR)imageLocal + relocDir.VirtualAddress),
             (DWORD_PTR)imageLocal,
