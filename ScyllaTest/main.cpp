@@ -216,6 +216,23 @@ static ScyllaTestResult Check_ZwQuerySystemInformation_SystemKernelDebuggerInfor
     return ScyllaTestOk;
 }
 
+static ScyllaTestResult Check_EFLAGS_TrapFlags()
+{
+    __try {
+        _asm
+        {
+            pushfd
+            or dword ptr[esp], 0x100
+            popfd
+            nop
+        }
+        return ScyllaTestDetected;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+        return ScyllaTestOk;
+    }
+}
+
 static const char *ScyllaTestResultAsStr(ScyllaTestResult result)
 {
     switch (result)
@@ -288,6 +305,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     SCYLLA_TEST(OutputDebugStringW_Exception, ver >= scl::OS_WIN_10);
     SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort, ver >= scl::OS_WIN_XP);
     SCYLLA_TEST(ZwQuerySystemInformation_SystemKernelDebuggerInformation, ver >= scl::OS_WIN_XP);
+    SCYLLA_TEST(EFLAGS_TrapFlags, ver >= scl::OS_WIN_XP);
     
     CloseHandle(g_proc_handle);
     g_proc_handle = INVALID_HANDLE_VALUE;
