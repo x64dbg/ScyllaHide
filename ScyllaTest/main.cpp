@@ -199,6 +199,23 @@ static ScyllaTestResult Check_NtQueryInformationProcess_ProcessDebugPort()
     return SCYLLA_TEST_CHECK(handle == nullptr);
 }
 
+static ScyllaTestResult Check_ZwQuerySystemInformation_SystemKernelDebuggerInformation()
+{
+    SYSTEM_KERNEL_DEBUGGER_INFORMATION SysKernDebInfo;
+    t_ZwQuerySystemInformation _ZwQuerySystemInformation = 0;
+    HMODULE hNtdll = 0;
+
+    hNtdll = GetModuleHandleW(L"ntdll.dll");
+    _ZwQuerySystemInformation = (t_ZwQuerySystemInformation)GetProcAddress(hNtdll, "ZwQuerySystemInformation");
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(_ZwQuerySystemInformation(SystemKernelDebuggerInformation, &SysKernDebInfo, sizeof(SysKernDebInfo), NULL)));
+
+    if (SysKernDebInfo.KernelDebuggerEnabled && !SysKernDebInfo.KernelDebuggerNotPresent)
+    {
+        return ScyllaTestDetected;
+    }
+    return ScyllaTestOk;
+}
+
 static const char *ScyllaTestResultAsStr(ScyllaTestResult result)
 {
     switch (result)
@@ -270,7 +287,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     SCYLLA_TEST(OutputDebugStringA_Exception, true);
     SCYLLA_TEST(OutputDebugStringW_Exception, ver >= scl::OS_WIN_10);
     SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort, ver >= scl::OS_WIN_XP);
-
+    SCYLLA_TEST(ZwQuerySystemInformation_SystemKernelDebuggerInformation, ver >= scl::OS_WIN_XP);
+    
     CloseHandle(g_proc_handle);
     g_proc_handle = INVALID_HANDLE_VALUE;
 
