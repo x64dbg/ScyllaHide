@@ -201,7 +201,6 @@ static ScyllaTestResult Check_NtQueryInformationProcess()
     return SCYLLA_TEST_CHECK(!pbi.ExitStatus);
 }
 
-
 static const char *ScyllaTestResultAsStr(ScyllaTestResult result)
 {
     switch (result)
