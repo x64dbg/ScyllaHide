@@ -3,12 +3,6 @@
 #include <Scylla/OsInfo.h>
 #include "Util.h"
 
-#ifdef _WIN64
-#pragma comment(lib, "ntdll\\ntdll_x64.lib")
-#else
-#pragma comment(lib, "ntdll\\ntdll_x86.lib")
-#endif
-
 scl::PEB *scl::GetPebAddress(HANDLE hProcess)
 {
     ::PROCESS_BASIC_INFORMATION pbi = { 0 };
