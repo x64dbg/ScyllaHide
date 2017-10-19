@@ -214,6 +214,19 @@ static const char *ScyllaTestResultAsStr(ScyllaTestResult result)
     }
 }
 
+static ScyllaTestResult Check_NtQuerySystemInformation_SystemKernelDebuggerInformation()
+{
+    SYSTEM_KERNEL_DEBUGGER_INFORMATION SysKernDebInfo;
+
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(NtQuerySystemInformation(SystemKernelDebuggerInformation, &SysKernDebInfo, sizeof(SysKernDebInfo), NULL)));
+
+    if (SysKernDebInfo.KernelDebuggerEnabled || !SysKernDebInfo.KernelDebuggerNotPresent)
+    {
+        return ScyllaTestDetected;
+    }
+    return ScyllaTestOk;
+}
+
 static bool OpenConsole()
 {
     if (!AllocConsole())
@@ -270,6 +283,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     SCYLLA_TEST(OutputDebugStringA_Exception, true);
     SCYLLA_TEST(OutputDebugStringW_Exception, ver >= scl::OS_WIN_10);
     SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort, ver >= scl::OS_WIN_XP);
+    SCYLLA_TEST(NtQuerySystemInformation_SystemKernelDebuggerInformation, ver >= scl::OS_WIN_XP);
 
     CloseHandle(g_proc_handle);
     g_proc_handle = INVALID_HANDLE_VALUE;
