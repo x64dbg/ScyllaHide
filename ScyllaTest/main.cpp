@@ -15,6 +15,12 @@ enum ScyllaTestResult
 #define SCYLLA_TEST_FAIL_IF(x) if (x) return ScyllaTestFail;
 #define SCYLLA_TEST_CHECK(x) ((x) ? ScyllaTestOk : ScyllaTestDetected);
 
+#ifdef _WIN64
+const bool is_x64 = true;
+#else
+const bool is_x64 = false;
+#endif
+
 static HANDLE g_proc_handle;
 
 static HANDLE GetRealCurrentProcess()
@@ -59,11 +65,6 @@ static ScyllaTestResult Check_Wow64PEB64_NtGlobalFlag()
 static ScyllaTestResult Check_PEB_HeapFlags()
 {
     const DWORD bad_flags = HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED | HEAP_SKIP_VALIDATION_CHECKS | HEAP_VALIDATE_PARAMETERS_ENABLED;
-#ifdef _WIN64
-    const auto is_x64 = true;
-#else
-    const auto is_x64 = false;
-#endif
 
     const auto peb = scl::GetPebAddress(g_proc_handle);
     SCYLLA_TEST_FAIL_IF(!peb);
@@ -246,44 +247,44 @@ static bool OpenConsole()
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
     if (!OpenConsole())
-        return 0;
+        return -1;
 
     g_proc_handle = GetRealCurrentProcess();
     if (g_proc_handle == INVALID_HANDLE_VALUE)
     {
         fprintf(stderr, "Failed to obtain real process handle.\n");
-        return 0;
+        return -1;
     }
 
     auto ver = scl::GetWindowsVersion();
-
-#ifdef _WIN64
-    const auto is_x64 = true;
-#else
-    const auto is_x64 = false;
-#endif
+    if (ver < scl::OS_WIN_XP)
+    {
+        fprintf(stderr, "Unsupported OS version.\n");
+        return -1;
+    }
 
     auto is_wow64 = scl::IsWow64Process(g_proc_handle);
 
-#define SCYLLA_TEST(x, stmt)              \
+#define SCYLLA_TEST_IF(condition, x)      \
     printf("Check %s...\t", #x);          \
-    if (!(stmt)) { printf("SKIP\n"); } else { auto ret = Check_ ## x(); printf("%s\n", ScyllaTestResultAsStr(ret)); }
+    if (!(condition)) { printf("SKIP\n"); } else { auto ret = Check_ ## x(); printf("%s\n", ScyllaTestResultAsStr(ret)); }
+#define SCYLLA_TEST(x) SCYLLA_TEST_IF(true, x)
 
-    SCYLLA_TEST(PEB_BeingDebugged, true);
-    SCYLLA_TEST(Wow64PEB64_BeingDebugged, is_wow64);
-    SCYLLA_TEST(PEB_NtGlobalFlag, true);
-    SCYLLA_TEST(Wow64PEB64_NtGlobalFlag, is_wow64);
-    SCYLLA_TEST(PEB_HeapFlags, true);
-    SCYLLA_TEST(Wow64PEB64_HeapFlags, is_wow64);
-    SCYLLA_TEST(PEB_ProcessParameters, true);
-    SCYLLA_TEST(Wow64PEB64_ProcessParameters, is_wow64);
-    SCYLLA_TEST(IsDebuggerPresent, true);
-    SCYLLA_TEST(CheckRemoteDebuggerPresent, true);
-    SCYLLA_TEST(OutputDebugStringA_LastError, ver < scl::OS_WIN_VISTA);
-    SCYLLA_TEST(OutputDebugStringA_Exception, true);
-    SCYLLA_TEST(OutputDebugStringW_Exception, ver >= scl::OS_WIN_10);
-    SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort, ver >= scl::OS_WIN_XP);
-    SCYLLA_TEST(NtQuerySystemInformation_SystemKernelDebuggerInformation, ver >= scl::OS_WIN_XP);
+    SCYLLA_TEST(PEB_BeingDebugged);
+    SCYLLA_TEST_IF(is_wow64, Wow64PEB64_BeingDebugged);
+    SCYLLA_TEST(PEB_NtGlobalFlag);
+    SCYLLA_TEST_IF(is_wow64, Wow64PEB64_NtGlobalFlag);
+    SCYLLA_TEST(PEB_HeapFlags);
+    SCYLLA_TEST_IF(is_wow64, Wow64PEB64_HeapFlags);
+    SCYLLA_TEST(PEB_ProcessParameters);
+    SCYLLA_TEST_IF(is_wow64, Wow64PEB64_ProcessParameters);
+    SCYLLA_TEST(IsDebuggerPresent);
+    SCYLLA_TEST(CheckRemoteDebuggerPresent);
+    SCYLLA_TEST_IF(ver < scl::OS_WIN_VISTA, OutputDebugStringA_LastError);
+    SCYLLA_TEST(OutputDebugStringA_Exception);
+    SCYLLA_TEST_IF(ver >= scl::OS_WIN_10, OutputDebugStringW_Exception);
+    SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort);
+    SCYLLA_TEST(NtQuerySystemInformation_SystemKernelDebuggerInformation);
 
     CloseHandle(g_proc_handle);
     g_proc_handle = INVALID_HANDLE_VALUE;
