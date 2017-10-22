@@ -14,7 +14,7 @@
     <ProjectGuid>{9EEA6D78-4E74-47B9-8746-B8754B15525D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ScyllaHideOlly2Plugin</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

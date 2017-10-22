@@ -22,7 +22,7 @@
     <ProjectGuid>{C2B5EC30-CF03-4963-B963-7576E9F1D01E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ScyllaHideGenericPlugin</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

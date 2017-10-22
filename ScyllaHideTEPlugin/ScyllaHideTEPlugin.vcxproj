@@ -22,7 +22,7 @@
     <ProjectGuid>{0520906F-4296-4BEC-BD5F-B370E1F7800A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ScyllaHideTEPlugin</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

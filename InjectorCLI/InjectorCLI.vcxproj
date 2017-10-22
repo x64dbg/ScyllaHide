@@ -22,7 +22,7 @@
     <ProjectGuid>{92C90AAD-036E-474D-902C-CFD1E7422899}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>InjectorCLI</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

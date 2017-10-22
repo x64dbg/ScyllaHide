@@ -22,7 +22,7 @@
     <ProjectGuid>{4506D672-19C3-439B-8E1B-F1BA8BE28844}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ScyllaHideIDAServer</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
