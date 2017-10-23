@@ -112,7 +112,7 @@ extern "C" DLL_EXPORT bool TitanRegisterPlugin(char* szPluginName, DWORD* titanP
     {
         *titanPluginMajorVersion = SCYLLA_HIDE_VERSION_MAJOR;
         *titanPluginMinorVersion = SCYLLA_HIDE_VERSION_MINOR;
-        strcpy(szPluginName, SCYLLA_HIDE_NAME_A);
+        strncpy_s(szPluginName, sizeof(SCYLLA_HIDE_NAME_A), SCYLLA_HIDE_NAME_A, _TRUNCATE);
         return true;
     }
     return false;

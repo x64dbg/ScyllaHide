@@ -203,9 +203,9 @@ static void HandleDetachProcess()
 //register plugin with name
 extern "C" int DLL_EXPORT _ODBG_Plugindata(char shortname[32])
 {
-    strcpy(shortname, SCYLLA_HIDE_NAME_A);
+    strncpy_s(shortname, 32, SCYLLA_HIDE_NAME_A, _TRUNCATE);
     return PLUGIN_VERSION;
-};
+}
 
 //initialization happens in here
 extern "C" int DLL_EXPORT _ODBG_Plugininit(int ollydbgversion, HWND hw, unsigned long *features)
@@ -290,7 +290,7 @@ extern "C" int DLL_EXPORT _ODBG_Pluginmenu(int origin, char data[4096], void *it
     }
     case PM_THREADS:
     {
-        strcpy(data, "0 &Resume all Threads, 1 &Suspend all Threads");
+        strncpy_s(data, 4096, "0 &Resume all Threads, 1 &Suspend all Threads", _TRUNCATE);
         return 1;
     }
 
