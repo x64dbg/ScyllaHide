@@ -213,7 +213,7 @@ extern "C" DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct)
 {
     initStruct->pluginVersion = (SCYLLA_HIDE_VERSION_MAJOR * 100) + (SCYLLA_HIDE_VERSION_MINOR * 10) + SCYLLA_HIDE_VERSION_PATCH;
     initStruct->sdkVersion = PLUG_SDKVERSION;
-    strncpy(initStruct->pluginName, SCYLLA_HIDE_NAME_A, sizeof(initStruct->pluginName));
+    strncpy_s(initStruct->pluginName, sizeof(initStruct->pluginName), SCYLLA_HIDE_NAME_A, _TRUNCATE);
     pluginHandle = initStruct->pluginHandle;
 
     _plugin_registercallback(pluginHandle, CB_MENUENTRY, cbMenuEntry);

@@ -752,13 +752,13 @@ void hookedOllyWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if(module != NULL)
 		{
 			ZeroMemory(modName, sizeof(modName));
-            strncpy(modName, module->name, SHORTLEN);
+            strncpy_s(modName, SHORTLEN, module->name, _TRUNCATE);
 
             IMAGE_SECTION_HEADER* hdr = module->sect;
             for(int i=0; i<module->nsect; i++) {
                 if((hdr->VirtualAddress+module->base) < startAddr && (hdr->VirtualAddress+module->base+hdr->Misc.VirtualSize) > startAddr) {
                     ZeroMemory(sectName, sizeof(sectName));
-					strncpy(sectName, (char*)hdr->Name, SHORTLEN);
+                    strncpy_s(sectName, SHORTLEN, (char*)hdr->Name, _TRUNCATE);
                     break;
                 }
 

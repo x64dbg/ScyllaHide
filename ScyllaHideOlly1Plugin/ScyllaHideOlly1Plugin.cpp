@@ -282,7 +282,7 @@ extern "C" int DLL_EXPORT _ODBG_Pluginmenu(int origin, char data[4096], void *it
             ssMenu << (i + MENU_PROFILES_OFFSET) << ' ' << scl::wstr_conv().to_bytes(g_settings.profile_names()[i].c_str()) << ",";
         }
         ssMenu << "},|2 &Inject DLL|5 &Attach process, 6 &Detach process|1 &About";
-        strncpy(data, ssMenu.str().c_str(), min(4096, ssMenu.str().size()));
+        strncpy_s(data, 4096, ssMenu.str().c_str(), ssMenu.str().size());
 
         //also patch olly title
         SetWindowTextW(hwmain, g_settings.opts().ollyWindowTitle.c_str());
