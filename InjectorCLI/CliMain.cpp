@@ -107,7 +107,7 @@ int wmain(int argc, wchar_t* argv[])
 
 static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-    g_hdd.dwProtectedProcessId = 0; //for olly plugins
+    g_hdd.dwProtectedProcessId = 0;
     g_hdd.EnableProtectProcessId = FALSE;
 
     DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_ProcessParameters;

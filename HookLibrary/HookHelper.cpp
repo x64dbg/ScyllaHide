@@ -62,6 +62,10 @@ const WCHAR * BadWindowClassList[] =
 extern HOOK_DLL_DATA HookDllData;
 extern SAVE_DEBUG_REGISTERS ArrayDebugRegister[100];
 
+static USHORT DebugObjectTypeIndex = 0;
+static USHORT ProcessTypeIndex = 0;
+static USHORT ThreadTypeIndex = 0;
+
 bool IsProcessBad(PUNICODE_STRING process)
 {
 	WCHAR nameCopy[400];
@@ -147,6 +151,79 @@ bool IsWindowNameBad(PUNICODE_STRING lpszWindow)
 
 	return false;
 
+}
+
+static void GetBadObjectTypes()
+{
+	// If NtQSI is not hooked, this function is N/A
+	if (HookDllData.dNtQuerySystemInformation == nullptr)
+		return;
+
+	// Only get the object type indices once
+	if (DebugObjectTypeIndex != 0 || ProcessTypeIndex != 0 || ThreadTypeIndex != 0)
+		return;
+
+	// Create handles to three bad object types: an empty debug object and our own process and thread
+	HANDLE DebugObjectHandle = nullptr;
+	HANDLE ProcessHandle = nullptr;
+	HANDLE ThreadHandle = nullptr;
+	
+	OBJECT_ATTRIBUTES ObjectAttributes = { sizeof(OBJECT_ATTRIBUTES) };
+	CLIENT_ID ClientId = NtCurrentTeb()->ClientId;
+	NtCreateDebugObject(&DebugObjectHandle, DEBUG_ALL_ACCESS, &ObjectAttributes, 0);
+	NtOpenProcess(&ProcessHandle, PROCESS_ALL_ACCESS, &ObjectAttributes, &ClientId);
+	NtOpenThread(&ThreadHandle, THREAD_ALL_ACCESS, &ObjectAttributes, &ClientId);
+	
+	SYSTEM_HANDLE_INFORMATION_EX Dummy; // Prevent getting STATUS_INFO_LENGTH_MISMATCH twice
+	PSYSTEM_HANDLE_INFORMATION_EX HandleInfo = &Dummy;
+	ULONG Size;
+	NTSTATUS Status;
+	if ((Status = HookDllData.dNtQuerySystemInformation(SystemExtendedHandleInformation,
+														HandleInfo,
+														sizeof(Dummy),
+														&Size)) != STATUS_INFO_LENGTH_MISMATCH)
+		goto exit;
+
+	HandleInfo = (PSYSTEM_HANDLE_INFORMATION_EX)RtlAllocateHeap(RtlProcessHeap(), 0, 2 * Size);
+	Status = HookDllData.dNtQuerySystemInformation(SystemExtendedHandleInformation,
+													HandleInfo,
+													2 * Size,
+													nullptr);
+	if (!NT_SUCCESS(Status))
+		goto exit;
+
+	// Enumerate all handles
+	for (ULONG i = 0; i < HandleInfo->NumberOfHandles; ++i)
+	{
+		SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX Entry = HandleInfo->Handles[i];
+		if (Entry.UniqueProcessId != (ULONG_PTR)NtCurrentTeb()->ClientId.UniqueProcess)
+			continue; // Not our process
+
+		if (Entry.HandleValue == (ULONG_PTR)DebugObjectHandle)
+			DebugObjectTypeIndex = Entry.ObjectTypeIndex;
+		else if (Entry.HandleValue == (ULONG_PTR)ProcessHandle)
+			ProcessTypeIndex = Entry.ObjectTypeIndex;
+		else if (Entry.HandleValue == (ULONG_PTR)ThreadHandle)
+			ThreadTypeIndex = Entry.ObjectTypeIndex;
+	}
+
+exit:
+	if (DebugObjectHandle != nullptr)
+		NtClose(DebugObjectHandle);
+	if (ProcessHandle != nullptr)
+		NtClose(ProcessHandle);
+	if (ThreadHandle != nullptr)
+		NtClose(ThreadHandle);
+	if (HandleInfo != &Dummy)
+		RtlFreeHeap(RtlProcessHeap(), 0, HandleInfo);
+}
+
+bool IsObjectTypeBad(USHORT objectTypeIndex)
+{
+	GetBadObjectTypes();
+	return objectTypeIndex == DebugObjectTypeIndex ||
+		objectTypeIndex == ProcessTypeIndex ||
+		objectTypeIndex == ThreadTypeIndex;
 }
 
 bool IsValidProcessHandle(HANDLE hProcess)

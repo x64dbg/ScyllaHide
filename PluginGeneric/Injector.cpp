@@ -146,7 +146,7 @@ bool StartFixBeingDebugged(DWORD targetPid, bool setToNull)
 
 bool StartHooking(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-    hdd->dwProtectedProcessId = GetCurrentProcessId(); //for olly plugins
+    hdd->dwProtectedProcessId = GetCurrentProcessId();
     hdd->EnableProtectProcessId = TRUE;
 
     DWORD peb_flags = 0;

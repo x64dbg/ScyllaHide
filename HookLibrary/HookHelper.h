@@ -28,6 +28,7 @@ bool wcsistr(const wchar_t *s, const wchar_t *t);
 
 bool IsWindowNameBad(PUNICODE_STRING lpszWindow);
 bool IsWindowClassBad(PUNICODE_STRING lpszClass);
+bool IsObjectTypeBad(USHORT objectTypeIndex);
 
 size_t _wcslen(const wchar_t* sc);
 size_t _strlen(const char* sc);

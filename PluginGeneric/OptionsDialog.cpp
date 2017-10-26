@@ -294,6 +294,8 @@ HWND CreateTooltips(HWND hDlg)
             L"SystemKernelDebuggerInformationEx and SystemKernelDebuggerFlags can be used\r\n"
             L"to detect kernel debuggers. The SYSTEM_INFORMATION_CLASS values SystemProcessInformation\r\n"
             L"and SystemExtendedProcessInformation are used to get a process list.\r\n"
+            L"SystemHandleInformation and SystemExtendedHandleInformation are used to\r\n"
+            L"enumerate system process handles to detect e.g. handles to the debuggee process.\r\n"
             L"The SYSTEM_INFORMATION_CLASS values SystemCodeIntegrityInformation and\r\n"
             L"SystemCodeIntegrityUnlockInformation can be used to detect test signing mode.\r\n"
             L"A debugger should be hidden in a process list and the debugee should have a good parent\r\n"

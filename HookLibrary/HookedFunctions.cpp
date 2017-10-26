@@ -8,6 +8,8 @@ HOOK_DLL_DATA HookDllData = { 0 };
 #include "HookHelper.h"
 
 void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo);
+void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo);
+void FilterHandleInfoEx(PSYSTEM_HANDLE_INFORMATION_EX pHandleInfoEx);
 void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes);
 void FilterObject(POBJECT_TYPE_INFORMATION pObject);
@@ -34,6 +36,8 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
 {
     if (SystemInformationClass == SystemKernelDebuggerInformation ||
         SystemInformationClass == SystemProcessInformation ||
+        SystemInformationClass == SystemHandleInformation ||
+        SystemInformationClass == SystemExtendedHandleInformation ||
         SystemInformationClass == SystemExtendedProcessInformation ||   // Vista+
         SystemInformationClass == SystemCodeIntegrityInformation ||     // Vista+
         SystemInformationClass == SystemKernelDebuggerInformationEx ||  // 8.1+
@@ -47,6 +51,14 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
             {
                 ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation)->KernelDebuggerEnabled = FALSE;
                 ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation)->KernelDebuggerNotPresent = TRUE;
+            }
+            else if (SystemInformationClass == SystemHandleInformation)
+            {
+                FilterHandleInfo((PSYSTEM_HANDLE_INFORMATION)SystemInformation);
+            }
+            else if (SystemInformationClass == SystemExtendedHandleInformation)
+            {
+                FilterHandleInfoEx((PSYSTEM_HANDLE_INFORMATION_EX)SystemInformation);
             }
             else if (SystemInformationClass == SystemProcessInformation || SystemInformationClass == SystemExtendedProcessInformation)
             {
@@ -795,6 +807,46 @@ NTSTATUS NTAPI HookedNtCreateThreadEx(PHANDLE ThreadHandle,ACCESS_MASK DesiredAc
     }
 
     return HookDllData.dNtCreateThreadEx(ThreadHandle, DesiredAccess, ObjectAttributes, ProcessHandle, StartRoutine, Argument, CreateFlags, ZeroBits, StackSize, MaximumStackSize,AttributeList);
+}
+
+void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo)
+{
+    const ULONG TrueCount = pHandleInfo->NumberOfHandles;
+    for (ULONG i = 0; i < TrueCount; ++i)
+    {
+        // TODO: protect processes by name too
+        if ((HookDllData.EnableProtectProcessId == TRUE && (ULONG)(pHandleInfo->Handles[i].UniqueProcessId == HookDllData.dwProtectedProcessId)) &&
+            IsObjectTypeBad(pHandleInfo->Handles[i].ObjectTypeIndex))
+        {
+            pHandleInfo->NumberOfHandles--;
+            for (ULONG j = i; j < TrueCount - 1; ++j)
+            {
+                pHandleInfo->Handles[j] = pHandleInfo->Handles[j + 1];
+                RtlZeroMemory(&pHandleInfo->Handles[j + 1], sizeof(pHandleInfo->Handles[j + 1]));
+            }
+            i--;
+        }
+    }
+}
+
+void FilterHandleInfoEx(PSYSTEM_HANDLE_INFORMATION_EX pHandleInfoEx)
+{
+    const ULONG TrueCount = (ULONG)pHandleInfoEx->NumberOfHandles;
+    for (ULONG i = 0; i < TrueCount; ++i)
+    {
+        // TODO: protect processes by name too
+        if ((HookDllData.EnableProtectProcessId == TRUE && (ULONG)(pHandleInfoEx->Handles[i].UniqueProcessId == HookDllData.dwProtectedProcessId)) &&
+            IsObjectTypeBad(pHandleInfoEx->Handles[i].ObjectTypeIndex))
+        {
+            pHandleInfoEx->NumberOfHandles--;
+            for (ULONG j = i; j < TrueCount - 1; ++j)
+            {
+                pHandleInfoEx->Handles[j] = pHandleInfoEx->Handles[j + 1];
+                RtlZeroMemory(&pHandleInfoEx->Handles[j + 1], sizeof(pHandleInfoEx->Handles[j + 1]));
+            }
+            i--;
+        }
+    }
 }
 
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes)
