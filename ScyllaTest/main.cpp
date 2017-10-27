@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <cstdio>
+#include <string>
 #include <Scylla/NtApiShim.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Peb.h>
@@ -228,6 +229,118 @@ static ScyllaTestResult Check_NtQuerySystemInformation_SystemKernelDebuggerInfor
     return ScyllaTestOk;
 }
 
+static bool isExeDetected(const std::wstring& exe)
+{
+	static const std::wstring exeToDetect[] = {
+		// OllyDbg v1/2
+		L"ollydbg.exe",
+		// IDA Pro v5/6
+		L"idaq.exe",
+		L"idaq64.exe",
+		// IDA Pro v7+
+		L"ida.exe",
+		L"ida64.exe"
+		// x32/64Dbg
+		L"x32dbg.exe",
+		L"x64dbg.exe"
+
+		// add more before this mark
+	};
+
+	for (auto item : exeToDetect)
+	{
+		if (item == exe) //TODO: case-insensitive
+			return true;
+	}
+	return false;
+}
+
+ScyllaTestResult walkProcessList(PSYSTEM_PROCESS_INFORMATION pinfo)
+{
+	ScyllaTestResult result = ScyllaTestOk;
+
+	// iterate over all the process entries
+	while (pinfo->NextEntryOffset)
+	{
+		//printf("\nProcess name: %ws | Process ID: %d\n", pinfo->ImageName.Buffer, (int)pinfo->UniqueProcessId);
+		const std::wstring processName = pinfo->ImageName.Buffer ? pinfo->ImageName.Buffer : L"";
+		if (isExeDetected(processName))
+		{
+			result = ScyllaTestDetected;
+			break;
+		}
+		// jump to next entry. 
+		// NextEntryOffset has variable length due to differnt number of threads, etc
+		pinfo = (PSYSTEM_PROCESS_INFORMATION)((LPBYTE)pinfo + pinfo->NextEntryOffset);
+	}
+	return result;
+}
+
+static ScyllaTestResult _NtQuerySystemInformation_SystemProcessInformation(SYSTEM_INFORMATION_CLASS sysInfoClass)
+{
+	ScyllaTestResult result = ScyllaTestOk;
+	PSYSTEM_PROCESS_INFORMATION pinfo;
+	ULONG returnLength;
+
+	// expecting fail here, so testing for success, strange but true
+	SCYLLA_TEST_FAIL_IF(NT_SUCCESS(NtQuerySystemInformation(sysInfoClass, NULL, NULL, &returnLength)));
+	
+	PVOID buffer = malloc(returnLength);
+
+	pinfo = (PSYSTEM_PROCESS_INFORMATION)buffer;
+	SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(NtQuerySystemInformation(sysInfoClass, pinfo, returnLength, NULL)));
+
+	result = walkProcessList(pinfo);
+
+	free(buffer);
+
+	return result;
+}
+
+static ScyllaTestResult Check_NtQuerySystemInformation_SystemProcessInformation()
+{
+	return _NtQuerySystemInformation_SystemProcessInformation(SystemProcessInformation);
+}
+
+static ScyllaTestResult Check_NtQuerySystemInformation_SystemExtendedProcessInformation()
+{
+	return _NtQuerySystemInformation_SystemProcessInformation(SystemExtendedProcessInformation);
+}
+
+static ScyllaTestResult Check_NtQuerySystemInformation_SystemSessionProcessInformation()
+{
+	ScyllaTestResult result = ScyllaTestOk;
+	SYSTEM_SESSION_PROCESS_INFORMATION info;
+	PSYSTEM_PROCESS_INFORMATION pinfo;
+	ULONG returnLength;
+
+	// expecting fail here, so testing for success, strange but true
+	SCYLLA_TEST_FAIL_IF(NT_SUCCESS(NtQuerySystemInformation(SystemExtendedProcessInformation, NULL, NULL, &returnLength)));
+
+	// Another bug - the API does not put the end mark (NULL) at process list end, so need to take care
+	// buffer will be filled with SYSTEM_PROCESS_INFORMATION structures, just like with SystemProcessInformation
+	PVOID buffer = calloc(returnLength, 1);
+
+	SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(ProcessIdToSessionId(GetCurrentProcessId(), &info.SessionId)));
+	info.SizeOfBuf = returnLength;
+	info.Buffer = buffer;
+
+	// This API on the specific key has a bug - it returns wrong info, so need to be more flexible here
+	// returnLength is guarunteed to be >= the total size of subset of processes for current session.
+	// Win32: if you think you need to pass the sizeof(info) - you'll get the 0xc0000004 return code - STATUS_INFO_LENGTH_MISMATCH 
+	// Win64: passing returnLength will return 0xc0000005! so need to pass correct value - sizeof(info)
+	// more info http://www.geoffchappell.com/studies/windows/km/ntoskrnl/api/ex/sysinfo/query.htm
+	SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(NtQuerySystemInformation(SystemSessionProcessInformation, &info, is_x64 ? sizeof(info) : returnLength, NULL)));
+
+	pinfo = (PSYSTEM_PROCESS_INFORMATION)buffer;
+
+	result = walkProcessList(pinfo);
+
+	free(buffer);
+
+	return result;
+}
+
 static bool OpenConsole()
 {
     if (!AllocConsole())
@@ -285,6 +398,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     SCYLLA_TEST_IF(ver >= scl::OS_WIN_10, OutputDebugStringW_Exception);
     SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort);
     SCYLLA_TEST(NtQuerySystemInformation_SystemKernelDebuggerInformation);
+	SCYLLA_TEST(NtQuerySystemInformation_SystemProcessInformation);
+	SCYLLA_TEST(NtQuerySystemInformation_SystemExtendedProcessInformation);
+	SCYLLA_TEST(NtQuerySystemInformation_SystemSessionProcessInformation);
 
     CloseHandle(g_proc_handle);
     g_proc_handle = INVALID_HANDLE_VALUE;
