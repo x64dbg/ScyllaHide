@@ -36,6 +36,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
 {
     if (SystemInformationClass == SystemKernelDebuggerInformation ||
         SystemInformationClass == SystemProcessInformation ||
+        SystemInformationClass == SystemSessionProcessInformation ||
         SystemInformationClass == SystemHandleInformation ||
         SystemInformationClass == SystemExtendedHandleInformation ||
         SystemInformationClass == SystemExtendedProcessInformation ||   // Vista+
@@ -60,10 +61,16 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
             {
                 FilterHandleInfoEx((PSYSTEM_HANDLE_INFORMATION_EX)SystemInformation);
             }
-            else if (SystemInformationClass == SystemProcessInformation || SystemInformationClass == SystemExtendedProcessInformation)
+            else if (SystemInformationClass == SystemProcessInformation ||
+                    SystemInformationClass == SystemSessionProcessInformation ||
+                    SystemInformationClass == SystemExtendedProcessInformation)
             {
-                FilterProcess((PSYSTEM_PROCESS_INFORMATION)SystemInformation);
-                FakeCurrentParentProcessId((PSYSTEM_PROCESS_INFORMATION)SystemInformation);
+                PSYSTEM_PROCESS_INFORMATION ProcessInfo = (PSYSTEM_PROCESS_INFORMATION)SystemInformation;
+                if (SystemInformationClass == SystemSessionProcessInformation)
+                    ProcessInfo = (PSYSTEM_PROCESS_INFORMATION)((PSYSTEM_SESSION_PROCESS_INFORMATION)SystemInformation)->Buffer;
+
+                FilterProcess(ProcessInfo);
+                FakeCurrentParentProcessId(ProcessInfo);
             }
             else if (SystemInformationClass == SystemCodeIntegrityInformation)
             {
