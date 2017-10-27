@@ -1,4 +1,4 @@
-#include "CustomExceptionHandler.h"
+#include "OllyExceptionHandler.h"
 #include <Scylla/Logger.h>
 #include <Scylla/Settings.h>
 
@@ -6,17 +6,17 @@
 #include "..\InjectorCLI\RemoteHook.h"
 
 
-t_WaitForDebugEvent dWaitForDebugEvent = 0;
-t_ContinueDebugEvent dContinueDebugEvent = 0;
+t_WaitForDebugEvent dWaitForDebugEvent = nullptr;
 
+#ifdef OLLY1
 typedef bool (__cdecl * t_IsAddressBreakpoint)(DWORD_PTR address);
+t_IsAddressBreakpoint _IsAddressBreakpoint = nullptr;
+#endif
 
 extern scl::Settings g_settings;
 extern scl::Logger g_log;
 
 char OutputDebugStringBuffer[500] = {0};
-
-t_IsAddressBreakpoint _IsAddressBreakpoint = 0;
 
 void handleOutputDebugString( LPDEBUG_EVENT lpDebugEvent )
 {
@@ -77,7 +77,7 @@ void handleRipEvent( LPDEBUG_EVENT lpDebugEvent )
 DWORD_PTR hNtdll = 0;
 DWORD_PTR hKernel = 0;
 
-bool IsNotInsideKernelOrNtdll( DWORD dwProcessId, DWORD_PTR address )
+bool IsInsideKernelOrNtdll( DWORD_PTR address )
 {
 	PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)hNtdll;
 	PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
@@ -89,18 +89,8 @@ bool IsNotInsideKernelOrNtdll( DWORD dwProcessId, DWORD_PTR address )
 
 	DWORD imageSizeKernel = pNt->OptionalHeader.SizeOfImage;
 
-	if (address > hNtdll && address < (hNtdll + imageSizeNtdll))
-	{
-		return false;
-	}
-	else if (address > hKernel && address < (hKernel + imageSizeKernel))
-	{
-		return false;
-	}
-	else
-	{
-		return true;
-	}
+	return (address > hNtdll && address < (hNtdll + imageSizeNtdll)) ||
+			(address > hKernel && address < (hKernel + imageSizeKernel));
 }
 
 bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
@@ -110,39 +100,42 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 		handleOutputDebugString(lpDebugEvent);
 		return true;
 	}
-    else if (g_settings.opts().handleExceptionRip != 0 && lpDebugEvent->dwDebugEventCode == RIP_EVENT)
+
+    if (g_settings.opts().handleExceptionRip != 0 && lpDebugEvent->dwDebugEventCode == RIP_EVENT)
 	{
 		handleRipEvent(lpDebugEvent);
 		return true;
 	}
-	else if (lpDebugEvent->dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
+
+    if (lpDebugEvent->dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
 	{
         if (g_settings.opts().handleExceptionIllegalInstruction != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ILLEGAL_INSTRUCTION)
 		{
             g_log.LogInfo(L"Illegal Instruction %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
-        else if (g_settings.opts().handleExceptionInvalidLockSequence != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_INVALID_LOCK_SEQUENCE)
+        if (g_settings.opts().handleExceptionInvalidLockSequence != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_INVALID_LOCK_SEQUENCE)
 		{
             g_log.LogInfo(L"Invalid Lock Sequence %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
-        else if (g_settings.opts().handleExceptionNoncontinuableException != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
+        if (g_settings.opts().handleExceptionNoncontinuableException != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
 		{
             g_log.LogInfo(L"Non-continuable Exception %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
-        else if (g_settings.opts().handleExceptionAssertionFailure != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ASSERTION_FAILURE)
+        if (g_settings.opts().handleExceptionAssertionFailure != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_ASSERTION_FAILURE)
 		{
             g_log.LogInfo(L"Assertion Failure %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 			return true;
 		}
-        else if (g_settings.opts().handleExceptionBreakpoint != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT)
+#ifdef OLLY1 // This may or may not be needed for Olly v2, but we don't have IsAddressBreakPoint() there
+        if (g_settings.opts().handleExceptionBreakpoint != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT)
 		{
 			if (_IsAddressBreakpoint((DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress) == false)
 			{
 				//system breakpoint?
-				if (IsNotInsideKernelOrNtdll(lpDebugEvent->dwProcessId, (DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress))
+				if (!IsInsideKernelOrNtdll((DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress))
 				{
                     g_log.LogInfo(L"Breakpoint %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 					return true;
@@ -154,13 +147,14 @@ bool AnalyzeDebugStructure( LPDEBUG_EVENT lpDebugEvent )
 			if (_IsAddressBreakpoint((DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress) == false)
 			{
 				//system breakpoint?
-				if (IsNotInsideKernelOrNtdll(lpDebugEvent->dwProcessId, (DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress))
+				if (!IsInsideKernelOrNtdll((DWORD_PTR)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress))
 				{
                     g_log.LogInfo(L"Wx86 Breakpoint %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
 					return true;
 				}
 			}
 		}
+#endif
         else if (g_settings.opts().handleExceptionGuardPageViolation != 0 && lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode == STATUS_GUARD_PAGE_VIOLATION)
 		{
             g_log.LogInfo(L"Guard Page Violation %p", lpDebugEvent->u.Exception.ExceptionRecord.ExceptionAddress);
@@ -199,32 +193,19 @@ BOOL WINAPI HookedWaitForDebugEvent(LPDEBUG_EVENT lpDebugEvent, DWORD dwMillisec
 	return retV;
 }
 
-BOOL WINAPI HookedContinueDebugEvent(DWORD dwProcessId,DWORD dwThreadId,DWORD dwContinueStatus)
-{
-	BOOL retV = dContinueDebugEvent(dwProcessId, dwThreadId, dwContinueStatus);
-	return retV;
-}
-
-
 void HookDebugLoop()
 {
 	hNtdll = (DWORD_PTR)GetModuleHandleW(L"ntdll.dll");
 	hKernel = (DWORD_PTR)GetModuleHandleW(L"kernel32.dll");
 
 	BYTE * WaitForIt = (BYTE *)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "WaitForDebugEvent");
-	BYTE * ContinueIt = (BYTE *)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "ContinueDebugEvent");
 
 	if (*WaitForIt == 0xE9 || *WaitForIt == 0x68) //JMP, PUSH
 	{
 		MessageBoxW(0, L"kernel32.dll - WaitForDebugEvent is hooked already!", L"Error", MB_ICONERROR);
 	}
-	else if (*ContinueIt == 0xE9 || *ContinueIt == 0x68) //JMP, PUSH
-	{
-		MessageBoxW(0, L"kernel32.dll - ContinueDebugEvent is hooked already!", L"Error", MB_ICONERROR);
-	}
 	else
 	{
 		dWaitForDebugEvent = (t_WaitForDebugEvent)DetourCreate(WaitForIt,HookedWaitForDebugEvent, true);
-		//dContinueDebugEvent = (t_ContinueDebugEvent)DetourCreate(ContinueIt,HookedContinueDebugEvent, true);
 	}
 }

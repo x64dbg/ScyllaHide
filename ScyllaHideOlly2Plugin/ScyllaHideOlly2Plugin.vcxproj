@@ -75,6 +75,7 @@
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
     <ClCompile Include="..\PluginGeneric\AttachDialog.cpp" />
+    <ClCompile Include="..\PluginGeneric\OllyExceptionHandler.cpp" />
     <ClCompile Include="..\PluginGeneric\Injector.cpp" />
     <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp" />
     <ClCompile Include="ScyllaHideOlly2Plugin.cpp" />
@@ -84,6 +85,7 @@
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\PluginGeneric\AttachDialog.h" />
+    <ClInclude Include="..\PluginGeneric\OllyExceptionHandler.h" />
     <ClInclude Include="..\PluginGeneric\Injector.h" />
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
     <ClInclude Include="olly2patches.h" />

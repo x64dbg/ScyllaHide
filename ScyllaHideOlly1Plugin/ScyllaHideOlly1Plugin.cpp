@@ -11,7 +11,7 @@
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
-#include "..\PluginGeneric\CustomExceptionHandler.h"
+#include "..\PluginGeneric\OllyExceptionHandler.h"
 
 #include "resource.h"
 #include "olly1patches.h"
@@ -55,7 +55,7 @@ bool bHookedDumpProc = false;
 HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
 LPVOID ImageBase = 0;
-bool executeOnce = false;
+bool debugLoopHooked = false;
 DEBUG_EVENT *currentDebugEvent;
 
 static void LogCallback(const char *msg)
@@ -429,10 +429,10 @@ extern "C" void DLL_EXPORT _ODBG_Pluginmainloop(DEBUG_EVENT *debugevent)
             g_settings.opts().handleExceptionGuardPageViolation
             )
         {
-            if (executeOnce == false)
+            if (!debugLoopHooked)
             {
                 HookDebugLoop();
-                executeOnce = true;
+                debugLoopHooked = true;
             }
         }
 

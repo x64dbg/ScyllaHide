@@ -13,6 +13,7 @@
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\OptionsDialog.h"
 #include "..\PluginGeneric\AttachDialog.h"
+#include "..\PluginGeneric\OllyExceptionHandler.h"
 
 #include "resource.h"
 
@@ -41,6 +42,7 @@ HOOK_DLL_DATA g_hdd;
 HINSTANCE hinst;
 HMODULE hNtdllModule = 0;
 bool specialPebFix = false;
+bool debugLoopHooked = false;
 DWORD ProcessId = 0;
 bool bHooked = false;
 
@@ -342,6 +344,25 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
     {
     case CREATE_PROCESS_DEBUG_EVENT:
     {
+        // TODO // FIXME // WTF
+        // This is copied from the Olly v1 plugin since at least some (all?) of its exception handling problems seem to have carried over to v2.
+        // 1. Figure out which of these are still relevant. At the very least this includes debug prints (https://github.com/x64dbg/ScyllaHide/issues/44)
+        // 2. Add v2 version of IsAddressBreakPoint() for handleExceptionBreakpoint / handleExceptionWx86Breakpoint (currently ignored)
+        if (g_settings.opts().handleExceptionPrint ||
+            g_settings.opts().handleExceptionRip ||
+            g_settings.opts().handleExceptionIllegalInstruction ||
+            g_settings.opts().handleExceptionInvalidLockSequence ||
+            g_settings.opts().handleExceptionNoncontinuableException ||
+            g_settings.opts().handleExceptionGuardPageViolation
+            )
+        {
+            if (!debugLoopHooked)
+            {
+                HookDebugLoop();
+                debugLoopHooked = true;
+            }
+        }
+
         ProcessId = debugevent->dwProcessId;
         bHooked = false;
         ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));

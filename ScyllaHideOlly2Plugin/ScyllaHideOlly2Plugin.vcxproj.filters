@@ -36,6 +36,9 @@
     <ClCompile Include="..\PluginGeneric\AttachDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\PluginGeneric\OllyExceptionHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h">
@@ -59,7 +62,7 @@
     <ClInclude Include="..\PluginGeneric\AttachDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="olly2patches.h">
+    <ClInclude Include="..\PluginGeneric\OllyExceptionHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
