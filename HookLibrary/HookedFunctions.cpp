@@ -48,6 +48,14 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
         NTSTATUS ntStat = HookDllData.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
         if (NT_SUCCESS(ntStat) && SystemInformation != nullptr && SystemInformationLength != 0)
         {
+            ULONG backupReturnLength = 0;
+            if (ReturnLength != nullptr &&
+                (ULONG_PTR)ReturnLength >= (ULONG_PTR)SystemInformation &&
+                (ULONG_PTR)ReturnLength <= (ULONG_PTR)SystemInformation + SystemInformationLength)
+            {
+                backupReturnLength = *ReturnLength;
+            }
+
             if (SystemInformationClass == SystemKernelDebuggerInformation)
             {
                 ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation)->KernelDebuggerEnabled = FALSE;
@@ -90,6 +98,9 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
             {
                 ((PSYSTEM_CODEINTEGRITY_UNLOCK_INFORMATION)SystemInformation)->Flags = 0;
             }
+
+            if (backupReturnLength != 0)
+                *ReturnLength = backupReturnLength;
         }
 
         return ntStat;
@@ -119,6 +130,14 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
 
         if (NT_SUCCESS(ntStat) && ProcessInformation != 0 && ProcessInformationLength != 0)
         {
+            ULONG backupReturnLength = 0;
+            if (ReturnLength != nullptr &&
+                (ULONG_PTR)ReturnLength >= (ULONG_PTR)ProcessInformation &&
+                (ULONG_PTR)ReturnLength <= (ULONG_PTR)ProcessInformation + ProcessInformationLength)
+            {
+                backupReturnLength = *ReturnLength;
+            }
+
             if (ProcessInformationClass == ProcessDebugFlags)
             {
                 *((ULONG *)ProcessInformation) = ((ValueProcessDebugFlags & PROCESS_NO_DEBUG_INHERIT) != 0) ? 0 : PROCESS_DEBUG_INHERIT;
@@ -126,7 +145,7 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
             else if (ProcessInformationClass == ProcessDebugObjectHandle)
             {
                 *((HANDLE *)ProcessInformation) = 0;
-                return STATUS_PORT_NOT_SET;
+                ntStat = STATUS_PORT_NOT_SET;
             }
             else if (ProcessInformationClass == ProcessDebugPort)
             {
@@ -142,15 +161,11 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
             }
 			else if (ProcessInformationClass == ProcessHandleTracing)
 			{
-				if (IsProcessHandleTracingEnabled)
-				{
-					return STATUS_SUCCESS;
-				}
-				else
-				{
-					return STATUS_INVALID_PARAMETER;
-				}
+                ntStat = IsProcessHandleTracingEnabled ? STATUS_SUCCESS : STATUS_INVALID_PARAMETER;
 			}
+
+            if (backupReturnLength != 0)
+                *ReturnLength = backupReturnLength;
         }
 
         return ntStat;
@@ -254,6 +269,14 @@ NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS Objec
         ObjectInformationClass == ObjectTypeInformation) &&
         (NT_SUCCESS(ntStat) && ObjectInformation))
     {
+        ULONG backupReturnLength = 0;
+        if (ReturnLength != nullptr &&
+            (ULONG_PTR)ReturnLength >= (ULONG_PTR)ObjectInformation &&
+            (ULONG_PTR)ReturnLength <= (ULONG_PTR)ObjectInformation + ObjectInformationLength)
+        {
+            backupReturnLength = *ReturnLength;
+        }
+
         if (ObjectInformationClass == ObjectTypesInformation)
         {
             FilterObjects((POBJECT_TYPES_INFORMATION)ObjectInformation);
@@ -262,6 +285,9 @@ NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS Objec
         {
             FilterObject((POBJECT_TYPE_INFORMATION)ObjectInformation);
         }
+
+        if (backupReturnLength != 0)
+            *ReturnLength = backupReturnLength;
     }
 
     return ntStat;
