@@ -200,6 +200,47 @@ static ScyllaTestResult Check_NtQueryInformationProcess_ProcessDebugPort()
     return SCYLLA_TEST_CHECK(handle == nullptr);
 }
 
+static ScyllaTestResult Check_NtQuerySystemInformation_SystemKernelDebuggerInformation()
+{
+    SYSTEM_KERNEL_DEBUGGER_INFORMATION SysKernDebInfo;
+
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(NtQuerySystemInformation(SystemKernelDebuggerInformation, &SysKernDebInfo, sizeof(SysKernDebInfo), NULL)));
+
+    if (SysKernDebInfo.KernelDebuggerEnabled || !SysKernDebInfo.KernelDebuggerNotPresent)
+    {
+        return ScyllaTestDetected;
+    }
+    return ScyllaTestOk;
+}
+
+static ScyllaTestResult Check_NtQuery_OverlappingReturnLength() // https://github.com/x64dbg/ScyllaHide/issues/47
+{
+    UCHAR Buffer[sizeof(OBJECT_TYPE_INFORMATION) + 64];
+    RtlZeroMemory(Buffer, sizeof(Buffer));
+    PULONG pReturnLength = (PULONG)&Buffer[0];
+
+    NTSTATUS Status = NtQueryInformationProcess(NtCurrentProcess, ProcessDebugObjectHandle, Buffer, sizeof(HANDLE), pReturnLength);
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(Status) && Status != STATUS_PORT_NOT_SET);
+    if (*pReturnLength != sizeof(HANDLE))
+        return ScyllaTestDetected;
+
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(NtQuerySystemInformation(SystemKernelDebuggerInformation, Buffer, sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION), pReturnLength)));
+    if (*pReturnLength != sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION))
+        return ScyllaTestDetected;
+
+    HANDLE DebugObjectHandle;
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(NtCreateDebugObject(&DebugObjectHandle, DEBUG_ALL_ACCESS, nullptr, 0)));
+
+    pReturnLength = (PULONG)(Buffer + FIELD_OFFSET(OBJECT_TYPE_INFORMATION, TotalNumberOfObjects)); // Where TotalNumberOfObjects would be
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(NtQueryObject(DebugObjectHandle, ObjectTypeInformation, Buffer, sizeof(Buffer), pReturnLength)));
+    if (*pReturnLength < sizeof(OBJECT_TYPE_INFORMATION) + sizeof(ULONG))
+        return ScyllaTestDetected;
+
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(NtClose(DebugObjectHandle)));
+
+    return ScyllaTestOk;
+}
+
 static const char *ScyllaTestResultAsStr(ScyllaTestResult result)
 {
     switch (result)
@@ -213,19 +254,6 @@ static const char *ScyllaTestResultAsStr(ScyllaTestResult result)
     default:
         return "UNKNOWN";
     }
-}
-
-static ScyllaTestResult Check_NtQuerySystemInformation_SystemKernelDebuggerInformation()
-{
-    SYSTEM_KERNEL_DEBUGGER_INFORMATION SysKernDebInfo;
-
-    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(NtQuerySystemInformation(SystemKernelDebuggerInformation, &SysKernDebInfo, sizeof(SysKernDebInfo), NULL)));
-
-    if (SysKernDebInfo.KernelDebuggerEnabled || !SysKernDebInfo.KernelDebuggerNotPresent)
-    {
-        return ScyllaTestDetected;
-    }
-    return ScyllaTestOk;
 }
 
 static bool OpenConsole()
@@ -285,6 +313,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     SCYLLA_TEST_IF(ver >= scl::OS_WIN_10, OutputDebugStringW_Exception);
     SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort);
     SCYLLA_TEST(NtQuerySystemInformation_SystemKernelDebuggerInformation);
+    SCYLLA_TEST(NtQuery_OverlappingReturnLength);
 
     CloseHandle(g_proc_handle);
     g_proc_handle = INVALID_HANDLE_VALUE;
