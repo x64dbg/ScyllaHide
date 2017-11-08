@@ -107,7 +107,13 @@ static bool IsProcessHandleTracingEnabled = false;
 
 NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength)
 {
-	if (ProcessHandle == NtCurrentProcess || HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByProcessHandle(ProcessHandle))
+    if ((ProcessInformationClass == ProcessDebugFlags ||
+        ProcessInformationClass == ProcessDebugObjectHandle ||
+        ProcessInformationClass == ProcessDebugPort ||
+        ProcessInformationClass == ProcessBasicInformation ||
+        ProcessInformationClass == ProcessBreakOnTermination ||
+        ProcessInformationClass == ProcessHandleTracing) &&
+        (ProcessHandle == NtCurrentProcess || HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByProcessHandle(ProcessHandle)))
     {
         NTSTATUS ntStat = HookDllData.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
 
@@ -244,7 +250,9 @@ NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS Objec
 {
     NTSTATUS ntStat = HookDllData.dNtQueryObject(Handle, ObjectInformationClass, ObjectInformation, ObjectInformationLength, ReturnLength);
 
-    if (NT_SUCCESS(ntStat) && ObjectInformation)
+    if ((ObjectInformationClass == ObjectTypesInformation ||
+        ObjectInformationClass == ObjectTypeInformation) &&
+        (NT_SUCCESS(ntStat) && ObjectInformation))
     {
         if (ObjectInformationClass == ObjectTypesInformation)
         {
@@ -720,7 +728,7 @@ NTSTATUS NTAPI HookedNtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLE
 
 void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
 {
-    DWORD dwProcessId = 0;
+    DWORD dwProcessId;
 
     if (HookDllData.EnableProtectProcessId == TRUE)
     {
@@ -871,7 +879,7 @@ void FilterObject(POBJECT_TYPE_INFORMATION pObject)
 {
     const WCHAR strDebugObject[] = L"DebugObject";
 
-	if (pObject->TypeName.Length == 0 || pObject->TypeName.Buffer == 0)
+	if (pObject->TypeName.Length == 0 || pObject->TypeName.Buffer == nullptr)
 	{
 		return;
 	}
@@ -884,7 +892,6 @@ void FilterObject(POBJECT_TYPE_INFORMATION pObject)
             pObject->TotalNumberOfHandles = 0;
         }
     }
-
 }
 
 void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo)
