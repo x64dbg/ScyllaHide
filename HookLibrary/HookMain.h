@@ -17,7 +17,7 @@ typedef DWORD(WINAPI * t_OutputDebugStringA)(LPCSTR lpOutputString); //Kernel32.
 typedef DWORD(WINAPI * t_OutputDebugStringW)(LPCWSTR lpOutputString); //Kernel32.dll
 //WIN 7 X64: OutputDebugStringW -> OutputDebugStringA
 
-#define MAX_NATIVE_HOOKS 20
+#define MAX_NATIVE_HOOKS 32
 
 #pragma pack(push, 1)
 typedef struct _HOOK_NATIVE_CALL32 {
