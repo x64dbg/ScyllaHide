@@ -9,6 +9,8 @@
 const WCHAR * BadProcessnameList[] =
 {
 	L"ollydbg.exe",
+	L"ida.exe",
+	L"ida64.exe",
 	L"idag.exe",
 	L"idag64.exe",
 	L"idaw.exe",
