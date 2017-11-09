@@ -432,59 +432,21 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 	return pid;
 }
 
-bool wcsistr(const wchar_t *s, const wchar_t *t)
+bool wcsistr(const wchar_t *str, const wchar_t *subStr)
 {
-	size_t l1 = _wcslen(s);
-	size_t l2 = _wcslen(t);
+	const size_t lenStr = wcslen(str);
+	const size_t lenSubStr = wcslen(subStr);
 
-	if (l1 < l2)
+	if (lenStr < lenSubStr)
 		return false;
 
-	if (l1 == l2)
+	for (size_t offset = 0; offset <= lenStr - lenSubStr; ++offset)
 	{
-		if (!_wcsicmp(s, t))
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-	for (int off = 0; off < (int)(l1 - l2); ++off)
-	{
-		if (!_wcsicmp(s + off, t))
+		if (_wcsnicmp(str + offset, subStr, lenSubStr) == 0)
 			return true;
 	}
 
 	return false;
-}
-
-size_t _strlen(const char* sc)
-{
-	size_t count = 0;
-	while (sc[count] != '\0')
-		count++;
-	return count;
-}
-
-size_t _wcslen(const wchar_t* sc)
-{
-	size_t count = 0;
-	while (sc[count] != L'\0')
-		count++;
-	return count;
-}
-
-wchar_t * _wcscat(wchar_t *dest, const wchar_t *src)
-{
-	wchar_t *ret = dest;
-	while (*dest)
-		dest++;
-	while (*dest++ = *src++)
-		;
-	return ret;
 }
 
 void ThreadDebugContextRemoveEntry(const int index)
@@ -632,7 +594,7 @@ bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize, DWORD_PTR imagebase)
 			}
 		}
 
-		_wcscat(MalwareFile, MalwareFilename);
+		wcscat(MalwareFile, MalwareFilename);
 	}
 
 	return WriteMemoryToFile(MalwareFile, buffer,bufferSize, imagebase);
