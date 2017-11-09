@@ -66,91 +66,63 @@ static USHORT DebugObjectTypeIndex = 0;
 static USHORT ProcessTypeIndex = 0;
 static USHORT ThreadTypeIndex = 0;
 
-bool IsProcessBad(PUNICODE_STRING process)
+bool IsProcessNameBad(PUNICODE_STRING processName)
 {
-	WCHAR nameCopy[400];
-
-	if (!process || process->Length == 0 || !process->Buffer)
-	{
+	if (processName == nullptr || processName->Length == 0 || processName->Buffer == nullptr)
 		return false;
-	}
 
-	memset(nameCopy, 0, sizeof(nameCopy));
-
-	if (process->Length > (sizeof(nameCopy)-sizeof(WCHAR)))
-	{
-		return false;
-	}
-
-	memcpy(nameCopy, process->Buffer, process->Length);
-
+	UNICODE_STRING badProcessName;
 	for (int i = 0; i < _countof(BadProcessnameList); i++)
 	{
-		if (_wcsicmp(nameCopy, BadProcessnameList[i]) == 0)
-		{
+		RtlInitUnicodeString(&badProcessName, const_cast<PWSTR>(BadProcessnameList[i]));
+		if (RtlEqualUnicodeString(processName, &badProcessName, TRUE))
 			return true;
-		}
 	}
-
 	return false;
 }
 
-bool IsWindowClassBad(PUNICODE_STRING lpszClass)
+bool IsWindowClassNameBad(PUNICODE_STRING className)
 {
-	WCHAR nameCopy[400];
-
-	if (!lpszClass || lpszClass->Length == 0 || !lpszClass->Buffer)
-	{
+	if (className == nullptr || className->Length == 0 || className->Buffer == nullptr)
 		return false;
-	}
 
+	WCHAR nameCopy[400];
 	memset(nameCopy, 0, sizeof(nameCopy));
 
-	if (lpszClass->Length > (sizeof(nameCopy)-sizeof(WCHAR)))
+	if (className->Length > (sizeof(nameCopy)-sizeof(WCHAR)))
 	{
 		return false;
 	}
-	memcpy(nameCopy, lpszClass->Buffer, lpszClass->Length);
+	memcpy(nameCopy, className->Buffer, className->Length);
 
 	for (int i = 0; i < _countof(BadWindowClassList); i++)
 	{
 		if (wcsistr(nameCopy, BadWindowClassList[i]))
-		{
 			return true;
-		}
 	}
-
 	return false;
-
 }
 
-bool IsWindowNameBad(PUNICODE_STRING lpszWindow)
+bool IsWindowNameBad(PUNICODE_STRING windowName)
 {
-	WCHAR nameCopy[400];
-
-	if (!lpszWindow || lpszWindow->Length == 0 || !lpszWindow->Buffer)
-	{
+	if (windowName == nullptr || windowName->Length == 0 || windowName->Buffer == nullptr)
 		return false;
-	}
 
+	WCHAR nameCopy[400];
 	memset(nameCopy, 0, sizeof(nameCopy));
 
-	if (lpszWindow->Length > (sizeof(nameCopy)-sizeof(WCHAR)))
+	if (windowName->Length > (sizeof(nameCopy)-sizeof(WCHAR)))
 	{
 		return false;
 	}
-	memcpy(nameCopy, lpszWindow->Buffer, lpszWindow->Length);
+	memcpy(nameCopy, windowName->Buffer, windowName->Length);
 
 	for (int i = 0; i < _countof(BadWindowTextList); i++)
 	{
 		if (wcsistr(nameCopy, BadWindowTextList[i]))
-		{
 			return true;
-		}
 	}
-
 	return false;
-
 }
 
 static void GetBadObjectTypes()
@@ -432,6 +404,7 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 	return pid;
 }
 
+// TODO: Change to RtlUnicodeStringContains(str, subStr, bCaseInsensitive). This is only used by IsWindow[Class]NameBad
 bool wcsistr(const wchar_t *str, const wchar_t *subStr)
 {
 	const size_t lenStr = wcslen(str);

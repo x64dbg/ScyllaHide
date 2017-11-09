@@ -18,7 +18,7 @@ bool IsValidProcessHandle(HANDLE hProcess);
 bool HasDebugPrivileges(HANDLE hProcess);
 DWORD GetExplorerProcessId();
 DWORD GetProcessIdByName(const WCHAR * processName);
-bool IsProcessBad(PUNICODE_STRING process);
+bool IsProcessNameBad(PUNICODE_STRING processName);
 
 DWORD GetProcessIdByProcessHandle(HANDLE hProcess);
 DWORD GetThreadIdByThreadHandle(HANDLE hThread);
@@ -26,8 +26,8 @@ DWORD GetProcessIdByThreadHandle(HANDLE hThread);
 
 bool wcsistr(const wchar_t *str, const wchar_t *subStr);
 
-bool IsWindowNameBad(PUNICODE_STRING lpszWindow);
-bool IsWindowClassBad(PUNICODE_STRING lpszClass);
+bool IsWindowNameBad(PUNICODE_STRING windowName);
+bool IsWindowClassNameBad(PUNICODE_STRING className);
 bool IsObjectTypeBad(USHORT objectTypeIndex);
 
 int ThreadDebugContextFindFreeSlotIndex();

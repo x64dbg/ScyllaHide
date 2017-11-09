@@ -721,7 +721,7 @@ HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICO
     HWND resultHwnd = HookDllData.dNtUserFindWindowEx(hWndParent, hWndChildAfter, lpszClass, lpszWindow, dwType);
     if (resultHwnd)
     {
-        if (IsWindowClassBad(lpszClass) || IsWindowNameBad(lpszWindow))
+        if (IsWindowClassNameBad(lpszClass) || IsWindowNameBad(lpszWindow))
         {
             return 0;
         }
@@ -980,7 +980,7 @@ void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo)
 
     while (TRUE)
     {
-        if (IsProcessBad(&pInfo->ImageName) || ((HookDllData.EnableProtectProcessId == TRUE) && (HandleToULong(pInfo->UniqueProcessId) == HookDllData.dwProtectedProcessId)))
+        if (IsProcessNameBad(&pInfo->ImageName) || ((HookDllData.EnableProtectProcessId == TRUE) && (HandleToULong(pInfo->UniqueProcessId) == HookDllData.dwProtectedProcessId)))
         {
             if (pInfo->ImageName.Buffer)
                 ZeroMemory(pInfo->ImageName.Buffer, pInfo->ImageName.Length);

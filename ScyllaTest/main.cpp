@@ -319,5 +319,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     g_proc_handle = INVALID_HANDLE_VALUE;
 
     getchar();
+    FreeConsole();
     return 0;
 }
