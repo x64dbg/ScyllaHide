@@ -22,7 +22,7 @@ std::wstring scl::vfmtw(const wchar_t *fmt, va_list ap)
     va_end(vap);
 
     std::wstring wstr;
-    wstr.resize(size + 1);
+    wstr.resize(size);
 
     va_copy(vap, ap);
     ::_vsnwprintf(&wstr[0], wstr.size(), fmt, vap);
