@@ -1,6 +1,5 @@
 #include "HookHelper.h"
 
-#include <tlhelp32.h>
 #include <ntdll/ntdll.h>
 
 #include "HookedFunctions.h"
@@ -88,18 +87,11 @@ bool IsWindowClassNameBad(PUNICODE_STRING className)
 	if (className == nullptr || className->Length == 0 || className->Buffer == nullptr)
 		return false;
 
-	WCHAR nameCopy[400];
-	memset(nameCopy, 0, sizeof(nameCopy));
-
-	if (className->Length > (sizeof(nameCopy)-sizeof(WCHAR)))
-	{
-		return false;
-	}
-	memcpy(nameCopy, className->Buffer, className->Length);
-
+	UNICODE_STRING badWindowClassName;
 	for (int i = 0; i < _countof(BadWindowClassList); i++)
 	{
-		if (wcsistr(nameCopy, BadWindowClassList[i]))
+		RtlInitUnicodeString(&badWindowClassName, const_cast<PWSTR>(BadWindowClassList[i]));
+		if (RtlUnicodeStringContains(className, &badWindowClassName, TRUE))
 			return true;
 	}
 	return false;
@@ -110,18 +102,11 @@ bool IsWindowNameBad(PUNICODE_STRING windowName)
 	if (windowName == nullptr || windowName->Length == 0 || windowName->Buffer == nullptr)
 		return false;
 
-	WCHAR nameCopy[400];
-	memset(nameCopy, 0, sizeof(nameCopy));
-
-	if (windowName->Length > (sizeof(nameCopy)-sizeof(WCHAR)))
-	{
-		return false;
-	}
-	memcpy(nameCopy, windowName->Buffer, windowName->Length);
-
+	UNICODE_STRING badWindowName;
 	for (int i = 0; i < _countof(BadWindowTextList); i++)
 	{
-		if (wcsistr(nameCopy, BadWindowTextList[i]))
+		RtlInitUnicodeString(&badWindowName, const_cast<PWSTR>(BadWindowTextList[i]));
+		if (RtlUnicodeStringContains(windowName, &badWindowName, TRUE))
 			return true;
 	}
 	return false;
@@ -138,10 +123,7 @@ static void GetBadObjectTypes()
 		return;
 
 	// Create handles to three bad object types: an empty debug object and our own process and thread
-	HANDLE DebugObjectHandle = nullptr;
-	HANDLE ProcessHandle = nullptr;
-	HANDLE ThreadHandle = nullptr;
-	
+	HANDLE DebugObjectHandle = nullptr, ProcessHandle = nullptr, ThreadHandle = nullptr;
 	OBJECT_ATTRIBUTES ObjectAttributes = { sizeof(OBJECT_ATTRIBUTES) };
 	CLIENT_ID ClientId = NtCurrentTeb()->ClientId;
 	NtCreateDebugObject(&DebugObjectHandle, DEBUG_ALL_ACCESS, &ObjectAttributes, 0);
@@ -295,7 +277,6 @@ void * GetPEBRemote(HANDLE hProcess)
 		}
 	}
 
-
 	return 0;
 }
 
@@ -319,7 +300,6 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 			return HandleToULong(pbi.UniqueProcessId);
 		}
 	}
-
 
 	return 0;
 }
@@ -409,21 +389,20 @@ DWORD GetProcessIdByName(PUNICODE_STRING processName)
 	return pid;
 }
 
-// TODO: Change to RtlUnicodeStringContains(str, subStr, bCaseInsensitive). This is only used by IsWindow[Class]NameBad
-bool wcsistr(const wchar_t *str, const wchar_t *subStr)
+bool RtlUnicodeStringContains(PUNICODE_STRING Str, PUNICODE_STRING SubStr, BOOLEAN CaseInsensitive)
 {
-	const size_t lenStr = wcslen(str);
-	const size_t lenSubStr = wcslen(subStr);
-
-	if (lenStr < lenSubStr)
+	if (Str == nullptr || SubStr == nullptr || Str->Length < SubStr->Length)
 		return false;
 
-	for (size_t offset = 0; offset <= lenStr - lenSubStr; ++offset)
+	const USHORT numCharsDiff = (Str->Length - SubStr->Length) / sizeof(WCHAR);
+	UNICODE_STRING slice = *Str;
+	slice.Length = SubStr->Length;
+
+	for (USHORT i = 0; i <= numCharsDiff; ++i, ++slice.Buffer, slice.MaximumLength -= sizeof(WCHAR))
 	{
-		if (_wcsnicmp(str + offset, subStr, lenSubStr) == 0)
+		if (RtlEqualUnicodeString(&slice, SubStr, CaseInsensitive))
 			return true;
 	}
-
 	return false;
 }
 

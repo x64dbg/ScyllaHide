@@ -24,7 +24,7 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess);
 DWORD GetThreadIdByThreadHandle(HANDLE hThread);
 DWORD GetProcessIdByThreadHandle(HANDLE hThread);
 
-bool wcsistr(const wchar_t *str, const wchar_t *subStr);
+bool RtlUnicodeStringContains(PUNICODE_STRING Str, PUNICODE_STRING SubStr, BOOLEAN CaseInsensitive);
 
 bool IsWindowNameBad(PUNICODE_STRING windowName);
 bool IsWindowClassNameBad(PUNICODE_STRING className);
