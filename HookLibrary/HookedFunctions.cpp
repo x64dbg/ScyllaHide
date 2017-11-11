@@ -17,8 +17,6 @@ void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded);
 
 SAVE_DEBUG_REGISTERS ArrayDebugRegister[100] = { 0 }; //Max 100 threads
 
-extern DWORD dwExplorerPid;
-
 NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass, PVOID ThreadInformation, ULONG ThreadInformationLength)
 {
     if (ThreadInformationClass == ThreadHideFromDebugger && ThreadInformationLength == 0) // NB: ThreadInformation is not checked, this is deliberate
@@ -922,55 +920,18 @@ void FilterObject(POBJECT_TYPE_INFORMATION pObject)
 
 void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo)
 {
-    if (!dwExplorerPid)
+    while (true)
     {
-        const USHORT explorerNameLength = (sizeof(L"explorer.exe") / sizeof(WCHAR)) - 1;
-        PSYSTEM_PROCESS_INFORMATION pTemp = pInfo;
-        while (TRUE)
+        if (pInfo->UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess)
         {
-            if (pTemp->ImageName.Buffer && pTemp->ImageName.Length)
-            {
-                if (pTemp->ImageName.Length == explorerNameLength)
-                {
-                    pTemp->ImageName.Buffer[pTemp->ImageName.Length] = L'\0';
-                    if (!_wcsicmp(pTemp->ImageName.Buffer, L"explorer.exe"))
-                    {
-                        dwExplorerPid = HandleToULong(pTemp->UniqueProcessId);
-                        break;
-                    }
-                }
-            }
-
-            if (pTemp->NextEntryOffset == 0)
-            {
-                break;
-            }
-            else
-            {
-                pTemp = (PSYSTEM_PROCESS_INFORMATION)((DWORD_PTR)pTemp + pTemp->NextEntryOffset);
-            }
+            pInfo->InheritedFromUniqueProcessId = ULongToHandle(GetExplorerProcessId());
+            break;
         }
-    }
 
-    if (dwExplorerPid)
-    {
-        while (TRUE)
-        {
-			if (pInfo->UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess)
-            {
-                pInfo->InheritedFromUniqueProcessId = ULongToHandle(dwExplorerPid);
-                break;
-            }
+        if (pInfo->NextEntryOffset == 0)
+            break;
 
-            if (pInfo->NextEntryOffset == 0)
-            {
-                break;
-            }
-            else
-            {
-                pInfo = (PSYSTEM_PROCESS_INFORMATION)((DWORD_PTR)pInfo + pInfo->NextEntryOffset);
-            }
-        }
+        pInfo = (PSYSTEM_PROCESS_INFORMATION)((DWORD_PTR)pInfo + pInfo->NextEntryOffset);
     }
 }
 

@@ -344,11 +344,11 @@ void TerminateProcessByProcessId(DWORD dwProcess)
 	}
 }
 
-DWORD dwExplorerPid = 0;
+static DWORD dwExplorerPid = 0;
 
 DWORD GetExplorerProcessId()
 {
-	if (!dwExplorerPid)
+	if (dwExplorerPid == 0)
 	{
 		UNICODE_STRING explorerName = RTL_CONSTANT_STRING(L"explorer.exe");
 		dwExplorerPid = GetProcessIdByName(&explorerName);
@@ -363,10 +363,21 @@ DWORD GetProcessIdByName(PUNICODE_STRING processName)
 		return 0;
 	const PSYSTEM_PROCESS_INFORMATION systemProcessInfo =
 		static_cast<PSYSTEM_PROCESS_INFORMATION>(RtlAllocateHeap(RtlProcessHeap(), 0, 2 * size));
-	NTSTATUS status = NtQuerySystemInformation(SystemProcessInformation,
-												systemProcessInfo,
-												2 * size,
-												nullptr);
+	NTSTATUS status;
+	if (HookDllData.dNtQuerySystemInformation != nullptr)
+	{
+		status = HookDllData.dNtQuerySystemInformation(SystemProcessInformation,
+													systemProcessInfo,
+													2 * size,
+													nullptr);
+	}
+	else
+	{
+		status = NtQuerySystemInformation(SystemProcessInformation,
+											systemProcessInfo,
+											2 * size,
+											nullptr);
+	}
 	if (!NT_SUCCESS(status))
 		return 0;
 
