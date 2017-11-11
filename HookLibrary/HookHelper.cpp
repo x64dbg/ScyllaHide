@@ -182,38 +182,6 @@ bool IsObjectTypeBad(USHORT objectTypeIndex)
 		objectTypeIndex == ThreadTypeIndex;
 }
 
-bool IsValidProcessHandle(HANDLE hProcess)
-{
-	if (hProcess == 0)
-	{
-		return false;
-	}
-	else if (hProcess == NtCurrentProcess)
-	{
-		return true;
-	}
-	else
-	{
-		return IsValidHandle(hProcess);
-	}
-}
-
-bool IsValidThreadHandle(HANDLE hThread)
-{
-	if (hThread == 0)
-	{
-		return false;
-	}
-	else if (hThread == NtCurrentThread)
-	{
-		return true;
-	}
-	else
-	{
-		return IsValidHandle(hThread);
-	}
-}
-
 static LUID ConvertLongToLuid(LONG value)
 {
 	LUID luid;
@@ -245,16 +213,6 @@ bool HasDebugPrivileges(HANDLE hProcess)
 
 	NtClose(hToken);
 	return hasDebugPrivileges == TRUE;
-}
-
-bool IsValidHandle(HANDLE hHandle)
-{
-	//return !!GetHandleInformation(hThread, &flags); //calls NtQueryObject ObjectHandleFlagInformation
-	ULONG retLen = 0;
-	OBJECT_HANDLE_FLAG_INFORMATION flags;
-	flags.ProtectFromClose = 0;
-	flags.Inherit = 0;
-	return NtQueryObject(hHandle, ObjectHandleFlagInformation, &flags, sizeof(OBJECT_HANDLE_FLAG_INFORMATION), &retLen) >= 0;
 }
 
 void * GetPEBRemote(HANDLE hProcess)
@@ -299,18 +257,6 @@ DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 		{
 			return HandleToULong(pbi.UniqueProcessId);
 		}
-	}
-
-	return 0;
-}
-
-DWORD GetThreadIdByThreadHandle(HANDLE hThread)
-{
-	THREAD_BASIC_INFORMATION tbi;
-
-	if (NT_SUCCESS(NtQueryInformationThread(hThread, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0)))
-	{
-		return HandleToULong(tbi.ClientId.UniqueThread);
 	}
 
 	return 0;
@@ -573,8 +519,6 @@ bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize,
 	PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)buffer;
 	PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
 	PIMAGE_SECTION_HEADER pSection = IMAGE_FIRST_SECTION(pNt);
-
-	//pNt->OptionalHeader.ImageBase = imagebase;
 
 	UNICODE_STRING NtPath;
 	if (!RtlDosPathNameToNtPathName_U(filename, &NtPath, nullptr, nullptr))

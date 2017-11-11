@@ -12,16 +12,12 @@ FORCEINLINE ULONG NTAPI RtlGetTickCount()
 	return (ULONG)(*(PULONG64)(0x7FFE0000 + 0x320) * *(PULONG)(0x7FFE0000 + 0x4) >> 24);
 }
 
-bool IsValidHandle(HANDLE hHandle);
-bool IsValidThreadHandle(HANDLE hThread);
-bool IsValidProcessHandle(HANDLE hProcess);
 bool HasDebugPrivileges(HANDLE hProcess);
 DWORD GetExplorerProcessId();
 DWORD GetProcessIdByName(PUNICODE_STRING processName);
 bool IsProcessNameBad(PUNICODE_STRING processName);
 
 DWORD GetProcessIdByProcessHandle(HANDLE hProcess);
-DWORD GetThreadIdByThreadHandle(HANDLE hThread);
 DWORD GetProcessIdByThreadHandle(HANDLE hThread);
 
 bool RtlUnicodeStringContains(PUNICODE_STRING Str, PUNICODE_STRING SubStr, BOOLEAN CaseInsensitive);
