@@ -17,7 +17,7 @@ bool IsValidThreadHandle(HANDLE hThread);
 bool IsValidProcessHandle(HANDLE hProcess);
 bool HasDebugPrivileges(HANDLE hProcess);
 DWORD GetExplorerProcessId();
-DWORD GetProcessIdByName(const WCHAR * processName);
+DWORD GetProcessIdByName(PUNICODE_STRING processName);
 bool IsProcessNameBad(PUNICODE_STRING processName);
 
 DWORD GetProcessIdByProcessHandle(HANDLE hProcess);

@@ -370,17 +370,18 @@ DWORD GetExplorerProcessId()
 {
 	if (!dwExplorerPid)
 	{
-		dwExplorerPid = GetProcessIdByName(L"explorer.exe");
+		UNICODE_STRING explorerName = RTL_CONSTANT_STRING(L"explorer.exe");
+		dwExplorerPid = GetProcessIdByName(&explorerName);
 	}
 	return dwExplorerPid;
 }
 
-DWORD GetProcessIdByName(const WCHAR * processName)
+DWORD GetProcessIdByName(PUNICODE_STRING processName)
 {
 	ULONG size;
 	if (NtQuerySystemInformation(SystemProcessInformation, nullptr, 0, &size) != STATUS_INFO_LENGTH_MISMATCH)
 		return 0;
-	PSYSTEM_PROCESS_INFORMATION systemProcessInfo =
+	const PSYSTEM_PROCESS_INFORMATION systemProcessInfo =
 		static_cast<PSYSTEM_PROCESS_INFORMATION>(RtlAllocateHeap(RtlProcessHeap(), 0, 2 * size));
 	NTSTATUS status = NtQuerySystemInformation(SystemProcessInformation,
 												systemProcessInfo,
@@ -391,14 +392,16 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 
 	DWORD pid = 0;
 	PSYSTEM_PROCESS_INFORMATION process = systemProcessInfo;
-	while (process->NextEntryOffset != 0)
+	while (true)
 	{
-		if (process->ImageName.Buffer != nullptr &&
-			_wcsicmp(process->ImageName.Buffer, processName) == 0)
+		if (RtlEqualUnicodeString(&process->ImageName, processName, TRUE))
 		{
 			pid = HandleToULong(process->UniqueProcessId);
 			break;
 		}
+
+		if (process->NextEntryOffset == 0)
+			break;
 		process = (PSYSTEM_PROCESS_INFORMATION)((ULONG_PTR)process + process->NextEntryOffset);
 	}
 
