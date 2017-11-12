@@ -8,8 +8,8 @@ HOOK_DLL_DATA HookDllData = { 0 };
 #include "HookHelper.h"
 
 void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo);
-void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo);
-void FilterHandleInfoEx(PSYSTEM_HANDLE_INFORMATION_EX pHandleInfoEx);
+void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo, PULONG pReturnLengthAdjust);
+void FilterHandleInfoEx(PSYSTEM_HANDLE_INFORMATION_EX pHandleInfoEx, PULONG pReturnLengthAdjust);
 void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes);
 void FilterObject(POBJECT_TYPE_INFORMATION pObject);
@@ -47,6 +47,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
         if (NT_SUCCESS(ntStat) && SystemInformation != nullptr && SystemInformationLength != 0)
         {
             ULONG backupReturnLength = 0;
+            ULONG returnLengthAdjust = 0;
             if (ReturnLength != nullptr &&
                 (ULONG_PTR)ReturnLength >= (ULONG_PTR)SystemInformation &&
                 (ULONG_PTR)ReturnLength <= (ULONG_PTR)SystemInformation + SystemInformationLength)
@@ -61,11 +62,11 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
             }
             else if (SystemInformationClass == SystemHandleInformation)
             {
-                FilterHandleInfo((PSYSTEM_HANDLE_INFORMATION)SystemInformation);
+                FilterHandleInfo((PSYSTEM_HANDLE_INFORMATION)SystemInformation, &returnLengthAdjust);
             }
             else if (SystemInformationClass == SystemExtendedHandleInformation)
             {
-                FilterHandleInfoEx((PSYSTEM_HANDLE_INFORMATION_EX)SystemInformation);
+                FilterHandleInfoEx((PSYSTEM_HANDLE_INFORMATION_EX)SystemInformation, &returnLengthAdjust);
             }
             else if (SystemInformationClass == SystemProcessInformation ||
                     SystemInformationClass == SystemSessionProcessInformation ||
@@ -97,8 +98,12 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
                 ((PSYSTEM_CODEINTEGRITY_UNLOCK_INFORMATION)SystemInformation)->Flags = 0;
             }
 
-            if (backupReturnLength != 0)
+            if (backupReturnLength != 0) // TODO: or if returnLengthAdjust != 0, but we don't normally know if ReturnLength can be safely dereferenced w/o SEH
+            {
+                if (returnLengthAdjust <= backupReturnLength)
+                    backupReturnLength -= returnLengthAdjust;
                 *ReturnLength = backupReturnLength;
+            }
         }
 
         return ntStat;
@@ -848,8 +853,9 @@ NTSTATUS NTAPI HookedNtCreateThreadEx(PHANDLE ThreadHandle,ACCESS_MASK DesiredAc
     return HookDllData.dNtCreateThreadEx(ThreadHandle, DesiredAccess, ObjectAttributes, ProcessHandle, StartRoutine, Argument, CreateFlags, ZeroBits, StackSize, MaximumStackSize,AttributeList);
 }
 
-void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo)
+void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo, PULONG pReturnLengthAdjust)
 {
+    *pReturnLengthAdjust = 0;
     const ULONG TrueCount = pHandleInfo->NumberOfHandles;
     for (ULONG i = 0; i < TrueCount; ++i)
     {
@@ -858,6 +864,7 @@ void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo)
             IsObjectTypeBad(pHandleInfo->Handles[i].ObjectTypeIndex))
         {
             pHandleInfo->NumberOfHandles--;
+            *pReturnLengthAdjust += sizeof(SYSTEM_HANDLE_TABLE_ENTRY_INFO);
             for (ULONG j = i; j < TrueCount - 1; ++j)
             {
                 pHandleInfo->Handles[j] = pHandleInfo->Handles[j + 1];
@@ -868,8 +875,9 @@ void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo)
     }
 }
 
-void FilterHandleInfoEx(PSYSTEM_HANDLE_INFORMATION_EX pHandleInfoEx)
+void FilterHandleInfoEx(PSYSTEM_HANDLE_INFORMATION_EX pHandleInfoEx, PULONG pReturnLengthAdjust)
 {
+    *pReturnLengthAdjust = 0;
     const ULONG TrueCount = (ULONG)pHandleInfoEx->NumberOfHandles;
     for (ULONG i = 0; i < TrueCount; ++i)
     {
@@ -878,6 +886,7 @@ void FilterHandleInfoEx(PSYSTEM_HANDLE_INFORMATION_EX pHandleInfoEx)
             IsObjectTypeBad(pHandleInfoEx->Handles[i].ObjectTypeIndex))
         {
             pHandleInfoEx->NumberOfHandles--;
+            *pReturnLengthAdjust += sizeof(SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX);
             for (ULONG j = i; j < TrueCount - 1; ++j)
             {
                 pHandleInfoEx->Handles[j] = pHandleInfoEx->Handles[j + 1];
