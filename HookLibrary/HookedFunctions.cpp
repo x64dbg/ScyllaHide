@@ -12,7 +12,7 @@ void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo, PULONG pReturnLeng
 void FilterHandleInfoEx(PSYSTEM_HANDLE_INFORMATION_EX pHandleInfoEx, PULONG pReturnLengthAdjust);
 void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes);
-void FilterObject(POBJECT_TYPE_INFORMATION pObject);
+void FilterObject(POBJECT_TYPE_INFORMATION pObject, bool zeroTotal);
 void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded);
 
 SAVE_DEBUG_REGISTERS ArrayDebugRegister[100] = { 0 }; //Max 100 threads
@@ -286,7 +286,7 @@ NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS Objec
         }
         else if (ObjectInformationClass == ObjectTypeInformation)
         {
-            FilterObject((POBJECT_TYPE_INFORMATION)ObjectInformation);
+            FilterObject((POBJECT_TYPE_INFORMATION)ObjectInformation, false);
         }
 
         if (backupReturnLength != 0)
@@ -902,28 +902,20 @@ void FilterObjects(POBJECT_TYPES_INFORMATION pObjectTypes)
     POBJECT_TYPE_INFORMATION pObject = pObjectTypes->TypeInformation;
     for (ULONG i = 0; i < pObjectTypes->NumberOfTypes; i++)
     {
-        FilterObject(pObject);
+        FilterObject(pObject, true);
 
         pObject = (POBJECT_TYPE_INFORMATION)(((PCHAR)(pObject + 1) + ALIGN_UP(pObject->TypeName.MaximumLength, ULONG_PTR)));
     }
 }
 
-void FilterObject(POBJECT_TYPE_INFORMATION pObject)
+void FilterObject(POBJECT_TYPE_INFORMATION pObject, bool zeroTotal)
 {
-    const WCHAR strDebugObject[] = L"DebugObject";
-
-	if (pObject->TypeName.Length == 0 || pObject->TypeName.Buffer == nullptr)
-	{
-		return;
-	}
-
-    if (pObject->TypeName.Length == (sizeof(strDebugObject)-sizeof(WCHAR)))
+    UNICODE_STRING debugObjectName = RTL_CONSTANT_STRING(L"DebugObject");
+    if (RtlEqualUnicodeString(&debugObjectName, &pObject->TypeName, FALSE))
     {
-        if (!memcmp(strDebugObject, pObject->TypeName.Buffer, pObject->TypeName.Length))
-        {
-            pObject->TotalNumberOfObjects = 0;
-            pObject->TotalNumberOfHandles = 0;
-        }
+        // Subtract just one from both counts for our debugger, unless the query was a generic one for all object types
+        pObject->TotalNumberOfObjects = zeroTotal || pObject->TotalNumberOfObjects == 0 ? 0 : pObject->TotalNumberOfObjects - 1;
+        pObject->TotalNumberOfHandles = zeroTotal || pObject->TotalNumberOfHandles == 0 ? 0 : pObject->TotalNumberOfHandles - 1;
     }
 }
 
