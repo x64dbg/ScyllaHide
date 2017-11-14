@@ -752,7 +752,7 @@ HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICO
 
 NTSTATUS NTAPI HookedNtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLEAN State)
 {
-    return STATUS_ACCESS_DENIED;
+    return HasDebugPrivileges(NtCurrentProcess) ? STATUS_SUCCESS : STATUS_ACCESS_DENIED;
 }
 
 void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
