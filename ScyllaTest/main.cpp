@@ -249,6 +249,21 @@ static ScyllaTestResult Check_NtQuery_OverlappingReturnLength() // https://githu
     return ScyllaTestOk;
 }
 
+static ScyllaTestResult Check_NtClose()
+{
+    __try
+    {
+        NtClose((HANDLE)(ULONG_PTR)0x1337);
+        return ScyllaTestOk;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return GetExceptionCode() == EXCEPTION_INVALID_HANDLE
+            ? ScyllaTestDetected
+            : ScyllaTestFail;
+    }
+}
+
 static void PrintScyllaTestResult(ScyllaTestResult result)
 {
     // Neither stdout nor GetStdHandle() work and I cba with this kernel32/CRT shit anymore. Pay me
@@ -367,6 +382,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort);
         SCYLLA_TEST(NtQuerySystemInformation_SystemKernelDebuggerInformation);
         SCYLLA_TEST(NtQuery_OverlappingReturnLength);
+        SCYLLA_TEST(NtClose);
 
         printf("--------------------\n\n");
     }
