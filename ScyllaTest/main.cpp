@@ -208,7 +208,7 @@ static ScyllaTestResult Check_NtQueryInformationProcess_ProcessDebugPort()
     return SCYLLA_TEST_CHECK(handle == nullptr);
 }
 
-static ScyllaTestResult Check_NtQuerySystemInformation_SystemKernelDebuggerInformation()
+static ScyllaTestResult Check_NtQuerySystemInformation_KernelDebugger()
 {
     SYSTEM_KERNEL_DEBUGGER_INFORMATION SysKernDebInfo;
 
@@ -264,13 +264,18 @@ static ScyllaTestResult Check_NtClose()
     }
 }
 
-static void PrintScyllaTestResult(ScyllaTestResult result)
+static void PrintScyllaTestResult(ScyllaTestResult result, ULONG charsPrinted)
 {
     // Neither stdout nor GetStdHandle() work and I cba with this kernel32/CRT shit anymore. Pay me
     const HANDLE stdOut = NtCurrentPeb()->ProcessParameters->StandardOutput;
     CONSOLE_SCREEN_BUFFER_INFO consoleBufferInfo = { sizeof(CONSOLE_SCREEN_BUFFER_INFO) };
     GetConsoleScreenBufferInfo(stdOut, &consoleBufferInfo);
     const USHORT defaultColours = consoleBufferInfo.wAttributes;
+
+    const ULONG pad = charsPrinted <= 48 ? 48 - charsPrinted : 0;
+    for (ULONG i = 0; i < pad; ++i)
+        printf(" ");
+
     switch (result)
     {
     case ScyllaTestOk:
@@ -351,9 +356,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         return -1;
 
 #define SCYLLA_TEST_IF(condition, x)      \
-    printf("Check %s...\t", #x);          \
-    if (!(condition)) { PrintScyllaTestResult(ScyllaTestSkip); } \
-    else { auto ret = Check_ ## x(); PrintScyllaTestResult(ret); }
+    { ULONG n = printf("%s: ", #x);          \
+    if (!(condition)) { PrintScyllaTestResult(ScyllaTestSkip, n); } \
+    else { auto ret = Check_ ## x(); PrintScyllaTestResult(ret, n); } }
 #define SCYLLA_TEST(x) SCYLLA_TEST_IF(true, x)
 
     printf("Starting test loop. Press CTRL+C or the power button on your PC to exit.\n\n");
@@ -380,7 +385,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         SCYLLA_TEST(OutputDebugStringA_Exception);
         SCYLLA_TEST_IF(ver >= scl::OS_WIN_10, OutputDebugStringW_Exception);
         SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort);
-        SCYLLA_TEST(NtQuerySystemInformation_SystemKernelDebuggerInformation);
+        SCYLLA_TEST(NtQuerySystemInformation_KernelDebugger);
         SCYLLA_TEST(NtQuery_OverlappingReturnLength);
         SCYLLA_TEST(NtClose);
 
