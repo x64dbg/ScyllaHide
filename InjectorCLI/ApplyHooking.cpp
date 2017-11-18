@@ -83,8 +83,10 @@ void ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
     void * HookedNtYieldExecution = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtYieldExecution") + imageBase);
     void * HookedNtGetContextThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtGetContextThread") + imageBase);
     void * HookedNtSetContextThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetContextThread") + imageBase);
+#ifndef _WIN64
     void * HookedKiUserExceptionDispatcher = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedKiUserExceptionDispatcher") + imageBase);
     void * HookedNtContinue = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtContinue") + imageBase);
+#endif
     void * HookedNtClose = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtClose") + imageBase);
     void * HookedNtSetDebugFilterState = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetDebugFilterState") + imageBase);
     void * HookedNtCreateThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtCreateThread") + imageBase);
@@ -214,7 +216,16 @@ void ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
 
     if (hdd->EnableNtQuerySystemTimeHook == TRUE && _NtQuerySystemTime != 0)
     {
-        g_log.LogDebug(L"ApplyNtdllHook -> Hooking NtQuerySystemTime");
+#ifdef _WIN64
+        ULONG_PTR address = (ULONG_PTR)_NtQuerySystemTime;
+        if (*(PUCHAR)address == 0xE9) // jmp rel32
+        {
+            g_log.LogDebug(L"ApplyNtdllHook -> Finding jmp to RtlQuerySystemTime at NtQuerySystemTime");
+            LONG relativeOffset = *(PLONG)(address + 1);
+            _NtQuerySystemTime = (t_NtQuerySystemTime)(address + relativeOffset + 5);
+        }
+#endif
+        g_log.LogDebug(L"ApplyNtdllHook -> Hooking NtQuerySystemTime at %p", _NtQuerySystemTime);
         HOOK_NATIVE(NtQuerySystemTime);
     }
     if (hdd->EnableNtQueryPerformanceCounterHook == TRUE)
