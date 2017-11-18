@@ -9,7 +9,8 @@ enum ScyllaTestResult
 {
     ScyllaTestOk = 0,
     ScyllaTestFail,
-    ScyllaTestDetected
+    ScyllaTestDetected,
+    ScyllaTestSkip
 };
 
 #define SCYLLA_TEST_FAIL_IF(x) if (x) return ScyllaTestFail;
@@ -21,7 +22,14 @@ const bool is_x64 = true;
 const bool is_x64 = false;
 #endif
 
-static HANDLE g_proc_handle;
+static HANDLE g_proc_handle, g_stopEvent;
+
+static BOOL NTAPI CtrlHandler(ULONG)
+{
+    // Signal test stop, and don't pass to next handler
+    NtSetEvent(g_stopEvent, nullptr);
+    return TRUE;
+}
 
 static HANDLE GetRealCurrentProcess()
 {
@@ -241,19 +249,44 @@ static ScyllaTestResult Check_NtQuery_OverlappingReturnLength() // https://githu
     return ScyllaTestOk;
 }
 
-static const char *ScyllaTestResultAsStr(ScyllaTestResult result)
+static void PrintScyllaTestResult(ScyllaTestResult result)
 {
+    // Neither stdout nor GetStdHandle() work and I cba with this kernel32/CRT shit anymore. Pay me
+    const HANDLE stdOut = NtCurrentPeb()->ProcessParameters->StandardOutput;
+    CONSOLE_SCREEN_BUFFER_INFO consoleBufferInfo = { sizeof(CONSOLE_SCREEN_BUFFER_INFO) };
+    GetConsoleScreenBufferInfo(stdOut, &consoleBufferInfo);
+    const USHORT defaultColours = consoleBufferInfo.wAttributes;
     switch (result)
     {
     case ScyllaTestOk:
-        return "OK";
-    case ScyllaTestFail:
-        return "FAIL";
-    case ScyllaTestDetected:
-        return "DETECTED";
-    default:
-        return "UNKNOWN";
+    {
+        SetConsoleTextAttribute(stdOut, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+        printf("OK\n");
+        break;
     }
+    case ScyllaTestFail:
+    {
+        SetConsoleTextAttribute(stdOut, FOREGROUND_RED | BACKGROUND_BLUE | FOREGROUND_INTENSITY);
+        printf("FAIL\n");
+        break;
+    }
+    case ScyllaTestDetected:
+    {
+        SetConsoleTextAttribute(stdOut, FOREGROUND_RED | FOREGROUND_INTENSITY);
+        printf("DETECTED\n");
+        break;
+    }
+    case ScyllaTestSkip:
+    {
+        SetConsoleTextAttribute(stdOut, FOREGROUND_GREEN | FOREGROUND_BLUE);
+        printf("SKIP\n");
+        break;
+    }
+    default:
+        printf("UNKNOWN\n");
+        break;
+    }
+    SetConsoleTextAttribute(stdOut, defaultColours);
 }
 
 static bool OpenConsole()
@@ -268,6 +301,9 @@ static bool OpenConsole()
     freopen("CONIN$", "r", stdin);
     freopen("CONOUT$", "w", stdout);
     freopen("CONOUT$", "w", stderr);
+
+    if (!SetConsoleCtrlHandler(CtrlHandler, TRUE))
+        return false;
 
     return true;
 }
@@ -290,35 +326,54 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         fprintf(stderr, "Unsupported OS version.\n");
         return -1;
     }
+    
+    WCHAR title[64];
+    _snwprintf_s(title, sizeof(title), L"[ScyllaTest] PID: %u", (ULONG)(ULONG_PTR)NtCurrentTeb()->ClientId.UniqueProcess);
+    SetConsoleTitleW(title);
 
     auto is_wow64 = scl::IsWow64Process(g_proc_handle);
+    if (!NT_SUCCESS(NtCreateEvent(&g_stopEvent, EVENT_ALL_ACCESS, nullptr, NotificationEvent, FALSE)))
+        return -1;
 
 #define SCYLLA_TEST_IF(condition, x)      \
     printf("Check %s...\t", #x);          \
-    if (!(condition)) { printf("SKIP\n"); } else { auto ret = Check_ ## x(); printf("%s\n", ScyllaTestResultAsStr(ret)); }
+    if (!(condition)) { PrintScyllaTestResult(ScyllaTestSkip); } \
+    else { auto ret = Check_ ## x(); PrintScyllaTestResult(ret); }
 #define SCYLLA_TEST(x) SCYLLA_TEST_IF(true, x)
 
-    SCYLLA_TEST(PEB_BeingDebugged);
-    SCYLLA_TEST_IF(is_wow64, Wow64PEB64_BeingDebugged);
-    SCYLLA_TEST(PEB_NtGlobalFlag);
-    SCYLLA_TEST_IF(is_wow64, Wow64PEB64_NtGlobalFlag);
-    SCYLLA_TEST(PEB_HeapFlags);
-    SCYLLA_TEST_IF(is_wow64, Wow64PEB64_HeapFlags);
-    SCYLLA_TEST(PEB_ProcessParameters);
-    SCYLLA_TEST_IF(is_wow64, Wow64PEB64_ProcessParameters);
-    SCYLLA_TEST(IsDebuggerPresent);
-    SCYLLA_TEST(CheckRemoteDebuggerPresent);
-    SCYLLA_TEST_IF(ver < scl::OS_WIN_VISTA, OutputDebugStringA_LastError);
-    SCYLLA_TEST(OutputDebugStringA_Exception);
-    SCYLLA_TEST_IF(ver >= scl::OS_WIN_10, OutputDebugStringW_Exception);
-    SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort);
-    SCYLLA_TEST(NtQuerySystemInformation_SystemKernelDebuggerInformation);
-    SCYLLA_TEST(NtQuery_OverlappingReturnLength);
+    printf("Starting test loop. Press CTRL+C or the power button on your PC to exit.\n\n");
+    while (true)
+    {
+        LARGE_INTEGER timeout;
+        timeout.QuadPart = -1LL * 10000LL * 1500LL; // 1500 ms
+        if (NtWaitForSingleObject(g_stopEvent, FALSE, &timeout) != STATUS_TIMEOUT)
+            break;
 
-    CloseHandle(g_proc_handle);
-    g_proc_handle = INVALID_HANDLE_VALUE;
+        printf("--------------------\n");
 
-    getchar();
+        SCYLLA_TEST(PEB_BeingDebugged);
+        SCYLLA_TEST_IF(is_wow64, Wow64PEB64_BeingDebugged);
+        SCYLLA_TEST(PEB_NtGlobalFlag);
+        SCYLLA_TEST_IF(is_wow64, Wow64PEB64_NtGlobalFlag);
+        SCYLLA_TEST(PEB_HeapFlags);
+        SCYLLA_TEST_IF(is_wow64, Wow64PEB64_HeapFlags);
+        SCYLLA_TEST(PEB_ProcessParameters);
+        SCYLLA_TEST_IF(is_wow64, Wow64PEB64_ProcessParameters);
+        SCYLLA_TEST(IsDebuggerPresent);
+        SCYLLA_TEST(CheckRemoteDebuggerPresent);
+        SCYLLA_TEST_IF(ver < scl::OS_WIN_VISTA, OutputDebugStringA_LastError);
+        SCYLLA_TEST(OutputDebugStringA_Exception);
+        SCYLLA_TEST_IF(ver >= scl::OS_WIN_10, OutputDebugStringW_Exception);
+        SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort);
+        SCYLLA_TEST(NtQuerySystemInformation_SystemKernelDebuggerInformation);
+        SCYLLA_TEST(NtQuery_OverlappingReturnLength);
+
+        printf("--------------------\n\n");
+    }
+
+    NtClose(g_stopEvent);
+    NtClose(g_proc_handle);
+    SetConsoleCtrlHandler(nullptr, FALSE);
     FreeConsole();
     return 0;
 }
