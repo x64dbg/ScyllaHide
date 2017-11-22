@@ -95,7 +95,8 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
             }
             else if (SystemInformationClass == SystemCodeIntegrityUnlockInformation)
             {
-                ((PSYSTEM_CODEINTEGRITY_UNLOCK_INFORMATION)SystemInformation)->Flags = 0;
+                // The size of the buffer for this class changed from 4 to 36, but the output should still be all zeroes
+                RtlZeroMemory(SystemInformation, SystemInformationLength);
             }
 
             if (backupReturnLength != 0) // TODO: or if returnLengthAdjust != 0, but we don't normally know if ReturnLength can be safely dereferenced w/o SEH
