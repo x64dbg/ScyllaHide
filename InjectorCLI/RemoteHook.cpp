@@ -498,6 +498,12 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void
 #ifndef _WIN64
 void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
 {
+    if (scl::GetWindowsVersion() >= scl::OS_WIN_8 && !scl::IsWow64Process(hProcess))
+    {
+        // The native x86 syscall structure was changed in Windows 8. https://github.com/x64dbg/ScyllaHide/issues/49
+        return DetourCreateRemote(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
+    }
+
     memset(changedBytes, 0x90, sizeof(changedBytes));
     memset(originalBytes, 0x90, sizeof(originalBytes));
     memset(tempSpace, 0x90, sizeof(tempSpace));
