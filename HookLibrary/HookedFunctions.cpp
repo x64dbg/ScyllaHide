@@ -148,6 +148,11 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
             }
             else if (ProcessInformationClass == ProcessDebugObjectHandle)
             {
+                if (HookDllData.dNtClose)
+                    HookDllData.dNtClose(*(PHANDLE)ProcessInformation);
+                else
+                    NtClose(*(PHANDLE)ProcessInformation);
+
                 *((HANDLE *)ProcessInformation) = 0;
                 ntStat = STATUS_PORT_NOT_SET;
             }
