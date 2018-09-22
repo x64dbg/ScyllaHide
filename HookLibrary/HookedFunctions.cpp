@@ -431,7 +431,7 @@ NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert) //re
 #ifndef _WIN64
 PVOID NTAPI HandleNativeCallInternal(DWORD eaxValue, DWORD ecxValue)
 {
-    for (int i = 0; i < _countof(HookDllData.HookNative); i++)
+    for (ULONG i = 0; i < _countof(HookDllData.HookNative); i++)
     {
         if (HookDllData.HookNative[i].eaxValue == eaxValue)
         {
