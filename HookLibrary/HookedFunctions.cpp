@@ -17,6 +17,18 @@ void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded);
 
 SAVE_DEBUG_REGISTERS ArrayDebugRegister[100] = { 0 }; //Max 100 threads
 
+// https://forum.tuts4you.com/topic/40011-debugme-vmprotect-312-build-886-anti-debug-method-improved/#comment-192824
+// https://github.com/x64dbg/ScyllaHide/issues/47
+// https://github.com/mrexodia/TitanHide/issues/27
+#define BACKUP_RETURNLENGTH() \
+    ULONG TempReturnLength = 0; \
+    if(ReturnLength != nullptr) \
+        TempReturnLength = *ReturnLength
+
+#define RESTORE_RETURNLENGTH() \
+    if(ReturnLength != nullptr) \
+        (*ReturnLength) = TempReturnLength
+
 NTSTATUS NTAPI HookedNtSetInformationThread(HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass, PVOID ThreadInformation, ULONG ThreadInformationLength)
 {
     if (ThreadInformationClass == ThreadHideFromDebugger && ThreadInformationLength == 0) // NB: ThreadInformation is not checked, this is deliberate
@@ -46,64 +58,86 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
         NTSTATUS ntStat = HookDllData.dNtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
         if (NT_SUCCESS(ntStat) && SystemInformation != nullptr && SystemInformationLength != 0)
         {
-            ULONG backupReturnLength = 0;
-            ULONG returnLengthAdjust = 0;
-            if (ReturnLength != nullptr &&
-                (ULONG_PTR)ReturnLength >= (ULONG_PTR)SystemInformation &&
-                (ULONG_PTR)ReturnLength <= (ULONG_PTR)SystemInformation + SystemInformationLength)
-            {
-                backupReturnLength = *ReturnLength;
-            }
-
             if (SystemInformationClass == SystemKernelDebuggerInformation)
             {
+                BACKUP_RETURNLENGTH();
+
                 ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation)->KernelDebuggerEnabled = FALSE;
                 ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation)->KernelDebuggerNotPresent = TRUE;
+
+                RESTORE_RETURNLENGTH();
             }
             else if (SystemInformationClass == SystemHandleInformation)
             {
-                FilterHandleInfo((PSYSTEM_HANDLE_INFORMATION)SystemInformation, &returnLengthAdjust);
+                BACKUP_RETURNLENGTH();
+                ULONG ReturnLengthAdjust = 0;
+
+                FilterHandleInfo((PSYSTEM_HANDLE_INFORMATION)SystemInformation, &ReturnLengthAdjust);
+
+                if (ReturnLengthAdjust <= TempReturnLength)
+				    ReturnLength -= ReturnLengthAdjust;
+                RESTORE_RETURNLENGTH();
             }
             else if (SystemInformationClass == SystemExtendedHandleInformation)
             {
-                FilterHandleInfoEx((PSYSTEM_HANDLE_INFORMATION_EX)SystemInformation, &returnLengthAdjust);
+                BACKUP_RETURNLENGTH();
+                ULONG ReturnLengthAdjust = 0;
+
+                FilterHandleInfoEx((PSYSTEM_HANDLE_INFORMATION_EX)SystemInformation, &ReturnLengthAdjust);
+
+                if (ReturnLengthAdjust <= TempReturnLength)
+                    ReturnLength -= ReturnLengthAdjust;
+                RESTORE_RETURNLENGTH();
             }
             else if (SystemInformationClass == SystemProcessInformation ||
                     SystemInformationClass == SystemSessionProcessInformation ||
                     SystemInformationClass == SystemExtendedProcessInformation)
             {
+                BACKUP_RETURNLENGTH();
+
                 PSYSTEM_PROCESS_INFORMATION ProcessInfo = (PSYSTEM_PROCESS_INFORMATION)SystemInformation;
                 if (SystemInformationClass == SystemSessionProcessInformation)
                     ProcessInfo = (PSYSTEM_PROCESS_INFORMATION)((PSYSTEM_SESSION_PROCESS_INFORMATION)SystemInformation)->Buffer;
 
                 FilterProcess(ProcessInfo);
                 FakeCurrentParentProcessId(ProcessInfo);
+
+                RESTORE_RETURNLENGTH();
             }
             else if (SystemInformationClass == SystemCodeIntegrityInformation)
             {
+                BACKUP_RETURNLENGTH();
+
                 ((PSYSTEM_CODEINTEGRITY_INFORMATION)SystemInformation)->CodeIntegrityOptions = CODEINTEGRITY_OPTION_ENABLED;
+
+                RESTORE_RETURNLENGTH();
             }
             else if (SystemInformationClass == SystemKernelDebuggerInformationEx)
             {
+                BACKUP_RETURNLENGTH();
+
                 ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION_EX)SystemInformation)->DebuggerAllowed = FALSE;
                 ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION_EX)SystemInformation)->DebuggerEnabled = FALSE;
                 ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION_EX)SystemInformation)->DebuggerPresent = FALSE;
+
+                RESTORE_RETURNLENGTH();
             }
             else if (SystemInformationClass == SystemKernelDebuggerFlags)
             {
+                BACKUP_RETURNLENGTH();
+
                 *(PUCHAR)SystemInformation = 0;
+
+                RESTORE_RETURNLENGTH();
             }
             else if (SystemInformationClass == SystemCodeIntegrityUnlockInformation)
             {
+                BACKUP_RETURNLENGTH();
+
                 // The size of the buffer for this class changed from 4 to 36, but the output should still be all zeroes
                 RtlZeroMemory(SystemInformation, SystemInformationLength);
-            }
 
-            if (backupReturnLength != 0) // TODO: or if returnLengthAdjust != 0, but we don't normally know if ReturnLength can be safely dereferenced w/o SEH
-            {
-                if (returnLengthAdjust <= backupReturnLength)
-                    backupReturnLength -= returnLengthAdjust;
-                *ReturnLength = backupReturnLength;
+                RESTORE_RETURNLENGTH();
             }
         }
 
@@ -134,47 +168,60 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
 
         if (NT_SUCCESS(ntStat) && ProcessInformation != 0 && ProcessInformationLength != 0)
         {
-            ULONG backupReturnLength = 0;
-            if (ReturnLength != nullptr &&
-                (ULONG_PTR)ReturnLength >= (ULONG_PTR)ProcessInformation &&
-                (ULONG_PTR)ReturnLength <= (ULONG_PTR)ProcessInformation + ProcessInformationLength)
-            {
-                backupReturnLength = *ReturnLength;
-            }
-
             if (ProcessInformationClass == ProcessDebugFlags)
             {
+                BACKUP_RETURNLENGTH();
+
                 *((ULONG *)ProcessInformation) = ((ValueProcessDebugFlags & PROCESS_NO_DEBUG_INHERIT) != 0) ? 0 : PROCESS_DEBUG_INHERIT;
+
+                RESTORE_RETURNLENGTH();
             }
             else if (ProcessInformationClass == ProcessDebugObjectHandle)
             {
+                BACKUP_RETURNLENGTH();
+
                 if (HookDllData.dNtClose)
                     HookDllData.dNtClose(*(PHANDLE)ProcessInformation);
                 else
                     NtClose(*(PHANDLE)ProcessInformation);
 
-                *((HANDLE *)ProcessInformation) = 0;
+                *((HANDLE *)ProcessInformation) = nullptr;
+
+                RESTORE_RETURNLENGTH(); // Trigger any possible exceptions caused by messing with the output buffer before changing the final return status
+
                 ntStat = STATUS_PORT_NOT_SET;
             }
             else if (ProcessInformationClass == ProcessDebugPort)
             {
-                *((HANDLE *)ProcessInformation) = 0;
+                BACKUP_RETURNLENGTH();
+
+                *((HANDLE *)ProcessInformation) = nullptr;
+
+                RESTORE_RETURNLENGTH();
             }
             else if (ProcessInformationClass == ProcessBasicInformation) //Fake parent
             {
+                BACKUP_RETURNLENGTH();
+
                 ((PPROCESS_BASIC_INFORMATION)ProcessInformation)->InheritedFromUniqueProcessId = ULongToHandle(GetExplorerProcessId());
+
+                RESTORE_RETURNLENGTH();
             }
             else if (ProcessInformationClass == ProcessBreakOnTermination)
             {
+                BACKUP_RETURNLENGTH();
+
                 *((ULONG *)ProcessInformation) = ValueProcessBreakOnTermination;
+
+                RESTORE_RETURNLENGTH();
             }
 			else if (ProcessInformationClass == ProcessHandleTracing)
 			{
+                BACKUP_RETURNLENGTH();
+                RESTORE_RETURNLENGTH(); // Trigger any possible exceptions caused by messing with the output buffer before changing the final return status
+
                 ntStat = IsProcessHandleTracingEnabled ? STATUS_SUCCESS : STATUS_INVALID_PARAMETER;
 			}
-
-            if (backupReturnLength != 0)
-                *ReturnLength = backupReturnLength;
         }
 
         return ntStat;
@@ -278,25 +325,22 @@ NTSTATUS NTAPI HookedNtQueryObject(HANDLE Handle, OBJECT_INFORMATION_CLASS Objec
         ObjectInformationClass == ObjectTypeInformation) &&
         (NT_SUCCESS(ntStat) && ObjectInformation))
     {
-        ULONG backupReturnLength = 0;
-        if (ReturnLength != nullptr &&
-            (ULONG_PTR)ReturnLength >= (ULONG_PTR)ObjectInformation &&
-            (ULONG_PTR)ReturnLength <= (ULONG_PTR)ObjectInformation + ObjectInformationLength)
-        {
-            backupReturnLength = *ReturnLength;
-        }
-
         if (ObjectInformationClass == ObjectTypesInformation)
         {
+            BACKUP_RETURNLENGTH();
+
             FilterObjects((POBJECT_TYPES_INFORMATION)ObjectInformation);
+
+            RESTORE_RETURNLENGTH();
         }
         else if (ObjectInformationClass == ObjectTypeInformation)
         {
-            FilterObject((POBJECT_TYPE_INFORMATION)ObjectInformation, false);
-        }
+            BACKUP_RETURNLENGTH();
 
-        if (backupReturnLength != 0)
-            *ReturnLength = backupReturnLength;
+            FilterObject((POBJECT_TYPE_INFORMATION)ObjectInformation, false);
+
+            RESTORE_RETURNLENGTH();
+        }
     }
 
     return ntStat;
