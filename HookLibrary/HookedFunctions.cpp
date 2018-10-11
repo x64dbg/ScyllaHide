@@ -75,7 +75,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
                 FilterHandleInfo((PSYSTEM_HANDLE_INFORMATION)SystemInformation, &ReturnLengthAdjust);
 
                 if (ReturnLengthAdjust <= TempReturnLength)
-				    ReturnLength -= ReturnLengthAdjust;
+				    TempReturnLength -= ReturnLengthAdjust;
                 RESTORE_RETURNLENGTH();
             }
             else if (SystemInformationClass == SystemExtendedHandleInformation)
@@ -86,7 +86,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
                 FilterHandleInfoEx((PSYSTEM_HANDLE_INFORMATION_EX)SystemInformation, &ReturnLengthAdjust);
 
                 if (ReturnLengthAdjust <= TempReturnLength)
-                    ReturnLength -= ReturnLengthAdjust;
+                    TempReturnLength -= ReturnLengthAdjust;
                 RESTORE_RETURNLENGTH();
             }
             else if (SystemInformationClass == SystemProcessInformation ||
