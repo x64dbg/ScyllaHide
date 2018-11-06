@@ -62,6 +62,8 @@ int wmain(int argc, wchar_t* argv[])
     g_settings.Load(g_scyllaHideIniPath.c_str());
     ReadSettings();
 
+    bool waitOnExit = true;
+
     if (argc >= 3)
     {
         if(_wcsnicmp(argv[1], L"pid:", 4) == 0 && argv[1][4])
@@ -77,6 +79,9 @@ int wmain(int argc, wchar_t* argv[])
             targetPid = GetProcessIdByName(argv[1]);
 
         dllPath = argv[2];
+
+        if (argc >= 4)
+            waitOnExit = _wcsnicmp(argv[3], L"nowait", 6) != 0;
     }
     else
     {
@@ -101,7 +106,9 @@ int wmain(int argc, wchar_t* argv[])
         wprintf(L"Usage: %s pid:<process id> <dll path>", argv[0]);
     }
 
-    getchar();
+    if (waitOnExit)
+        getchar();
+
     return 0;
 }
 
