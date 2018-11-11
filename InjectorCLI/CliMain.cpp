@@ -26,12 +26,18 @@ HOOK_DLL_DATA g_hdd;
 void ChangeBadWindowText();
 void ReadSettings();
 DWORD GetProcessIdByName(const WCHAR * processName);
-void startInjection(DWORD targetPid, const WCHAR * dllPath);
+bool startInjection(DWORD targetPid, const WCHAR * dllPath);
 bool SetDebugPrivileges();
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
-void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
+bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase);
 bool convertNumber(const wchar_t* str, unsigned long & result, int radix);
+
+// Check if argument starts with text (case insensitive).
+bool ArgStartsWith(wchar_t* arg, const wchar_t* with);
+
+// Check if argument starts with text (case insensitive) and return param after the text.
+bool ArgStartsWith(wchar_t* arg, const wchar_t* text, wchar_t* &param);
 
 #define PREFIX_PATH L"C:\\Users\\Admin\\Documents\\Visual Studio 2010\\Projects\\ScyllaHide"
 
@@ -62,11 +68,14 @@ int wmain(int argc, wchar_t* argv[])
     g_settings.Load(g_scyllaHideIniPath.c_str());
     ReadSettings();
 
+    bool waitOnExit = true;
+
     if (argc >= 3)
     {
-        if(_wcsnicmp(argv[1], L"pid:", 4) == 0 && argv[1][4])
+        wchar_t* pid;
+
+        if (ArgStartsWith(argv[1], L"pid:", pid))
         {
-            auto pid = argv[1] + 4;
             auto radix = 10;
             if(wcsstr(pid, L"0x") == pid)
                 radix = 16, pid += 2;
@@ -77,6 +86,9 @@ int wmain(int argc, wchar_t* argv[])
             targetPid = GetProcessIdByName(argv[1]);
 
         dllPath = argv[2];
+
+        if (argc >= 4)
+            waitOnExit = !(ArgStartsWith(argv[3], L"nowait"));
     }
     else
     {
@@ -90,18 +102,23 @@ int wmain(int argc, wchar_t* argv[])
 #endif
     }
 
+    int result = 0;
+
     if (targetPid && dllPath)
     {
         wprintf(L"\nPID\t: %d 0x%X\nDLL Path: %s\n\n", targetPid, targetPid, dllPath);
-        startInjection(targetPid, dllPath);
+        if (!startInjection(targetPid, dllPath))
+            result = 1; // failure
     }
     else
     {
-        wprintf(L"Usage: %s <process name> <dll path>\n", argv[0]);
-        wprintf(L"Usage: %s pid:<process id> <dll path>", argv[0]);
+        wprintf(L"Usage: %s <process name> <dll path> [nowait]\n", argv[0]);
+        wprintf(L"Usage: %s pid:<process id> <dll path> [nowait]", argv[0]);
     }
 
-    getchar();
+    if (waitOnExit)
+        getchar();
+
     return 0;
 }
 
@@ -116,7 +133,7 @@ static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     return ApplyHook(&g_hdd, hProcess, dllMemory, imageBase);
 }
 
-void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
+bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 {
     LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory, true);
     if (remoteImageBase)
@@ -125,41 +142,46 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
         //DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
         DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
 
-        StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
-
-
-
-        if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &g_hdd, sizeof(HOOK_DLL_DATA), 0))
+        if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
         {
-            //DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
+            if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &g_hdd, sizeof(HOOK_DLL_DATA), 0))
+            {
+                //DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
 
 
-            //if (exitCode == HOOK_ERROR_SUCCESS)
+                //if (exitCode == HOOK_ERROR_SUCCESS)
 
-            //{
-            wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
-            //}
-            //else
-            //{
-            //	wprintf(L"Injection failed, exit code %d 0x%X Imagebase %p\n", exitCode, exitCode, remoteImageBase);
-            //}
-        }
-        else
-        {
-            wprintf(L"Failed to write hook dll data\n");
+                //{
+                wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
+                //}
+                //else
+                //{
+                //	wprintf(L"Injection failed, exit code %d 0x%X Imagebase %p\n", exitCode, exitCode, remoteImageBase);
+                //}
+
+                return true;
+            }
+            else
+            {
+                wprintf(L"Failed to write hook dll data\n");
+            }
         }
     }
+
+    return false;
 }
 
-void startInjection(DWORD targetPid, const WCHAR * dllPath)
+bool startInjection(DWORD targetPid, const WCHAR * dllPath)
 {
+    bool result = false;
+
     HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
     if (hProcess)
     {
         BYTE * dllMemory = ReadFileToMemory(dllPath);
         if (dllMemory)
         {
-            startInjectionProcess(hProcess, dllMemory);
+            result = startInjectionProcess(hProcess, dllMemory);
             free(dllMemory);
         }
         else
@@ -172,6 +194,8 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath)
     {
         wprintf(L"Cannot open process handle %d\n", targetPid);
     }
+
+    return result;
 }
 
 bool SetDebugPrivileges()
@@ -330,4 +354,23 @@ bool convertNumber(const wchar_t* str, unsigned long & result, int radix)
     if(*end)
         return false;
     return true;
+}
+
+bool ArgStartsWith(wchar_t* arg, const wchar_t* with)
+{
+    return _wcsnicmp(arg, with, wcslen(with)) == 0;
+}
+
+bool ArgStartsWith(wchar_t* arg, const wchar_t* text, wchar_t* &param)
+{
+    auto len = wcslen(text);
+
+    if (_wcsnicmp(arg, text, len) == 0 && arg[len])
+    {
+        param = arg + len;
+        return true;
+    }
+
+    param = nullptr;
+    return false;
 }
