@@ -37,7 +37,7 @@
 
 \title{ScyllaHide v1.4 - Documentation}
 \author{}
-\date{2016-10-02}
+\date{2018-11-11}
 
 \begin{document}
 
@@ -54,13 +54,13 @@
 
 \section{Description}
 
-ScyllaHide is an advanced open-source x64/x86 usermode Anti-Anti-Debug library. It hooks various functions in usermode to hide debugging. This tool is intended to stay in usermode (ring3). If you need kernelmode (ring0) Anti-Anti-Debug please see \href{https://bitbucket.org/mrexodia/titanhide}{TitanHide}. ScyllaHide hooks as stealth as possible in usermode and the goal is to not interfere any other functionality.
+ScyllaHide is an advanced open-source x64/x86 usermode Anti-Anti-Debug library. It hooks various functions in usermode to hide debugging. This tool is intended to stay in usermode (ring3). If you need kernelmode (ring0) Anti-Anti-Debug please see \href{https://github.com/mrexodia/TitanHide}{TitanHide}. ScyllaHide hooks as stealth as possible in usermode and the goal is to not interfere any other functionality.
 
 ScyllaHide supports various debuggers with plugins:
 \begin{itemize}
 \item OllyDbg v1 and v2 \url{http://www.ollydbg.de}
 \item x64dbg \url{http://x64dbg.com} or \url{https://github.com/x64dbg/x64dbg}
-\item Hex-Rays IDA v6+ \url{https://www.hex-rays.com/products/ida}
+\item Hex-Rays IDA v6 \url{https://www.hex-rays.com/products/ida}
 \item TitanEngine v2 \url{https://bitbucket.org/mrexodia/titanengine-update} and \url{http://www.reversinglabs.com/open-source/titanengine.html}
 \end{itemize}
 
@@ -73,10 +73,14 @@ Please note: ScyllaHide is not limited to these debuggers. You can use the stand
 The NtApiCollection.ini can be generated for your operating system by using the appropriate NtApiTool.exe in the release folder. Copy the generated NtApiCollection.ini to your plugin directory.
 
 \subsubsection{Standalone (debugger-independent)}
-InjectorCLI.exe "process name" "HookLibrary.dll path"
+InjectorCLI.exe "process name" "HookLibrary.dll path" [nowait]
+
+InjectorCLI.exe pid:\textit{process ID} "HookLibrary.dll path" [nowait]
 
 For example:
 InjectorCLI.exe crackme.exe \path{C:\HookLibrary.dll}
+
+The injector waits for a keystroke after injection by default. You can modify this behaviour by passing "nowait" (without quotes) as the last parameter.
 
 \subsubsection{OllyDbg v1}
 Copy scylla\_hide.ini, NtApiCollection.ini, HookLibraryx86.dll and ScyllaHideOlly1.dll to your specific plugins directory.
@@ -285,7 +289,7 @@ A typical RunPE workflow:
 Use the integrated window finder to quickly select your attach target. Drag'n'Drop the bullseye/crosshair to your target window or enter the Process ID manually in decimal or hexadecimal notation.
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.8]{newattachdialog.PNG}
+\includegraphics[scale=1]{newattachdialog.PNG}
 \caption{Improved Attach Dialog}
 \end{figure}
 
@@ -328,7 +332,7 @@ Replaces the default OllyDbg "Go to Address" dialog. Now you can enter RVA and o
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.8]{ollyadvancedctrlg.PNG}
+\includegraphics[scale=1]{ollyadvancedctrlg.PNG}
 \caption{Advanced CTRL+G}
 \end{figure}
 
@@ -382,8 +386,14 @@ Change the OllyDbg window caption. This can be useful against e.g. FindWindow an
 \subsubsection{Server Option}
 Remote debugging is fully supported. Define the TCP port for the special IDA Server application. X64 debugging requires remote debugging, because IDA (64-bit) is a 32-bit application.
 
-\subsection{x64dbg Specific}
-\subsection{TitanEngine Specific}
+% Matti: commented out because these sections were empty.
+% Uncomment these if there is x64dbg or TE-specific info to add
+%\subsection{x64dbg Specific}
+%\subsection{TitanEngine Specific}
+
+% Matti: force page break here because the section title was on a different page than the rest
+\pagebreak
+
 \section{Advanced Information}
 \subsection{Nt* APIs from user32.dll}
 
@@ -461,7 +471,24 @@ The error "NT APIs missing" appears, how to solve it?
 \item \url{https://forum.tuts4you.com/user/77269-cypher/}
 \item \url{https://forum.exetools.com/member.php?u=36610}
 \end{itemize}
+
+\textbf{mrexodia}
+\begin{itemize}
+\item \url{https://github.com/mrexodia/}
+\item \url{https://bitbucket.org/mrexodia/}
+\item \url{https://forum.tuts4you.com/profile/54652-mrexodia/}
+\end{itemize}
+
+\textbf{Mattiwatti}
+\begin{itemize}
+\item \url{https://github.com/Mattiwatti/}
+\item \url{https://bitbucket.org/Mattiwatti/}
+\item \url{https://forum.tuts4you.com/profile/93562-mattiwatti/}
+\end{itemize}
 \end{center}
+
+% Matti: force page break here because the section title was on a different page than the rest
+\pagebreak
 
 \section{Version History}
 
