@@ -26,10 +26,10 @@ HOOK_DLL_DATA g_hdd;
 void ChangeBadWindowText();
 void ReadSettings();
 DWORD GetProcessIdByName(const WCHAR * processName);
-void startInjection(DWORD targetPid, const WCHAR * dllPath);
+bool startInjection(DWORD targetPid, const WCHAR * dllPath);
 bool SetDebugPrivileges();
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath);
-void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
+bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase);
 bool convertNumber(const wchar_t* str, unsigned long & result, int radix);
 
@@ -102,10 +102,13 @@ int wmain(int argc, wchar_t* argv[])
 #endif
     }
 
+    int result = 0;
+
     if (targetPid && dllPath)
     {
         wprintf(L"\nPID\t: %d 0x%X\nDLL Path: %s\n\n", targetPid, targetPid, dllPath);
-        startInjection(targetPid, dllPath);
+        if (!startInjection(targetPid, dllPath))
+            result = 1; // failure
     }
     else
     {
@@ -130,7 +133,7 @@ static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     return ApplyHook(&g_hdd, hProcess, dllMemory, imageBase);
 }
 
-void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
+bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 {
     LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory, true);
     if (remoteImageBase)
@@ -139,41 +142,46 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
         //DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
         DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
 
-        StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase);
-
-
-
-        if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &g_hdd, sizeof(HOOK_DLL_DATA), 0))
+        if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
         {
-            //DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
+            if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &g_hdd, sizeof(HOOK_DLL_DATA), 0))
+            {
+                //DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
 
 
-            //if (exitCode == HOOK_ERROR_SUCCESS)
+                //if (exitCode == HOOK_ERROR_SUCCESS)
 
-            //{
-            wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
-            //}
-            //else
-            //{
-            //	wprintf(L"Injection failed, exit code %d 0x%X Imagebase %p\n", exitCode, exitCode, remoteImageBase);
-            //}
-        }
-        else
-        {
-            wprintf(L"Failed to write hook dll data\n");
+                //{
+                wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
+                //}
+                //else
+                //{
+                //	wprintf(L"Injection failed, exit code %d 0x%X Imagebase %p\n", exitCode, exitCode, remoteImageBase);
+                //}
+
+                return true;
+            }
+            else
+            {
+                wprintf(L"Failed to write hook dll data\n");
+            }
         }
     }
+
+    return false;
 }
 
-void startInjection(DWORD targetPid, const WCHAR * dllPath)
+bool startInjection(DWORD targetPid, const WCHAR * dllPath)
 {
+    bool result = false;
+
     HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
     if (hProcess)
     {
         BYTE * dllMemory = ReadFileToMemory(dllPath);
         if (dllMemory)
         {
-            startInjectionProcess(hProcess, dllMemory);
+            result = startInjectionProcess(hProcess, dllMemory);
             free(dllMemory);
         }
         else
@@ -186,6 +194,8 @@ void startInjection(DWORD targetPid, const WCHAR * dllPath)
     {
         wprintf(L"Cannot open process handle %d\n", targetPid);
     }
+
+    return result;
 }
 
 bool SetDebugPrivileges()
