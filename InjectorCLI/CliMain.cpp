@@ -109,8 +109,8 @@ int wmain(int argc, wchar_t* argv[])
     }
     else
     {
-        wprintf(L"Usage: %s <process name> <dll path>\n", argv[0]);
-        wprintf(L"Usage: %s pid:<process id> <dll path>", argv[0]);
+        wprintf(L"Usage: %s <process name> <dll path> [nowait]\n", argv[0]);
+        wprintf(L"Usage: %s pid:<process id> <dll path> [nowait]", argv[0]);
     }
 
     if (waitOnExit)
