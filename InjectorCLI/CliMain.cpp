@@ -33,6 +33,12 @@ void startInjectionProcess(HANDLE hProcess, BYTE * dllMemory);
 bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase);
 bool convertNumber(const wchar_t* str, unsigned long & result, int radix);
 
+// Check if argument starts with text (case insensitive).
+bool ArgStartsWith(wchar_t* arg, const wchar_t* with);
+
+// Check if argument starts with text (case insensitive) and return param after the text.
+bool ArgStartsWith(wchar_t* arg, const wchar_t* text, wchar_t* &param);
+
 #define PREFIX_PATH L"C:\\Users\\Admin\\Documents\\Visual Studio 2010\\Projects\\ScyllaHide"
 
 static void LogCallback(const wchar_t *msg)
@@ -66,9 +72,10 @@ int wmain(int argc, wchar_t* argv[])
 
     if (argc >= 3)
     {
-        if(_wcsnicmp(argv[1], L"pid:", 4) == 0 && argv[1][4])
+        wchar_t* pid;
+
+        if (ArgStartsWith(argv[1], L"pid:", pid))
         {
-            auto pid = argv[1] + 4;
             auto radix = 10;
             if(wcsstr(pid, L"0x") == pid)
                 radix = 16, pid += 2;
@@ -81,7 +88,7 @@ int wmain(int argc, wchar_t* argv[])
         dllPath = argv[2];
 
         if (argc >= 4)
-            waitOnExit = _wcsnicmp(argv[3], L"nowait", 6) != 0;
+            waitOnExit = !(ArgStartsWith(argv[3], L"nowait"));
     }
     else
     {
@@ -337,4 +344,23 @@ bool convertNumber(const wchar_t* str, unsigned long & result, int radix)
     if(*end)
         return false;
     return true;
+}
+
+bool ArgStartsWith(wchar_t* arg, const wchar_t* with)
+{
+    return _wcsnicmp(arg, with, wcslen(with)) == 0;
+}
+
+bool ArgStartsWith(wchar_t* arg, const wchar_t* text, wchar_t* &param)
+{
+    auto len = wcslen(text);
+
+    if (_wcsnicmp(arg, text, len) == 0 && arg[len])
+    {
+        param = arg + len;
+        return true;
+    }
+
+    param = nullptr;
+    return false;
 }
