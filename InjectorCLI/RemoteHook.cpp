@@ -15,7 +15,7 @@ _DecodeType DecodingType = Decode64Bits;
 #ifdef _WIN64
 const int minDetourLen = 2 + sizeof(DWORD)+sizeof(DWORD_PTR) + 1; //8+4+2+1=15
 #else
-const int minDetourLen = sizeof(DWORD) + 1 + 1;
+const int minDetourLen = sizeof(DWORD) + 1;
 #endif
 
 
@@ -45,20 +45,22 @@ void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo)
 
 void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo, unsigned char * buf, bool prefixNop)
 {
+#ifdef _WIN64
+    UNREFERENCED_PARAMETER(lpbFrom);
+
     ULONG i = 0;
     if (prefixNop)
         buf[i++] = 0x90;
-
-#ifdef _WIN64
-    UNREFERENCED_PARAMETER(lpbFrom);
 
     buf[i] = 0xFF;
     buf[i + 1] = 0x25;
     *(DWORD*)&buf[i + 2] = 0;
     *(DWORD_PTR*)&buf[i + 6] = (DWORD_PTR)lpbTo;
 #else
-    buf[i] = 0xE9;
-    *(DWORD*)&buf[i + 1] = (DWORD)((DWORD)lpbTo - (DWORD)lpbFrom - (i + 5));
+    UNREFERENCED_PARAMETER(prefixNop);
+
+    buf[0] = 0xE9;
+    *(DWORD*)&buf[1] = (DWORD)((DWORD)lpbTo - (DWORD)lpbFrom - 5);
 #endif
 
 }
@@ -407,7 +409,7 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
         if (VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, PAGE_EXECUTE_READWRITE, &protect))
         {
             ZeroMemory(tempSpace, sizeof(tempSpace));
-            WriteJumper((PBYTE)sysWowSpecialJmpAddress, (PBYTE)HookedNativeCallInternal, tempSpace, true);
+            WriteJumper((PBYTE)sysWowSpecialJmpAddress, (PBYTE)HookedNativeCallInternal, tempSpace, false);
             if (!WriteProcessMemory(hProcess, (void *)sysWowSpecialJmpAddress, tempSpace, minDetourLen, 0))
             {
                 MessageBoxA(0, "Failed to write new WOW64 gateway", "Error", MB_ICONERROR);
@@ -488,7 +490,7 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void
 
         if (VirtualProtectEx(hProcess, (void *)patchAddr, 5 + 2, PAGE_EXECUTE_READWRITE, &protect))
         {
-            WriteJumper((PBYTE)patchAddr, (PBYTE)HookedNativeCallInternal, KiSystemCallJmpPatch, true);
+            WriteJumper((PBYTE)patchAddr, (PBYTE)HookedNativeCallInternal, KiSystemCallJmpPatch, false);
             WriteProcessMemory(hProcess, (void *)patchAddr, KiSystemCallJmpPatch, 5 + 2, 0);
 
             VirtualProtectEx(hProcess, (void *)patchAddr, 5 + 2, protect, &protect);
@@ -582,7 +584,7 @@ void * DetourCreateRemote(void * hProcess, void * lpFuncOrig, void * lpFuncDetou
     if (VirtualProtectEx(hProcess, lpFuncOrig, detourLen, PAGE_EXECUTE_READWRITE, &protect))
     {
         ZeroMemory(tempSpace, sizeof(tempSpace));
-        WriteJumper((PBYTE)lpFuncOrig, (PBYTE)lpFuncDetour, tempSpace, true);
+        WriteJumper((PBYTE)lpFuncOrig, (PBYTE)lpFuncDetour, tempSpace, scl::IsWindows64() && !scl::IsWow64Process(NtCurrentProcess));
         WriteProcessMemory(hProcess, lpFuncOrig, tempSpace, minDetourLen, 0);
 
         VirtualProtectEx(hProcess, lpFuncOrig, detourLen, protect, &protect);
