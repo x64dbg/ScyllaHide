@@ -4071,6 +4071,19 @@ NTSTATUS
 typedef
 NTSTATUS
 (NTAPI
+*t_NtDuplicateObject)(
+	_In_ HANDLE SourceProcessHandle,
+	_In_ HANDLE SourceHandle,
+	_In_opt_ HANDLE TargetProcessHandle,
+	_Out_opt_ PHANDLE TargetHandle,
+	_In_ ACCESS_MASK DesiredAccess,
+	_In_ ULONG HandleAttributes,
+	_In_ ULONG Options
+	);
+
+typedef
+NTSTATUS
+(NTAPI
 *t_NtContinue)(
 	_In_ PCONTEXT ContextRecord,
 	_In_ BOOLEAN TestAlert

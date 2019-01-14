@@ -12,6 +12,7 @@ HookedNtClose
 HookedNtContinue
 HookedNtCreateThread
 HookedNtCreateThreadEx
+HookedNtDuplicateObject
 HookedNtGetContextThread
 HookedNtQueryInformationProcess
 HookedNtQueryObject

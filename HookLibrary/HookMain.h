@@ -106,6 +106,8 @@ typedef struct _HOOK_DLL_DATA {
     DWORD NtContinueBackupSize;
     t_NtClose dNtClose;
     DWORD NtCloseBackupSize;
+    t_NtDuplicateObject dNtDuplicateObject;
+    DWORD NtDuplicateObjectBackupSize;
 
     t_NtCreateThreadEx dNtCreateThreadEx; //only since vista
     DWORD NtCreateThreadExBackupSize;

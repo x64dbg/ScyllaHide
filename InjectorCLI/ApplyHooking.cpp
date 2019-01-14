@@ -58,6 +58,7 @@ t_NtGetContextThread _NtGetContextThread = 0;
 t_NtSetContextThread _NtSetContextThread = 0;
 t_NtContinue _NtContinue = 0;
 t_NtClose _NtClose = 0;
+t_NtDuplicateObject _NtDuplicateObject = 0;
 t_NtSetDebugFilterState _NtSetDebugFilterState = 0;
 t_NtCreateThread _NtCreateThread = 0;
 t_NtCreateThreadEx _NtCreateThreadEx = 0;
@@ -88,6 +89,7 @@ void ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
     void * HookedNtContinue = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtContinue") + imageBase);
 #endif
     void * HookedNtClose = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtClose") + imageBase);
+    void * HookedNtDuplicateObject = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtDuplicateObject") + imageBase);
     void * HookedNtSetDebugFilterState = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetDebugFilterState") + imageBase);
     void * HookedNtCreateThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtCreateThread") + imageBase);
     void * HookedNtCreateThreadEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtCreateThreadEx") + imageBase);
@@ -108,6 +110,7 @@ void ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
     _KiUserExceptionDispatcher = (t_KiUserExceptionDispatcher)GetProcAddress(hNtdll, "KiUserExceptionDispatcher");
     _NtContinue = (t_NtContinue)GetProcAddress(hNtdll, "NtContinue");
     _NtClose = (t_NtClose)GetProcAddress(hNtdll, "NtClose");
+    _NtDuplicateObject = (t_NtDuplicateObject)GetProcAddress(hNtdll, "NtDuplicateObject");
     _NtSetDebugFilterState = (t_NtSetDebugFilterState)GetProcAddress(hNtdll, "NtSetDebugFilterState");
     _NtCreateThread = (t_NtCreateThread)GetProcAddress(hNtdll, "NtCreateThread");
     _NtCreateThreadEx = (t_NtCreateThreadEx)GetProcAddress(hNtdll, "NtCreateThreadEx");
@@ -127,8 +130,9 @@ void ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
         _NtSetContextThread,
         _KiUserExceptionDispatcher,
         _NtContinue);
-    g_log.LogDebug(L"ApplyNtdllHook -> _NtClose %p _NtSetDebugFilterState %p _NtCreateThread %p _NtCreateThreadEx %p _NtQuerySystemTime %p _NtQueryPerformanceCounter %p _NtResumeThread %p",
+    g_log.LogDebug(L"ApplyNtdllHook -> _NtClose %p _NtDuplicateObject %p _NtSetDebugFilterState %p _NtCreateThread %p _NtCreateThreadEx %p _NtQuerySystemTime %p _NtQueryPerformanceCounter %p _NtResumeThread %p",
         _NtClose,
+        _NtDuplicateObject,
         _NtSetDebugFilterState,
         _NtCreateThread,
         _NtCreateThreadEx,
@@ -182,6 +186,8 @@ void ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
     {
         g_log.LogDebug(L"ApplyNtdllHook -> Hooking NtClose");
         HOOK_NATIVE(NtClose);
+        g_log.LogDebug(L"ApplyNtdllHook -> Hooking NtDuplicateObject");
+        HOOK_NATIVE(NtDuplicateObject);
     }
     if (hdd->EnablePreventThreadCreation == TRUE)
     {
@@ -529,6 +535,7 @@ void RestoreNtdllHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
     }
 #else
     RESTORE_JMP(NtClose);
+    RESTORE_JMP(NtDuplicateObject);
     RESTORE_JMP(NtContinue);
     RESTORE_JMP(NtCreateThreadEx);
     RESTORE_JMP(NtCreateThread);
@@ -543,6 +550,7 @@ void RestoreNtdllHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 #endif
 
     FREE_HOOK(NtClose);
+    FREE_HOOK(NtDuplicateObject);
     FREE_HOOK(NtContinue);
     FREE_HOOK(NtCreateThreadEx);
     FREE_HOOK(NtCreateThread);

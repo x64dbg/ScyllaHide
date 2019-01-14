@@ -524,9 +524,13 @@ void NAKED NTAPI HookedNativeCallInternal()
 NTSTATUS NTAPI HookedNtClose(HANDLE Handle)
 {
     OBJECT_HANDLE_FLAG_INFORMATION flags;
-    flags.ProtectFromClose = 0;
-    flags.Inherit = 0;
-    if (NtQueryObject(Handle, ObjectHandleFlagInformation, &flags, sizeof(OBJECT_HANDLE_FLAG_INFORMATION), 0) >= 0)
+    NTSTATUS Status;
+    if (HookDllData.dNtQueryObject != nullptr)
+        Status = HookDllData.dNtQueryObject(Handle, ObjectHandleFlagInformation, &flags, sizeof(OBJECT_HANDLE_FLAG_INFORMATION), nullptr);
+    else
+        Status = NtQueryObject(Handle, ObjectHandleFlagInformation, &flags, sizeof(OBJECT_HANDLE_FLAG_INFORMATION), nullptr);
+
+    if (NT_SUCCESS(Status))
     {
         if (flags.ProtectFromClose)
         {
@@ -535,10 +539,32 @@ NTSTATUS NTAPI HookedNtClose(HANDLE Handle)
 
         return HookDllData.dNtClose(Handle);
     }
-    else
-    {
-        return STATUS_INVALID_HANDLE;
-    }
+
+    return STATUS_INVALID_HANDLE;
+}
+
+NTSTATUS NTAPI HookedNtDuplicateObject(HANDLE SourceProcessHandle, HANDLE SourceHandle, HANDLE TargetProcessHandle, PHANDLE TargetHandle, ACCESS_MASK DesiredAccess, ULONG HandleAttributes, ULONG Options)
+{
+	if (Options & DUPLICATE_CLOSE_SOURCE)
+	{
+		// If a process is being debugged and duplicates a handle with DUPLICATE_CLOSE_SOURCE, *and* the handle has the ProtectFromClose bit set, a STATUS_HANDLE_NOT_CLOSABLE exception will occur.
+		// This is actually the exact same exception we already check for in NtClose, but the difference is that this NtClose call happens inside the kernel which we obviously can't hook.
+		// When a process is not being debugged, NtDuplicateObject will simply return success without closing the source. This is because ObDuplicateObject ignores NtClose return values
+		OBJECT_HANDLE_FLAG_INFORMATION HandleFlags;
+		NTSTATUS Status;
+		if (HookDllData.dNtQueryObject != nullptr)
+			Status = HookDllData.dNtQueryObject(SourceHandle, ObjectHandleFlagInformation, &HandleFlags, sizeof(HandleFlags), nullptr);
+		else
+			Status = NtQueryObject(SourceHandle, ObjectHandleFlagInformation, &HandleFlags, sizeof(HandleFlags), nullptr);
+
+		if (NT_SUCCESS(Status) && HandleFlags.ProtectFromClose)
+		{
+			// Prevent the exception
+			Options &= ~DUPLICATE_CLOSE_SOURCE;
+		}
+	}
+
+	return HookDllData.dNtDuplicateObject(SourceProcessHandle, SourceHandle, TargetProcessHandle, TargetHandle, DesiredAccess, HandleAttributes, Options);
 }
 
 //////////////////////////////////////////////////////////////
