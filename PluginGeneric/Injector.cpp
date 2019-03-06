@@ -230,13 +230,44 @@ void startInjection(DWORD targetPid, HOOK_DLL_DATA *hdd, const WCHAR * dllPath, 
     }
 }
 
-void DoThreadMagic(HANDLE hThread)
+NTSTATUS CreateAndWaitForThread(HANDLE hProcess, LPTHREAD_START_ROUTINE threadStart, PVOID parameter, PHANDLE threadHandle)
 {
-    SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
-    NtSetInformationThread(hThread, ThreadHideFromDebugger, 0, 0);
-    ResumeThread(hThread);
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    const t_NtCreateThreadEx fpNtCreateThreadEx = (t_NtCreateThreadEx)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtCreateThreadEx");
+    if (fpNtCreateThreadEx == nullptr)
+    {
+        // We are on XP/2003 - use CreateRemoteThread
+        *threadHandle = CreateRemoteThread(hProcess, nullptr, 0, threadStart, parameter, CREATE_SUSPENDED, nullptr);
+        if (*threadHandle != nullptr)
+        {
+            NtSetInformationThread(*threadHandle, ThreadHideFromDebugger, 0, 0);
+            status = STATUS_SUCCESS;
+        }
+    }
+    else
+    {
+        // Create sneaky thread
+        status = fpNtCreateThreadEx(threadHandle,
+                                    THREAD_ALL_ACCESS,
+                                    nullptr,
+                                    hProcess,
+                                    (PUSER_THREAD_START_ROUTINE)threadStart,
+                                    parameter,
+                                    THREAD_CREATE_FLAGS_CREATE_SUSPENDED | THREAD_CREATE_FLAGS_SUPPRESS_DLLMAINS | THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER,
+                                    0,
+                                    0,
+                                    0,
+                                    nullptr);
+    }
 
-    WaitForSingleObject(hThread, INFINITE);
+    if (NT_SUCCESS(status))
+    {
+        // Wait for thread to exit
+        SetThreadPriority(*threadHandle, THREAD_PRIORITY_TIME_CRITICAL);
+        ResumeThread(*threadHandle);
+        WaitForSingleObject(*threadHandle, INFINITE);
+    }
+    return status;
 }
 
 LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
@@ -254,11 +285,10 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
 
     if (WriteProcessMemory(hProcess, remoteMemory, dllPath, memorySize, 0))
     {
-        HANDLE hThread = CreateRemoteThread(hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)LoadLibraryW, remoteMemory, CREATE_SUSPENDED, 0);
-        if (hThread)
+        HANDLE hThread;
+        NTSTATUS status = CreateAndWaitForThread(hProcess, (LPTHREAD_START_ROUTINE)LoadLibraryW, remoteMemory, &hThread);
+        if (NT_SUCCESS(status))
         {
-            DoThreadMagic(hThread);
-
             GetExitCodeThread(hThread, (LPDWORD)&hModule);
 
             if (!hModule)
@@ -270,7 +300,7 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
         }
         else
         {
-            g_log.LogInfo(L"DLL INJECTION: Failed to start thread %d!", GetLastError());
+            g_log.LogInfo(L"DLL INJECTION: Failed to start thread: 0x%08X!", status);
         }
     }
     else
@@ -279,8 +309,6 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
     }
 
     VirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
-
-
 
     return hModule;
 }
@@ -310,16 +338,15 @@ LPVOID StealthDllInjection(HANDLE hProcess, const WCHAR * dllPath, BYTE * dllMem
 
                 g_log.LogInfo(L"DLL INJECTION: Starting thread at RVA %p VA %p!", entryPoint, dllMain);
 
-                HANDLE hThread = CreateRemoteThread(hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)dllMain, remoteImageBaseOfInjectedDll, CREATE_SUSPENDED, 0);
-                if (hThread)
+                HANDLE hThread;
+                NTSTATUS status = CreateAndWaitForThread(hProcess, (LPTHREAD_START_ROUTINE)dllMain, remoteImageBaseOfInjectedDll, &hThread);
+                if (NT_SUCCESS(status))
                 {
-                    DoThreadMagic(hThread);
-
                     CloseHandle(hThread);
                 }
                 else
                 {
-                    g_log.LogInfo(L"DLL INJECTION: Failed to start thread %d!", GetLastError());
+                    g_log.LogInfo(L"DLL INJECTION: Failed to start thread: 0x%08X!", status);
                 }
             }
         }
@@ -370,16 +397,16 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
 
                 if (g_settings.opts().dllNormal)
                 {
-                    HANDLE hThread = CreateRemoteThread(hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)FreeLibrary, remoteImage, CREATE_SUSPENDED, 0);
-                    if (hThread)
+                    HANDLE hThread;
+                    NTSTATUS status = CreateAndWaitForThread(hProcess, (LPTHREAD_START_ROUTINE)FreeLibrary, remoteImage, &hThread);
+                    if (NT_SUCCESS(status))
                     {
-                        DoThreadMagic(hThread);
                         CloseHandle(hThread);
                         g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
                     }
                     else
                     {
-                        g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p FAILED", remoteImage);
+                        g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p FAILED: 0x%08X", remoteImage, status);
                     }
                 }
                 else if (g_settings.opts().dllStealth)
