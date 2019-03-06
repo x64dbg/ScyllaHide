@@ -556,46 +556,33 @@ PATCH_FUNC patchFunctions[] = {
 
 bool ApplyAntiAntiAttach(DWORD targetPid)
 {
-    bool resu = false;
-
-    WCHAR modName[MAX_PATH] = { 0 };
+    bool result = false;
     HANDLE hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
 
     if (!hProcess)
-        return resu;
+        return result;
 
     HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
 
-    for (int i = 0; i < _countof(patchFunctions); i++)
+    for (ULONG i = 0; i < _countof(patchFunctions); i++)
     {
-        patchFunctions[i].funcAddr = GetProcAddress(hMod, patchFunctions[i].funcName);
+        patchFunctions[i].funcAddr = (PVOID)GetProcAddress(hMod, patchFunctions[i].funcName);
     }
 
-    //has remote ntdll same image base? if not -> crap
-    if (GetModuleBaseNameW(hProcess, hMod, modName, _countof(modName)))
+    for (ULONG i = 0; i < _countof(patchFunctions); i++)
     {
-        if (wcsstr(modName, L"ntdll") || wcsstr(modName, L"NTDLL"))
+        if (WriteProcessMemory(hProcess, patchFunctions[i].funcAddr, patchFunctions[i].funcAddr, patchFunctions[i].funcSize, 0))
         {
-            for (int i = 0; i < _countof(patchFunctions); i++)
-            {
-                if (WriteProcessMemory(hProcess, patchFunctions[i].funcAddr, patchFunctions[i].funcAddr, patchFunctions[i].funcSize, 0))
-                {
-                    resu = true;
-                }
-                else
-                {
-                    resu = false;
-                    break;
-                }
-            }
+            result = true;
         }
         else
         {
-            MessageBoxA(0, "Remote NTDLL does not have the same image base, please contact ScyllaHide developers!", "Error", MB_ICONERROR);
+            result = false;
+            break;
         }
     }
 
     CloseHandle(hProcess);
 
-    return resu;
+    return result;
 }
