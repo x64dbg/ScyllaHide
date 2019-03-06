@@ -220,6 +220,7 @@ void startInjection(DWORD targetPid, HOOK_DLL_DATA *hdd, const WCHAR * dllPath, 
         else
         {
             g_log.LogError(L"Cannot find %s", dllPath);
+            MessageBoxW(nullptr, L"Failed to load ScyllaHide hook library DLL! Make sure it is installed correctly and has not been deleted by an anti-virus.", L"Error", MB_ICONERROR);
         }
         CloseHandle(hProcess);
     }
