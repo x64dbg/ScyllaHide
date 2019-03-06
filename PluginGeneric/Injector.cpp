@@ -571,8 +571,11 @@ bool ApplyAntiAntiAttach(DWORD targetPid)
 
     for (ULONG i = 0; i < _countof(patchFunctions); i++)
     {
-        if (WriteProcessMemory(hProcess, patchFunctions[i].funcAddr, patchFunctions[i].funcAddr, patchFunctions[i].funcSize, 0))
+        ULONG oldProtection;
+        if (VirtualProtectEx(hProcess, patchFunctions[i].funcAddr, patchFunctions[i].funcSize, PAGE_EXECUTE_READWRITE, &oldProtection) &&
+            WriteProcessMemory(hProcess, patchFunctions[i].funcAddr, patchFunctions[i].funcAddr, patchFunctions[i].funcSize, nullptr))
         {
+            VirtualProtectEx(hProcess, patchFunctions[i].funcAddr, patchFunctions[i].funcSize, oldProtection, &oldProtection);
             result = true;
         }
         else
