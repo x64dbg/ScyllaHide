@@ -61,7 +61,7 @@ void scl::Settings::LoadProfile(const wchar_t *file, const wchar_t *name, Profil
 {
     profile->dllNormal = IniLoadNum(file, name, L"DLLNormal", 1);
     profile->dllStealth = IniLoadNum(file, name, L"DLLStealth", 0);
-    profile->dllUnload = IniLoadNum(file, name, L"DLLUnload", 1);
+    profile->dllUnload = IniLoadNum(file, name, L"DLLUnload", 0);
 
     profile->hookBlockInput = IniLoadNum(file, name, L"BlockInputHook", 1);
     profile->hookGetLocalTime = IniLoadNum(file, name, L"GetLocalTimeHook", 1);
