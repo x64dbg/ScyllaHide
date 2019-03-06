@@ -65,6 +65,9 @@
     <ClInclude Include="..\PluginGeneric\OllyExceptionHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="olly2patches.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScyllaHideOlly2Plugin.rc">
