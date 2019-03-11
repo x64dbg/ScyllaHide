@@ -135,6 +135,11 @@ static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 
 bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 {
+    if (g_settings.opts().removeDebugPrivileges)
+    {
+        RemoveDebugPrivileges(hProcess);
+    }
+
     LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory, true);
     if (remoteImageBase)
     {
