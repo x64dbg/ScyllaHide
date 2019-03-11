@@ -139,26 +139,13 @@ bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
     if (remoteImageBase)
     {
         FillHookDllData(hProcess, &g_hdd);
-        //DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
         DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
 
         if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
         {
             if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &g_hdd, sizeof(HOOK_DLL_DATA), 0))
             {
-                //DWORD exitCode = StartDllInitFunction(hProcess, ((DWORD_PTR)initDllFuncAddressRva + (DWORD_PTR)remoteImageBase), remoteImageBase);
-
-
-                //if (exitCode == HOOK_ERROR_SUCCESS)
-
-                //{
                 wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
-                //}
-                //else
-                //{
-                //	wprintf(L"Injection failed, exit code %d 0x%X Imagebase %p\n", exitCode, exitCode, remoteImageBase);
-                //}
-
                 return true;
             }
             else

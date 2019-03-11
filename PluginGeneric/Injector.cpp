@@ -162,7 +162,6 @@ bool StartHooking(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, DWORD_P
 
 void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, bool newProcess)
 {
-    DWORD initDllFuncAddressRva = GetDllFunctionAddressRVA(dllMemory, "InitDll");
     DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
 
     if (newProcess == false)
@@ -186,7 +185,6 @@ void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory
         if (remoteImageBase)
         {
             FillHookDllData(hProcess, hdd);
-
 
             StartHooking(hProcess, hdd, dllMemory, (DWORD_PTR)remoteImageBase);
 
