@@ -174,6 +174,13 @@ bool startInjection(DWORD targetPid, const WCHAR * dllPath)
         if (dllMemory)
         {
             result = startInjectionProcess(hProcess, dllMemory);
+            if (g_settings.opts().killAntiAttach)
+            {
+                if (!ApplyAntiAntiAttach(targetPid))
+                {
+                    wprintf(L"Anti-Anti-Attach failed\n");
+                }
+            }
             free(dllMemory);
         }
         else
