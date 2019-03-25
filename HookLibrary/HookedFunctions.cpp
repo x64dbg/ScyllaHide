@@ -355,6 +355,7 @@ NTSTATUS NTAPI HookedNtYieldExecution()
 NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadContext)
 {
     DWORD ContextBackup = 0;
+    BOOLEAN DebugRegistersRequested = FALSE;
     if (ThreadHandle == NtCurrentThread ||
 		HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByThreadHandle(ThreadHandle)) //thread inside this process?
     {
@@ -362,6 +363,7 @@ NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
         {
             ContextBackup = ThreadContext->ContextFlags;
             ThreadContext->ContextFlags &= ~CONTEXT_DEBUG_REGISTERS;
+            DebugRegistersRequested = ThreadContext->ContextFlags != ContextBackup;
         }
     }
 
@@ -370,6 +372,21 @@ NTSTATUS NTAPI HookedNtGetContextThread(HANDLE ThreadHandle, PCONTEXT ThreadCont
     if (ContextBackup)
     {
         ThreadContext->ContextFlags = ContextBackup;
+        if (DebugRegistersRequested)
+        {
+            ThreadContext->Dr0 = 0;
+            ThreadContext->Dr1 = 0;
+            ThreadContext->Dr2 = 0;
+            ThreadContext->Dr3 = 0;
+            ThreadContext->Dr6 = 0;
+            ThreadContext->Dr7 = 0;
+#ifdef _WIN64
+            ThreadContext->LastBranchToRip = 0;
+            ThreadContext->LastBranchFromRip = 0;
+            ThreadContext->LastExceptionToRip = 0;
+            ThreadContext->LastExceptionFromRip = 0;
+#endif
+        }
     }
     return ntStat;
 }
