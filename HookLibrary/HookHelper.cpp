@@ -199,7 +199,6 @@ bool HasDebugPrivileges(HANDLE hProcess)
 	if (!NT_SUCCESS(status))
 		return false;
 
-	const LONG SE_DEBUG_PRIVILEGE = 20;
 	const LUID SeDebugPrivilege = ConvertLongToLuid(SE_DEBUG_PRIVILEGE);
 
 	PRIVILEGE_SET privilegeSet;
