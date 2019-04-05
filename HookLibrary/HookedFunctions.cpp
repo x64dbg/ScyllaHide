@@ -154,8 +154,102 @@ static bool IsProcessHandleTracingEnabled = false;
 #define STATUS_INVALID_PARAMETER         ((DWORD   )0xC000000DL)
 #endif
 
+#ifdef _WIN64
+
+// Instrumentation callback
+
+extern "C" void InstrumentationCallbackAsm();
+
+static LONG volatile InstrumentationCallbackHookInstalled = 0;
+static LONG volatile RecurseGuard = 0;
+
+static
+NTSTATUS
+InstallInstrumentationCallbackHook(
+    _In_ HANDLE ProcessHandle,
+    _In_ BOOLEAN Remove
+    )
+{
+    PVOID pInstrumentationCallbackAsm = (PVOID)InstrumentationCallbackAsm;
+    NTSTATUS Status = STATUS_NOT_SUPPORTED;
+
+    if (RtlNtMajorVersion() > 6)
+    {
+        // Windows 10
+        PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION InstrumentationCallbackInfo;
+        InstrumentationCallbackInfo.Version = 0; // Use 1 on x86 OS
+        InstrumentationCallbackInfo.Reserved = 0;
+        InstrumentationCallbackInfo.Callback = Remove ? nullptr : pInstrumentationCallbackAsm;
+
+        Status = HookDllData.dNtSetInformationProcess != nullptr
+            ? HookDllData.dNtSetInformationProcess(ProcessHandle,
+                                    ProcessInstrumentationCallback,
+                                    &InstrumentationCallbackInfo,
+                                    sizeof(InstrumentationCallbackInfo))
+            : NtSetInformationProcess(ProcessHandle,
+                                    ProcessInstrumentationCallback,
+                                    &InstrumentationCallbackInfo,
+                                    sizeof(InstrumentationCallbackInfo));
+    }
+    else if (RtlNtMajorVersion() == 6 && RtlNtMinorVersion() >= 1)
+    {
+        // Windows 7-8.1 require SE_DEBUG for this to work, even on the current process
+        BOOLEAN SeDebugWasEnabled;
+        Status = RtlAdjustPrivilege(SE_DEBUG_PRIVILEGE, TRUE, FALSE, &SeDebugWasEnabled);
+        if (!NT_SUCCESS(Status))
+            return Status;
+        
+        Status = HookDllData.dNtSetInformationProcess != nullptr
+            ? HookDllData.dNtSetInformationProcess(ProcessHandle,
+                                                    ProcessInstrumentationCallback,
+                                                    Remove ? nullptr : &pInstrumentationCallbackAsm,
+                                                    sizeof(pInstrumentationCallbackAsm))
+            : NtSetInformationProcess(ProcessHandle,
+                                    ProcessInstrumentationCallback,
+                                    Remove ? nullptr : &pInstrumentationCallbackAsm,
+                                    sizeof(pInstrumentationCallbackAsm));
+
+        RtlAdjustPrivilege(SE_DEBUG_PRIVILEGE, SeDebugWasEnabled, FALSE, &SeDebugWasEnabled);
+    }
+
+    return Status;
+}
+
+extern "C"
+ULONG64
+InstrumentationCallback(
+    _In_ ULONG64 R10,
+    _Inout_ ULONG64 RAX
+    )
+{
+    if (InterlockedOr(&RecurseGuard, 0x1) == 0x1)
+        return RAX;
+
+    const PVOID ImageBase = NtCurrentPeb()->ImageBaseAddress;
+    const PIMAGE_NT_HEADERS NtHeaders = RtlImageNtHeader(ImageBase);
+    if (NtHeaders != nullptr && R10 >= (ULONG64)ImageBase &&
+        R10 < (ULONG64)ImageBase + NtHeaders->OptionalHeader.SizeOfImage)
+    {
+        // Syscall return address within the exe file
+        RAX = STATUS_PORT_NOT_SET;
+    }
+
+    InterlockedAnd(&RecurseGuard, 0);
+
+    return RAX;
+}
+
+#endif // _WIN64
+
 NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength)
 {
+#ifdef _WIN64
+    if (InterlockedOr(&InstrumentationCallbackHookInstalled, 0x1) == 0)
+    {
+        InstallInstrumentationCallbackHook(NtCurrentProcess, FALSE);
+    }
+#endif
+
     if ((ProcessInformationClass == ProcessDebugFlags ||
         ProcessInformationClass == ProcessDebugObjectHandle ||
         ProcessInformationClass == ProcessDebugPort ||

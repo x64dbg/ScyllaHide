@@ -7,6 +7,11 @@ FORCEINLINE ULONG NTAPI RtlNtMajorVersion()
 	return *(PULONG)(0x7FFE0000 + 0x26C);
 }
 
+FORCEINLINE ULONG NTAPI RtlNtMinorVersion()
+{
+	return *(PULONG)(0x7FFE0000 + 0x270);
+}
+
 FORCEINLINE ULONG NTAPI RtlGetTickCount()
 {
 	return (ULONG)(*(PULONG64)(0x7FFE0000 + 0x320) * *(PULONG)(0x7FFE0000 + 0x4) >> 24);
