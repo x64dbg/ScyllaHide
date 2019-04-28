@@ -229,7 +229,7 @@ void startInjection(DWORD targetPid, HOOK_DLL_DATA *hdd, const WCHAR * dllPath, 
     }
 }
 
-NTSTATUS CreateAndWaitForThread(HANDLE hProcess, LPTHREAD_START_ROUTINE threadStart, PVOID parameter, PHANDLE threadHandle)
+NTSTATUS CreateAndWaitForThread(HANDLE hProcess, LPTHREAD_START_ROUTINE threadStart, PVOID parameter, PHANDLE threadHandle, BOOLEAN suppressDllMains)
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     const t_NtCreateThreadEx fpNtCreateThreadEx = (t_NtCreateThreadEx)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtCreateThreadEx");
@@ -252,7 +252,7 @@ NTSTATUS CreateAndWaitForThread(HANDLE hProcess, LPTHREAD_START_ROUTINE threadSt
                                     hProcess,
                                     (PUSER_THREAD_START_ROUTINE)threadStart,
                                     parameter,
-                                    THREAD_CREATE_FLAGS_CREATE_SUSPENDED | THREAD_CREATE_FLAGS_SUPPRESS_DLLMAINS | THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER,
+                                    THREAD_CREATE_FLAGS_CREATE_SUSPENDED | THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER | (suppressDllMains ? THREAD_CREATE_FLAGS_SUPPRESS_DLLMAINS : 0),
                                     0,
                                     0,
                                     0,
@@ -285,7 +285,7 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
     if (WriteProcessMemory(hProcess, remoteMemory, dllPath, memorySize, 0))
     {
         HANDLE hThread;
-        NTSTATUS status = CreateAndWaitForThread(hProcess, (LPTHREAD_START_ROUTINE)LoadLibraryW, remoteMemory, &hThread);
+        NTSTATUS status = CreateAndWaitForThread(hProcess, (LPTHREAD_START_ROUTINE)LoadLibraryW, remoteMemory, &hThread, FALSE);
         if (NT_SUCCESS(status))
         {
             GetExitCodeThread(hThread, (LPDWORD)&hModule);
@@ -338,7 +338,7 @@ LPVOID StealthDllInjection(HANDLE hProcess, const WCHAR * dllPath, BYTE * dllMem
                 g_log.LogInfo(L"DLL INJECTION: Starting thread at RVA %p VA %p!", entryPoint, dllMain);
 
                 HANDLE hThread;
-                NTSTATUS status = CreateAndWaitForThread(hProcess, (LPTHREAD_START_ROUTINE)dllMain, remoteImageBaseOfInjectedDll, &hThread);
+                NTSTATUS status = CreateAndWaitForThread(hProcess, (LPTHREAD_START_ROUTINE)dllMain, remoteImageBaseOfInjectedDll, &hThread, TRUE);
                 if (NT_SUCCESS(status))
                 {
                     CloseHandle(hThread);
@@ -397,7 +397,7 @@ void injectDll(DWORD targetPid, const WCHAR * dllPath)
                 if (g_settings.opts().dllNormal)
                 {
                     HANDLE hThread;
-                    NTSTATUS status = CreateAndWaitForThread(hProcess, (LPTHREAD_START_ROUTINE)FreeLibrary, remoteImage, &hThread);
+                    NTSTATUS status = CreateAndWaitForThread(hProcess, (LPTHREAD_START_ROUTINE)FreeLibrary, remoteImage, &hThread, FALSE);
                     if (NT_SUCCESS(status))
                     {
                         CloseHandle(hThread);
