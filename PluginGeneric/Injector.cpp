@@ -32,7 +32,7 @@ void ReadNtApiInformation(const wchar_t *file, HOOK_DLL_DATA *hde)
     auto res = api_loader.Load(file);
     if (!res.first)
     {
-        g_log.LogError(L"Failed to load NT API addresses: %s", res.second);
+        g_log.LogError(L"Failed to load NT API addresses: %s", res.second.c_str());
         return;
     }
 
@@ -194,12 +194,12 @@ void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory
             }
             else
             {
-                g_log.LogInfo(L"Failed to write hook dll data");
+                g_log.LogError(L"Failed to write hook dll data");
             }
         }
         else
         {
-            g_log.LogInfo(L"Failed to map image!");
+            g_log.LogError(L"Failed to map image!");
         }
     }
 }
@@ -278,7 +278,7 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
 
     if (!remoteMemory)
     {
-        g_log.LogInfo(L"DLL INJECTION: VirtualAllocEx failed!");
+        g_log.LogError(L"DLL INJECTION: VirtualAllocEx failed!");
         return 0;
     }
 
@@ -292,19 +292,19 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
 
             if (!hModule)
             {
-                g_log.LogInfo(L"DLL INJECTION: Failed load library!");
+                g_log.LogError(L"DLL INJECTION: Failed load library!");
             }
 
             CloseHandle(hThread);
         }
         else
         {
-            g_log.LogInfo(L"DLL INJECTION: Failed to start thread: 0x%08X!", status);
+            g_log.LogError(L"DLL INJECTION: Failed to start thread: 0x%08X!", status);
         }
     }
     else
     {
-        g_log.LogInfo(L"DLL INJECTION: Failed WriteProcessMemory!");
+        g_log.LogError(L"DLL INJECTION: Failed WriteProcessMemory!");
     }
 
     VirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
@@ -312,11 +312,10 @@ LPVOID NormalDllInjection(HANDLE hProcess, const WCHAR * dllPath)
     return hModule;
 }
 
-DWORD_PTR GetAddressOfEntryPoint(BYTE * dllMemory)
+DWORD GetAddressOfEntryPoint(BYTE * dllMemory)
 {
-    PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)dllMemory;
-    PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
-    return pNt->OptionalHeader.AddressOfEntryPoint;
+    PIMAGE_NT_HEADERS ntHeaders = RtlImageNtHeader(dllMemory);
+    return HEADER_FIELD(ntHeaders, AddressOfEntryPoint);
 }
 
 LPVOID StealthDllInjection(HANDLE hProcess, const WCHAR * dllPath, BYTE * dllMemory)
@@ -329,7 +328,7 @@ LPVOID StealthDllInjection(HANDLE hProcess, const WCHAR * dllPath, BYTE * dllMem
         if (remoteImageBaseOfInjectedDll)
         {
 
-            DWORD_PTR entryPoint = GetAddressOfEntryPoint(dllMemory);
+            DWORD_PTR entryPoint = (DWORD_PTR)GetAddressOfEntryPoint(dllMemory);
 
             if (entryPoint)
             {
@@ -345,13 +344,13 @@ LPVOID StealthDllInjection(HANDLE hProcess, const WCHAR * dllPath, BYTE * dllMem
                 }
                 else
                 {
-                    g_log.LogInfo(L"DLL INJECTION: Failed to start thread: 0x%08X!", status);
+                    g_log.LogError(L"DLL INJECTION: Failed to start thread: 0x%08X!", status);
                 }
             }
         }
         else
         {
-            g_log.LogInfo(L"DLL INJECTION: Failed to map image of %s!", dllPath);
+            g_log.LogError(L"DLL INJECTION: Failed to map image of %s!", dllPath);
         }
     }
 
@@ -361,69 +360,94 @@ LPVOID StealthDllInjection(HANDLE hProcess, const WCHAR * dllPath, BYTE * dllMem
 void injectDll(DWORD targetPid, const WCHAR * dllPath)
 {
     HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, 0, targetPid);
-    BYTE * dllMemory = ReadFileToMemory(dllPath);
-
-    if (hProcess && dllMemory)
+    if (hProcess == nullptr)
     {
-        LPVOID remoteImage = 0;
+        g_log.LogError(L"DLL INJECTION: Cannot open process handle %d", targetPid);
+        return;
+    }
 
-        DWORD entryPoint = (DWORD)GetAddressOfEntryPoint(dllMemory);
+    BYTE* dllMemory = ReadFileToMemory(dllPath);
+    if (dllMemory == nullptr)
+    {
+        g_log.LogError(L"DLL INJECTION: Failed to read file %s!", dllPath);
+        CloseHandle(hProcess);
+        return;
+    }
 
-        if (entryPoint) g_log.LogInfo(L"DLL entry point (DllMain) RVA %X!", entryPoint);
-
-        if (g_settings.opts().dllStealth)
-        {
-            g_log.LogInfo(L"Starting Stealth DLL Injection!");
-            remoteImage = StealthDllInjection(hProcess, dllPath, dllMemory);
-        }
-        else if (g_settings.opts().dllNormal)
-        {
-            g_log.LogInfo(L"Starting Normal DLL Injection!");
-            remoteImage = NormalDllInjection(hProcess, dllPath);
-        }
-        else
-        {
-            g_log.LogInfo(L"DLL INJECTION: No injection type selected!");
-        }
-
-        if (remoteImage)
-        {
-            g_log.LogInfo(L"DLL INJECTION: Injection of %s successful, Imagebase %p", dllPath, remoteImage);
-
-            if (g_settings.opts().dllUnload)
-            {
-                g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p", remoteImage);
-
-                if (g_settings.opts().dllNormal)
-                {
-                    HANDLE hThread;
-                    NTSTATUS status = CreateAndWaitForThread(hProcess, (LPTHREAD_START_ROUTINE)FreeLibrary, remoteImage, &hThread, FALSE);
-                    if (NT_SUCCESS(status))
-                    {
-                        CloseHandle(hThread);
-                        g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
-                    }
-                    else
-                    {
-                        g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p FAILED: 0x%08X", remoteImage, status);
-                    }
-                }
-                else if (g_settings.opts().dllStealth)
-                {
-                    VirtualFreeEx(hProcess, remoteImage, 0, MEM_RELEASE);
-                    g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
-                }
-            }
-        }
-
+    PIMAGE_NT_HEADERS ntHeaders = RtlImageNtHeader(dllMemory);
+    if (ntHeaders == nullptr)
+    {
+        g_log.LogError(L"DLL INJECTION: Invalid PE file %s!", dllPath);
         free(dllMemory);
         CloseHandle(hProcess);
+        return;
+    }
+
+    bool processIsWow64 = scl::IsWow64Process(hProcess);
+    if ((scl::IsWindows64() &&
+        ((processIsWow64 && ntHeaders->FileHeader.Machine != IMAGE_FILE_MACHINE_I386) ||
+        (!processIsWow64 && ntHeaders->FileHeader.Machine != IMAGE_FILE_MACHINE_AMD64)))
+        ||
+        (!scl::IsWindows64() && ntHeaders->FileHeader.Machine != IMAGE_FILE_MACHINE_I386))
+    {
+        g_log.LogError(L"DLL INJECTION: DLL %s is of wrong bitness for process!", dllPath);
+        free(dllMemory);
+        CloseHandle(hProcess);
+        return;
+    }
+
+    LPVOID remoteImage = nullptr;
+    DWORD entryPoint = GetAddressOfEntryPoint(dllMemory);
+    if (entryPoint != 0)
+        g_log.LogInfo(L"DLL entry point (DllMain) RVA %X!", entryPoint);
+
+    if (g_settings.opts().dllStealth)
+    {
+        g_log.LogInfo(L"Starting Stealth DLL Injection!");
+        remoteImage = StealthDllInjection(hProcess, dllPath, dllMemory);
+    }
+    else if (g_settings.opts().dllNormal)
+    {
+        g_log.LogInfo(L"Starting Normal DLL Injection!");
+        remoteImage = NormalDllInjection(hProcess, dllPath);
     }
     else
     {
-        if (!hProcess) g_log.LogInfo(L"DLL INJECTION: Cannot open process handle %d", targetPid);
-        if (!dllMemory) g_log.LogInfo(L"DLL INJECTION: Failed to read file %s!", dllPath);
+        g_log.LogError(L"DLL INJECTION: No injection type selected!");
     }
+
+    if (remoteImage != nullptr)
+    {
+        g_log.LogInfo(L"DLL INJECTION: Injection of %s successful, Imagebase %p", dllPath, remoteImage);
+
+        if (g_settings.opts().dllUnload)
+        {
+            g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p", remoteImage);
+
+            if (g_settings.opts().dllNormal)
+            {
+                HANDLE hThread;
+                NTSTATUS status = CreateAndWaitForThread(hProcess, (LPTHREAD_START_ROUTINE)FreeLibrary, remoteImage, &hThread, FALSE);
+                if (NT_SUCCESS(status))
+                {
+                    CloseHandle(hThread);
+                    g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
+                }
+                else
+                {
+                    g_log.LogError(L"DLL INJECTION: Unloading Imagebase %p FAILED: 0x%08X", remoteImage, status);
+                }
+            }
+            else if (g_settings.opts().dllStealth)
+            {
+                VirtualFreeEx(hProcess, remoteImage, 0, MEM_RELEASE);
+                g_log.LogInfo(L"DLL INJECTION: Unloading Imagebase %p successful", remoteImage);
+            }
+        }
+    }
+
+    free(dllMemory);
+    CloseHandle(hProcess);
 }
 
 BYTE * ReadFileToMemory(const WCHAR * targetFilePath)
@@ -458,10 +482,6 @@ BYTE * ReadFileToMemory(const WCHAR * targetFilePath)
 
 void FillHookDllData(HANDLE hProcess, HOOK_DLL_DATA *hdd)
 {
-    HMODULE localKernel = GetModuleHandleW(L"kernel32.dll");
-    HMODULE localKernelbase = GetModuleHandleW(L"kernelbase.dll");
-    HMODULE localNtdll = GetModuleHandleW(L"ntdll.dll");
-
     hdd->hNtdll = GetModuleBaseRemote(hProcess, L"ntdll.dll");
     hdd->hkernel32 = GetModuleBaseRemote(hProcess, L"kernel32.dll");
     hdd->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
