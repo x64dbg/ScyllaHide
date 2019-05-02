@@ -58,12 +58,15 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scylla", "Scylla\Scylla.vcxproj", "{E468DA07-48EA-40EB-A845-FA69C39D3396}"
 	ProjectSection(ProjectDependencies) = postProject
 		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
+		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762} = {4CEF9C8E-91C8-4148-94B1-AF2A3B597762}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaTest", "ScyllaTest\ScyllaTest.vcxproj", "{5EEACDD3-61B9-4E6A-BB47-5F37C03973C3}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E468DA07-48EA-40EB-A845-FA69C39D3396} = {E468DA07-48EA-40EB-A845-FA69C39D3396}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SCMRevGen", "SCMRevGen\SCMRevGen.vcxproj", "{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -171,6 +174,14 @@ Global
 		{5EEACDD3-61B9-4E6A-BB47-5F37C03973C3}.Release|Win32.Build.0 = Release|Win32
 		{5EEACDD3-61B9-4E6A-BB47-5F37C03973C3}.Release|x64.ActiveCfg = Release|x64
 		{5EEACDD3-61B9-4E6A-BB47-5F37C03973C3}.Release|x64.Build.0 = Release|x64
+		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}.Debug|Win32.Build.0 = Debug|Win32
+		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}.Debug|x64.ActiveCfg = Debug|x64
+		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}.Debug|x64.Build.0 = Debug|x64
+		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}.Release|Win32.ActiveCfg = Release|Win32
+		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}.Release|Win32.Build.0 = Release|Win32
+		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}.Release|x64.ActiveCfg = Release|x64
+		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

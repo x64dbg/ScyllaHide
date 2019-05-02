@@ -4,7 +4,7 @@ void scl::ShowAboutBox(HWND hWnd)
 {
     MessageBoxW(hWnd,
         SCYLLA_HIDE_NAME_W L" Plugin v" SCYLLA_HIDE_VERSION_STRING_W L" (" TEXT(__DATE__) L")\n\n"
-        L"Copyright (C) 2014 Aguila / cypher\n\n"
+        L"Copyright (C) 2014-" COMPILE_YEAR_W L" Aguila / cypher\n\n"
         L"Special thanks to:\n"
         L"- What for his POISON assembler source code\n"
         L"- waliedassar for his blog posts\n"
