@@ -491,7 +491,6 @@ void RestoreMemory(HANDLE hProcess, DWORD_PTR address, void * buffer, int buffer
             WriteProcessMemory(hProcess, (void *)address, buffer, bufferSize, 0);
 
             VirtualProtectEx(hProcess, (void *)address, bufferSize, protect, &protect);
-            FlushInstructionCache(hProcess, (void *)address, bufferSize);
         }
     }
 

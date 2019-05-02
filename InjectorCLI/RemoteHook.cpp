@@ -416,7 +416,6 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
             }
 
             VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, protect, &protect);
-            FlushInstructionCache(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen);
         }
         else
         {
@@ -494,7 +493,6 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void
             WriteProcessMemory(hProcess, (void *)patchAddr, KiSystemCallJmpPatch, 5 + 2, 0);
 
             VirtualProtectEx(hProcess, (void *)patchAddr, 5 + 2, protect, &protect);
-            FlushInstructionCache(hProcess, (void *)patchAddr, 5 + 2);
         }
         onceNativeCallContinue = true;
     }
@@ -588,7 +586,6 @@ void * DetourCreateRemote(void * hProcess, void * lpFuncOrig, void * lpFuncDetou
         WriteProcessMemory(hProcess, lpFuncOrig, tempSpace, minDetourLen, 0);
 
         VirtualProtectEx(hProcess, lpFuncOrig, detourLen, protect, &protect);
-        FlushInstructionCache(hProcess, lpFuncOrig, detourLen);
         success = true;
     }
 
@@ -635,7 +632,6 @@ void * DetourCreate(void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
         WriteJumper((PBYTE)lpFuncOrig, (PBYTE)lpFuncDetour);
 
         VirtualProtect(lpFuncOrig, detourLen, protect, &protect);
-        FlushInstructionCache(GetCurrentProcess(), lpFuncOrig, detourLen);
         success = true;
     }
 
