@@ -23,6 +23,11 @@ bld/
 [Oo]bj/
 scmrev.h
 
+# Make it possible to keep a local copy of the sacred IDA SDK
+# without accidentally committing it and receiving a takedown request
+# as a thank you for helping to expand the IDA plugin ecosystem
+3rdparty/idasdk/
+
 # Visual Studio 2015 cache/options directory
 .vs/
 # Uncomment if you have tasks that create the project's static files in wwwroot
