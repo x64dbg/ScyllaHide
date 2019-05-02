@@ -681,7 +681,7 @@ typedef struct _IMAGE_INFO
 
 typedef struct _PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION
 {
-	ULONG Version; // Set to 0 for x64 or WOW64, 1 on an x86 OS
+	ULONG Version; // Set to 0 for x64, use as PVOID Callback on x86/WOW64
 	ULONG Reserved;
 	PVOID Callback;
 } PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION, *PPROCESS_INSTRUMENTATION_CALLBACK_INFORMATION;
@@ -2843,8 +2843,6 @@ typedef ULONG GDI_HANDLE_BUFFER32[GDI_HANDLE_BUFFER_SIZE32];
 typedef ULONG GDI_HANDLE_BUFFER64[GDI_HANDLE_BUFFER_SIZE64];
 typedef ULONG GDI_HANDLE_BUFFER[GDI_HANDLE_BUFFER_SIZE];
 
-#define FLS_MAXIMUM_AVAILABLE 128
-#define TLS_MINIMUM_AVAILABLE 64
 #define TLS_EXPANSION_SLOTS 1024
 
 typedef struct _PEB_LDR_DATA
@@ -3662,6 +3660,14 @@ typedef struct _SYSTEM_EXTENDED_THREAD_INFORMATION
 													WORKER_FACTORY_QUERY_INFORMATION | \
 													WORKER_FACTORY_READY_WORKER | \
 													WORKER_FACTORY_SHUTDOWN)
+
+typedef struct _WORKER_FACTORY_DEFERRED_WORK
+{
+	struct _PORT_MESSAGE* AlpcSendMessage;
+	HANDLE AlpcSendMessagePort;
+	ULONG AlpcSendMessageFlags;
+	ULONG Flags;
+} WORKER_FACTORY_DEFERRED_WORK, *PWORKER_FACTORY_DEFERRED_WORK;
 
 #define NtCurrentProcess		((HANDLE)(LONG_PTR)-1)
 #define NtCurrentThread			((HANDLE)(LONG_PTR)-2)
@@ -6029,7 +6035,7 @@ NtCreateKey(
 	_Out_opt_ PULONG Disposition
 	);
 
-#if NTDDI_VERSION >= PNTDDI_VISTA
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -6054,7 +6060,7 @@ NtOpenKey(
 	_In_ POBJECT_ATTRIBUTES ObjectAttributes
 	);
 
-#if NTDDI_VERSION >= PNTDDI_VISTA
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -6393,7 +6399,7 @@ NtLockProductActivationKeys(
 	_Out_opt_ ULONG *pSafeMode
 	);
 
-#if NTDDI_VERSION >= PNTDDI_VISTA
+#if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -7443,9 +7449,7 @@ NTAPI
 NtWorkerFactoryWorkerReady(
 	_In_ HANDLE WorkerFactoryHandle
 	);
-#endif
 
-#if NTDDI_VERSION >= NTDDI_VISTA
 #if NTDDI_VERSION >= NTDDI_WIN8 || defined(_WIN64)
 // Windows 8+ declaration, but can be used on any x64 Windows Vista+
 NTSYSCALLAPI
@@ -7453,11 +7457,10 @@ NTSTATUS
 NTAPI
 NtWaitForWorkViaWorkerFactory(
 	_In_ HANDLE WorkerFactoryHandle,
-	_Out_ PFILE_IO_COMPLETION_INFORMATION *MiniPacket,
-	_In_ ULONG NumberOfMiniPackets,
-	_Out_ PULONG NumberOfMiniPacketsReturned,
-	_In_opt_ PHANDLE Handles,
-	_In_ PULONG Flags
+	_Out_writes_to_(Count, *PacketsReturned) PFILE_IO_COMPLETION_INFORMATION MiniPackets,
+	_In_ ULONG Count,
+	_Out_ PULONG PacketsReturned,
+	_In_ PWORKER_FACTORY_DEFERRED_WORK DeferredWork
 	);
 #else
 // Windows Vista/7 x86
