@@ -102,6 +102,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_M_IX86;_X86_;_USING_V110_SDK71_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -110,6 +113,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_M_AMD64;_AMD64_;_WIN64;_USING_V110_SDK71_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -118,6 +124,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_M_IX86;_X86_;_USING_V110_SDK71_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -126,6 +135,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_M_AMD64;_AMD64_;_WIN64;_USING_V110_SDK71_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\InjectorCLI\ApplyHooking.cpp" />
