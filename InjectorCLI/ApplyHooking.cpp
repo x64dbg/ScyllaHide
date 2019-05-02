@@ -6,9 +6,10 @@
 #include "DynamicMapping.h"
 #include "RemoteHook.h"
 
-#define HOOK(name) hdd->d##name = (t_##name)DetourCreateRemote(hProcess,_##name, Hooked##name, true, &hdd->##name##BackupSize)
-#define HOOK_NATIVE(name) hdd->d##name = (t_##name)DetourCreateRemoteNative(hProcess,_##name, Hooked##name, true, &hdd->##name##BackupSize)
-#define HOOK_NATIVE_NOTRAMP(name) DetourCreateRemoteNative(hProcess,_##name, Hooked##name, false, &hdd->##name##BackupSize)
+#define STR(x) #x
+#define HOOK(name) hdd->d##name = (t_##name)DetourCreateRemote(hProcess, "" STR(name) "", _##name, Hooked##name, true, &hdd->##name##BackupSize)
+#define HOOK_NATIVE(name) hdd->d##name = (t_##name)DetourCreateRemoteNative(hProcess, "" STR(name) "", _##name, Hooked##name, true, &hdd->##name##BackupSize)
+#define HOOK_NATIVE_NOTRAMP(name) DetourCreateRemoteNative(hProcess, "" STR(name) "", _##name, Hooked##name, false, &hdd->##name##BackupSize)
 #define FREE_HOOK(name) FreeMemory(hProcess, hdd->d##name); hdd->d##name = 0
 #define RESTORE_JMP(name) RestoreJumper(hProcess,_##name, hdd->d##name, hdd->##name##BackupSize)
 
@@ -19,7 +20,7 @@ void * NativeCallContinue = 0;
 int countNativeHooks = 0;
 HOOK_NATIVE_CALL32 * HookNative = 0;
 bool onceNativeCallContinue = false;
-
+bool fatalFindSyscallIndexFailure = false;
 
 #ifndef _WIN64
 extern BYTE KiSystemCallBackup[20];

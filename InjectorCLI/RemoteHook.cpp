@@ -3,6 +3,7 @@
 #include <distorm/mnemonics.h>
 #include <Scylla/OsInfo.h>
 #include "ApplyHooking.h"
+#include <stdio.h>
 
 #pragma comment(lib, "distorm.lib")
 
@@ -24,6 +25,7 @@ extern void * NativeCallContinue;
 extern HOOK_NATIVE_CALL32 * HookNative;
 extern int countNativeHooks;
 extern bool onceNativeCallContinue;
+extern bool fatalFindSyscallIndexFailure;
 
 BYTE originalBytes[60] = { 0 };
 BYTE changedBytes[60] = { 0 };
@@ -65,22 +67,7 @@ void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo, unsigned char *
 
 }
 
-void * FixWindowsRedirects(void * address)
-{
-    BYTE * pb = (BYTE *)address;
-    int len = (int)LengthDisassemble((void *)address);
-
-    if (len == 2 && pb[0] == 0xEB) //JMP SHORT
-    {
-        return (pb + 2 + pb[1]);
-    }
-    else if (len == 6 && pb[0] == 0xFF && pb[1] == 0x25) //JMP DWORD PTR
-    {
-        return (pb + 2 + pb[1]);
-    }
-
-    return address;
-}
+#ifndef _WIN64
 
 DWORD GetEcxSysCallIndex32(const BYTE * data, int dataSize)
 {
@@ -131,24 +118,21 @@ DWORD GetSysCallIndex32(const BYTE * data)
             }
             else
             {
-                MessageBoxA(0, "Distorm opcode no I_MOV", "Distorm ERROR", MB_ICONERROR);
+                MessageBoxA(0, "GetSysCallIndex32: Opcode is not I_MOV", "Distorm ERROR", MB_ICONERROR);
             }
         }
         else
         {
-            MessageBoxA(0, "Distorm flags FLAG_NOT_DECODABLE", "Distorm ERROR", MB_ICONERROR);
+            MessageBoxA(0, "GetSysCallIndex32: Distorm flags == FLAG_NOT_DECODABLE", "Distorm ERROR", MB_ICONERROR);
         }
     }
     else
     {
-        MessageBoxA(0, "Distorm distorm_decompose error DECRES_INPUTERR", "Distorm ERROR", MB_ICONERROR);
+        MessageBoxA(0, "GetSysCallIndex32: distorm_decompose() returned DECRES_INPUTERR", "Distorm ERROR", MB_ICONERROR);
     }
 
-    return 0;
+    return (DWORD)-1; // Don't return 0 here, it is a valid syscall index
 }
-
-#ifndef _WIN64
-
 
 DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
 {
@@ -232,8 +216,6 @@ DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
     return NULL;
 }
 
-#endif
-
 DWORD GetFunctionSizeRETN(BYTE * data, int dataSize)
 {
     unsigned int DecodedInstructionsCount = 0;
@@ -292,8 +274,6 @@ DWORD GetCallOffset(const BYTE * data, int dataSize, DWORD * callSize)
 
     return 0;
 }
-
-#ifndef _WIN64
 
 // EA 1E 27 E5 74 33 00              JMP FAR 0033:74E5271E ; Far jump
 // FF 25 18 12 39 4B                 jmp     ds:_Wow64Transition
@@ -426,7 +406,6 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 
     return trampoline;
 }
-#endif
 
 //7C91E4F0 ntdll.KiFastSystemCall  EB F9   JMP 7C91E4EB
 
@@ -434,8 +413,8 @@ BYTE KiSystemCallJmpPatch[] = { 0xE9, 0x00, 0x00, 0x00, 0x00, 0xEB, 0xF9 };
 BYTE KiSystemCallBackup[20] = { 0 };
 DWORD KiSystemCallAddress = 0;
 DWORD KiSystemCallBackupSize = 0;
-#ifndef _WIN64
-void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
+
+void * DetourCreateRemoteNative32Normal(void * hProcess, const char* funcName, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
 {
     PBYTE trampoline = 0;
     DWORD protect;
@@ -499,15 +478,17 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, void * lpFuncOrig, void
 
     return trampoline;
 }
-#endif
-#ifndef _WIN64
-void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
+
+void * DetourCreateRemoteNative32(void * hProcess, const char* funcName, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
 {
     if (scl::GetWindowsVersion() >= scl::OS_WIN_8 && !scl::IsWow64Process(hProcess))
     {
         // The native x86 syscall structure was changed in Windows 8. https://github.com/x64dbg/ScyllaHide/issues/49
-        return DetourCreateRemote(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
+        return DetourCreateRemote(hProcess, funcName, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
     }
+
+    if (fatalFindSyscallIndexFailure)
+        return nullptr; // Don't spam user with repeated error message boxes
 
     memset(changedBytes, 0x90, sizeof(changedBytes));
     memset(originalBytes, 0x90, sizeof(originalBytes));
@@ -515,29 +496,32 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
 
     if (!ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), 0))
     {
-        MessageBoxA(0, "DetourCreateRemoteNative32->ReadProcessMemory failed", "ERROR", MB_ICONERROR);
-        return NULL;
+        MessageBoxA(nullptr, "DetourCreateRemoteNative32->ReadProcessMemory failed.", "ScyllaHide", MB_ICONERROR);
+        return nullptr;
     }
 
     memcpy(changedBytes, originalBytes, sizeof(originalBytes));
 
     DWORD sysCallIndex = GetSysCallIndex32(originalBytes);
 
-    PVOID result = 0;
-
-    if (!sysCallIndex)
+    if (sysCallIndex == (DWORD)-1)
     {
-        MessageBoxA(0, "GetSysCallIndex32 -> sysCallIndex not found", "ERROR", MB_ICONERROR);
-        return NULL;
+        fatalFindSyscallIndexFailure = true; // Do not attempt any more hooks after this
+        char errorMessage[256];
+        _snprintf_s(errorMessage, sizeof(errorMessage), sizeof(errorMessage) - sizeof(char),
+            "Error: syscall index of %hs not found.\nThis can happen if the function is already hooked, or if it contains a breakpoint.", funcName);
+        MessageBoxA(nullptr, errorMessage, "ScyllaHide", MB_ICONERROR);
+        return nullptr;
     }
 
     HookNative[countNativeHooks].eaxValue = sysCallIndex;
     HookNative[countNativeHooks].ecxValue = 0;
     HookNative[countNativeHooks].hookedFunction = lpFuncDetour;
 
+    PVOID result;
     if (!scl::IsWow64Process(hProcess))
     {
-        result = DetourCreateRemoteNative32Normal(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
+        result = DetourCreateRemoteNative32Normal(hProcess, funcName, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
     }
     else
     {
@@ -549,9 +533,10 @@ void * DetourCreateRemoteNative32(void * hProcess, void * lpFuncOrig, void * lpF
 
     return result;
 }
+
 #endif
 
-void * DetourCreateRemote(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, DWORD * backupSize)
+void * DetourCreateRemote(void * hProcess, const char* funcName, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, DWORD * backupSize)
 {
     BYTE originalBytes[50] = { 0 };
     BYTE tempSpace[1000] = { 0 };
@@ -611,10 +596,7 @@ void * DetourCreate(void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
 
     bool success = false;
 
-    //lpFuncOrig = FixWindowsRedirects(lpFuncOrig);
-
     int detourLen = GetDetourLen(lpFuncOrig, minDetourLen);
-
 
     if (createTramp)
     {
