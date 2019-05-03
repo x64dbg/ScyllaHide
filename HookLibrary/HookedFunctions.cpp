@@ -720,42 +720,6 @@ ULONGLONG WINAPI HookedGetTickCount64(void) //yes we can use DWORD
 static SYSTEMTIME OneLocalTime = {0};
 static SYSTEMTIME OneSystemTime = {0};
 
-// GetSystemTime and GetLocalTime are reimplemented here because the KernelBase functions use
-// RIP-relative addressing which breaks hooking. https://github.com/x64dbg/ScyllaHide/issues/31
-static void WINAPI RealGetSystemTime(PSYSTEMTIME lpSystemTime)
-{
-	TIME_FIELDS TimeFields;
-	RtlTimeToTimeFields((PLARGE_INTEGER)&SharedUserData->SystemTime, &TimeFields);
-
-	lpSystemTime->wYear = TimeFields.Year;
-	lpSystemTime->wMonth = TimeFields.Month;
-	lpSystemTime->wDay = TimeFields.Day;
-	lpSystemTime->wHour = TimeFields.Hour;
-	lpSystemTime->wMinute = TimeFields.Minute;
-	lpSystemTime->wSecond = TimeFields.Second;
-	lpSystemTime->wMilliseconds = TimeFields.Milliseconds;
-	lpSystemTime->wDayOfWeek = TimeFields.Weekday;
-}
-
-static void WINAPI RealGetLocalTime(LPSYSTEMTIME lpSystemTime)
-{
-	TIME_FIELDS TimeFields;
-	LARGE_INTEGER SystemTime = *(PLARGE_INTEGER)&SharedUserData->SystemTime;
-	LARGE_INTEGER TimeZoneBias = *(PLARGE_INTEGER)&SharedUserData->TimeZoneBias;
-
-	SystemTime.QuadPart -= TimeZoneBias.QuadPart;
-	RtlTimeToTimeFields(&SystemTime, &TimeFields);
-
-	lpSystemTime->wYear = TimeFields.Year;
-	lpSystemTime->wMonth = TimeFields.Month;
-	lpSystemTime->wDay = TimeFields.Day;
-	lpSystemTime->wHour = TimeFields.Hour;
-	lpSystemTime->wMinute = TimeFields.Minute;
-	lpSystemTime->wSecond = TimeFields.Second;
-	lpSystemTime->wMilliseconds = TimeFields.Milliseconds;
-	lpSystemTime->wDayOfWeek = TimeFields.Weekday;
-}
-
 void WINAPI HookedGetLocalTime(LPSYSTEMTIME lpSystemTime)
 {
 	if (!OneLocalTime.wYear)

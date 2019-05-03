@@ -36,6 +36,8 @@ int ThreadDebugContextFindExistingSlotIndex();
 void ThreadDebugContextRemoveEntry(const int index);
 void ThreadDebugContextSaveContext(const int index, const PCONTEXT ThreadContext);
 
+void NTAPI RealGetSystemTime(PSYSTEMTIME lpSystemTime);
+void NTAPI RealGetLocalTime(LPSYSTEMTIME lpSystemTime);
 void IncreaseSystemTime(LPSYSTEMTIME lpTime);
 
 void TerminateProcessByProcessId(DWORD dwProcess);
