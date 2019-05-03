@@ -43,14 +43,6 @@
     <Import Project="$(SolutionDir)Scylla\scylla.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <!--
-    DisableFastUpToDateCheck bypasses Visual Studio's build manager and forces MSBuild to be run
-    on the project. This allows the PreBuildEvent to be run by MSBuild even if VS thinks things
-    are up-to-date.
-   -->
-  <PropertyGroup>
-    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
-  </PropertyGroup>
   <ItemDefinitionGroup>
     <PreBuildEvent>
       <Command>cmd.exe /C "make_scmrev.h.bat"</Command>
