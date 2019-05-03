@@ -18,7 +18,7 @@ namespace scl
     };
 
     const SYSTEM_INFO *GetNativeSystemInfo();
-    const OSVERSIONINFOEXW* GetVersionExW();
+    const RTL_OSVERSIONINFOEXW* GetVersionExW();
 
     bool IsWindows64();
     bool IsWow64Process(HANDLE hProcess);

@@ -34,15 +34,15 @@ const SYSTEM_INFO *scl::GetNativeSystemInfo()
     return &si;
 }
 
-const OSVERSIONINFOEXW* scl::GetVersionExW()
+const RTL_OSVERSIONINFOEXW* scl::GetVersionExW()
 {
-    static OSVERSIONINFOEXW osVerInfo = { 0 };
+    static RTL_OSVERSIONINFOEXW osVerInfo = { 0 };
     static auto cached = false;
 
     if (!cached)
     {
         osVerInfo.dwOSVersionInfoSize = sizeof(osVerInfo);
-        ::GetVersionExW((LPOSVERSIONINFOW)&osVerInfo);
+        RtlGetVersion((PRTL_OSVERSIONINFOW)&osVerInfo);
         auto peb = GetPebAddress(GetCurrentProcess());
         if (peb)
         {
