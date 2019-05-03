@@ -60,6 +60,8 @@ const WCHAR * BadWindowClassList[] =
 	L"tgrzoom"
 };
 
+extern "C" void InstrumentationCallbackAsm();
+
 extern HOOK_DLL_DATA HookDllData;
 extern SAVE_DEBUG_REGISTERS ArrayDebugRegister[100];
 
@@ -212,6 +214,83 @@ bool HasDebugPrivileges(HANDLE hProcess)
 
 	NtClose(hToken);
 	return hasDebugPrivileges == TRUE;
+}
+
+bool IsWow64Process(HANDLE ProcessHandle)
+{
+	PPEB WoW64Peb = nullptr;
+	const NTSTATUS Status = NtQueryInformationProcess(ProcessHandle,
+													ProcessWow64Information,
+													&WoW64Peb,
+													sizeof(WoW64Peb),
+													nullptr);
+
+	return NT_SUCCESS(Status) && WoW64Peb != nullptr;
+}
+
+NTSTATUS
+InstallInstrumentationCallbackHook(
+	_In_ HANDLE ProcessHandle,
+	_In_ BOOLEAN Remove
+	)
+{
+	const PVOID pInstrumentationCallbackAsm = (PVOID)InstrumentationCallbackAsm;
+	NTSTATUS Status = STATUS_NOT_SUPPORTED;
+
+	if (RtlNtMajorVersion() > 6)
+	{
+		// Windows 10
+		PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION InstrumentationCallbackInfo;
+#ifdef _WIN64
+		InstrumentationCallbackInfo.Version = 0;
+#else
+		// Native x86 instrumentation callbacks don't work correctly
+		if (!IsWow64Process(ProcessHandle))
+		{
+			//InstrumentationCallbackInfo.Version = 1; // Value to use if they did
+			return Status;
+		}
+
+		// WOW64: set the callback pointer in the version field
+		InstrumentationCallbackInfo.Version = (ULONG)(ULONG_PTR)(Remove ? nullptr : pInstrumentationCallbackAsm);
+#endif
+		InstrumentationCallbackInfo.Reserved = 0;
+		InstrumentationCallbackInfo.Callback = Remove ? nullptr : pInstrumentationCallbackAsm;
+
+		Status = HookDllData.dNtSetInformationProcess != nullptr
+			? HookDllData.dNtSetInformationProcess(ProcessHandle,
+													ProcessInstrumentationCallback,
+													&InstrumentationCallbackInfo,
+													sizeof(InstrumentationCallbackInfo))
+			: NtSetInformationProcess(ProcessHandle,
+									ProcessInstrumentationCallback,
+									&InstrumentationCallbackInfo,
+									sizeof(InstrumentationCallbackInfo));
+	}
+#ifdef _WIN64 // Windows 7-8.1 do not support x86/WOW64 instrumentation callbacks
+	else if (RtlNtMajorVersion() == 6 && RtlNtMinorVersion() >= 1)
+	{
+		// Windows 7-8.1 require SE_DEBUG for this to work, even on the current process
+		BOOLEAN SeDebugWasEnabled;
+		Status = RtlAdjustPrivilege(SE_DEBUG_PRIVILEGE, TRUE, FALSE, &SeDebugWasEnabled);
+		if (!NT_SUCCESS(Status))
+			return Status;
+
+		Status = HookDllData.dNtSetInformationProcess != nullptr
+			? HookDllData.dNtSetInformationProcess(ProcessHandle,
+													ProcessInstrumentationCallback,
+													Remove ? nullptr : (PVOID)&pInstrumentationCallbackAsm,
+													sizeof(pInstrumentationCallbackAsm))
+			: NtSetInformationProcess(ProcessHandle,
+									ProcessInstrumentationCallback,
+									Remove ? nullptr : (PVOID)&pInstrumentationCallbackAsm,
+									sizeof(pInstrumentationCallbackAsm));
+
+		RtlAdjustPrivilege(SE_DEBUG_PRIVILEGE, SeDebugWasEnabled, FALSE, &SeDebugWasEnabled);
+	}
+#endif
+
+	return Status;
 }
 
 void * GetPEBRemote(HANDLE hProcess)

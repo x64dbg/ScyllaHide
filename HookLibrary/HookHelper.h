@@ -18,6 +18,8 @@ FORCEINLINE ULONG NTAPI RtlGetTickCount()
 }
 
 bool HasDebugPrivileges(HANDLE hProcess);
+bool IsWow64Process(HANDLE ProcessHandle);
+NTSTATUS InstallInstrumentationCallbackHook(HANDLE ProcessHandle, BOOLEAN Remove);
 DWORD GetExplorerProcessId();
 DWORD GetProcessIdByName(PUNICODE_STRING processName);
 bool IsProcessNameBad(PUNICODE_STRING processName);

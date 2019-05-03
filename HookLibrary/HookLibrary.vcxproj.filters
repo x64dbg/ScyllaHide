@@ -42,6 +42,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <MASM Include="InstrumentationCallbackX86.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
     <MASM Include="InstrumentationCallbackX64.asm">
       <Filter>Source Files</Filter>
     </MASM>

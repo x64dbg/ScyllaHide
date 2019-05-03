@@ -681,7 +681,7 @@ typedef struct _IMAGE_INFO
 
 typedef struct _PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION
 {
-	ULONG Version; // Set to 0 for x64, use as PVOID Callback on x86/WOW64
+	ULONG Version; // Set to 0 for x64, 1 for native x86, and use as PVOID Callback on WOW64
 	ULONG Reserved;
 	PVOID Callback;
 } PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION, *PPROCESS_INSTRUMENTATION_CALLBACK_INFORMATION;
