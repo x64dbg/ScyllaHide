@@ -24,6 +24,7 @@
 #include <Scylla/Settings.h>
 #include <Scylla/Version.h>
 #include <Scylla/Util.h>
+#include <Scylla/OsInfo.h>
 
 #include "..\PluginGeneric\Injector.h"
 #include "..\PluginGeneric\OptionsDialog.h"
@@ -124,7 +125,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
         bHooked = false;
         ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
 
-        if (dbg != 0)
+        if (dbg != nullptr)
         {
             //char text[1000];
             //wsprintfA(text, "dbg->id %d processor %s", dbg->id , dbg->processor);
@@ -203,7 +204,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
             {
 
 #ifndef BUILD_IDA_64BIT
-                if (!bHooked)
+                if (!scl::IsWindows64() && !bHooked) // Only apply on native x86 OS, see dbg_library_unload below
                 {
                     bHooked = true;
                     startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
@@ -254,6 +255,19 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
     }
     break;
+
+#ifndef BUILD_IDA_64BIT
+    case dbg_library_unload:
+    {
+        if (scl::IsWindows64() && !bHooked)
+        {
+            // Bogus unload event which is actually a load of a native x64 DLL (ntdll, wow64, wow64cpu, wow64win)
+            bHooked = true;
+            startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
+        }
+    }
+    break;
+#endif
 
     case dbg_bpt:
     {

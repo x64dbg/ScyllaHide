@@ -284,6 +284,8 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 {
     PBYTE trampoline = 0;
     DWORD protect;
+    bool onceNativeCallContinueWasSet = onceNativeCallContinue;
+    onceNativeCallContinue = true;
 
     // NtQueryInformationProcess on Windows 10 under sysWow64 has an irregular structure, this is a call at +4 or bytes from itself
     // Another case for Windows 10 is 'call $+5'
@@ -359,21 +361,29 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
         sysWowSpecialJmpAddress = pActualSysWowSpecialJmpAddress;
     }
 
-    if (onceNativeCallContinue == false)
+    if (!onceNativeCallContinueWasSet)
     {
-        ReadProcessMemory(hProcess, (void*)sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0);
-        NativeCallContinue = VirtualAllocEx(hProcess, 0, sizeof(sysWowSpecialJmp), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-        if (!WriteProcessMemory(hProcess, NativeCallContinue, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0))
+        if (ReadProcessMemory(hProcess, (void*)sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0))
         {
-            MessageBoxA(0, "Failed to write NativeCallContinue routine", "Error", MB_ICONERROR);
+            NativeCallContinue = VirtualAllocEx(hProcess, 0, sizeof(sysWowSpecialJmp), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+            if (!WriteProcessMemory(hProcess, NativeCallContinue, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0))
+            {
+                MessageBoxA(nullptr, "Failed to write NativeCallContinue routine", "Error", MB_ICONERROR);
+                return nullptr;
+            }
+        }
+        else
+        {
+            MessageBoxA(nullptr, "Failed to read WOW64 gateway instruction bytes", "Error", MB_ICONERROR);
+            return nullptr;
         }
     }
 
-    if (funcSize && createTramp)
+    if (funcSize != 0 && createTramp)
     {
         trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, sizeof(changedBytes), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-        if (!trampoline)
-            return 0;
+        if (trampoline == nullptr)
+            return nullptr;
 
         changedBytes[callOffset] = 0x68; //PUSH
         *((DWORD*)&changedBytes[callOffset + 1]) = ((DWORD)trampoline + (DWORD)callOffset + 5 + 7);
@@ -384,7 +394,7 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
         WriteProcessMemory(hProcess, trampoline, changedBytes, sizeof(changedBytes), 0);
     }
 
-    if (onceNativeCallContinue == false)
+    if (!onceNativeCallContinueWasSet)
     {
         if (VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, PAGE_EXECUTE_READWRITE, &protect))
         {
@@ -401,7 +411,6 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
         {
             MessageBoxA(0, "Failed to unprotect WOW64 gateway", "Error", MB_ICONERROR);
         }
-        onceNativeCallContinue = true;
     }
 
     return trampoline;
