@@ -1,8 +1,6 @@
 #define USE_STANDARD_FILE_FUNCTIONS
 #pragma warning(disable : 4996 4512 4127 4201)
 
-//also switch this in OptionsDialog.cpp !
-//#define BUILD_IDA_64BIT 1
 
 //for 64bit - p64
 #ifdef BUILD_IDA_64BIT
