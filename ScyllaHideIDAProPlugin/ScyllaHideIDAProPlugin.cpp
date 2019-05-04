@@ -1,8 +1,6 @@
 #define USE_STANDARD_FILE_FUNCTIONS
 #pragma warning(disable : 4996 4512 4127 4201)
 
-//also switch this in OptionsDialog.cpp !
-//#define BUILD_IDA_64BIT 1
 
 //for 64bit - p64
 #ifdef BUILD_IDA_64BIT
@@ -36,7 +34,7 @@ typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
 extern t_AttachProcess _AttachProcess;
 
 const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
-const WCHAR g_scyllaHidex64ServerFilename[] = L"ScyllaHideIDASrvx64.exe";
+const WCHAR g_scyllaHidex64ServerFilename[] = L"ScyllaHideIDAServerx64.exe";
 
 scl::Settings g_settings;
 scl::Logger g_log;
@@ -136,7 +134,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
             if (dbg->is_remote())
             {
                 qstring hoststring;
-                char host[200] = { 0 };
+                char host[MAX_PATH] = { 0 };
                 char port[6] = { 0 };
                 wcstombs(port, g_settings.opts().idaServerPort.c_str(), _countof(port));
 
@@ -148,11 +146,11 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 
 #ifdef BUILD_IDA_64BIT
                 //autostart server if necessary
-                if(pHideOptions.autostartServer)
+                if(g_settings.opts().idaAutoStartServer)
                 {
-                    if (!FileExists(ScyllaHidex64ServerPath))
+                    if (!scl::FileExistsW(g_scyllaHidex64ServerPath.c_str()))
                     {
-                        msg("Cannot find server executable %S\n", ScyllaHidex64ServerPath);
+                        g_log.LogError(L"Cannot find server executable %s\n", g_scyllaHidex64ServerPath.c_str());
                     }
 
                     DWORD dwRunningStatus = 0;
@@ -173,9 +171,9 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                         ZeroMemory(&ServerProcessInfo, sizeof(ServerProcessInfo));
 
                         WCHAR commandline[MAX_PATH*2] = {0};
-                        wcscpy(commandline, ScyllaHidex64ServerPath);
+                        wcscpy(commandline, g_scyllaHidex64ServerPath.c_str());
                         wcscat(commandline, L" ");
-                        wcscat(commandline, pHideOptions.serverPort);
+                        wcscat(commandline, g_settings.opts().idaServerPort.c_str());
                         ServerStartupInfo.cb = sizeof(ServerStartupInfo);
                         if (!CreateProcessW(0, commandline, NULL, NULL, FALSE, 0, NULL, NULL, &ServerStartupInfo, &ServerProcessInfo))
                         {
@@ -210,7 +208,7 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
                     startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
                 }
 #else
-                g_log.LogError("Error IDA_64BIT please contact ScyllaHide developers!");
+                g_log.LogError(L"Error IDA_64BIT please contact ScyllaHide developers!");
 #endif
             }
         }
@@ -314,7 +312,7 @@ static int idaapi IDAP_init(void)
     }
 
     msg("##################################################\n");
-    msg("# " SCYLLA_HIDE_NAME_A " v" SCYLLA_HIDE_VERSION_STRING_A " Copyright 2014 Aguila / cypher #\n");
+    msg("# " SCYLLA_HIDE_NAME_A " v" SCYLLA_HIDE_VERSION_STRING_A " Copyright 2014-" COMPILE_YEAR_A " Aguila / cypher #\n");
     msg("##################################################\n");
 
     bHooked = false;
@@ -372,7 +370,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD dwReason, LPVOID lpReserved)
 
         g_settings.Load(g_scyllaHideIniPath.c_str());
 
-        SetDebugPrivileges();
+        if (!SetDebugPrivileges())
+        {
+            g_log.LogInfo(L"Failed to set debug privileges");
+        }
 
         if (!StartWinsock())
         {
