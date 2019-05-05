@@ -67,6 +67,32 @@ void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo, unsigned char *
 
 }
 
+void ClearSyscallBreakpoint(const char* funcName, unsigned char* funcBytes)
+{
+    // Do nothing if this is not a syscall stub
+    if ((funcName == nullptr || funcName[0] == '\0') ||
+        (funcName[0] != 'N' || funcName[1] != 't') &&
+        (funcName[0] != 'Z' || funcName[1] != 'w'))
+        return;
+
+    if (funcBytes[0] == 0xCC || // int 3
+        (funcBytes[0] == 0xCD && funcBytes[1] == 0x03) || // long int 3
+        (funcBytes[0] == 0xF0 && funcBytes[1] == 0x0B)) // UD2
+    {
+#ifdef _WIN64
+        // x64 stubs always start with 'mov r10, rcx'
+        funcBytes[0] = 0x4C;
+        funcBytes[1] = 0x8B;
+#else
+        // For x86 and WOW64 stubs, we can only restore int 3 breakpoints since the second byte is the (unknown) syscall number
+        if (funcBytes[0] != 0xCC)
+            MessageBoxA(nullptr, "ClearSyscallBreakpoint failed! Please use INT 3 breakpoints instead of long INT 3 or UD2.", "ScyllaHide", MB_ICONERROR);
+        else
+            funcBytes[0] = 0xB8; // mov eax, <syscall num>
+#endif
+    }
+}
+
 #ifndef _WIN64
 
 DWORD GetEcxSysCallIndex32(const BYTE * data, int dataSize)
@@ -503,11 +529,13 @@ void * DetourCreateRemoteNative32(void * hProcess, const char* funcName, void * 
     memset(originalBytes, 0x90, sizeof(originalBytes));
     memset(tempSpace, 0x90, sizeof(tempSpace));
 
-    if (!ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), 0))
+    if (!ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), nullptr))
     {
         MessageBoxA(nullptr, "DetourCreateRemoteNative32->ReadProcessMemory failed.", "ScyllaHide", MB_ICONERROR);
         return nullptr;
     }
+
+    ClearSyscallBreakpoint(funcName, originalBytes);
 
     memcpy(changedBytes, originalBytes, sizeof(originalBytes));
 
@@ -554,7 +582,13 @@ void * DetourCreateRemote(void * hProcess, const char* funcName, void * lpFuncOr
 
     bool success = false;
 
-    ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), 0);
+    if (!ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), nullptr))
+    {
+        MessageBoxA(nullptr, "DetourCreateRemote->ReadProcessMemory failed.", "ScyllaHide", MB_ICONERROR);
+        return nullptr;
+    }
+
+    ClearSyscallBreakpoint(funcName, originalBytes);
 
     int detourLen = GetDetourLen(originalBytes, minDetourLen);
 
