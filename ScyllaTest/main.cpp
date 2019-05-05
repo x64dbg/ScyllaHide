@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <cstdio>
+#include <string>
 #include <Scylla/NtApiShim.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Peb.h>
@@ -221,6 +222,88 @@ static ScyllaTestResult Check_NtQuerySystemInformation_KernelDebugger()
     return ScyllaTestOk;
 }
 
+static bool isExeDetected(const std::wstring& exe)
+{
+    // TODO: merge it together with the list used inside the core?
+    static const std::wstring exeToDetect[] = {
+        // OllyDbg v1/2
+        L"ollydbg.exe",
+        // IDA Pro v5/6
+        L"idaq.exe",
+        L"idaq64.exe",
+        // IDA Pro v7+
+        L"ida.exe",
+        L"ida64.exe",
+        L"idat.exe",
+        L"idat64.exe",
+        // x32/64Dbg
+        L"x32dbg.exe",
+        L"x64dbg.exe"
+
+        // add more before this mark
+    };
+
+    for (const auto& item : exeToDetect)
+    {
+        if (item == exe) //TODO: case-insensitive
+            return true;
+    }
+    return false;
+}
+
+ScyllaTestResult walkProcessList(PSYSTEM_PROCESS_INFORMATION pinfo)
+{
+    ScyllaTestResult result = ScyllaTestOk;
+
+    // iterate over all the process entries
+    // Note: on any Windows at least 2 records shall be present in a process list (PID 0, 4)
+    while (true)
+    {
+        //printf("\nProcess name: %ws | Process ID: %d\n", pinfo->ImageName.Buffer, (int)pinfo->UniqueProcessId);
+        const std::wstring processName = pinfo->ImageName.Buffer ? pinfo->ImageName.Buffer : L"";
+        if (isExeDetected(processName))
+        {
+            result = ScyllaTestDetected;
+            break;
+        }
+
+        // before jump to next entry check if it's last one
+        if (pinfo->NextEntryOffset == 0)
+            break;
+
+        // NextEntryOffset has variable length due to differnt number of threads, etc
+        pinfo = (PSYSTEM_PROCESS_INFORMATION)((LPBYTE)pinfo + pinfo->NextEntryOffset);
+    }
+    return result;
+}
+
+static ScyllaTestResult _NtQuerySystemInformation_SystemProcessInformation(SYSTEM_INFORMATION_CLASS sysInfoClass)
+{
+    PSYSTEM_PROCESS_INFORMATION pinfo;
+    ULONG returnLength;
+
+    // expecting fail here, so testing for success, strange but true
+    SCYLLA_TEST_FAIL_IF(NT_SUCCESS(NtQuerySystemInformation(sysInfoClass, NULL, NULL, &returnLength)));
+
+    std::string buffer;
+    buffer.resize(returnLength);
+
+    pinfo = (PSYSTEM_PROCESS_INFORMATION)buffer.c_str();
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(NtQuerySystemInformation(sysInfoClass, pinfo, returnLength, NULL)));
+
+    return walkProcessList(pinfo);
+}
+
+static ScyllaTestResult Check_NtQuerySystemInformation_SystemProcessInformation()
+{
+    return _NtQuerySystemInformation_SystemProcessInformation(SystemProcessInformation);
+}
+
+static ScyllaTestResult Check_NtQuerySystemInformation_SystemExtendedProcessInformation()
+{
+    return _NtQuerySystemInformation_SystemProcessInformation(SystemExtendedProcessInformation);
+}
+
 static ScyllaTestResult Check_NtQuery_OverlappingReturnLength() // https://github.com/x64dbg/ScyllaHide/issues/47
 {
     UCHAR Buffer[sizeof(OBJECT_TYPE_INFORMATION) + 64];
@@ -385,6 +468,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         SCYLLA_TEST(OutputDebugStringA_Exception);
         SCYLLA_TEST_IF(ver >= scl::OS_WIN_10, OutputDebugStringW_Exception);
         SCYLLA_TEST(NtQueryInformationProcess_ProcessDebugPort);
+        SCYLLA_TEST(NtQuerySystemInformation_SystemProcessInformation);
+        SCYLLA_TEST(NtQuerySystemInformation_SystemExtendedProcessInformation);
         SCYLLA_TEST(NtQuerySystemInformation_KernelDebugger);
         SCYLLA_TEST(NtQuery_OverlappingReturnLength);
         SCYLLA_TEST(NtClose);
