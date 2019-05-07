@@ -7,9 +7,15 @@
 #include "RemoteHook.h"
 
 #define STR(x) #x
-#define HOOK(name) hdd->d##name = (t_##name)DetourCreateRemote(hProcess, "" STR(name) "", _##name, Hooked##name, true, &hdd->##name##BackupSize)
-#define HOOK_NATIVE(name) hdd->d##name = (t_##name)DetourCreateRemoteNative(hProcess, "" STR(name) "", _##name, Hooked##name, true, &hdd->##name##BackupSize)
-#define HOOK_NATIVE_NOTRAMP(name) DetourCreateRemoteNative(hProcess, "" STR(name) "", _##name, Hooked##name, false, &hdd->##name##BackupSize)
+#define HOOK(name) { \
+    hdd->d##name = (t_##name)DetourCreateRemote(hProcess, "" STR(name) "", _##name, Hooked##name, true, &hdd->##name##BackupSize); \
+    if (hdd->d##name == nullptr) { return false; } }
+#define HOOK_NATIVE(name) { \
+    hdd->d##name = (t_##name)DetourCreateRemoteNative(hProcess, "" STR(name) "", _##name, Hooked##name, true, &hdd->##name##BackupSize); \
+    if (hdd->d##name == nullptr) { return false; } }
+#define HOOK_NATIVE_NOTRAMP(name) { \
+    void* p = DetourCreateRemoteNative(hProcess, "" STR(name) "", _##name, Hooked##name, false, &hdd->##name##BackupSize); \
+    if (p == nullptr) { return false; } }
 #define FREE_HOOK(name) FreeMemory(hProcess, hdd->d##name); hdd->d##name = 0
 #define RESTORE_JMP(name) RestoreJumper(hProcess,_##name, hdd->d##name, hdd->##name##BackupSize)
 
@@ -67,7 +73,7 @@ t_NtQuerySystemTime _NtQuerySystemTime = 0;
 t_NtQueryPerformanceCounter _NtQueryPerformanceCounter = 0;
 t_NtResumeThread _NtResumeThread = 0;
 
-void ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
     hNtdll = GetModuleHandleW(L"ntdll.dll");
 
@@ -252,9 +258,11 @@ void ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
 #ifndef _WIN64
     hdd->NativeCallContinue = NativeCallContinue;
 #endif
+
+    return true;
 }
 
-void ApplyKernel32Hook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+bool ApplyKernel32Hook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
     hKernel = GetModuleHandleW(L"kernel32.dll");
     hKernelbase = GetModuleHandleW(L"kernelbase.dll");
@@ -312,9 +320,11 @@ void ApplyKernel32Hook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, D
         HOOK(OutputDebugStringA);
     }
     hdd->isKernel32Hooked = TRUE;
+
+    return true;
 }
 
-void ApplyUser32Hook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+bool ApplyUser32Hook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
     hUser = GetModuleHandleW(L"user32.dll");
     hUserRemote = GetModuleBaseRemote(hProcess, L"user32.dll");
@@ -322,7 +332,7 @@ void ApplyUser32Hook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWO
     if (!hUser || !hUserRemote)
     {
         g_log.LogDebug(L"ApplyUser32Hook -> dlls not loaded local %p remote %p", hUser, hUserRemote);
-        return;
+        return false;
     }
 
     void * HookedBlockInput = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedBlockInput") + imageBase);
@@ -379,9 +389,11 @@ void ApplyUser32Hook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWO
     }
 
     hdd->isUser32Hooked = TRUE;
+
+    return true;
 }
 
-void ApplyWin32uHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+bool ApplyWin32uHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
     hWin32u = GetModuleHandleW(L"win32u.dll");
 
@@ -419,6 +431,8 @@ void ApplyWin32uHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWO
     }
 
     hdd->isWin32uHooked = TRUE;
+
+    return true;
 }
 
 void ApplyPEBPatch(HANDLE hProcess, DWORD flags)
@@ -653,17 +667,16 @@ bool ApplyHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR
     if (!NT_SUCCESS(NtSuspendProcess(hProcess)))
         return false;
 
+    bool success = true;
     hdd->hDllImage = (HMODULE)imageBase;
 
     if (!hdd->isNtdllHooked)
     {
-        retVal = true;
-        ApplyNtdllHook(hdd, hProcess, dllMemory, imageBase);
+        success = success && ApplyNtdllHook(hdd, hProcess, dllMemory, imageBase);
     }
     if (!hdd->isKernel32Hooked)
     {
-        retVal = true;
-        ApplyKernel32Hook(hdd, hProcess, dllMemory, imageBase);
+        success = success && ApplyKernel32Hook(hdd, hProcess, dllMemory, imageBase);
     }
     if (!hdd->isUser32Hooked && !hdd->isWin32uHooked)
     {
@@ -678,5 +691,5 @@ bool ApplyHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR
 
     NtResumeProcess(hProcess);
 
-    return retVal;
+    return success;
 }

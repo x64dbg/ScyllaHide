@@ -164,7 +164,7 @@ void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory
 {
     DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
 
-    if (newProcess == false)
+    if (!newProcess)
     {
         //g_log.Log(L"Apply hooks again");
         if (StartHooking(hProcess, hdd, dllMemory, (DWORD_PTR)remoteImageBase))
@@ -186,9 +186,8 @@ void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory
         {
             FillHookDllData(hProcess, hdd);
 
-            StartHooking(hProcess, hdd, dllMemory, (DWORD_PTR)remoteImageBase);
-
-            if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), hdd, sizeof(HOOK_DLL_DATA), 0))
+            if (StartHooking(hProcess, hdd, dllMemory, (DWORD_PTR)remoteImageBase) &&
+                WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), hdd, sizeof(HOOK_DLL_DATA), 0))
             {
                 g_log.LogInfo(L"Hook Injection successful, Imagebase %p", remoteImageBase);
             }
