@@ -26,6 +26,7 @@ extern HOOK_NATIVE_CALL32 * HookNative;
 extern int countNativeHooks;
 extern bool onceNativeCallContinue;
 extern bool fatalFindSyscallIndexFailure;
+extern bool fatalAlreadyHookedFailure;
 
 BYTE originalBytes[60] = { 0 };
 BYTE changedBytes[60] = { 0 };
@@ -391,6 +392,13 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
     {
         if (ReadProcessMemory(hProcess, (void*)sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0))
         {
+            if (sysWowSpecialJmp[0] == 0xE9)
+            {
+                fatalAlreadyHookedFailure = true;
+                MessageBoxA(nullptr, "Function is already hooked!", "ScyllaHide", MB_ICONERROR);
+                return nullptr;
+            }
+
             NativeCallContinue = VirtualAllocEx(hProcess, 0, sizeof(sysWowSpecialJmp), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
             if (!WriteProcessMemory(hProcess, NativeCallContinue, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0))
             {
@@ -522,7 +530,7 @@ void * DetourCreateRemoteNative32(void * hProcess, const char* funcName, void * 
         return DetourCreateRemote(hProcess, funcName, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
     }
 
-    if (fatalFindSyscallIndexFailure)
+    if (fatalFindSyscallIndexFailure || fatalAlreadyHookedFailure)
         return nullptr; // Don't spam user with repeated error message boxes
 
     memset(changedBytes, 0x90, sizeof(changedBytes));
@@ -582,6 +590,9 @@ void * DetourCreateRemote(void * hProcess, const char* funcName, void * lpFuncOr
 
     bool success = false;
 
+    if (fatalFindSyscallIndexFailure || fatalAlreadyHookedFailure)
+        return nullptr; // Don't spam user with repeated error message boxes
+
     if (!ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), nullptr))
     {
         MessageBoxA(nullptr, "DetourCreateRemote->ReadProcessMemory failed.", "ScyllaHide", MB_ICONERROR);
@@ -589,6 +600,24 @@ void * DetourCreateRemote(void * hProcess, const char* funcName, void * lpFuncOr
     }
 
     ClearSyscallBreakpoint(funcName, originalBytes);
+
+    // Note that this check will give a false negative in the case that a function is hooked *and* has a breakpoint set on it (now cleared).
+    // We can clear the breakpoint or detect the hook, not both. (If the hook is ours, this is actually a hack because we should be properly unhooking)
+#ifdef _WIN64
+    const bool isHooked = (originalBytes[0] == 0xFF && originalBytes[1] == 0x25) ||
+        (originalBytes[0] == 0x90 && originalBytes[1] == 0xFF && originalBytes[2] == 0x25);
+#else
+    const bool isHooked = originalBytes[0] == 0xE9;
+#endif
+    if (isHooked)
+    {
+        fatalAlreadyHookedFailure = true;
+        char errorMessage[256];
+        _snprintf_s(errorMessage, sizeof(errorMessage), sizeof(errorMessage) - sizeof(char),
+            "Error: %hs is already hooked!", funcName);
+        MessageBoxA(nullptr, errorMessage, "ScyllaHide", MB_ICONERROR);
+        return nullptr;
+    }
 
     int detourLen = GetDetourLen(originalBytes, minDetourLen);
 

@@ -27,6 +27,7 @@ int countNativeHooks = 0;
 HOOK_NATIVE_CALL32 * HookNative = 0;
 bool onceNativeCallContinue = false;
 bool fatalFindSyscallIndexFailure = false;
+bool fatalAlreadyHookedFailure = false;
 
 #ifndef _WIN64
 extern BYTE KiSystemCallBackup[20];
