@@ -620,40 +620,47 @@ void RestoreWin32uHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 
 void RestoreHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 {
-    if (hdd->isNtdllHooked == TRUE)
+    const bool suspended = NT_SUCCESS(NtSuspendProcess(hProcess));
+
+    if (hdd->isNtdllHooked)
     {
         RestoreNtdllHooks(hdd, hProcess);
     }
 
-    if (hdd->isKernel32Hooked == TRUE)
+    if (hdd->isKernel32Hooked)
     {
         RestoreKernel32Hooks(hdd, hProcess);
     }
 
-    if (hdd->isUser32Hooked == TRUE)
+    if (hdd->isUser32Hooked)
     {
         RestoreUser32Hooks(hdd, hProcess);
     }
-    if (hdd->isWin32uHooked == TRUE)
+    if (hdd->isWin32uHooked)
     {
         RestoreWin32uHooks(hdd, hProcess);
     }
 
     FreeMemory(hProcess, hdd->hDllImage);
     hdd->hDllImage = 0;
+
+    if (suspended)
+        NtResumeProcess(hProcess);
 }
 
 bool ApplyHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-    bool retVal = false;
+    if (!NT_SUCCESS(NtSuspendProcess(hProcess)))
+        return false;
+
     hdd->hDllImage = (HMODULE)imageBase;
 
-    if (hdd->isNtdllHooked == FALSE)
+    if (!hdd->isNtdllHooked)
     {
         retVal = true;
         ApplyNtdllHook(hdd, hProcess, dllMemory, imageBase);
     }
-    if (hdd->isKernel32Hooked == FALSE)
+    if (!hdd->isKernel32Hooked)
     {
         retVal = true;
         ApplyKernel32Hook(hdd, hProcess, dllMemory, imageBase);
@@ -668,6 +675,8 @@ bool ApplyHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR
             ApplyUser32Hook(hdd, hProcess, dllMemory, imageBase);
         }
     }
+
+    NtResumeProcess(hProcess);
 
     return retVal;
 }
