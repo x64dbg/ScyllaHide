@@ -162,6 +162,9 @@ bool StartHooking(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, DWORD_P
 
 void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, bool newProcess)
 {
+    if (!NT_SUCCESS(NtSuspendProcess(hProcess)))
+        return;
+
     DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
 
     if (!newProcess)
@@ -201,6 +204,8 @@ void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory
             g_log.LogError(L"Failed to map image!");
         }
     }
+
+    NtResumeProcess(hProcess);
 }
 
 void startInjection(DWORD targetPid, HOOK_DLL_DATA *hdd, const WCHAR * dllPath, bool newProcess)

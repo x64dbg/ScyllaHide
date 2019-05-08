@@ -665,9 +665,6 @@ void RestoreHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 
 bool ApplyHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-    if (!NT_SUCCESS(NtSuspendProcess(hProcess)))
-        return false;
-
     bool success = true;
     hdd->hDllImage = (HMODULE)imageBase;
 
@@ -689,8 +686,6 @@ bool ApplyHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR
             ApplyUser32Hook(hdd, hProcess, dllMemory, imageBase);
         }
     }
-
-    NtResumeProcess(hProcess);
 
     return success;
 }

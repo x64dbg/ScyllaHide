@@ -135,11 +135,15 @@ static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 
 bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 {
+    if (!NT_SUCCESS(NtSuspendProcess(hProcess)))
+        return false;
+
     if (g_settings.opts().removeDebugPrivileges)
     {
         RemoveDebugPrivileges(hProcess);
     }
 
+    bool success = false;
     LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory, true);
     if (remoteImageBase)
     {
@@ -151,7 +155,7 @@ bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
             if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &g_hdd, sizeof(HOOK_DLL_DATA), 0))
             {
                 wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
-                return true;
+                success = true;
             }
             else
             {
@@ -160,7 +164,9 @@ bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
         }
     }
 
-    return false;
+    NtResumeProcess(hProcess);
+
+    return success;
 }
 
 bool startInjection(DWORD targetPid, const WCHAR * dllPath)
