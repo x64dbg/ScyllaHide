@@ -507,11 +507,6 @@ BYTE * ReadFileToMemory(const WCHAR * targetFilePath)
 
 void FillHookDllData(HANDLE hProcess, HOOK_DLL_DATA *hdd)
 {
-    hdd->hNtdll = GetModuleBaseRemote(hProcess, L"ntdll.dll");
-    hdd->hkernel32 = GetModuleBaseRemote(hProcess, L"kernel32.dll");
-    hdd->hkernelBase = GetModuleBaseRemote(hProcess, L"kernelbase.dll");
-    hdd->hUser32 = GetModuleBaseRemote(hProcess, L"user32.dll");
-
     hdd->EnablePebBeingDebugged = g_settings.opts().fixPebBeingDebugged;
     hdd->EnablePebHeapFlags = g_settings.opts().fixPebHeapFlags;
     hdd->EnablePebNtGlobalFlag = g_settings.opts().fixPebNtGlobalFlag;

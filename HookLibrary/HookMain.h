@@ -28,10 +28,6 @@ typedef struct _HOOK_NATIVE_CALL32 {
 
 typedef struct _HOOK_DLL_DATA {
     HMODULE hDllImage;
-    HMODULE hNtdll;
-    HMODULE hkernel32;
-    HMODULE hkernelBase;
-    HMODULE hUser32;
 
     BOOLEAN EnablePebBeingDebugged;
     BOOLEAN EnablePebHeapFlags;

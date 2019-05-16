@@ -494,30 +494,28 @@ NTSTATUS NTAPI HookedNtContinue(PCONTEXT ThreadContext, BOOLEAN RaiseAlert) //re
     DWORD_PTR retAddress = (DWORD_PTR)_ReturnAddress();
     if (!KiUserExceptionDispatcherAddress)
     {
-        ANSI_STRING KiUserExceptionDispatcherName = RTL_CONSTANT_ANSI_STRING("KiUserExceptionDispatcher");
-        LdrGetProcedureAddress(HookDllData.hNtdll, &KiUserExceptionDispatcherName, 0, (PVOID*)&KiUserExceptionDispatcherAddress);
+        UNICODE_STRING NtdllName = RTL_CONSTANT_STRING(L"ntdll.dll");
+        PVOID Ntdll;
+        if (NT_SUCCESS(LdrGetDllHandle(nullptr, nullptr, &NtdllName, &Ntdll)))
+        {
+            ANSI_STRING KiUserExceptionDispatcherName = RTL_CONSTANT_ANSI_STRING("KiUserExceptionDispatcher");
+            LdrGetProcedureAddress(Ntdll, &KiUserExceptionDispatcherName, 0, (PVOID*)&KiUserExceptionDispatcherAddress);
+        }
     }
 
-    if (ThreadContext)
+    if (ThreadContext != nullptr &&
+        retAddress >= KiUserExceptionDispatcherAddress && retAddress < (KiUserExceptionDispatcherAddress + 0x100))
     {
-        //char text[100];
-        //wsprintfA(text, "HookedNtContinue return %X", _ReturnAddress());
-        //MessageBoxA(0, text, "debug", 0);
-
-        if (retAddress >= KiUserExceptionDispatcherAddress && retAddress < (KiUserExceptionDispatcherAddress + 0x100))
+        int index = ThreadDebugContextFindExistingSlotIndex();
+        if (index != -1)
         {
-            int index = ThreadDebugContextFindExistingSlotIndex();
-            if (index != -1)
-            {
-                ThreadContext->Dr0 = ArrayDebugRegister[index].Dr0;
-                ThreadContext->Dr1 = ArrayDebugRegister[index].Dr1;
-                ThreadContext->Dr2 = ArrayDebugRegister[index].Dr2;
-                ThreadContext->Dr3 = ArrayDebugRegister[index].Dr3;
-                ThreadContext->Dr6 = ArrayDebugRegister[index].Dr6;
-                ThreadContext->Dr7 = ArrayDebugRegister[index].Dr7;
-                ThreadDebugContextRemoveEntry(index);
-            }
-
+            ThreadContext->Dr0 = ArrayDebugRegister[index].Dr0;
+            ThreadContext->Dr1 = ArrayDebugRegister[index].Dr1;
+            ThreadContext->Dr2 = ArrayDebugRegister[index].Dr2;
+            ThreadContext->Dr3 = ArrayDebugRegister[index].Dr3;
+            ThreadContext->Dr6 = ArrayDebugRegister[index].Dr6;
+            ThreadContext->Dr7 = ArrayDebugRegister[index].Dr7;
+            ThreadDebugContextRemoveEntry(index);
         }
     }
 
