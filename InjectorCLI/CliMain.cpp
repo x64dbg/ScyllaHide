@@ -127,8 +127,17 @@ static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
     g_hdd.dwProtectedProcessId = 0;
     g_hdd.EnableProtectProcessId = FALSE;
 
-    DWORD enableEverything = PEB_PATCH_BeingDebugged|PEB_PATCH_HeapFlags|PEB_PATCH_NtGlobalFlag|PEB_PATCH_ProcessParameters;
-    ApplyPEBPatch(hProcess, enableEverything);
+    DWORD peb_flags = 0;
+    if (g_settings.opts().fixPebBeingDebugged)
+        peb_flags |= PEB_PATCH_BeingDebugged;
+    if (g_settings.opts().fixPebHeapFlags)
+        peb_flags |= PEB_PATCH_HeapFlags;
+    if (g_settings.opts().fixPebNtGlobalFlag)
+        peb_flags |= PEB_PATCH_NtGlobalFlag;
+    if (g_settings.opts().fixPebStartupInfo)
+        peb_flags |= PEB_PATCH_ProcessParameters;
+
+    ApplyPEBPatch(hProcess, peb_flags);
 
     return ApplyHook(&g_hdd, hProcess, dllMemory, imageBase);
 }
@@ -292,61 +301,6 @@ void ReadSettings()
     g_hdd.EnablePreventThreadCreation = g_settings.opts().preventThreadCreation;
     g_hdd.EnableProtectProcessId = g_settings.opts().protectProcessId;
 }
-
-//BOOL CALLBACK MyEnumChildProc(
-//	_In_  HWND hwnd,
-//	_In_  LPARAM lParam
-//	)
-//{
-//	WCHAR windowText[1000] = { 0 };
-//	WCHAR classText[1000] = { 0 };
-//	if (GetWindowTextW(hwnd, windowText, _countof(windowText)) > 1)
-//	{
-//		GetClassName(hwnd, classText, _countof(classText));
-//
-//		wprintf(L"\t%s\n\t%s\n", windowText, classText);
-//	}
-//
-//	return TRUE;
-//}
-//
-//BOOL CALLBACK MyEnumWindowsProc(HWND hwnd,LPARAM lParam)
-//{
-//	WCHAR windowText[1000] = { 0 };
-//	WCHAR classText[1000] = { 0 };
-//	if (GetWindowTextW(hwnd, windowText, _countof(windowText)) > 1)
-//	{
-//		GetClassName(hwnd, classText, _countof(classText));
-//
-//		wprintf(L"------------------\n%s\n%s\n", windowText, classText);
-//
-//		if (wcsistr(windowText, L"x32_dbg"))
-//		{
-//
-//			EnumChildWindows(hwnd, MyEnumChildProc, 0);
-//
-//			DWORD_PTR result;
-//			SendMessageTimeoutW(hwnd, WM_SETTEXT, 0, (LPARAM)title, SMTO_ABORTIFHUNG, 1000, &result);
-//
-//			//LPVOID stringW = WriteStringInProcessW(hwnd, L"ficken");
-//			//LPVOID stringA = WriteStringInProcessA(hwnd, "ficken");
-//			//if (!SetClassLongPtrW(hwnd, (int)&((WNDCLASSEXW*)0)->lpszClassName, (LONG_PTR)stringW))
-//			//{
-//			//	printf("%d %d\n", (int)&((WNDCLASSEXW*)0)->lpszClassName,  GetLastError());
-//			//}
-//			//if (!SetClassLongPtrA(hwnd, (int)&((WNDCLASSEXA*)0)->lpszClassName, (LONG_PTR)stringA))
-//			//{
-//			//	printf("%d %d\n", (int)&((WNDCLASSEXA*)0)->lpszClassName, GetLastError());
-//			//}
-//		}
-//	}
-//
-//	return TRUE;
-//}
-//void ChangeBadWindowText()
-//{
-//	EnumWindows(MyEnumWindowsProc, 0);
-//}
 
 bool convertNumber(const wchar_t* str, unsigned long & result, int radix)
 {
