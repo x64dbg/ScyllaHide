@@ -150,12 +150,19 @@ bool StartHooking(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, DWORD_P
     hdd->EnableProtectProcessId = TRUE;
 
     DWORD peb_flags = 0;
-    if (g_settings.opts().fixPebBeingDebugged) peb_flags |= PEB_PATCH_BeingDebugged;
-    if (g_settings.opts().fixPebHeapFlags) peb_flags |= PEB_PATCH_HeapFlags;
-    if (g_settings.opts().fixPebNtGlobalFlag) peb_flags |= PEB_PATCH_NtGlobalFlag;
-    if (g_settings.opts().fixPebStartupInfo) peb_flags |= PEB_PATCH_ProcessParameters;
+    if (g_settings.opts().fixPebBeingDebugged)
+        peb_flags |= PEB_PATCH_BeingDebugged;
+    if (g_settings.opts().fixPebHeapFlags)
+        peb_flags |= PEB_PATCH_HeapFlags;
+    if (g_settings.opts().fixPebNtGlobalFlag)
+        peb_flags |= PEB_PATCH_NtGlobalFlag;
+    if (g_settings.opts().fixPebStartupInfo)
+        peb_flags |= PEB_PATCH_ProcessParameters;
 
     ApplyPEBPatch(hProcess, peb_flags);
+
+    if (dllMemory == nullptr || imageBase == 0)
+        return peb_flags != 0; // Not injecting hook DLL
 
     return ApplyHook(hdd, hProcess, dllMemory, imageBase);
 }
@@ -165,14 +172,20 @@ void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory
     if (!NT_SUCCESS(NtSuspendProcess(hProcess)))
         return;
 
+    const bool injectDll = g_settings.hook_dll_needed() || hdd->isNtdllHooked || hdd->isKernel32Hooked || hdd->isUser32Hooked || hdd->isWin32uHooked;
+
     DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
 
     if (!newProcess)
     {
         //g_log.Log(L"Apply hooks again");
-        if (StartHooking(hProcess, hdd, dllMemory, (DWORD_PTR)remoteImageBase))
+        if (injectDll && StartHooking(hProcess, hdd, dllMemory, (DWORD_PTR)remoteImageBase))
         {
             WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), hdd, sizeof(HOOK_DLL_DATA), 0);
+        }
+        else if (!injectDll)
+        {
+            StartHooking(hProcess, hdd, nullptr, 0);
         }
     }
     else
@@ -184,24 +197,32 @@ void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory
 
         RestoreHooks(hdd, hProcess);
 
-        remoteImageBase = MapModuleToProcess(hProcess, dllMemory, true);
-        if (remoteImageBase)
+        if (injectDll)
         {
-            FillHookDllData(hProcess, hdd);
-
-            if (StartHooking(hProcess, hdd, dllMemory, (DWORD_PTR)remoteImageBase) &&
-                WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), hdd, sizeof(HOOK_DLL_DATA), 0))
+            remoteImageBase = MapModuleToProcess(hProcess, dllMemory, true);
+            if (remoteImageBase)
             {
-                g_log.LogInfo(L"Hook Injection successful, Imagebase %p", remoteImageBase);
+                FillHookDllData(hProcess, hdd);
+
+                if (StartHooking(hProcess, hdd, dllMemory, (DWORD_PTR)remoteImageBase) &&
+                    WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), hdd, sizeof(HOOK_DLL_DATA), 0))
+                {
+                    g_log.LogInfo(L"Hook injection successful, image base %p", remoteImageBase);
+                }
+                else
+                {
+                    g_log.LogError(L"Failed to write hook dll data");
+                }
             }
             else
             {
-                g_log.LogError(L"Failed to write hook dll data");
+                g_log.LogError(L"Failed to map image!");
             }
         }
         else
         {
-            g_log.LogError(L"Failed to map image!");
+            if (StartHooking(hProcess, hdd, nullptr, 0))
+                g_log.LogInfo(L"PEB patch successful, hook injection not needed\n");
         }
     }
 

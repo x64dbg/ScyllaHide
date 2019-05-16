@@ -102,6 +102,37 @@ namespace scl
             return profile_;
         }
 
+        bool hook_dll_needed() const
+        {
+            return
+                profile_.hookBlockInput ||
+                profile_.hookGetLocalTime ||
+                profile_.hookGetSystemTime ||
+                profile_.hookGetTickCount ||
+                profile_.hookGetTickCount64 ||
+                profile_.hookKiUserExceptionDispatcher ||
+                profile_.hookNtClose ||
+                profile_.hookNtContinue ||
+                profile_.hookNtCreateThreadEx ||
+                profile_.hookNtGetContextThread ||
+                profile_.hookNtQueryInformationProcess ||
+                profile_.hookNtQueryObject ||
+                profile_.hookNtQueryPerformanceCounter ||
+                profile_.hookNtQuerySystemInformation ||
+                profile_.hookNtQuerySystemTime ||
+                profile_.hookNtSetContextThread ||
+                profile_.hookNtSetDebugFilterState ||
+                profile_.hookNtSetInformationThread ||
+                profile_.hookNtSetInformationProcess ||
+                profile_.hookNtUserBuildHwndList ||
+                profile_.hookNtUserFindWindowEx ||
+                profile_.hookNtUserQueryWindow ||
+                profile_.hookNtYieldExecution ||
+                profile_.hookOutputDebugStringA ||
+                profile_.preventThreadCreation ||
+                profile_.malwareRunpeUnpacker;
+        }
+
     protected:
         static void LoadProfile(const wchar_t *file, const wchar_t *name, Profile *profile);
         static bool SaveProfile(const wchar_t *file, const wchar_t *name, const Profile *profile);
@@ -110,6 +141,6 @@ namespace scl
         std::wstring ini_path_;
         std::vector<std::wstring> profile_names_;
         std::wstring profile_name_;
-        Profile profile_;
+        Profile profile_{};
     };
 }

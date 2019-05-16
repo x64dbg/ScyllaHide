@@ -139,6 +139,9 @@ static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 
     ApplyPEBPatch(hProcess, peb_flags);
 
+    if (dllMemory == nullptr || imageBase == 0)
+        return peb_flags != 0; // Not injecting hook DLL
+
     return ApplyHook(&g_hdd, hProcess, dllMemory, imageBase);
 }
 
@@ -152,25 +155,35 @@ bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
         RemoveDebugPrivileges(hProcess);
     }
 
+    const bool injectDll = g_settings.hook_dll_needed();
     bool success = false;
-    LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory, true);
-    if (remoteImageBase)
+    if (injectDll)
     {
-        FillHookDllData(hProcess, &g_hdd);
-        DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
-
-        if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
+        LPVOID remoteImageBase = MapModuleToProcess(hProcess, dllMemory, true);
+        if (remoteImageBase != nullptr)
         {
-            if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &g_hdd, sizeof(HOOK_DLL_DATA), 0))
+            FillHookDllData(hProcess, &g_hdd);
+            DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
+
+            if (StartHooking(hProcess, dllMemory, (DWORD_PTR)remoteImageBase))
             {
-                wprintf(L"Injection successful, Imagebase %p\n", remoteImageBase);
-                success = true;
-            }
-            else
-            {
-                wprintf(L"Failed to write hook dll data\n");
+                if (WriteProcessMemory(hProcess, (LPVOID)((DWORD_PTR)hookDllDataAddressRva + (DWORD_PTR)remoteImageBase), &g_hdd, sizeof(HOOK_DLL_DATA), 0))
+                {
+                    wprintf(L"Hook injection successful, image base %p\n", remoteImageBase);
+                    success = true;
+                }
+                else
+                {
+                    wprintf(L"Failed to write hook dll data\n");
+                }
             }
         }
+    }
+    else
+    {
+        if (StartHooking(hProcess, nullptr, 0))
+            wprintf(L"PEB patch successful, hook injection not needed\n");
+        success = true;
     }
 
     NtResumeProcess(hProcess);
