@@ -1,6 +1,5 @@
 #include <codecvt>
 #include <Scylla/Logger.h>
-#include <Scylla/NtApiLoader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
@@ -48,7 +47,6 @@ const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 scl::Settings g_settings;
 scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
-std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
 
 HOOK_DLL_DATA g_hdd = { 0 };
@@ -186,7 +184,7 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
         {
             if (!bHooked)
             {
-                ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &g_hdd);
+                ReadNtApiInformation(&g_hdd);
 
                 bHooked = true;
                 startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
@@ -292,7 +290,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
         wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
 
         g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
-        g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
         g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
         auto log_file = wstrPath + scl::Logger::kFileName;

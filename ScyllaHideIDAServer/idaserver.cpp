@@ -1,6 +1,5 @@
 #include <WinSock2.h>
 #include <Scylla/Logger.h>
-#include <Scylla/NtApiLoader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
@@ -19,7 +18,6 @@ const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 scl::Settings g_settings;
 scl::Logger g_log;
 std::wstring g_scyllaHideDllPath;
-std::wstring g_ntApiCollectionIniPath;
 
 HOOK_DLL_DATA g_hdd;
 
@@ -38,7 +36,6 @@ static void LogCallback(const wchar_t * msg)
 static void checkPaths(const std::wstring & wstrPath)
 {
     g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
-    g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
 
     bool missing = false;
 
@@ -161,13 +158,13 @@ void MapSettings()
     g_settings.opts().hookNtSetContextThread = idaExchange.EnableNtSetContextThreadHook;
     g_settings.opts().hookNtSetDebugFilterState = idaExchange.EnableNtSetDebugFilterStateHook;
     g_settings.opts().hookNtSetInformationThread = idaExchange.EnableNtSetInformationThreadHook;
+    g_settings.opts().hookNtUserBlockInput = idaExchange.EnableNtUserBlockInputHook;
     g_settings.opts().hookNtUserBuildHwndList = idaExchange.EnableNtUserBuildHwndListHook;
     g_settings.opts().hookNtUserFindWindowEx = idaExchange.EnableNtUserFindWindowExHook;
     g_settings.opts().hookNtUserQueryWindow = idaExchange.EnableNtUserQueryWindowHook;
     g_settings.opts().hookNtYieldExecution = idaExchange.EnableNtYieldExecutionHook;
     g_settings.opts().preventThreadCreation = idaExchange.EnablePreventThreadCreation;
     g_settings.opts().hookOutputDebugStringA = idaExchange.EnableOutputDebugStringHook;
-    g_settings.opts().hookBlockInput = idaExchange.EnableBlockInputHook;
     g_settings.opts().hookNtSetInformationProcess = idaExchange.EnableNtSetInformationProcessHook;
 
     g_settings.opts().hookGetTickCount = idaExchange.EnableGetTickCountHook;

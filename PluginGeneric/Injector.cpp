@@ -1,7 +1,7 @@
 #include "Injector.h"
 #include <Psapi.h>
 #include "Scylla/Logger.h"
-#include <Scylla/NtApiLoader.h>
+#include <Scylla/User32Loader.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/PebHider.h>
 #include <Scylla/Settings.h>
@@ -26,34 +26,28 @@ BYTE* RemoteBreakinPatch;
 BYTE code[8];
 HANDLE hDebuggee;
 
-void ReadNtApiInformation(const wchar_t *file, HOOK_DLL_DATA *hde)
+void ReadNtApiInformation(HOOK_DLL_DATA *hdd)
 {
-    scl::NtApiLoader api_loader;
-    auto res = api_loader.Load(file);
-    if (!res.first)
+    scl::User32Loader user32Loader;
+    if (!user32Loader.FindSyscalls({
+        "NtUserBlockInput",
+        "NtUserBuildHwndList",
+        "NtUserFindWindowEx",
+        "NtUserQueryWindow" }))
     {
-        g_log.LogError(L"Failed to load NT API addresses: %s", res.second.c_str());
+        g_log.LogError(L"Failed to find user32.dll/win32u.dll syscalls!");
         return;
     }
 
-    hde->NtUserQueryWindowRVA = (DWORD)api_loader.get_fun(L"user32.dll", L"NtUserQueryWindow");
-    hde->NtUserBuildHwndListRVA = (DWORD)api_loader.get_fun(L"user32.dll", L"NtUserBuildHwndList");
-    hde->NtUserFindWindowExRVA = (DWORD)api_loader.get_fun(L"user32.dll", L"NtUserFindWindowEx");
+    hdd->NtUserBlockInputVA = user32Loader.GetUserSyscallVa("NtUserBlockInput");
+    hdd->NtUserQueryWindowVA = user32Loader.GetUserSyscallVa("NtUserQueryWindow");
+    hdd->NtUserBuildHwndListVA = user32Loader.GetUserSyscallVa("NtUserBuildHwndList");
+    hdd->NtUserFindWindowExVA = user32Loader.GetUserSyscallVa("NtUserFindWindowEx");
 
-    g_log.LogInfo(L"Loaded RVA for user32.dll!NtUserQueryWindow = 0x%p", hde->NtUserQueryWindowRVA);
-    g_log.LogInfo(L"Loaded RVA for user32.dll!NtUserBuildHwndList = 0x%p", hde->NtUserBuildHwndListRVA);
-    g_log.LogInfo(L"Loaded RVA for user32.dll!NtUserFindWindowEx = 0x%p", hde->NtUserFindWindowExRVA);
-
-    if (!hde->NtUserQueryWindowRVA || !hde->NtUserBuildHwndListRVA || !hde->NtUserFindWindowExRVA)
-    {
-        g_log.LogError(
-            L"NtUser* API Addresses are missing!\n"
-            L"File: %s\n"
-            L"Section: %s\n"
-            L"Please read the documentation to fix this problem!",
-            file, api_loader.GetOsId().c_str()
-        );
-    }
+    g_log.LogInfo(L"Loaded VA for NtUserBlockInput = 0x%p", hdd->NtUserBlockInputVA);
+    g_log.LogInfo(L"Loaded VA for NtUserQueryWindow = 0x%p", hdd->NtUserQueryWindowVA);
+    g_log.LogInfo(L"Loaded VA for NtUserBuildHwndList = 0x%p", hdd->NtUserBuildHwndListVA);
+    g_log.LogInfo(L"Loaded VA for NtUserFindWindowEx = 0x%p", hdd->NtUserFindWindowExVA);
 }
 
 #ifndef _WIN64
@@ -172,7 +166,7 @@ void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory
     if (!NT_SUCCESS(NtSuspendProcess(hProcess)))
         return;
 
-    const bool injectDll = g_settings.hook_dll_needed() || hdd->isNtdllHooked || hdd->isKernel32Hooked || hdd->isUser32Hooked || hdd->isWin32uHooked;
+    const bool injectDll = g_settings.hook_dll_needed() || hdd->isNtdllHooked || hdd->isKernel32Hooked || hdd->isUserDllHooked;
 
     DWORD hookDllDataAddressRva = GetDllFunctionAddressRVA(dllMemory, "HookDllData");
 
@@ -511,7 +505,6 @@ void FillHookDllData(HANDLE hProcess, HOOK_DLL_DATA *hdd)
     hdd->EnablePebHeapFlags = g_settings.opts().fixPebHeapFlags;
     hdd->EnablePebNtGlobalFlag = g_settings.opts().fixPebNtGlobalFlag;
     hdd->EnablePebStartupInfo = g_settings.opts().fixPebStartupInfo;
-    hdd->EnableBlockInputHook = g_settings.opts().hookBlockInput;
     hdd->EnableOutputDebugStringHook = g_settings.opts().hookOutputDebugStringA;
     hdd->EnableNtSetInformationThreadHook = g_settings.opts().hookNtSetInformationThread;
     hdd->EnableNtQueryInformationProcessHook = g_settings.opts().hookNtQueryInformationProcess;
@@ -521,6 +514,7 @@ void FillHookDllData(HANDLE hProcess, HOOK_DLL_DATA *hdd)
     hdd->EnableNtCloseHook = g_settings.opts().hookNtClose;
     hdd->EnableNtCreateThreadExHook = g_settings.opts().hookNtCreateThreadEx;
     hdd->EnablePreventThreadCreation = g_settings.opts().preventThreadCreation;
+    hdd->EnableNtUserBlockInputHook = g_settings.opts().hookNtUserBlockInput;
     hdd->EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
     hdd->EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
     hdd->EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;
@@ -541,7 +535,7 @@ void FillHookDllData(HANDLE hProcess, HOOK_DLL_DATA *hdd)
 
     hdd->isKernel32Hooked = FALSE;
     hdd->isNtdllHooked = FALSE;
-    hdd->isUser32Hooked = FALSE;
+    hdd->isUserDllHooked = FALSE;
 }
 
 bool RemoveDebugPrivileges(HANDLE hProcess)

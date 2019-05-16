@@ -1,7 +1,6 @@
 LIBRARY
 EXPORTS
 HookDllData
-HookedBlockInput
 HookedGetLocalTime
 HookedGetSystemTime
 HookedGetTickCount

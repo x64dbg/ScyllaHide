@@ -40,8 +40,6 @@ HMODULE hKernel = 0;
 HMODULE hKernelbase = 0;
 HMODULE hNtdll = 0;
 HMODULE hUser = 0;
-HMODULE hUserRemote = 0;
-HMODULE hWin32u = 0;
 
 t_KiUserExceptionDispatcher _KiUserExceptionDispatcher = 0;
 t_OutputDebugStringA _OutputDebugStringA = 0;
@@ -54,7 +52,6 @@ t_NtUserBlockInput _NtUserBlockInput = 0;
 t_NtUserBuildHwndList _NtUserBuildHwndList = 0;
 t_NtUserFindWindowEx _NtUserFindWindowEx = 0;
 t_NtUserQueryWindow _NtUserQueryWindow = 0;
-t_BlockInput _BlockInput = 0;
 
 t_NtSetInformationThread _NtSetInformationThread = 0;
 t_NtQuerySystemInformation _NtQuerySystemInformation = 0;
@@ -325,113 +322,61 @@ bool ApplyKernel32Hook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, D
     return true;
 }
 
-bool ApplyUser32Hook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
+bool ApplyUserHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
-    hUser = GetModuleHandleW(L"user32.dll");
-    hUserRemote = GetModuleBaseRemote(hProcess, L"user32.dll");
-
-    if (!hUser || !hUserRemote)
+    if (GetModuleBaseRemote(hProcess, L"user32.dll") == nullptr &&
+        GetModuleBaseRemote(hProcess, L"win32u.dll") == nullptr)
     {
-        g_log.LogDebug(L"ApplyUser32Hook -> dlls not loaded local %p remote %p", hUser, hUserRemote);
-        return false;
+        hdd->isUserDllHooked = FALSE;
+        return true;
     }
-
-    void * HookedBlockInput = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedBlockInput") + imageBase);
-    void * HookedNtUserFindWindowEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserFindWindowEx") + imageBase);
-    void * HookedNtUserBuildHwndList = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBuildHwndList") + imageBase);
-    void * HookedNtUserQueryWindow = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserQueryWindow") + imageBase);
-
-    g_log.LogDebug(L"ApplyUser32Hook -> HookedBlockInput %p HookedNtUserFindWindowEx %p HookedNtUserBuildHwndList %p HookedNtUserQueryWindow %p",
-        HookedBlockInput,
-        HookedNtUserFindWindowEx,
-        HookedNtUserBuildHwndList,
-        HookedNtUserQueryWindow);
-
-    if (hdd->NtUserBuildHwndListRVA && hdd->NtUserQueryWindowRVA)
-    {
-        _NtUserQueryWindow = (t_NtUserQueryWindow)((DWORD_PTR)hUserRemote + hdd->NtUserQueryWindowRVA);
-        hdd->NtUserQueryWindow = _NtUserQueryWindow;
-    }
-    if (hdd->NtUserBuildHwndListRVA && hdd->NtUserQueryWindowRVA)
-    {
-        _NtUserBuildHwndList = (t_NtUserBuildHwndList)((DWORD_PTR)hUserRemote + hdd->NtUserBuildHwndListRVA);
-    }
-    if (hdd->NtUserFindWindowExRVA)
-    {
-        _NtUserFindWindowEx = (t_NtUserFindWindowEx)((DWORD_PTR)hUserRemote + hdd->NtUserFindWindowExRVA);
-    }
-    _BlockInput = (t_BlockInput)GetProcAddress(hUser, "BlockInput");
-
-    g_log.LogDebug(L"ApplyUser32Hook -> _BlockInput %p _NtUserFindWindowEx %p _NtUserBuildHwndList %p _NtUserQueryWindow %p",
-        _BlockInput,
-        _NtUserFindWindowEx,
-        _NtUserBuildHwndList,
-        _NtUserQueryWindow);
-
-    if (hdd->EnableBlockInputHook == TRUE)
-    {
-        g_log.LogDebug(L"ApplyUser32Hook -> Hooking BlockInput");
-        HOOK_NATIVE(BlockInput);
-    }
-    if (hdd->EnableNtUserFindWindowExHook == TRUE && _NtUserFindWindowEx != 0)
-    {
-        g_log.LogDebug(L"ApplyUser32Hook -> Hooking NtUserFindWindowEx");
-        HOOK_NATIVE(NtUserFindWindowEx);
-    }
-    if (hdd->EnableNtUserBuildHwndListHook == TRUE && _NtUserBuildHwndList != 0)
-    {
-        g_log.LogDebug(L"ApplyUser32Hook -> Hooking NtUserBuildHwndList");
-        HOOK_NATIVE(NtUserBuildHwndList);
-    }
-    if (hdd->EnableNtUserQueryWindowHook == TRUE && _NtUserQueryWindow != 0)
-    {
-        g_log.LogDebug(L"ApplyUser32Hook -> Hooking NtUserQueryWindow");
-        HOOK_NATIVE(NtUserQueryWindow);
-    }
-
-    hdd->isUser32Hooked = TRUE;
-
-    return true;
-}
-
-bool ApplyWin32uHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
-{
-    hWin32u = GetModuleHandleW(L"win32u.dll");
 
     void * HookedNtUserBlockInput = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBlockInput") + imageBase);
     void * HookedNtUserFindWindowEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserFindWindowEx") + imageBase);
     void * HookedNtUserBuildHwndList = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBuildHwndList") + imageBase);
     void * HookedNtUserQueryWindow = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserQueryWindow") + imageBase);
 
-    _NtUserBlockInput = (t_NtUserBlockInput)GetProcAddress(hWin32u, "NtUserBlockInput");
-    _NtUserFindWindowEx = (t_NtUserFindWindowEx)GetProcAddress(hWin32u, "NtUserFindWindowEx");
-    _NtUserBuildHwndList = (t_NtUserBuildHwndList)GetProcAddress(hWin32u, "NtUserBuildHwndList");
-    _NtUserQueryWindow = (t_NtUserQueryWindow)GetProcAddress(hWin32u, "NtUserQueryWindow");
+    g_log.LogDebug(L"ApplyUserHook -> HookedNtUserBlockInput %p HookedNtUserFindWindowEx %p HookedNtUserBuildHwndList %p HookedNtUserQueryWindow %p",
+        HookedNtUserBlockInput,
+        HookedNtUserFindWindowEx,
+        HookedNtUserBuildHwndList,
+        HookedNtUserQueryWindow);
 
-    g_log.LogDebug(L"ApplyWin32uHook -> _NtUserBlockInput %p _NtUserFindWindowEx %p _NtUserBuildHwndList %p _NtUserQueryWindow %p",
+    _NtUserBlockInput = (t_NtUserBlockInput)hdd->NtUserBlockInputVA;
+    _NtUserFindWindowEx = (t_NtUserFindWindowEx)hdd->NtUserFindWindowExVA;
+    _NtUserBuildHwndList = (t_NtUserBuildHwndList)hdd->NtUserBuildHwndListVA;
+    _NtUserQueryWindow = (t_NtUserQueryWindow)hdd->NtUserQueryWindowVA;
+
+    hdd->NtUserQueryWindow = _NtUserQueryWindow;
+
+    g_log.LogDebug(L"ApplyUserHook -> _NtUserBlockInput %p _NtUserFindWindowEx %p _NtUserBuildHwndList %p _NtUserQueryWindow %p",
         _NtUserBlockInput,
         _NtUserFindWindowEx,
         _NtUserBuildHwndList,
         _NtUserQueryWindow);
 
-    if (hdd->EnableBlockInputHook) {
-        g_log.LogDebug(L"ApplyWin32uHook -> Hooking NtUserBlockInput");
+    if (hdd->EnableNtUserBlockInputHook)
+    {
+        g_log.LogDebug(L"ApplyUserHook -> Hooking NtUserBlockInput");
         HOOK_NATIVE(NtUserBlockInput);
     }
-    if (hdd->EnableNtUserFindWindowExHook) {
-        g_log.LogDebug(L"ApplyWin32uHook -> Hooking NtUserFindWindowEx");
+    if (hdd->EnableNtUserFindWindowExHook)
+    {
+        g_log.LogDebug(L"ApplyUserHook -> Hooking NtUserFindWindowEx");
         HOOK_NATIVE(NtUserFindWindowEx);
     }
-    if (hdd->EnableNtUserBuildHwndListHook) {
-        g_log.LogDebug(L"ApplyWin32uHook -> Hooking NtUserBuildHwndList");
+    if (hdd->EnableNtUserBuildHwndListHook)
+    {
+        g_log.LogDebug(L"ApplyUserHook -> Hooking NtUserBuildHwndList");
         HOOK_NATIVE(NtUserBuildHwndList);
     }
-    if (hdd->EnableNtUserQueryWindowHook) {
-        g_log.LogDebug(L"ApplyWin32uHook -> Hooking NtUserQueryWindow");
+    if (hdd->EnableNtUserQueryWindowHook)
+    {
+        g_log.LogDebug(L"ApplyUserHook -> Hooking NtUserQueryWindow");
         HOOK_NATIVE(NtUserQueryWindow);
     }
 
-    hdd->isWin32uHooked = TRUE;
+    hdd->isUserDllHooked = TRUE;
 
     return true;
 }
@@ -598,26 +543,9 @@ void RestoreKernel32Hooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
     hdd->isKernel32Hooked = FALSE;
 }
 
-void RestoreUser32Hooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
+void RestoreUserHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 {
 
-#ifdef _WIN64
-    RESTORE_JMP(BlockInput);
-    RESTORE_JMP(NtUserFindWindowEx);
-    RESTORE_JMP(NtUserBuildHwndList);
-    RESTORE_JMP(NtUserQueryWindow);
-#endif
-
-    FREE_HOOK(BlockInput);
-    FREE_HOOK(NtUserFindWindowEx);
-    FREE_HOOK(NtUserBuildHwndList);
-    FREE_HOOK(NtUserQueryWindow);
-
-    hdd->isUser32Hooked = FALSE;
-}
-
-void RestoreWin32uHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
-{
 #ifdef _WIN64
     RESTORE_JMP(NtUserBlockInput);
     RESTORE_JMP(NtUserFindWindowEx);
@@ -630,7 +558,7 @@ void RestoreWin32uHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
     FREE_HOOK(NtUserBuildHwndList);
     FREE_HOOK(NtUserQueryWindow);
 
-    hdd->isWin32uHooked = FALSE;
+    hdd->isUserDllHooked = FALSE;
 }
 
 void RestoreHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
@@ -647,13 +575,9 @@ void RestoreHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
         RestoreKernel32Hooks(hdd, hProcess);
     }
 
-    if (hdd->isUser32Hooked)
+    if (hdd->isUserDllHooked)
     {
-        RestoreUser32Hooks(hdd, hProcess);
-    }
-    if (hdd->isWin32uHooked)
-    {
-        RestoreWin32uHooks(hdd, hProcess);
+        RestoreUserHooks(hdd, hProcess);
     }
 
     FreeMemory(hProcess, hdd->hDllImage);
@@ -676,15 +600,9 @@ bool ApplyHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR
     {
         success = success && ApplyKernel32Hook(hdd, hProcess, dllMemory, imageBase);
     }
-    if (!hdd->isUser32Hooked && !hdd->isWin32uHooked)
+    if (!hdd->isUserDllHooked)
     {
-        if (GetModuleHandleW(L"win32u.dll"))
-        {
-            ApplyWin32uHook(hdd, hProcess, dllMemory, imageBase);
-        }
-        else {
-            ApplyUser32Hook(hdd, hProcess, dllMemory, imageBase);
-        }
+        success = success && ApplyUserHook(hdd, hProcess, dllMemory, imageBase);
     }
 
     return success;

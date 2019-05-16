@@ -778,7 +778,7 @@ NTSTATUS NTAPI HookedNtQueryPerformanceCounter(PLARGE_INTEGER PerformanceCounter
 
 static BOOL isBlocked = FALSE;
 
-BOOL WINAPI HookedBlockInput(BOOL fBlockIt)
+BOOL NTAPI HookedNtUserBlockInput(BOOL fBlockIt)
 {
     if (isBlocked == FALSE && fBlockIt != FALSE)
     {
@@ -792,11 +792,6 @@ BOOL WINAPI HookedBlockInput(BOOL fBlockIt)
     }
 
     return FALSE;
-}
-
-NTSTATUS NTAPI HookedNtUserBlockInput(BOOL fBlockIt)
-{
-    return (NTSTATUS)HookedBlockInput(fBlockIt);
 }
 
 //GetLastError() function might not change if a  debugger is present (it has never been the case that it is always set to zero).

@@ -44,7 +44,6 @@ bool SendEventToServer(unsigned long notif_code, unsigned long ProcessId)
     idaExchange.EnablePebHeapFlags = g_settings.opts().fixPebHeapFlags;
     idaExchange.EnablePebNtGlobalFlag = g_settings.opts().fixPebNtGlobalFlag;
     idaExchange.EnablePebStartupInfo = g_settings.opts().fixPebStartupInfo;
-    idaExchange.EnableBlockInputHook = g_settings.opts().hookBlockInput;
     idaExchange.EnableOutputDebugStringHook = g_settings.opts().hookOutputDebugStringA;
     idaExchange.EnableNtSetInformationThreadHook = g_settings.opts().hookNtSetInformationThread;
     idaExchange.EnableNtQueryInformationProcessHook = g_settings.opts().hookNtQueryInformationProcess;
@@ -69,6 +68,7 @@ bool SendEventToServer(unsigned long notif_code, unsigned long ProcessId)
     idaExchange.EnableNtQuerySystemTimeHook = g_settings.opts().hookNtQuerySystemTime;
     idaExchange.EnableNtQueryPerformanceCounterHook = g_settings.opts().hookNtQueryPerformanceCounter;
 
+    idaExchange.EnableNtUserBlockInputHook = g_settings.opts().hookNtUserBlockInput;
     idaExchange.EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
     idaExchange.EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
     idaExchange.EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;

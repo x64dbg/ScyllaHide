@@ -97,7 +97,6 @@ typedef struct _IDA_SERVER_EXCHANGE
 	unsigned char EnablePebNtGlobalFlag;
 	unsigned char EnablePebStartupInfo;
 
-	unsigned char EnableBlockInputHook;
 	unsigned char EnableOutputDebugStringHook;
 
 	unsigned char EnableNtSetInformationThreadHook;
@@ -118,6 +117,7 @@ typedef struct _IDA_SERVER_EXCHANGE
 	unsigned char EnableNtContinueHook;
 	unsigned char EnableKiUserExceptionDispatcherHook;
 
+	unsigned char EnableNtUserBlockInputHook;
 	unsigned char EnableNtUserQueryWindowHook;
 	unsigned char EnableNtUserBuildHwndListHook;
 	unsigned char EnableNtUserFindWindowExHook;

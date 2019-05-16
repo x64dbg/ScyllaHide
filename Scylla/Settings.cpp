@@ -63,7 +63,6 @@ void scl::Settings::LoadProfile(const wchar_t *file, const wchar_t *name, Profil
     profile->dllStealth = IniLoadNum(file, name, L"DLLStealth", 0);
     profile->dllUnload = IniLoadNum(file, name, L"DLLUnload", 0);
 
-    profile->hookBlockInput = IniLoadNum(file, name, L"BlockInputHook", 1);
     profile->hookGetLocalTime = IniLoadNum(file, name, L"GetLocalTimeHook", 1);
     profile->hookGetSystemTime = IniLoadNum(file, name, L"GetSystemTimeHook", 1);
     profile->hookGetTickCount = IniLoadNum(file, name, L"GetTickCountHook", 1);
@@ -82,6 +81,7 @@ void scl::Settings::LoadProfile(const wchar_t *file, const wchar_t *name, Profil
     profile->hookNtSetDebugFilterState = IniLoadNum(file, name, L"NtSetDebugFilterStateHook", 1);
     profile->hookNtSetInformationThread = IniLoadNum(file, name, L"NtSetInformationThreadHook", 1);
     profile->hookNtSetInformationProcess = IniLoadNum(file, name, L"NtSetInformationProcessHook", 1);
+    profile->hookNtUserBlockInput = IniLoadNum(file, name, L"NtUserBlockInputHook", 1);
     profile->hookNtUserBuildHwndList = IniLoadNum(file, name, L"NtUserBuildHwndListHook", 1);
     profile->hookNtUserFindWindowEx = IniLoadNum(file, name, L"NtUserFindWindowExHook", 1);
     profile->hookNtUserQueryWindow = IniLoadNum(file, name, L"NtUserQueryWindowHook", 1);
@@ -138,7 +138,6 @@ bool scl::Settings::SaveProfile(const wchar_t *file, const wchar_t *name, const 
     success &= IniSaveNum(file, name, L"DLLStealth", profile->dllStealth);
     success &= IniSaveNum(file, name, L"DLLUnload", profile->dllUnload);
 
-    success &= IniSaveNum(file, name, L"BlockInputHook", profile->hookBlockInput);
     success &= IniSaveNum(file, name, L"GetLocalTimeHook", profile->hookGetLocalTime);
     success &= IniSaveNum(file, name, L"GetSystemTimeHook", profile->hookGetSystemTime);
     success &= IniSaveNum(file, name, L"GetTickCount64Hook", profile->hookGetTickCount64);
@@ -157,6 +156,7 @@ bool scl::Settings::SaveProfile(const wchar_t *file, const wchar_t *name, const 
     success &= IniSaveNum(file, name, L"NtSetDebugFilterStateHook", profile->hookNtSetDebugFilterState);
     success &= IniSaveNum(file, name, L"NtSetInformationThreadHook", profile->hookNtSetInformationThread);
     success &= IniSaveNum(file, name, L"NtSetInformationProcessHook", profile->hookNtSetInformationProcess);
+    success &= IniSaveNum(file, name, L"NtUserBlockInputHook", profile->hookNtUserBlockInput);
     success &= IniSaveNum(file, name, L"NtUserBuildHwndListHook", profile->hookNtUserBuildHwndList);
     success &= IniSaveNum(file, name, L"NtUserFindWindowExHook", profile->hookNtUserFindWindowEx);
     success &= IniSaveNum(file, name, L"NtUserQueryWindowHook", profile->hookNtUserQueryWindow);

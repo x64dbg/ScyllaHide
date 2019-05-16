@@ -20,26 +20,27 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="NtApiLoader.cpp" />
     <ClCompile Include="PebHider.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="OsInfo.cpp" />
     <ClCompile Include="Peb.cpp" />
+    <ClCompile Include="User32Loader.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="Version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dbghelp.h" />
     <ClInclude Include="Logger.h" />
-    <ClInclude Include="NtApiLoader.h" />
     <ClInclude Include="NtApiShim.h" />
     <ClInclude Include="PebHider.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="OsInfo.h" />
     <ClInclude Include="Peb.h" />
+    <ClInclude Include="User32Loader.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="Version.h" />
+    <ClInclude Include="Win32kSyscalls.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

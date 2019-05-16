@@ -14,7 +14,6 @@ namespace scl
             BOOL dllNormal;
             BOOL dllStealth;
             BOOL dllUnload;
-            BOOL hookBlockInput;
             BOOL hookGetLocalTime;
             BOOL hookGetSystemTime;
             BOOL hookGetTickCount;
@@ -33,6 +32,7 @@ namespace scl
             BOOL hookNtSetDebugFilterState;
             BOOL hookNtSetInformationThread;
             BOOL hookNtSetInformationProcess;
+            BOOL hookNtUserBlockInput;
             BOOL hookNtUserBuildHwndList;
             BOOL hookNtUserFindWindowEx;
             BOOL hookNtUserQueryWindow;
@@ -105,7 +105,6 @@ namespace scl
         bool hook_dll_needed() const
         {
             return
-                profile_.hookBlockInput ||
                 profile_.hookGetLocalTime ||
                 profile_.hookGetSystemTime ||
                 profile_.hookGetTickCount ||
@@ -124,6 +123,7 @@ namespace scl
                 profile_.hookNtSetDebugFilterState ||
                 profile_.hookNtSetInformationThread ||
                 profile_.hookNtSetInformationProcess ||
+                profile_.hookNtUserBlockInput ||
                 profile_.hookNtUserBuildHwndList ||
                 profile_.hookNtUserFindWindowEx ||
                 profile_.hookNtUserQueryWindow ||

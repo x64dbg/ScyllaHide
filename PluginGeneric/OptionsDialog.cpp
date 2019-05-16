@@ -106,7 +106,6 @@ static void UpdateOptions(HWND hWnd, const scl::Settings *settings)
     CheckDlgButton(hWnd, IDC_NTQUERYOBJECT, opts->hookNtQueryObject);
     CheckDlgButton(hWnd, IDC_NTYIELDEXECUTION, opts->hookNtYieldExecution);
     CheckDlgButton(hWnd, IDC_OUTPUTDEBUGSTRINGA, opts->hookOutputDebugStringA);
-    CheckDlgButton(hWnd, IDC_BLOCKINPUT, opts->hookBlockInput);
     CheckDlgButton(hWnd, IDC_NTGETCONTEXTTHREAD, opts->hookNtGetContextThread);
     CheckDlgButton(hWnd, IDC_NTSETCONTEXTTHREAD, opts->hookNtSetContextThread);
     CheckDlgButton(hWnd, IDC_NTCONTINUE, opts->hookNtContinue);
@@ -115,6 +114,7 @@ static void UpdateOptions(HWND hWnd, const scl::Settings *settings)
     BOOL drx_state = opts->hookNtGetContextThread && opts->hookNtSetContextThread && opts->hookNtContinue && opts->hookKiUserExceptionDispatcher;
     CheckDlgButton(hWnd, IDC_PROTECTDRX, drx_state);
 
+    CheckDlgButton(hWnd, IDC_NTUSERBLOCKINPUT, opts->hookNtUserBlockInput);
     CheckDlgButton(hWnd, IDC_NTUSERFINDWINDOWEX, opts->hookNtUserFindWindowEx);
     CheckDlgButton(hWnd, IDC_NTUSERBUILDHWNDLIST, opts->hookNtUserBuildHwndList);
     CheckDlgButton(hWnd, IDC_NTUSERQUERYWINDOW, opts->hookNtUserQueryWindow);
@@ -198,12 +198,12 @@ void SaveOptions(HWND hWnd, scl::Settings *settings)
     opts->hookNtQueryObject = (IsDlgButtonChecked(hWnd, IDC_NTQUERYOBJECT) == BST_CHECKED);
     opts->hookNtYieldExecution = (IsDlgButtonChecked(hWnd, IDC_NTYIELDEXECUTION) == BST_CHECKED);
     opts->hookOutputDebugStringA = (IsDlgButtonChecked(hWnd, IDC_OUTPUTDEBUGSTRINGA) == BST_CHECKED);
-    opts->hookBlockInput = (IsDlgButtonChecked(hWnd, IDC_BLOCKINPUT) == BST_CHECKED);
     opts->hookNtGetContextThread = (IsDlgButtonChecked(hWnd, IDC_NTGETCONTEXTTHREAD) == BST_CHECKED);
     opts->hookNtSetContextThread = (IsDlgButtonChecked(hWnd, IDC_NTSETCONTEXTTHREAD) == BST_CHECKED);
     opts->hookNtContinue = (IsDlgButtonChecked(hWnd, IDC_NTCONTINUE) == BST_CHECKED);
     opts->hookKiUserExceptionDispatcher = (IsDlgButtonChecked(hWnd, IDC_KIUED) == BST_CHECKED);
     opts->hookNtUserFindWindowEx = (IsDlgButtonChecked(hWnd, IDC_NTUSERFINDWINDOWEX) == BST_CHECKED);
+    opts->hookNtUserBlockInput = (IsDlgButtonChecked(hWnd, IDC_NTUSERBLOCKINPUT) == BST_CHECKED);
     opts->hookNtUserBuildHwndList = (IsDlgButtonChecked(hWnd, IDC_NTUSERBUILDHWNDLIST) == BST_CHECKED);
     opts->hookNtUserQueryWindow = (IsDlgButtonChecked(hWnd, IDC_NTUSERQUERYWINDOW) == BST_CHECKED);
     opts->hookNtSetDebugFilterState = (IsDlgButtonChecked(hWnd, IDC_NTSETDEBUGFILTERSTATE) == BST_CHECKED);
@@ -337,7 +337,7 @@ HWND CreateTooltips(HWND hDlg)
             L"antidebug method, so you will not need this option very often."
         },
         {
-            IDC_BLOCKINPUT,
+            IDC_NTUSERBLOCKINPUT,
             L"Very effective anti-debug method. This is used e.g. in Yoda's Protector.\r\n"
             L"\"Blocks keyboard and mouse input events from reaching applications.\""
         },

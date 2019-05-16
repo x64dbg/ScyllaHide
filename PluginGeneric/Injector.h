@@ -12,7 +12,7 @@
 	? ((PIMAGE_THUNK_DATA64)(Ptr))->Val \
 	: ((PIMAGE_THUNK_DATA32)(Ptr))->Val)
 
-void ReadNtApiInformation(const wchar_t *file, HOOK_DLL_DATA *hde);
+void ReadNtApiInformation(HOOK_DLL_DATA *hdd);
 
 void InstallAntiAttachHook();
 void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, bool newProcess);

@@ -4,20 +4,17 @@
 #include <cstdio>
 #include <cstring>
 #include <Scylla/Logger.h>
-#include <Scylla/NtApiLoader.h>
 #include <Scylla/PebHider.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Util.h>
 
 #include "DynamicMapping.h"
 #include "..\HookLibrary\HookMain.h"
-#include "RemoteHook.h"
 #include "ApplyHooking.h"
 #include "../PluginGeneric/Injector.h"
 
 scl::Settings g_settings;
 scl::Logger g_log;
-std::wstring g_ntApiCollectionIniPath;
 std::wstring g_scyllaHideIniPath;
 
 HOOK_DLL_DATA g_hdd;
@@ -54,7 +51,6 @@ int wmain(int argc, wchar_t* argv[])
     auto wstrPath = scl::GetModuleFileNameW();
     wstrPath.resize(wstrPath.find_last_of(L'\\') + 1);
 
-    g_ntApiCollectionIniPath = wstrPath + scl::NtApiLoader::kFileName;
     g_scyllaHideIniPath = wstrPath + scl::Settings::kFileName;
 
     auto log_file = wstrPath + scl::Logger::kFileName;
@@ -62,7 +58,7 @@ int wmain(int argc, wchar_t* argv[])
     g_log.SetLogCb(scl::Logger::Info, LogCallback);
     g_log.SetLogCb(scl::Logger::Error, LogCallback);
 
-    ReadNtApiInformation(g_ntApiCollectionIniPath.c_str(), &g_hdd);
+    ReadNtApiInformation(&g_hdd);
     SetDebugPrivileges();
     //ChangeBadWindowText();
     g_settings.Load(g_scyllaHideIniPath.c_str());
@@ -284,7 +280,6 @@ DWORD GetProcessIdByName(const WCHAR * processName)
 
 void ReadSettings()
 {
-    g_hdd.EnableBlockInputHook = g_settings.opts().hookBlockInput;
     g_hdd.EnableGetLocalTimeHook = g_settings.opts().hookGetLocalTime;
     g_hdd.EnableGetSystemTimeHook = g_settings.opts().hookGetSystemTime;
     g_hdd.EnableGetTickCount64Hook = g_settings.opts().hookGetTickCount64;
@@ -302,6 +297,7 @@ void ReadSettings()
     g_hdd.EnableNtSetContextThreadHook = g_settings.opts().hookNtSetContextThread;
     g_hdd.EnableNtSetDebugFilterStateHook = g_settings.opts().hookNtSetDebugFilterState;
     g_hdd.EnableNtSetInformationThreadHook = g_settings.opts().hookNtSetInformationThread;
+    g_hdd.EnableNtUserBlockInputHook = g_settings.opts().hookNtUserBlockInput;
     g_hdd.EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
     g_hdd.EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
     g_hdd.EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;
