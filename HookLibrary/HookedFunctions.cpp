@@ -840,7 +840,7 @@ NTSTATUS NTAPI HookedNtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLE
     return HasDebugPrivileges(NtCurrentProcess) ? STATUS_SUCCESS : STATUS_ACCESS_DENIED;
 }
 
-void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
+void FilterHwndList(HWND * phwndFirst, PULONG pcHwndNeeded)
 {
     for (UINT i = 0; i < *pcHwndNeeded; i++)
     {
@@ -866,13 +866,25 @@ void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
     }
 }
 
-NTSTATUS NTAPI HookedNtUserBuildHwndList(HDESK hdesk, HWND hwndNext, BOOL fEnumChildren, DWORD idThread, UINT cHwndMax, HWND *phwndFirst, PUINT pcHwndNeeded)
+NTSTATUS NTAPI HookedNtUserBuildHwndList(HDESK hDesktop, HWND hwndParent, BOOLEAN bChildren, ULONG dwThreadId, ULONG lParam, HWND* pWnd, PULONG pBufSize)
 {
-    NTSTATUS ntStat = HookDllData.dNtUserBuildHwndList(hdesk, hwndNext, fEnumChildren, idThread, cHwndMax, phwndFirst, pcHwndNeeded);
+    NTSTATUS ntStat = HookDllData.dNtUserBuildHwndList(hDesktop, hwndParent, bChildren, dwThreadId, lParam, pWnd, pBufSize);
 
-    if (NT_SUCCESS(ntStat) && pcHwndNeeded != 0 && phwndFirst != 0)
+    if (NT_SUCCESS(ntStat) && pWnd != nullptr && pBufSize != nullptr)
     {
-        FilterHwndList(phwndFirst, pcHwndNeeded);
+        FilterHwndList(pWnd, pBufSize);
+    }
+
+    return ntStat;
+}
+
+NTSTATUS NTAPI HookedNtUserBuildHwndList_Eight(HDESK hDesktop, HWND hwndParent, BOOLEAN bChildren, BOOLEAN bUnknownFlag, ULONG dwThreadId, ULONG lParam, HWND* pWnd, PULONG pBufSize)
+{
+    NTSTATUS ntStat = ((t_NtUserBuildHwndList_Eight)HookDllData.dNtUserBuildHwndList)(hDesktop, hwndParent, bChildren, bUnknownFlag, dwThreadId, lParam, pWnd, pBufSize);
+
+    if (NT_SUCCESS(ntStat) && pWnd != nullptr && pBufSize != nullptr)
+    {
+        FilterHwndList(pWnd, pBufSize);
     }
 
     return ntStat;

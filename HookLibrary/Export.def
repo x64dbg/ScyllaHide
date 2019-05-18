@@ -24,6 +24,7 @@ HookedNtSetInformationProcess
 HookedNtSetInformationThread
 HookedNtUserBlockInput
 HookedNtUserBuildHwndList
+HookedNtUserBuildHwndList_Eight
 HookedNtUserFindWindowEx
 HookedNtUserQueryWindow
 HookedNtYieldExecution

@@ -4544,13 +4544,28 @@ typedef
 NTSTATUS
 (NTAPI
 *t_NtUserBuildHwndList)(
-	_In_ HDESK hdesk,
-	_In_opt_ HWND hwndNext,
-	_In_ BOOL fEnumChildren,
-	_In_opt_ DWORD idThread,
-	_In_opt_ UINT cHwndMax,
-	_Out_ HWND *phwndFirst,
-	_In_ PUINT pcHwndNeeded
+	_In_ HDESK hDesktop,
+	_In_opt_ HWND hwndParent,
+	_In_ BOOLEAN bChildren,
+	_In_opt_ ULONG dwThreadId,
+	_In_opt_ ULONG lParam,
+	_Out_ HWND* pWnd,
+	_Inout_ PULONG pBufSize
+	);
+
+// EnumWindows (Windows 8+)
+typedef
+NTSTATUS
+(NTAPI
+*t_NtUserBuildHwndList_Eight)(
+	_In_ HDESK hDesktop,
+	_In_opt_ HWND hwndParent,
+	_In_ BOOLEAN bChildren,
+	_In_ BOOLEAN bUnknownFlag,
+	_In_opt_ ULONG dwThreadId,
+	_In_opt_ ULONG lParam,
+	_Out_ HWND* pWnd,
+	_Inout_ PULONG pBufSize
 	);
 
 typedef enum _WINDOWINFOCLASS

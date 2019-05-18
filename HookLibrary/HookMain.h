@@ -137,7 +137,7 @@ typedef struct _HOOK_DLL_DATA {
     DWORD NtUserBlockInputBackupSize;
     t_NtUserFindWindowEx dNtUserFindWindowEx;
     DWORD NtUserFindWindowExBackupSize;
-    t_NtUserBuildHwndList dNtUserBuildHwndList;
+    t_NtUserBuildHwndList /*or t_NtUserBuildHwndList_Eight*/ dNtUserBuildHwndList;
     DWORD NtUserBuildHwndListBackupSize;
     t_NtUserQueryWindow dNtUserQueryWindow;
     DWORD NtUserQueryWindowBackupSize;
