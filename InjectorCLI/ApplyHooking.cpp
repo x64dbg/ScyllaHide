@@ -253,10 +253,6 @@ bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
 
     hdd->isNtdllHooked = TRUE;
 
-#ifndef _WIN64
-    hdd->NativeCallContinue = NativeCallContinue;
-#endif
-
     return true;
 }
 
@@ -613,6 +609,10 @@ bool ApplyHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR
     {
         success = success && ApplyUserHook(hdd, hProcess, dllMemory, imageBase);
     }
+
+#ifndef _WIN64
+    hdd->NativeCallContinue = NativeCallContinue;
+#endif
 
     return success;
 }
