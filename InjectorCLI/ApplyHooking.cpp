@@ -348,6 +348,8 @@ bool ApplyUserHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD
     _NtUserQueryWindow = (t_NtUserQueryWindow)hdd->NtUserQueryWindowVA;
 
     hdd->NtUserQueryWindow = _NtUserQueryWindow;
+    hdd->NtUserGetClassName = (t_NtUserGetClassName)hdd->NtUserGetClassNameVA;
+    hdd->NtUserInternalGetWindowText = (t_NtUserInternalGetWindowText)hdd->NtUserInternalGetWindowTextVA;
 
     g_log.LogDebug(L"ApplyUserHook -> _NtUserBlockInput %p _NtUserFindWindowEx %p _NtUserBuildHwndList %p _NtUserQueryWindow %p",
         _NtUserBlockInput,

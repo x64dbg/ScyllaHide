@@ -842,39 +842,25 @@ NTSTATUS NTAPI HookedNtSetDebugFilterState(ULONG ComponentId, ULONG Level, BOOLE
 
 void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded)
 {
-    if (!HookDllData.EnableProtectProcessId)
-        return;
-
     for (UINT i = 0; i < *pcHwndNeeded; i++)
     {
-        if (phwndFirst[i] != nullptr)
+        if (phwndFirst[i] != nullptr && IsWindowBad(phwndFirst[i]))
         {
-            //GetWindowThreadProcessId(phwndFirst[i], &dwProcessId);
-            ULONG dwProcessId = HookDllData.dNtUserQueryWindow != nullptr
-                ? HandleToULong(HookDllData.dNtUserQueryWindow(phwndFirst[i], WindowProcess))
-                : HandleToULong(HookDllData.NtUserQueryWindow(phwndFirst[i], WindowProcess));
-
-            if (dwProcessId == HookDllData.dwProtectedProcessId)
+            if (i == 0)
             {
-                if (i == 0)
+                // Find the first HWND that belongs to a different process (i + 1, i + 2... may still be ours)
+                for (UINT j = i + 1; j < *pcHwndNeeded; j++)
                 {
-                    // Find the first HWND that belongs to a different process (i + 1, i + 2... may still be ours)
-                    for (UINT j = i + 1; j < *pcHwndNeeded; j++)
+                    if (phwndFirst[j] != nullptr && !IsWindowBad(phwndFirst[j]))
                     {
-                        dwProcessId = HookDllData.dNtUserQueryWindow != nullptr
-                            ? HandleToULong(HookDllData.dNtUserQueryWindow(phwndFirst[j], WindowProcess))
-                            : HandleToULong(HookDllData.NtUserQueryWindow(phwndFirst[j], WindowProcess));
-                        if (dwProcessId != HookDllData.dwProtectedProcessId)
-                        {
-                            phwndFirst[i] = phwndFirst[j];
-                            break;
-                        }
+                        phwndFirst[i] = phwndFirst[j];
+                        break;
                     }
                 }
-                else
-                {
-                    phwndFirst[i] = phwndFirst[i - 1]; //just override with previous
-                }
+            }
+            else
+            {
+                phwndFirst[i] = phwndFirst[i - 1]; //just override with previous
             }
         }
     }

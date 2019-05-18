@@ -114,6 +114,30 @@ bool IsWindowNameBad(PUNICODE_STRING windowName)
 	return false;
 }
 
+bool IsWindowBad(HWND hWnd)
+{
+	if (HookDllData.EnableProtectProcessId)
+	{
+		const ULONG Pid = HookDllData.dNtUserQueryWindow != nullptr
+			? HandleToULong(HookDllData.dNtUserQueryWindow(hWnd, WindowProcess))
+			: HandleToULong(HookDllData.NtUserQueryWindow(hWnd, WindowProcess));
+		if (Pid == HookDllData.dwProtectedProcessId)
+			return true;
+	}
+
+	DECLARE_UNICODE_STRING_SIZE(ClassName, 256);
+	DECLARE_UNICODE_STRING_SIZE(WindowText, 512);
+
+	ClassName.Length = (USHORT)HookDllData.NtUserGetClassName(hWnd, FALSE, &ClassName) * sizeof(WCHAR);
+	ClassName.Buffer[ClassName.Length / sizeof(WCHAR)] = UNICODE_NULL;
+	if (IsWindowClassNameBad(&ClassName))
+		return true;
+
+	WindowText.Length = (USHORT)HookDllData.NtUserInternalGetWindowText(hWnd, WindowText.Buffer, (INT)(WindowText.MaximumLength / sizeof(WCHAR))) * sizeof(WCHAR);
+	WindowText.Buffer[WindowText.Length / sizeof(WCHAR)] = UNICODE_NULL;
+	return IsWindowNameBad(&WindowText);
+}
+
 static void GetBadObjectTypes()
 {
 	// If NtQSI is not hooked, this function is N/A

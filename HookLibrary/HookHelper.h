@@ -31,6 +31,7 @@ bool RtlUnicodeStringContains(PUNICODE_STRING Str, PUNICODE_STRING SubStr, BOOLE
 
 bool IsWindowNameBad(PUNICODE_STRING windowName);
 bool IsWindowClassNameBad(PUNICODE_STRING className);
+bool IsWindowBad(HWND hWnd);
 bool IsObjectTypeBad(USHORT objectTypeIndex);
 
 int ThreadDebugContextFindFreeSlotIndex();

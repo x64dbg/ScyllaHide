@@ -33,7 +33,9 @@ void ReadNtApiInformation(HOOK_DLL_DATA *hdd)
         "NtUserBlockInput",
         "NtUserBuildHwndList",
         "NtUserFindWindowEx",
-        "NtUserQueryWindow" }))
+        "NtUserQueryWindow",
+        "NtUserGetClassName",
+        "NtUserInternalGetWindowText" }))
     {
         g_log.LogError(L"Failed to find user32.dll/win32u.dll syscalls!");
         return;
@@ -43,11 +45,15 @@ void ReadNtApiInformation(HOOK_DLL_DATA *hdd)
     hdd->NtUserQueryWindowVA = user32Loader.GetUserSyscallVa("NtUserQueryWindow");
     hdd->NtUserBuildHwndListVA = user32Loader.GetUserSyscallVa("NtUserBuildHwndList");
     hdd->NtUserFindWindowExVA = user32Loader.GetUserSyscallVa("NtUserFindWindowEx");
+    hdd->NtUserGetClassNameVA = user32Loader.GetUserSyscallVa("NtUserGetClassName");
+    hdd->NtUserInternalGetWindowTextVA = user32Loader.GetUserSyscallVa("NtUserInternalGetWindowText");
 
     g_log.LogInfo(L"Loaded VA for NtUserBlockInput = 0x%p", hdd->NtUserBlockInputVA);
     g_log.LogInfo(L"Loaded VA for NtUserQueryWindow = 0x%p", hdd->NtUserQueryWindowVA);
     g_log.LogInfo(L"Loaded VA for NtUserBuildHwndList = 0x%p", hdd->NtUserBuildHwndListVA);
     g_log.LogInfo(L"Loaded VA for NtUserFindWindowEx = 0x%p", hdd->NtUserFindWindowExVA);
+    g_log.LogInfo(L"Loaded VA for NtUserGetClassName = 0x%p", hdd->NtUserGetClassNameVA);
+    g_log.LogInfo(L"Loaded VA for NtUserInternalGetWindowText = 0x%p", hdd->NtUserInternalGetWindowTextVA);
 }
 
 #ifndef _WIN64

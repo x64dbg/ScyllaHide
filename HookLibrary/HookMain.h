@@ -57,6 +57,8 @@ typedef struct _HOOK_DLL_DATA {
     ULONG_PTR NtUserQueryWindowVA;
     ULONG_PTR NtUserBuildHwndListVA;
     ULONG_PTR NtUserFindWindowExVA;
+    ULONG_PTR NtUserGetClassNameVA;
+    ULONG_PTR NtUserInternalGetWindowTextVA;
 
     BOOLEAN EnableNtUserBlockInputHook;
     BOOLEAN EnableNtUserQueryWindowHook;
@@ -142,7 +144,8 @@ typedef struct _HOOK_DLL_DATA {
 
 
     t_NtUserQueryWindow NtUserQueryWindow;
-    //t_NtUserGetClassName dNtUserGetClassName;
+    t_NtUserGetClassName NtUserGetClassName;
+    t_NtUserInternalGetWindowText NtUserInternalGetWindowText;
 
     DWORD dwProtectedProcessId;
     BOOLEAN EnableProtectProcessId;
