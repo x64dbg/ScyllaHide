@@ -405,6 +405,7 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
                 MessageBoxA(nullptr, "Failed to write NativeCallContinue routine", "Error", MB_ICONERROR);
                 return nullptr;
             }
+            VirtualProtectEx(hProcess, NativeCallContinue, sizeof(sysWowSpecialJmp), PAGE_EXECUTE_READ, &protect);
         }
         else
         {
@@ -426,6 +427,7 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
         memcpy(changedBytes + callOffset + 5 + sizeof(sysWowSpecialJmp), originalBytes + callOffset + callSize, funcSize - callOffset - callSize);
 
         WriteProcessMemory(hProcess, trampoline, changedBytes, sizeof(changedBytes), 0);
+        VirtualProtectEx(hProcess, trampoline, sizeof(changedBytes), PAGE_EXECUTE_READ, &protect);
     }
 
     if (!onceNativeCallContinueWasSet)
@@ -478,6 +480,7 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, const char* funcName, v
             if (NativeCallContinue)
             {
                 WriteProcessMemory(hProcess, NativeCallContinue, KiSystemCallBackup, KiSystemCallBackupSize, 0);
+                VirtualProtectEx(hProcess, NativeCallContinue, sizeof(KiSystemCallBackupSize), PAGE_EXECUTE_READ, &protect);
             }
             else
             {
@@ -503,6 +506,7 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, const char* funcName, v
         memcpy(changedBytes + callOffset + 5 + KiSystemCallBackupSize, originalBytes + callOffset + callSize, funcSize - callOffset - callSize);
 
         WriteProcessMemory(hProcess, trampoline, changedBytes, sizeof(changedBytes), 0);
+        VirtualProtectEx(hProcess, trampoline, sizeof(changedBytes), PAGE_EXECUTE_READ, &protect);
     }
 
     if (onceNativeCallContinue == false)
@@ -634,6 +638,7 @@ void * DetourCreateRemote(void * hProcess, const char* funcName, void * lpFuncOr
         ZeroMemory(tempSpace, sizeof(tempSpace));
         WriteJumper(trampoline + detourLen, (PBYTE)lpFuncOrig + detourLen, tempSpace, false);
         WriteProcessMemory(hProcess, trampoline + detourLen, tempSpace, minDetourLen, 0);
+        VirtualProtectEx(hProcess, trampoline, detourLen + minDetourLen, PAGE_EXECUTE_READ, &protect);
     }
 
     if (VirtualProtectEx(hProcess, lpFuncOrig, detourLen, PAGE_EXECUTE_READWRITE, &protect))
@@ -678,6 +683,7 @@ void * DetourCreate(void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
 
         memcpy(trampoline, lpFuncOrig, detourLen);
         WriteJumper(trampoline + detourLen, (PBYTE)lpFuncOrig + detourLen);
+        VirtualProtect(trampoline, detourLen + minDetourLen, PAGE_EXECUTE_READ, &protect);
     }
 
 

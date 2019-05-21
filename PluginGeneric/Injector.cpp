@@ -23,7 +23,7 @@ BYTE* DbgUiIssueRemoteBreakin_addr;
 DWORD jmpback;
 DWORD DbgUiRemoteBreakin_addr;
 BYTE* RemoteBreakinPatch;
-BYTE code[8];
+BYTE OllyRemoteBreakInReplacement[8];
 HANDLE hDebuggee;
 
 void ReadNtApiInformation(HOOK_DLL_DATA *hdd)
@@ -68,14 +68,16 @@ void __declspec(naked) handleAntiAttach()
     }
 
     //write our RemoteBreakIn patch to target memory
-    RemoteBreakinPatch = (BYTE*)VirtualAllocEx(hDebuggee, 0, sizeof(code), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    WriteProcessMemory(hDebuggee, (LPVOID)RemoteBreakinPatch, code, sizeof(code), NULL);
+    RemoteBreakinPatch = (BYTE*)VirtualAllocEx(hDebuggee, 0, sizeof(OllyRemoteBreakInReplacement), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    WriteProcessMemory(hDebuggee, (LPVOID)RemoteBreakinPatch, OllyRemoteBreakInReplacement, sizeof(OllyRemoteBreakInReplacement), NULL);
 
     //find push ntdll.DbgUiRemoteBreakin and patch our patch function addr there
     while (*(DWORD*)DbgUiIssueRemoteBreakin_addr != DbgUiRemoteBreakin_addr) {
         DbgUiIssueRemoteBreakin_addr++;
     }
     WriteProcessMemory(GetCurrentProcess(), DbgUiIssueRemoteBreakin_addr, &RemoteBreakinPatch, 4, NULL);
+    ULONG oldProtect;
+    VirtualProtectEx(hDebuggee, RemoteBreakinPatch, sizeof(OllyRemoteBreakInReplacement), PAGE_EXECUTE_READ, &oldProtect);
 
     _asm {
         popad
@@ -89,7 +91,6 @@ void InstallAntiAttachHook()
 {
 #ifndef _WIN64
     HANDLE hOlly = GetCurrentProcess();
-    DWORD lpBaseAddr = (DWORD)GetModuleHandle(NULL);
 
     DbgUiIssueRemoteBreakin_addr = (BYTE*)GetProcAddress(GetModuleHandleA("ntdll.dll"), "DbgUiIssueRemoteBreakin");
     DbgUiRemoteBreakin_addr = (DWORD)GetProcAddress(GetModuleHandleA("ntdll.dll"), "DbgUiRemoteBreakin");
@@ -105,7 +106,7 @@ void InstallAntiAttachHook()
     WriteProcessMemory(hOlly, DbgUiIssueRemoteBreakin_addr + 1, &patch, 4, NULL);
 
     //init our remote breakin patch
-    BYTE* p = &code[0];
+    BYTE* p = &OllyRemoteBreakInReplacement[0];
     *p = 0xCC;  //int3
     p++;
     *p = 0x68;  //push
