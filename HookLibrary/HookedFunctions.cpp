@@ -892,20 +892,14 @@ NTSTATUS NTAPI HookedNtUserBuildHwndList_Eight(HDESK hDesktop, HWND hwndParent, 
 
 HANDLE NTAPI HookedNtUserQueryWindow(HWND hwnd, WINDOWINFOCLASS WindowInfo)
 {
-	HANDLE hHandle = HookDllData.dNtUserQueryWindow(hwnd, WindowInfo);
-
-	if (hHandle)
+	if ((WindowInfo == WindowProcess || WindowInfo == WindowThread) && IsWindowBad(hwnd))
 	{
-		if(HookDllData.EnableProtectProcessId == TRUE)
-		{
-			if (hHandle == ULongToHandle(HookDllData.dwProtectedProcessId))
-			{
-				return (HANDLE)((DWORD_PTR)hHandle + 1);
-			}
-		}
+		if (WindowInfo == WindowProcess)
+			return NtCurrentTeb()->ClientId.UniqueProcess;
+		if (WindowInfo == WindowThread)
+			return NtCurrentTeb()->ClientId.UniqueThread;
 	}
-
-	return hHandle;
+	return HookDllData.dNtUserQueryWindow(hwnd, WindowInfo);
 }
 
 //WIN XP: CreateThread -> CreateRemoteThread -> NtCreateThread
