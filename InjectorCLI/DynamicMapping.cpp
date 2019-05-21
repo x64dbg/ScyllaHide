@@ -239,7 +239,9 @@ HMODULE GetModuleBaseRemote(HANDLE hProcess, const wchar_t* szDLLName)
                         dllName++;
                         if (!_wcsicmp(dllName, szDLLName))
                         {
-                            return hMods[i];
+                            HMODULE module = hMods[i];
+                            free(hMods);
+                            return module;
                         }
                     }
                 }
