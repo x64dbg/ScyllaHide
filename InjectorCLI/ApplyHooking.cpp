@@ -327,6 +327,14 @@ bool ApplyUserHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD
         return true;
     }
 
+    if (!hdd->isUserDllHooked && GetModuleBaseRemote(hProcess, L"win32u.dll") != nullptr &&
+        onceNativeCallContinue && scl::IsWow64Process(hProcess))
+    {
+        // HACK: on Windows 10 WOW64, we have two syscall stub DLLs (ntdll and win32u) which both need to be detoured.
+        // Because the WOW64 gateways are identical but in different DLLs, reset the flag to indicate that it should be hooked.
+        onceNativeCallContinue = false;
+    }
+
     void * HookedNtUserBlockInput = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBlockInput") + imageBase);
     void * HookedNtUserFindWindowEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserFindWindowEx") + imageBase);
     void * HookedNtUserBuildHwndList = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBuildHwndList") + imageBase);
@@ -568,8 +576,6 @@ void RestoreUserHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 
 void RestoreHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 {
-    const bool suspended = NT_SUCCESS(NtSuspendProcess(hProcess));
-
     if (hdd->isNtdllHooked)
     {
         RestoreNtdllHooks(hdd, hProcess);
@@ -587,9 +593,6 @@ void RestoreHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 
     FreeMemory(hProcess, hdd->hDllImage);
     hdd->hDllImage = 0;
-
-    if (suspended)
-        NtResumeProcess(hProcess);
 }
 
 bool ApplyHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
