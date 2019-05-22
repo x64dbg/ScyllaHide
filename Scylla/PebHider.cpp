@@ -1,10 +1,30 @@
 #include "PebHider.h"
 #include <vector>
-#include <crtdbg.h>
 #include <Scylla/NtApiShim.h>
 #include <Scylla/Peb.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Util.h>
+
+#define HEAP_VALIDATE_ALL_ENABLED       0x20000000
+#define HEAP_CAPTURE_STACK_BACKTRACES   0x08000000
+
+// Flags set by RtlDebugCreateHeap
+#define RTLDEBUGCREATEHEAP_HEAP_FLAGS   (HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED | HEAP_SKIP_VALIDATION_CHECKS)
+
+// Additional debug flags that may be set depending on NtGlobalFlags
+#define NTGLOBALFLAGS_HEAP_FLAGS        (HEAP_DISABLE_COALESCE_ON_FREE | HEAP_FREE_CHECKING_ENABLED | HEAP_TAIL_CHECKING_ENABLED | \
+                                        HEAP_VALIDATE_ALL_ENABLED | HEAP_VALIDATE_PARAMETERS_ENABLED | HEAP_CAPTURE_STACK_BACKTRACES)
+
+// The set of heap flags to clear is the union of flags set by RtlDebugCreateHeap and NtGlobalFlags
+#define HEAP_CLEARABLE_FLAGS            (RTLDEBUGCREATEHEAP_HEAP_FLAGS | NTGLOBALFLAGS_HEAP_FLAGS)
+
+// Only a subset of possible flags passed to RtlCreateHeap persists into force flags
+#define HEAP_VALID_FORCE_FLAGS          (HEAP_NO_SERIALIZE | HEAP_GENERATE_EXCEPTIONS | HEAP_ZERO_MEMORY | HEAP_REALLOC_IN_PLACE_ONLY | \
+                                        HEAP_VALIDATE_PARAMETERS_ENABLED | HEAP_VALIDATE_ALL_ENABLED | HEAP_TAIL_CHECKING_ENABLED | \
+                                        HEAP_CREATE_ALIGN_16 | HEAP_FREE_CHECKING_ENABLED)
+
+// The set of force flags to clear is the intersection of valid force flags and the debug flags
+#define HEAP_CLEARABLE_FORCE_FLAGS      (HEAP_CLEARABLE_FLAGS & HEAP_VALID_FORCE_FLAGS)
 
 bool scl::PebPatchProcessParameters(PEB* peb, HANDLE hProcess)
 {
@@ -68,18 +88,9 @@ bool scl::PebPatchHeapFlags(PEB* peb, HANDLE hProcess)
         auto flags = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(is_x64));
         auto force_flags = (DWORD *)(heap.data() + scl::GetHeapForceFlagsOffset(is_x64));
 
-        if (i == 0)
-        {
-            // Default heap.
-            *flags &= HEAP_GROWABLE;
-        }
-        else
-        {
-            // Flags from RtlCreateHeap/HeapCreate.
-            *flags &= (HEAP_GROWABLE | HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_CREATE_ENABLE_EXECUTE);
-        }
+        *flags &= ~HEAP_CLEARABLE_FLAGS;
 
-        *force_flags = 0;
+        *force_flags &= ~HEAP_CLEARABLE_FORCE_FLAGS;
 
         if (WriteProcessMemory(hProcess, heaps[i], (PVOID)heap.data(), heap.size(), nullptr) == FALSE)
             return false;
@@ -106,19 +117,9 @@ bool scl::Wow64Peb64PatchHeapFlags(PEB64* peb, HANDLE hProcess)
         auto flags = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(true));
         auto force_flags = (DWORD *)(heap.data() + scl::GetHeapForceFlagsOffset(true));
 
-        if (i == 0)
-        {
-            // Default heap.
-            *flags &= HEAP_GROWABLE;
-        }
-        else
-        {
-            // Flags from RtlCreateHeap/HeapCreate.
-            *flags &= (HEAP_GROWABLE | HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_CREATE_ENABLE_EXECUTE);
-        }
+        *flags &= ~HEAP_CLEARABLE_FLAGS;
 
-        // Disable all force flags, except some specific ones only set by protectors/packers
-        *force_flags &= (_CRTDBG_CHECK_EVERY_16_DF | _CRTDBG_CHECK_EVERY_128_DF | _CRTDBG_CHECK_EVERY_1024_DF);
+        *force_flags &= ~HEAP_CLEARABLE_FORCE_FLAGS;
 
         if (Wow64WriteProcessMemory64(hProcess, (PVOID64)heaps[i], (PVOID)heap.data(), heap.size(), nullptr) == FALSE)
             return false;
