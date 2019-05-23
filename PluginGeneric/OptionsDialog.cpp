@@ -23,9 +23,9 @@
 
 #elif defined(__IDP__)
 //#define BUILD_IDA_64BIT 1
-#include <idasdk/ida.hpp>
-#include <idasdk/idp.hpp>
-#include <idasdk/dbg.hpp>
+#include <ida.hpp>
+#include <idp.hpp>
+#include <dbg.hpp>
 #include "..\ScyllaHideIDAProPlugin\IdaServerClient.h"
 #include "..\PluginGeneric\AttachDialog.h"
 #include "..\ScyllaHideIDAProPlugin\resource.h"

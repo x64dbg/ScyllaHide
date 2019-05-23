@@ -5,18 +5,18 @@
 //for 64bit - p64
 #ifdef BUILD_IDA_64BIT
 #define __EA64__
-#pragma comment(lib, "idasdk/x86_win_vc_64/ida.lib")
+#pragma comment(lib, "x86_win_vc_64/ida.lib")
 #else
 //for 32bit - plw
-#pragma comment(lib, "idasdk/x86_win_vc_32/ida.lib")
+#pragma comment(lib, "x86_win_vc_32/ida.lib")
 #endif
 
 #include <Windows.h>
-#include <idasdk/ida.hpp>
-#include <idasdk/idp.hpp>
-#include <idasdk/dbg.hpp>
-#include <idasdk/loader.hpp>
-#include <idasdk/kernwin.hpp>
+#include <ida.hpp>
+#include <idp.hpp>
+#include <dbg.hpp>
+#include <loader.hpp>
+#include <kernwin.hpp>
 #include <Scylla/Logger.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Version.h>

@@ -9,7 +9,7 @@
 #include <ollydbg2/plugin.h>
 #elif __IDP__
 #include "..\ScyllaHideIDAProPlugin\resource.h"
-#include <idasdk/idp.hpp>
+#include <idp.hpp>
 #elif X64DBG
 #include "..\ScyllaHideX64DBGPlugin\resource.h"
 #endif

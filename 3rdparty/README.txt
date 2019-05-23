@@ -1,0 +1,1 @@
+To build the IDA plugin, extract the contents of idasdk695.zip in the directory "idasdk"
