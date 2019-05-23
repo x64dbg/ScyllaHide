@@ -12,7 +12,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)3rdparty;$(SolutionDir)3rdparty\idasdk;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)3rdparty;$(SolutionDir)3rdparty\idasdk\include;</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32_NO_STATUS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -26,7 +26,7 @@
       <AdditionalOptions>/Gw /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)3rdparty;$(OutDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)3rdparty;$(SolutionDir)3rdparty\idasdk\lib;$(OutDir)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Scylla.lib;ntdll\ntdll_$(PlatformShortName).lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <AdditionalOptions>/NOVCFEATURE /NOCOFFGRPINFO %(AdditionalOptions)</AdditionalOptions>
