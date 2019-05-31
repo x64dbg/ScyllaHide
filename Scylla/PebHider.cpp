@@ -37,8 +37,8 @@ bool scl::PebPatchProcessParameters(PEB* peb, HANDLE hProcess)
     auto patch_size = (DWORD_PTR)&rupp.WindowFlags - (DWORD_PTR)&rupp.StartingX;
     ZeroMemory(&rupp.WindowFlags, patch_size);
 
-    // Magic flag.
-    rupp.Flags |= (ULONG)0x4000;
+    // If the debugger used IFEO, the app doesn't need to know that
+    rupp.Flags |= RTL_USER_PROCESS_PARAMETERS_IMAGE_KEY_MISSING;
 
     return (WriteProcessMemory(hProcess, (PVOID)peb->ProcessParameters, &rupp, sizeof(rupp), nullptr) == TRUE);
 }
@@ -55,8 +55,8 @@ bool scl::Wow64Peb64PatchProcessParameters(PEB64* peb64, HANDLE hProcess)
     auto patch_size = (DWORD_PTR)&rupp.WindowFlags - (DWORD_PTR)&rupp.StartingX;
     ZeroMemory(&rupp.WindowFlags, patch_size);
 
-    // Magic flag.
-    rupp.Flags |= (ULONG)0x4000;
+    // If the debugger used IFEO, the app doesn't need to know that
+    rupp.Flags |= RTL_USER_PROCESS_PARAMETERS_IMAGE_KEY_MISSING;
 
     return Wow64WriteProcessMemory64(hProcess, (PVOID)peb64->ProcessParameters, &rupp, sizeof(rupp), nullptr);
 #endif
