@@ -7,6 +7,11 @@
 
 #pragma comment(lib, "distorm.lib")
 
+// GDT selector numbers on AMD64
+#define KGDT64_R3_CMCODE (2 * 16)   // user mode 32-bit code
+#define KGDT64_R3_CODE (3 * 16)     // user mode 64-bit code
+#define RPL_MASK 3
+
 #if !defined(_WIN64)
 _DecodeType DecodingType = Decode32Bits;
 #else
@@ -17,6 +22,8 @@ _DecodeType DecodingType = Decode64Bits;
 const int minDetourLen = 2 + sizeof(DWORD)+sizeof(DWORD_PTR) + 1; //8+4+2+1=15
 #else
 const int minDetourLen = sizeof(DWORD) + 1;
+const int detourLenWow64IndirectJmp = 2 + sizeof(DWORD) + sizeof(DWORD); // FF 25 jmp
+const int detourLenWow64FarJmp = 1 + sizeof(DWORD) + sizeof(USHORT); // EA far jmp
 #endif
 
 
@@ -43,7 +50,6 @@ void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo)
     lpbFrom[0] = 0xE9;
     *(DWORD*)&lpbFrom[1] = (DWORD)((DWORD)lpbTo - (DWORD)lpbFrom - 5);
 #endif
-
 }
 
 void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo, unsigned char * buf, bool prefixNop)
@@ -65,8 +71,26 @@ void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo, unsigned char *
     buf[0] = 0xE9;
     *(DWORD*)&buf[1] = (DWORD)((DWORD)lpbTo - (DWORD)lpbFrom - 5);
 #endif
-
 }
+
+#ifndef _WIN64
+void WriteWow64Jumper(unsigned char * lpbFrom, unsigned char * lpbTo, unsigned char * buf, bool farJmp)
+{
+    if (!farJmp)
+    {
+        // Preserve FF 25 prefix (absolute indirect far jmp) at the cost of wasted bytes
+        buf[0] = 0xFF;
+        buf[1] = 0x25;
+        *(DWORD*)&buf[2] = (DWORD)((DWORD)lpbFrom + 6); // +instruction length
+        *(DWORD*)&buf[6] = (DWORD)lpbTo;
+    }
+
+    // Preserve EA prefix (absolute far jmp), but use the 32 bit segment selector to avoid transitioning into x64 mode
+    buf[0] = 0xEA;
+    *(DWORD*)&buf[1] = (DWORD)lpbTo;
+    *(USHORT*)&buf[5] = (USHORT)(KGDT64_R3_CMCODE | RPL_MASK);
+}
+#endif
 
 void ClearSyscallBreakpoint(const char* funcName, unsigned char* funcBytes)
 {
@@ -311,6 +335,7 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 {
     PBYTE trampoline = 0;
     DWORD protect;
+    bool detouringFarJmp = true; // TODO: we should always find and hook the true (non-indirect) far jmp into x64 mode. ('jmp Wow64Transition' will also lead to a far jmp eventually)
     bool onceNativeCallContinueWasSet = onceNativeCallContinue;
     onceNativeCallContinue = true;
 
@@ -392,7 +417,10 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
     {
         if (ReadProcessMemory(hProcess, (void*)sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0))
         {
-            if (sysWowSpecialJmp[0] == 0xE9)
+            detouringFarJmp = sysWowSpecialJmp[0] == 0xEA &&
+                (sysWowSpecialJmp[5] == (KGDT64_R3_CODE | RPL_MASK) || sysWowSpecialJmp[5] == (KGDT64_R3_CMCODE | RPL_MASK));
+
+            if (sysWowSpecialJmp[0] == 0xE9 || (detouringFarJmp && sysWowSpecialJmp[5] == (KGDT64_R3_CMCODE | RPL_MASK)))
             {
                 fatalAlreadyHookedFailure = true;
                 MessageBoxA(nullptr, "Function is already hooked!", "ScyllaHide", MB_ICONERROR);
@@ -432,16 +460,18 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 
     if (!onceNativeCallContinueWasSet)
     {
-        if (VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, PAGE_EXECUTE_READWRITE, &protect))
+        const int detourLen = detouringFarJmp ? detourLenWow64FarJmp : detourLenWow64IndirectJmp;
+        if (VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, detourLen, PAGE_EXECUTE_READWRITE, &protect))
         {
             ZeroMemory(tempSpace, sizeof(tempSpace));
-            WriteJumper((PBYTE)sysWowSpecialJmpAddress, (PBYTE)HookedNativeCallInternal, tempSpace, false);
-            if (!WriteProcessMemory(hProcess, (void *)sysWowSpecialJmpAddress, tempSpace, minDetourLen, 0))
+            // Write a faux WOW64 transition far jmp with disregard for space used
+            WriteWow64Jumper((PBYTE)sysWowSpecialJmpAddress, (PBYTE)HookedNativeCallInternal, tempSpace, detouringFarJmp);
+            if (!WriteProcessMemory(hProcess, (void *)sysWowSpecialJmpAddress, tempSpace, detourLen, 0))
             {
                 MessageBoxA(0, "Failed to write new WOW64 gateway", "Error", MB_ICONERROR);
             }
 
-            VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, minDetourLen, protect, &protect);
+            VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, detourLen, protect, &protect);
         }
         else
         {
