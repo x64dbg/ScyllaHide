@@ -2,6 +2,7 @@
 #include <distorm/distorm.h>
 #include <distorm/mnemonics.h>
 #include <Scylla/OsInfo.h>
+#include <Scylla/Settings.h>
 #include "ApplyHooking.h"
 #include <stdio.h>
 
@@ -27,6 +28,7 @@ const int detourLenWow64FarJmp = 1 + sizeof(DWORD) + sizeof(USHORT); // EA far j
 #endif
 
 
+extern scl::Settings g_settings;
 extern void * HookedNativeCallInternal;
 extern void * NativeCallContinue;
 extern HOOK_NATIVE_CALL32 * HookNative;
@@ -558,10 +560,21 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, const char* funcName, v
 
 void * DetourCreateRemoteNative32(void * hProcess, const char* funcName, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
 {
-    if (scl::GetWindowsVersion() >= scl::OS_WIN_8 && !scl::IsWow64Process(hProcess))
+    if (!scl::IsWow64Process(hProcess))
     {
-        // The native x86 syscall structure was changed in Windows 8. https://github.com/x64dbg/ScyllaHide/issues/49
-        return DetourCreateRemote(hProcess, funcName, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
+        // Handle special cases on native x86 where hooks should be placed inside the function and not at KiFastSystemCall.
+        // TODO: why does DetourCreateRemoteNative32Normal even exist? DetourCreateRemote works fine on any OS
+        if (scl::GetWindowsVersion() >= scl::OS_WIN_8)
+        {
+            // The native x86 syscall structure was changed in Windows 8. https://github.com/x64dbg/ScyllaHide/issues/49
+            return DetourCreateRemote(hProcess, funcName, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
+        }
+
+        if (g_settings.profile_name().find(L"Obsidium") != std::wstring::npos)
+        {
+            // This is an extremely lame hack because Obsidium doesn't like where we put our hooks
+            return DetourCreateRemote(hProcess, funcName, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
+        }
     }
 
     if (fatalFindSyscallIndexFailure || fatalAlreadyHookedFailure)
