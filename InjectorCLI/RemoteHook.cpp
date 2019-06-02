@@ -3,6 +3,7 @@
 #include <distorm/mnemonics.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/Settings.h>
+#include <Scylla/Peb.h>
 #include "ApplyHooking.h"
 #include <stdio.h>
 
@@ -23,7 +24,6 @@ _DecodeType DecodingType = Decode64Bits;
 const int minDetourLen = 2 + sizeof(DWORD)+sizeof(DWORD_PTR) + 1; //8+4+2+1=15
 #else
 const int minDetourLen = sizeof(DWORD) + 1;
-const int detourLenWow64IndirectJmp = 2 + sizeof(DWORD) + sizeof(DWORD); // FF 25 jmp
 const int detourLenWow64FarJmp = 1 + sizeof(DWORD) + sizeof(USHORT); // EA far jmp
 #endif
 
@@ -39,7 +39,6 @@ extern bool fatalAlreadyHookedFailure;
 
 BYTE originalBytes[60] = { 0 };
 BYTE changedBytes[60] = { 0 };
-BYTE tempSpace[1000] = { 0 };
 
 void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo)
 {
@@ -76,17 +75,8 @@ void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo, unsigned char *
 }
 
 #ifndef _WIN64
-void WriteWow64Jumper(unsigned char * lpbFrom, unsigned char * lpbTo, unsigned char * buf, bool farJmp)
+void WriteWow64Jumper(unsigned char * lpbTo, unsigned char * buf)
 {
-    if (!farJmp)
-    {
-        // Preserve FF 25 prefix (absolute indirect far jmp) at the cost of wasted bytes
-        buf[0] = 0xFF;
-        buf[1] = 0x25;
-        *(DWORD*)&buf[2] = (DWORD)((DWORD)lpbFrom + 6); // +instruction length
-        *(DWORD*)&buf[6] = (DWORD)lpbTo;
-    }
-
     // Preserve EA prefix (absolute far jmp), but use the 32 bit segment selector to avoid transitioning into x64 mode
     buf[0] = 0xEA;
     *(DWORD*)&buf[1] = (DWORD)lpbTo;
@@ -171,17 +161,17 @@ DWORD GetSysCallIndex32(const BYTE * data)
             }
             else
             {
-                MessageBoxA(0, "GetSysCallIndex32: Opcode is not I_MOV", "Distorm ERROR", MB_ICONERROR);
+                MessageBoxA(nullptr, "GetSysCallIndex32: Opcode is not I_MOV", "Distorm ERROR", MB_ICONERROR);
             }
         }
         else
         {
-            MessageBoxA(0, "GetSysCallIndex32: Distorm flags == FLAG_NOT_DECODABLE", "Distorm ERROR", MB_ICONERROR);
+            MessageBoxA(nullptr, "GetSysCallIndex32: Distorm flags == FLAG_NOT_DECODABLE", "Distorm ERROR", MB_ICONERROR);
         }
     }
     else
     {
-        MessageBoxA(0, "GetSysCallIndex32: distorm_decompose() returned DECRES_INPUTERR", "Distorm ERROR", MB_ICONERROR);
+        MessageBoxA(nullptr, "GetSysCallIndex32: distorm_decompose() returned DECRES_INPUTERR", "Distorm ERROR", MB_ICONERROR);
     }
 
     return (DWORD)-1; // Don't return 0 here, it is a valid syscall index
@@ -189,14 +179,6 @@ DWORD GetSysCallIndex32(const BYTE * data)
 
 DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
 {
-    // Colin Edit, hacky
-    if (scl::GetWindowsVersion() < scl::OS_WIN_10) {
-        DWORD SysWow64 = (DWORD)__readfsdword(0xC0);
-        if (SysWow64) {
-            return SysWow64;
-        }
-    }
-
     unsigned int DecodedInstructionsCount = 0;
     _CodeInfo decomposerCi = { 0 };
     _DInst decomposerResult[100] = { 0 };
@@ -210,24 +192,6 @@ DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
     {
         if (DecodedInstructionsCount > 2)
         {
-            // Windows 10 NtQueryInformationProcess specific
-            /*
-            CPU Disasm
-            Address                                      Hex dump                                   Command                                                                        Comments
-            77C86C60 NtQueryInformationProcess               B8 19000000                            MOV EAX,19                                                                     ; NTSTATUS ntdll.NtQueryInformationProcess(ProcessHandle,ProcessInfoClass,Buffer,Bufsize,pLength)
-            77C86C65                                         E8 04000000                            CALL 77C86C6E
-            77C86C6A                                         0000                                   ADD [EAX],AL
-            77C86C6C                                         C177 5A 80                             SAL DWORD PTR [EDI+5A],80                                                      ; Shift out of range
-            77C86C70                                         7A 03                                  JPE SHORT 77C86C75
-            77C86C72                                         4B                                     DEC EBX
-            77C86C73                                         75 0A                                  JNE SHORT 77C86C7F
-            77C86C75                                         64:FF15 C0000000                       CALL FS:[0C0]
-            77C86C7C                                         C2 1400                                RETN 14						    <<<< thinks this is the end of the function
-            77C86C7F                                         BA C0B4C977                            MOV EDX,gateway					<<<< Expecting this, finding nothing
-            77C86C84                                         FFD2                                   CALL EDX
-            77C86C86                                         C2 1400                                RETN 14
-            */
-
             //B8 EA000000      MOV EAX,0EA
             //BA 0003FE7F      MOV EDX,7FFE0300
             //FF12             CALL DWORD PTR DS:[EDX]
@@ -261,8 +225,7 @@ DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
                 }
             }
 
-
-            MessageBoxA(0, "Unknown syscall structure!", "ERROR", 0);
+            MessageBoxA(nullptr, "Unknown syscall structure!", "ScyllaHide", 0);
         }
     }
 
@@ -328,16 +291,30 @@ DWORD GetCallOffset(const BYTE * data, int dataSize, DWORD * callSize)
     return 0;
 }
 
-// EA 1E 27 E5 74 33 00              JMP FAR 0033:74E5271E ; Far jump
-// FF 25 18 12 39 4B                 jmp     ds:_Wow64Transition
-BYTE sysWowSpecialJmp[7] = { 0 };
-DWORD sysWowSpecialJmpAddress = 0;
-
-void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
+ULONG_PTR FindPattern(ULONG_PTR base, ULONG size, const UCHAR* pattern, ULONG patternSize)
 {
-    PBYTE trampoline = 0;
+    for (PUCHAR Address = (PUCHAR)base; Address < (PUCHAR)(base + size - patternSize); ++Address)
+    {
+        ULONG i;
+        for (i = 0; i < patternSize; ++i)
+        {
+            if (pattern[i] != 0xCC && (*(Address + i) != pattern[i]))
+                break;
+        }
+
+        if (i == patternSize)
+            return (ULONG_PTR)Address;
+    }
+    return 0;
+}
+
+BYTE KiFastSystemCallWow64Backup[7] = { 0 };
+DWORD KiFastSystemCallWow64Address = 0; // In wow64cpu.dll, named X86SwitchTo64BitMode prior to Windows 8
+
+void * DetourCreateRemoteWow64(void * hProcess, bool createTramp)
+{
+    PBYTE trampoline = nullptr;
     DWORD protect;
-    bool detouringFarJmp = true; // TODO: we should always find and hook the true (non-indirect) far jmp into x64 mode. ('jmp Wow64Transition' will also lead to a far jmp eventually)
     bool onceNativeCallContinueWasSet = onceNativeCallContinue;
     onceNativeCallContinue = true;
 
@@ -372,112 +349,125 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
     DWORD callSize = 0;
     DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
 
-    // if the bytes at sysWowSpecialJmpAddress != 0xEA then take our new code path
-    // Plugin is expecting something like this at sysWowSpecialJmpAddress: JMP FAR 0033:74E5271E ; Far jump
-    // But on Windows 10, we have this at that address
-    /*
-    CPU Disasm
-    77C9B4C0 syscalledx                          |.  64:8B15 30000000                       MOV EDX,FS:[30]						<<<< sysWowSpecialJmpAddress
-    77C9B4C7                                     |.  8B92 64040000                          MOV EDX,[EDX+464]
-    77C9B4CD                                     |.  F7C2 02000000                          TEST EDX,00000002
-    77C9B4D3                                     |.- 74 03                                  JZ SHORT 77C9B4D8
-    77C9B4D5                                     |.  CD 2E                                  INT 2E
-    77C9B4D7                                     |.  C3                                     RETN
-    77C9B4D8                                     \>  EA DFB4C977 3300                       JMP FAR 0033:77C9B4DF               <<<< Expects this
-    77C9B4DF                                     /.  41                                     INC ECX
-    77C9B4E0                                     \.  FFA7 F8000000                          JMP [EDI+0F8]
-    */
-
-    sysWowSpecialJmpAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
-
-    // Windows 8.1 Gateway is just a JMP FAR 0033:77C9B4DF
-    // Windows 10 Gateway has extra code before the JMP FAR
-    // And some Windows 10 has JMP DS:_Wow64Transition
-    // The code below adjusts the sysWowSpecialJmpAddress for windows 10
-    if ((*(BYTE*)sysWowSpecialJmpAddress != 0xEA) && (*(BYTE*)sysWowSpecialJmpAddress != 0xFF))
-    {
-        //g_log.LogDebug(L"Adjusting address for Windows 10 gateway ");
-
-        // Windows 10 specific
-        BYTE sysWowGatewayOriginalBytes[100] = { 0 };
-
-        ReadProcessMemory(hProcess, (LPCVOID)sysWowSpecialJmpAddress, &sysWowGatewayOriginalBytes, sizeof(sysWowGatewayOriginalBytes), 0);
-
-        DWORD sysWowGatewayFuncSize = GetFunctionSizeRETN(sysWowGatewayOriginalBytes, sizeof(sysWowGatewayOriginalBytes));
-        DWORD pActualSysWowSpecialJmpAddress = (sysWowSpecialJmpAddress + sysWowGatewayFuncSize);
-
-        if (*(BYTE*)pActualSysWowSpecialJmpAddress != 0xEA)
-        {
-            // 0xEA == JMP FAR 0033:XXXXXXXXXX
-            MessageBoxA(0, "Windows 10 SysWowSpecialJmpAddress was not found!", "Error", MB_OK);
-        }
-
-        sysWowSpecialJmpAddress = pActualSysWowSpecialJmpAddress;
-    }
-
     if (!onceNativeCallContinueWasSet)
     {
-        if (ReadProcessMemory(hProcess, (void*)sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0))
+        if (NtCurrentPeb()->OSBuildNumber >= 14393) // Windows 10 >= RS1?
         {
-            detouringFarJmp = sysWowSpecialJmp[0] == 0xEA &&
-                (sysWowSpecialJmp[5] == (KGDT64_R3_CODE | RPL_MASK) || sysWowSpecialJmp[5] == (KGDT64_R3_CMCODE | RPL_MASK));
-
-            if (sysWowSpecialJmp[0] == 0xE9 || (detouringFarJmp && sysWowSpecialJmp[5] == (KGDT64_R3_CMCODE | RPL_MASK)))
+            // ntdll32!Wow64Transition will point to wow64cpu!KiFastSystemCall in 99% of cases. However, it is possible that the process
+            // has the 'prohibit dynamic code execution' mitigation enabled, in which case it will point to the no fun allowed version
+            // wow64cpu!KiFastSystemCall2, which pushes the x64 segment selector on the stack to do a jmp far fword ptr [esp] (FF 2C 24).
+            // Hooking KiFastSystemCall2 is pointless because ScyllaHide is mega incompatible with the entire mitigation policy anyway due to its many RWX allocations.
+            PVOID* pWow64Transition = (PVOID*)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "Wow64Transition");
+            ULONG Wow64Transition = 0;
+            if (pWow64Transition != nullptr &&
+                ReadProcessMemory(hProcess, pWow64Transition, &Wow64Transition, sizeof(Wow64Transition), nullptr) &&
+                Wow64Transition != 0)
             {
-                fatalAlreadyHookedFailure = true;
-                MessageBoxA(nullptr, "Function is already hooked!", "ScyllaHide", MB_ICONERROR);
+                if (((PUCHAR)Wow64Transition)[0] != 0xEA)
+                {
+                    MessageBoxA(nullptr, "Wow64Transition[0] != 0xEA! The process is probably prohibiting dynamic code execution.", "ScyllaHide", MB_ICONERROR);
+                    return nullptr;
+                }
+
+                KiFastSystemCallWow64Address = Wow64Transition;
+            }
+        }
+
+        if (KiFastSystemCallWow64Address == 0)
+        {
+            ULONG64 Wow64cpu = (ULONG64)scl::Wow64GetModuleHandle64(L"wow64cpu.dll");
+            if (Wow64cpu == 0 || Wow64cpu > (ULONG32)Wow64cpu) // wow64cpu.dll should always be below 4GB
+            {
+                MessageBoxA(nullptr, "Failed to obtain address of wow64cpu.dll!", "ScyllaHide", MB_ICONERROR);
                 return nullptr;
             }
 
-            NativeCallContinue = VirtualAllocEx(hProcess, 0, sizeof(sysWowSpecialJmp), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-            if (!WriteProcessMemory(hProcess, NativeCallContinue, sysWowSpecialJmp, sizeof(sysWowSpecialJmp), 0))
+            // EA XXXXXXXX 3300
+            // ^ absolute non-indirect far jmp
+            //    ^ 32 bit address
+            //             ^ x64 cs segment selector
+            constexpr UCHAR Wow64FarJmpPattern[] = { 0xEA, 0xCC, 0xCC, 0xCC, 0xCC, (UCHAR)(KGDT64_R3_CODE | RPL_MASK), 0x00 };
+
+            PIMAGE_NT_HEADERS64 NtHeaders64 = (PIMAGE_NT_HEADERS64)RtlImageNtHeader((PVOID)Wow64cpu);
+            PIMAGE_SECTION_HEADER TextSection = IMAGE_FIRST_SECTION(NtHeaders64);
+            KiFastSystemCallWow64Address = (ULONG)FindPattern((ULONG_PTR)Wow64cpu + TextSection->VirtualAddress,
+                NtHeaders64->OptionalHeader.SizeOfImage - TextSection->Misc.VirtualSize, Wow64FarJmpPattern, sizeof(Wow64FarJmpPattern));
+            if (KiFastSystemCallWow64Address == 0)
             {
-                MessageBoxA(nullptr, "Failed to write NativeCallContinue routine", "Error", MB_ICONERROR);
+                // For when you're debugging the debugger and forget to turn off your own hooks...
+                constexpr UCHAR Wow64FarJmpIntoX86Pattern[] = { 0xEA, 0xCC, 0xCC, 0xCC, 0xCC, (UCHAR)(KGDT64_R3_CMCODE | RPL_MASK), 0x00 };
+                KiFastSystemCallWow64Address = (ULONG)FindPattern((ULONG_PTR)Wow64cpu + TextSection->VirtualAddress,
+                    NtHeaders64->OptionalHeader.SizeOfImage - TextSection->Misc.VirtualSize, Wow64FarJmpIntoX86Pattern, sizeof(Wow64FarJmpIntoX86Pattern));
+            }
+                
+            if (KiFastSystemCallWow64Address == 0)
+            {
+                MessageBoxA(nullptr, "Failed to find KiFastSystemCall/X86SwitchTo64BitMode in wow64cpu.dll!", "ScyllaHide", MB_ICONERROR);
                 return nullptr;
             }
-            VirtualProtectEx(hProcess, NativeCallContinue, sizeof(sysWowSpecialJmp), PAGE_EXECUTE_READ, &protect);
+        }
+
+        if (ReadProcessMemory(hProcess, (void*)KiFastSystemCallWow64Address, KiFastSystemCallWow64Backup, sizeof(KiFastSystemCallWow64Backup), nullptr))
+        {
+            if (KiFastSystemCallWow64Backup[5] == (KGDT64_R3_CMCODE | RPL_MASK))
+            {
+                // PENDING: it should be safe to just undo this since we are likely the only ones using this retarded 'far jmp into x86' type hook
+                //fatalAlreadyHookedFailure = true;
+                MessageBoxA(nullptr, "KiFastSystemCall/X86SwitchTo64BitMode in wow64cpu.dll is already hooked! Trying to salvage this...", "ScyllaHide", MB_ICONWARNING);
+                //return nullptr;
+
+                KiFastSystemCallWow64Backup[5] = (KGDT64_R3_CODE | RPL_MASK);
+            }
+
+            NativeCallContinue = VirtualAllocEx(hProcess, nullptr, sizeof(KiFastSystemCallWow64Backup), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+            if (!WriteProcessMemory(hProcess, NativeCallContinue, KiFastSystemCallWow64Backup, sizeof(KiFastSystemCallWow64Backup), nullptr))
+            {
+                MessageBoxA(nullptr, "Failed to write NativeCallContinue routine", "ScyllaHide", MB_ICONERROR);
+                return nullptr;
+            }
+            VirtualProtectEx(hProcess, NativeCallContinue, sizeof(KiFastSystemCallWow64Backup), PAGE_EXECUTE_READ, &protect);
         }
         else
         {
-            MessageBoxA(nullptr, "Failed to read WOW64 gateway instruction bytes", "Error", MB_ICONERROR);
+            MessageBoxA(nullptr, "Failed to read KiFastSystemCall/X86SwitchTo64BitMode bytes in wow64cpu.dll", "ScyllaHide", MB_ICONERROR);
             return nullptr;
         }
     }
 
     if (funcSize != 0 && createTramp)
     {
-        trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, sizeof(changedBytes), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+        trampoline = (PBYTE)VirtualAllocEx(hProcess, nullptr, sizeof(changedBytes), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
         if (trampoline == nullptr)
             return nullptr;
 
         changedBytes[callOffset] = 0x68; //PUSH
         *((DWORD*)&changedBytes[callOffset + 1]) = ((DWORD)trampoline + (DWORD)callOffset + 5 + 7);
-        memcpy(changedBytes + callOffset + 5, sysWowSpecialJmp, sizeof(sysWowSpecialJmp));
+        memcpy(changedBytes + callOffset + 5, KiFastSystemCallWow64Backup, sizeof(KiFastSystemCallWow64Backup));
 
-        memcpy(changedBytes + callOffset + 5 + sizeof(sysWowSpecialJmp), originalBytes + callOffset + callSize, funcSize - callOffset - callSize);
+        memcpy(changedBytes + callOffset + 5 + sizeof(KiFastSystemCallWow64Backup), originalBytes + callOffset + callSize, funcSize - callOffset - callSize);
 
-        WriteProcessMemory(hProcess, trampoline, changedBytes, sizeof(changedBytes), 0);
+        WriteProcessMemory(hProcess, trampoline, changedBytes, sizeof(changedBytes), nullptr);
         VirtualProtectEx(hProcess, trampoline, sizeof(changedBytes), PAGE_EXECUTE_READ, &protect);
     }
 
     if (!onceNativeCallContinueWasSet)
     {
-        const int detourLen = detouringFarJmp ? detourLenWow64FarJmp : detourLenWow64IndirectJmp;
-        if (VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, detourLen, PAGE_EXECUTE_READWRITE, &protect))
+        if (VirtualProtectEx(hProcess, (void *)KiFastSystemCallWow64Address, detourLenWow64FarJmp, PAGE_EXECUTE_READWRITE, &protect))
         {
-            ZeroMemory(tempSpace, sizeof(tempSpace));
             // Write a faux WOW64 transition far jmp with disregard for space used
-            WriteWow64Jumper((PBYTE)sysWowSpecialJmpAddress, (PBYTE)HookedNativeCallInternal, tempSpace, detouringFarJmp);
-            if (!WriteProcessMemory(hProcess, (void *)sysWowSpecialJmpAddress, tempSpace, detourLen, 0))
+            UCHAR jumperBytes[detourLenWow64FarJmp];
+            RtlZeroMemory(jumperBytes, sizeof(jumperBytes));
+            WriteWow64Jumper((PBYTE)HookedNativeCallInternal, jumperBytes);
+            if (!WriteProcessMemory(hProcess, (void *)KiFastSystemCallWow64Address, jumperBytes, detourLenWow64FarJmp, nullptr))
             {
-                MessageBoxA(0, "Failed to write new WOW64 gateway", "Error", MB_ICONERROR);
+                MessageBoxA(nullptr, "Failed to write KiFastSystemCall/X86SwitchTo64BitMode replacement to wow64cpu.dll", "ScyllaHide", MB_ICONERROR);
             }
 
-            VirtualProtectEx(hProcess, (void *)sysWowSpecialJmpAddress, detourLen, protect, &protect);
+            VirtualProtectEx(hProcess, (void *)KiFastSystemCallWow64Address, detourLenWow64FarJmp, protect, &protect);
         }
         else
         {
-            MessageBoxA(0, "Failed to unprotect WOW64 gateway", "Error", MB_ICONERROR);
+            MessageBoxA(nullptr, "Failed to unprotect KiFastSystemCall/X86SwitchTo64BitMode in wow64cpu.dll", "ScyllaHide", MB_ICONERROR);
         }
     }
 
@@ -486,12 +476,12 @@ void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void
 
 //7C91E4F0 ntdll.KiFastSystemCall  EB F9   JMP 7C91E4EB
 
-BYTE KiSystemCallJmpPatch[] = { 0xE9, 0x00, 0x00, 0x00, 0x00, 0xEB, 0xF9 };
-BYTE KiSystemCallBackup[20] = { 0 };
-DWORD KiSystemCallAddress = 0;
-DWORD KiSystemCallBackupSize = 0;
+BYTE KiFastSystemCallJmpPatch[] = { 0xE9, 0x00, 0x00, 0x00, 0x00, 0xEB, 0xF9 };
+BYTE KiFastSystemCallBackup[20] = { 0 };
+DWORD KiFastSystemCallAddress = 0;
+DWORD KiFastSystemCallBackupSize = 0;
 
-void * DetourCreateRemoteNative32Normal(void * hProcess, const char* funcName, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
+void * DetourCreateRemoteX86(void * hProcess, bool createTramp)
 {
     PBYTE trampoline = 0;
     DWORD protect;
@@ -500,55 +490,55 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, const char* funcName, v
 
     DWORD callSize = 0;
     DWORD callOffset = GetCallOffset(originalBytes, sizeof(originalBytes), &callSize);
-    KiSystemCallAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
+    KiFastSystemCallAddress = GetCallDestination(hProcess, originalBytes, sizeof(originalBytes));
 
-    if (onceNativeCallContinue == false)
+    if (!onceNativeCallContinue)
     {
-        ReadProcessMemory(hProcess, (void*)KiSystemCallAddress, KiSystemCallBackup, sizeof(KiSystemCallBackup), 0);
-        KiSystemCallBackupSize = GetFunctionSizeRETN(KiSystemCallBackup, sizeof(KiSystemCallBackup));
-        if (KiSystemCallBackupSize)
+        ReadProcessMemory(hProcess, (void*)KiFastSystemCallAddress, KiFastSystemCallBackup, sizeof(KiFastSystemCallBackup), 0);
+        KiFastSystemCallBackupSize = GetFunctionSizeRETN(KiFastSystemCallBackup, sizeof(KiFastSystemCallBackup));
+        if (KiFastSystemCallBackupSize)
         {
-            NativeCallContinue = VirtualAllocEx(hProcess, 0, KiSystemCallBackupSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+            NativeCallContinue = VirtualAllocEx(hProcess, 0, KiFastSystemCallBackupSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
             if (NativeCallContinue)
             {
-                WriteProcessMemory(hProcess, NativeCallContinue, KiSystemCallBackup, KiSystemCallBackupSize, 0);
-                VirtualProtectEx(hProcess, NativeCallContinue, sizeof(KiSystemCallBackupSize), PAGE_EXECUTE_READ, &protect);
+                WriteProcessMemory(hProcess, NativeCallContinue, KiFastSystemCallBackup, KiFastSystemCallBackupSize, 0);
+                VirtualProtectEx(hProcess, NativeCallContinue, sizeof(KiFastSystemCallBackupSize), PAGE_EXECUTE_READ, &protect);
             }
             else
             {
-                MessageBoxA(0, "DetourCreateRemoteNative32Normal -> NativeCallContinue", "ERROR", MB_ICONERROR);
+                MessageBoxA(nullptr, "DetourCreateRemoteX86 -> NativeCallContinue", "ScyllaHide", MB_ICONERROR);
             }
         }
         else
         {
-            MessageBoxA(0, "DetourCreateRemoteNative32Normal -> KiSystemCallBackupSize", "ERROR", MB_ICONERROR);
+            MessageBoxA(nullptr, "DetourCreateRemoteX86 -> KiSystemCallBackupSize", "ScyllaHide", MB_ICONERROR);
         }
     }
 
     if (funcSize && createTramp)
     {
-        trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, sizeof(changedBytes), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+        trampoline = (PBYTE)VirtualAllocEx(hProcess, nullptr, sizeof(changedBytes), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
         if (!trampoline)
-            return 0;
+            return nullptr;
 
         changedBytes[callOffset] = 0x68; //PUSH
-        *((DWORD*)&changedBytes[callOffset + 1]) = ((DWORD)trampoline + (DWORD)callOffset + 5 + KiSystemCallBackupSize);
-        memcpy(changedBytes + callOffset + 5, KiSystemCallBackup, KiSystemCallBackupSize);
+        *((DWORD*)&changedBytes[callOffset + 1]) = ((DWORD)trampoline + (DWORD)callOffset + 5 + KiFastSystemCallBackupSize);
+        memcpy(changedBytes + callOffset + 5, KiFastSystemCallBackup, KiFastSystemCallBackupSize);
 
-        memcpy(changedBytes + callOffset + 5 + KiSystemCallBackupSize, originalBytes + callOffset + callSize, funcSize - callOffset - callSize);
+        memcpy(changedBytes + callOffset + 5 + KiFastSystemCallBackupSize, originalBytes + callOffset + callSize, funcSize - callOffset - callSize);
 
         WriteProcessMemory(hProcess, trampoline, changedBytes, sizeof(changedBytes), 0);
         VirtualProtectEx(hProcess, trampoline, sizeof(changedBytes), PAGE_EXECUTE_READ, &protect);
     }
 
-    if (onceNativeCallContinue == false)
+    if (!onceNativeCallContinue)
     {
-        DWORD_PTR patchAddr = (DWORD_PTR)KiSystemCallAddress - 5;
+        DWORD_PTR patchAddr = (DWORD_PTR)KiFastSystemCallAddress - 5;
 
         if (VirtualProtectEx(hProcess, (void *)patchAddr, 5 + 2, PAGE_EXECUTE_READWRITE, &protect))
         {
-            WriteJumper((PBYTE)patchAddr, (PBYTE)HookedNativeCallInternal, KiSystemCallJmpPatch, false);
-            WriteProcessMemory(hProcess, (void *)patchAddr, KiSystemCallJmpPatch, 5 + 2, 0);
+            WriteJumper((PBYTE)patchAddr, (PBYTE)HookedNativeCallInternal, KiFastSystemCallJmpPatch, false);
+            WriteProcessMemory(hProcess, (void *)patchAddr, KiFastSystemCallJmpPatch, 5 + 2, 0);
 
             VirtualProtectEx(hProcess, (void *)patchAddr, 5 + 2, protect, &protect);
         }
@@ -558,12 +548,12 @@ void * DetourCreateRemoteNative32Normal(void * hProcess, const char* funcName, v
     return trampoline;
 }
 
-void * DetourCreateRemoteNative32(void * hProcess, const char* funcName, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
+void * DetourCreateRemote32(void * hProcess, const char* funcName, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
 {
     if (!scl::IsWow64Process(hProcess))
     {
         // Handle special cases on native x86 where hooks should be placed inside the function and not at KiFastSystemCall.
-        // TODO: why does DetourCreateRemoteNative32Normal even exist? DetourCreateRemote works fine on any OS
+        // TODO: why does DetourCreateRemoteX86 even exist? DetourCreateRemote works fine on any OS
         if (scl::GetWindowsVersion() >= scl::OS_WIN_8)
         {
             // The native x86 syscall structure was changed in Windows 8. https://github.com/x64dbg/ScyllaHide/issues/49
@@ -582,11 +572,10 @@ void * DetourCreateRemoteNative32(void * hProcess, const char* funcName, void * 
 
     memset(changedBytes, 0x90, sizeof(changedBytes));
     memset(originalBytes, 0x90, sizeof(originalBytes));
-    memset(tempSpace, 0x90, sizeof(tempSpace));
 
     if (!ReadProcessMemory(hProcess, lpFuncOrig, originalBytes, sizeof(originalBytes), nullptr))
     {
-        MessageBoxA(nullptr, "DetourCreateRemoteNative32->ReadProcessMemory failed.", "ScyllaHide", MB_ICONERROR);
+        MessageBoxA(nullptr, "DetourCreateRemoteX86->ReadProcessMemory failed.", "ScyllaHide", MB_ICONERROR);
         return nullptr;
     }
 
@@ -613,12 +602,12 @@ void * DetourCreateRemoteNative32(void * hProcess, const char* funcName, void * 
     PVOID result;
     if (!scl::IsWow64Process(hProcess))
     {
-        result = DetourCreateRemoteNative32Normal(hProcess, funcName, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
+        result = DetourCreateRemoteX86(hProcess, createTramp);
     }
     else
     {
         HookNative[countNativeHooks].ecxValue = GetEcxSysCallIndex32(originalBytes, sizeof(originalBytes));
-        result = DetourCreateRemoteNativeSysWow64(hProcess, lpFuncOrig, lpFuncDetour, createTramp, backupSize);
+        result = DetourCreateRemoteWow64(hProcess, createTramp);
     }
 
     countNativeHooks++;

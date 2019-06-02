@@ -11,10 +11,10 @@ void * DetourCreateRemote(void * hProcess, const char* funcName, void * lpFuncOr
 #ifdef _WIN64
 #define DetourCreateRemoteNative DetourCreateRemote
 #else
-void * DetourCreateRemoteNative32(void * hProcess, const char* funcName, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize);
-void * DetourCreateRemoteNativeSysWow64(void * hProcess, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize);
+void * DetourCreateRemote32(void * hProcess, const char* funcName, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize);
+void * DetourCreateRemoteWow64(void * hProcess, bool createTramp);
 
-#define DetourCreateRemoteNative DetourCreateRemoteNative32
+#define DetourCreateRemoteNative DetourCreateRemote32
 #endif
 
 int LengthDisassemble(void* DisassmAddress);

@@ -28,10 +28,10 @@ bool fatalFindSyscallIndexFailure = false;
 bool fatalAlreadyHookedFailure = false;
 
 #ifndef _WIN64
-extern BYTE KiSystemCallBackup[20];
-extern BYTE sysWowSpecialJmp[7];
-extern DWORD KiSystemCallAddress;
-extern DWORD sysWowSpecialJmpAddress;
+extern BYTE KiFastSystemCallBackup[20];
+extern BYTE KiFastSystemCallWow64Backup[7];
+extern DWORD KiFastSystemCallAddress;
+extern DWORD KiFastSystemCallWow64Address;
 #endif
 
 HMODULE hKernel = 0;
@@ -325,14 +325,6 @@ bool ApplyUserHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD
         return true;
     }
 
-    if (!hdd->isUserDllHooked && GetModuleBaseRemote(hProcess, L"win32u.dll") != nullptr &&
-        onceNativeCallContinue && scl::IsWow64Process(hProcess))
-    {
-        // HACK: on Windows 10 WOW64, we have two syscall stub DLLs (ntdll and win32u) which both need to be detoured.
-        // Because the WOW64 gateways are identical but in different DLLs, reset the flag to indicate that it should be hooked.
-        onceNativeCallContinue = false;
-    }
-
     void * HookedNtUserBlockInput = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBlockInput") + imageBase);
     void * HookedNtUserFindWindowEx = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserFindWindowEx") + imageBase);
     void * HookedNtUserBuildHwndList = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBuildHwndList") + imageBase);
@@ -498,13 +490,13 @@ void RestoreNtdllHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 #ifndef _WIN64
     if (scl::IsWow64Process(hProcess))
     {
-        RestoreMemory(hProcess, sysWowSpecialJmpAddress, sysWowSpecialJmp, sizeof(sysWowSpecialJmp));
+        RestoreMemory(hProcess, KiFastSystemCallWow64Address, KiFastSystemCallWow64Backup, sizeof(KiFastSystemCallWow64Backup));
     }
     else
     {
-        if (KiSystemCallAddress != 0)
+        if (KiFastSystemCallAddress != 0)
         {
-            RestoreMemory(hProcess, KiSystemCallAddress, KiSystemCallBackup, sizeof(KiSystemCallBackup));
+            RestoreMemory(hProcess, KiFastSystemCallAddress, KiFastSystemCallBackup, sizeof(KiFastSystemCallBackup));
         }
         else
         {
@@ -575,7 +567,7 @@ void RestoreKernel32Hooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 void RestoreUserHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 {
 #ifndef _WIN64
-    if (!scl::IsWow64Process(hProcess) && KiSystemCallAddress == 0)
+    if (!scl::IsWow64Process(hProcess) && KiFastSystemCallAddress == 0)
     {
         RESTORE_JMP(NtUserBlockInput);
         RESTORE_JMP(NtUserFindWindowEx);

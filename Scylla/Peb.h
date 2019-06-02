@@ -12,11 +12,83 @@
 namespace scl {
 
 #pragma pack(push, 1)
-    template <typename T>
-    struct LIST_ENTRY
+    template <class T>
+    struct _LIST_ENTRY_T
     {
         T Flink;
         T Blink;
+    };
+
+    template <class T>
+    struct _UNICODE_STRING_T
+    {
+        union
+        {
+            struct
+            {
+                WORD Length;
+                WORD MaximumLength;
+            };
+            T dummy;
+        };
+        T Buffer;
+    };
+
+    template <class T>
+    struct _LDR_DATA_TABLE_ENTRY_T
+    {
+        _LIST_ENTRY_T<T> InLoadOrderLinks;
+        _LIST_ENTRY_T<T> InMemoryOrderLinks;
+        _LIST_ENTRY_T<T> InInitializationOrderLinks;
+        T DllBase;
+        T EntryPoint;
+        union
+        {
+            DWORD SizeOfImage;
+            T dummy01;
+        };
+        _UNICODE_STRING_T<T> FullDllName;
+        _UNICODE_STRING_T<T> BaseDllName;
+        DWORD Flags;
+        WORD LoadCount;
+        WORD TlsIndex;
+        union
+        {
+            _LIST_ENTRY_T<T> HashLinks;
+            struct
+            {
+                T SectionPointer;
+                T CheckSum;
+            };
+        };
+        union
+        {
+            T LoadedImports;
+            DWORD TimeDateStamp;
+        };
+        T EntryPointActivationContext;
+        T PatchInformation;
+        _LIST_ENTRY_T<T> ForwarderLinks;
+        _LIST_ENTRY_T<T> ServiceTagLinks;
+        _LIST_ENTRY_T<T> StaticLinks;
+        T ContextInformation;
+        T OriginalBase;
+        _LARGE_INTEGER LoadTime;
+    };
+
+    template <class T>
+    struct _PEB_LDR_DATA_T
+    {
+        DWORD Length;
+        DWORD Initialized;
+        T SsHandle;
+        _LIST_ENTRY_T<T> InLoadOrderModuleList;
+        _LIST_ENTRY_T<T> InMemoryOrderModuleList;
+        _LIST_ENTRY_T<T> InInitializationOrderModuleList;
+        T EntryInProgress;
+        DWORD ShutdownInProgress;
+        T ShutdownThreadId;
+
     };
 
     template <typename T, typename NGF, int A>
@@ -109,6 +181,12 @@ namespace scl {
     };
 #pragma pack(pop)
 
+    typedef _LDR_DATA_TABLE_ENTRY_T<DWORD> LDR_DATA_TABLE_ENTRY32;
+    typedef _LDR_DATA_TABLE_ENTRY_T<DWORD64> LDR_DATA_TABLE_ENTRY64;
+
+    typedef _PEB_LDR_DATA_T<DWORD> PEB_LDR_DATA32;
+    typedef _PEB_LDR_DATA_T<DWORD64> PEB_LDR_DATA64;
+
     typedef _PEB_T<DWORD, DWORD64, 34> PEB32;
     typedef _PEB_T<DWORD64, DWORD, 30> PEB64;
 
@@ -126,6 +204,8 @@ namespace scl {
 
     bool SetPeb(HANDLE hProcess, const PEB *pPeb);
     bool Wow64SetPeb64(HANDLE hProcess, const PEB64 *pPeb64);
+
+    PVOID64 Wow64GetModuleHandle64(const wchar_t* moduleName);
 
     DWORD GetHeapFlagsOffset(bool x64);
     DWORD GetHeapForceFlagsOffset(bool x64);

@@ -20,9 +20,9 @@ PVOID64 scl::GetPeb64Address(HANDLE hProcess)
 #ifndef _WIN64
     PROCESS_BASIC_INFORMATION<DWORD64> pbi = { 0 };
 
-    auto status = Wow64QueryInformationProcess64(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr);
+    bool success = Wow64QueryInformationProcess64(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr);
 
-    return NT_SUCCESS(status) ? (PVOID64)pbi.PebBaseAddress : nullptr;
+    return success ? (PVOID64)pbi.PebBaseAddress : nullptr;
 #endif
 
     return nullptr;
@@ -83,6 +83,43 @@ bool scl::Wow64SetPeb64(HANDLE hProcess, const PEB64 *pPeb64)
 #endif
 
     return false;
+}
+
+PVOID64 scl::Wow64GetModuleHandle64(const wchar_t* moduleName)
+{
+    const auto Peb64 = Wow64GetPeb64(NtCurrentProcess);
+    if (Peb64 == nullptr)
+        return nullptr;
+
+    PEB_LDR_DATA64 LdrData64;
+    if (!Wow64ReadProcessMemory64(NtCurrentProcess, (PVOID64)Peb64->Ldr, &LdrData64, sizeof(LdrData64), nullptr))
+        return nullptr;
+
+    PVOID64 DllBase = nullptr;
+    const ULONG64 LastEntry = Peb64->Ldr + offsetof(PEB_LDR_DATA64, InLoadOrderModuleList);
+    LDR_DATA_TABLE_ENTRY64 Head;
+    Head.InLoadOrderLinks.Flink = LdrData64.InLoadOrderModuleList.Flink;
+
+    do
+    {
+        if (!Wow64ReadProcessMemory64(NtCurrentProcess, (PVOID64)Head.InLoadOrderLinks.Flink, &Head, sizeof(Head), nullptr))
+            break;
+
+        wchar_t* BaseDllName = (wchar_t*)RtlAllocateHeap(RtlProcessHeap(), HEAP_ZERO_MEMORY, Head.BaseDllName.MaximumLength);
+        if (BaseDllName == nullptr ||
+            !Wow64ReadProcessMemory64(NtCurrentProcess, (PVOID64)Head.BaseDllName.Buffer, BaseDllName, Head.BaseDllName.MaximumLength, nullptr))
+            break;
+
+        if (_wcsicmp(moduleName, BaseDllName) == 0)
+        {
+            DllBase = (PVOID64)Head.DllBase;
+        }
+
+        RtlFreeHeap(RtlProcessHeap(), 0, BaseDllName);
+
+    } while (Head.InLoadOrderLinks.Flink != LastEntry && DllBase == nullptr);
+
+    return DllBase;
 }
 
 DWORD scl::GetHeapFlagsOffset(bool x64)
