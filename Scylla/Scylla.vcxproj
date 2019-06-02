@@ -29,7 +29,6 @@
     <ClCompile Include="Version.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dbghelp.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="NtApiShim.h" />
     <ClInclude Include="PebHider.h" />

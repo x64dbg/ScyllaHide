@@ -44,9 +44,6 @@
     <ClInclude Include="Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="dbghelp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Peb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
