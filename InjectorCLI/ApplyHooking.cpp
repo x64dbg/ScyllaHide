@@ -502,7 +502,26 @@ void RestoreNtdllHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
     }
     else
     {
-        RestoreMemory(hProcess, KiSystemCallAddress, KiSystemCallBackup, sizeof(KiSystemCallBackup));
+        if (KiSystemCallAddress != 0)
+        {
+            RestoreMemory(hProcess, KiSystemCallAddress, KiSystemCallBackup, sizeof(KiSystemCallBackup));
+        }
+        else
+        {
+            RESTORE_JMP(NtClose);
+            RESTORE_JMP(NtDuplicateObject);
+            RESTORE_JMP(NtContinue);
+            RESTORE_JMP(NtCreateThreadEx);
+            RESTORE_JMP(NtCreateThread);
+            RESTORE_JMP(NtSetContextThread);
+            RESTORE_JMP(NtGetContextThread);
+            RESTORE_JMP(NtYieldExecution);
+            RESTORE_JMP(NtQueryObject);
+            RESTORE_JMP(NtSetInformationProcess);
+            RESTORE_JMP(NtQueryInformationProcess);
+            RESTORE_JMP(NtQuerySystemInformation);
+            RESTORE_JMP(NtSetInformationThread);
+        }
     }
 #else
     RESTORE_JMP(NtClose);
@@ -539,7 +558,6 @@ void RestoreNtdllHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
     FREE_HOOK(KiUserExceptionDispatcher);
 
 
-
     hdd->isNtdllHooked = FALSE;
 }
 
@@ -556,8 +574,15 @@ void RestoreKernel32Hooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 
 void RestoreUserHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 {
-
-#ifdef _WIN64
+#ifndef _WIN64
+    if (!scl::IsWow64Process(hProcess) && KiSystemCallAddress == 0)
+    {
+        RESTORE_JMP(NtUserBlockInput);
+        RESTORE_JMP(NtUserFindWindowEx);
+        RESTORE_JMP(NtUserBuildHwndList);
+        RESTORE_JMP(NtUserQueryWindow);
+    }
+#else
     RESTORE_JMP(NtUserBlockInput);
     RESTORE_JMP(NtUserFindWindowEx);
     RESTORE_JMP(NtUserBuildHwndList);
