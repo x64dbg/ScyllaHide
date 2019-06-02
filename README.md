@@ -1,6 +1,6 @@
 # ScyllaHide
 
-[![Build status](https://ci.appveyor.com/api/projects/status/hk1e4fx3rw4qjrho?svg=true)](https://ci.appveyor.com/project/mrexodia/scyllahide)
+[![Build status](https://ci.appveyor.com/api/projects/status/0ia5b6ln4twwqwjm?svg=true)](https://ci.appveyor.com/project/x64dbg/scyllahide)
 
 ScyllaHide is an advanced open-source x64/x86 user mode Anti-Anti-Debug library. It hooks various functions to hide debugging. This tool is intended to stay in user mode (ring 3). If you need kernel mode (ring 0) Anti-Anti-Debug, please see [TitanHide](https://github.com/mrexodia/titanhide).
 

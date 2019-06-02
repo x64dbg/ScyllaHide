@@ -35,28 +35,10 @@ if "%MSBUILD%"=="" (
 	exit
 )
 
-@rem TODO: the following only works on Appveyor because the file is password protected, and is only needed for building the IDA plugin.
-@rem This should be fixed so people who don't want to deal with this shit can still run this file to build the rest of ScyllaHide
-echo Downloading IDA SDK...
-curl -O -L https://github.com/x64dbg/ScyllaHide/releases/download/docs-2019-05-17/idasdk_password_protected_dont_bother.7z 1>nul
-if not %ERRORLEVEL%==0 (
-	echo Failed to fetch IDA SDK.
+if not exist 3rdparty\idasdk (
+	echo IDA SDK not found
 	exit
 )
-
-set SEVENZIP=%PROGRAMFILES%\7-Zip\7z.exe
-if not exist "%SEVENZIP%" set SEVENZIP=%PROGRAMFILES32%\7-Zip\7z.exe
-if not exist "%SEVENZIP%" (
-	echo Missing 7-zip installation.
-	exit
-)
-
-set PASSWORD=%APPVEYOR_ACCOUNT_NAME%%APPVEYOR_PROJECT_ID%%APPVEYOR_PROJECT_SLUG%%APPVEYOR_BUILD_FOLDER%
-"%SEVENZIP%" x -y -p"%PASSWORD%" -o3rdparty idasdk_password_protected_dont_bother.7z 1>nul
-if not %ERRORLEVEL%==0 (
-	echo Failed to extract IDA SDK; the IDA plugin will fail to build.
-)
-del idasdk_password_protected_dont_bother.7z 1>nul 2>&1
 
 "%MSBUILD%" /m /property:Configuration=Release,Platform=Win32
 if not %ERRORLEVEL%==0 exit
@@ -84,5 +66,3 @@ xcopy /S /Y build\Release\Win32\*.exe Release
 xcopy /S /Y build\Release\x64\*.exe Release
 copy /y /b build\Release\Win32\HookLibraryx86.dll Release
 copy /y /b build\Release\x64\HookLibraryx64.dll Release
-
-rmdir /S /Q 3rdparty\idasdk 1>nul 2>&1
