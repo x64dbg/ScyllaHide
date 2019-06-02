@@ -39,6 +39,7 @@
     <Link>
       <Version>5.1</Version>
       <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
