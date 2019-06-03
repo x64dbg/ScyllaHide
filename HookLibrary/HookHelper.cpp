@@ -258,7 +258,7 @@ InstallInstrumentationCallbackHook(
 	_In_ BOOLEAN Remove
 	)
 {
-	const PVOID pInstrumentationCallbackAsm = (PVOID)InstrumentationCallbackAsm;
+	const PVOID Callback = Remove ? nullptr : (PVOID)InstrumentationCallbackAsm;
 	NTSTATUS Status = STATUS_NOT_SUPPORTED;
 
 	if (RtlNtMajorVersion() > 6)
@@ -276,10 +276,10 @@ InstallInstrumentationCallbackHook(
 		}
 
 		// WOW64: set the callback pointer in the version field
-		InstrumentationCallbackInfo.Version = (ULONG)(ULONG_PTR)(Remove ? nullptr : pInstrumentationCallbackAsm);
+		InstrumentationCallbackInfo.Version = (ULONG)(ULONG_PTR)Callback;
 #endif
 		InstrumentationCallbackInfo.Reserved = 0;
-		InstrumentationCallbackInfo.Callback = Remove ? nullptr : pInstrumentationCallbackAsm;
+		InstrumentationCallbackInfo.Callback = Callback;
 
 		Status = HookDllData.dNtSetInformationProcess != nullptr
 			? HookDllData.dNtSetInformationProcess(ProcessHandle,
@@ -303,12 +303,12 @@ InstallInstrumentationCallbackHook(
 		Status = HookDllData.dNtSetInformationProcess != nullptr
 			? HookDllData.dNtSetInformationProcess(ProcessHandle,
 													ProcessInstrumentationCallback,
-													Remove ? nullptr : (PVOID)&pInstrumentationCallbackAsm,
-													sizeof(pInstrumentationCallbackAsm))
+													(PVOID)&Callback,
+													sizeof(Callback))
 			: NtSetInformationProcess(ProcessHandle,
 									ProcessInstrumentationCallback,
-									Remove ? nullptr : (PVOID)&pInstrumentationCallbackAsm,
-									sizeof(pInstrumentationCallbackAsm));
+									(PVOID)&Callback,
+									sizeof(Callback));
 
 		RtlAdjustPrivilege(SE_DEBUG_PRIVILEGE, SeDebugWasEnabled, FALSE, &SeDebugWasEnabled);
 	}

@@ -158,6 +158,7 @@ static bool IsProcessHandleTracingEnabled = false;
 
 static LONG volatile InstrumentationCallbackHookInstalled = 0;
 static LONG volatile RecurseGuard = 0;
+static ULONG NumManualSyscalls = 0;
 
 extern "C"
 ULONG_PTR
@@ -176,7 +177,14 @@ InstrumentationCallback(
         ReturnAddress < (ULONG_PTR)ImageBase + NtHeaders->OptionalHeader.SizeOfImage)
     {
         // Syscall return address within the exe file
-        ReturnVal = STATUS_PORT_NOT_SET;
+        ReturnVal = (ULONG_PTR)(ULONG)STATUS_PORT_NOT_SET;
+
+        // Uninstall ourselves after we have completed the sequence { NtQIP, NtQIP }. More NtSITs will follow but we can't do anything about them
+        NumManualSyscalls++;
+        if (NumManualSyscalls >= 2)
+        {
+            InstallInstrumentationCallbackHook(NtCurrentProcess, TRUE);
+        }
     }
 
     InterlockedAnd(&RecurseGuard, 0);
@@ -186,7 +194,8 @@ InstrumentationCallback(
 
 NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength)
 {
-    if (InterlockedOr(&InstrumentationCallbackHookInstalled, 0x1) == 0)
+    if (NumManualSyscalls == 0 &&
+        InterlockedOr(&InstrumentationCallbackHookInstalled, 0x1) == 0)
     {
         InstallInstrumentationCallbackHook(NtCurrentProcess, FALSE);
     }
