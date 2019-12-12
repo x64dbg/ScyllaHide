@@ -21,8 +21,8 @@ extern "C" {
 #include <ntstatus.h>
 #include <intrin.h>
 
-#define NT_SUCCESS(Status)				((NTSTATUS)(Status) >= 0)
-#define NT_ERROR(Status)				((((ULONG)(Status)) >> 30) == 3)
+#define NT_SUCCESS(Status)			((NTSTATUS)(Status) >= 0)
+#define NT_ERROR(Status)			((((ULONG)(Status)) >> 30) == 3)
 
 #define FASTCALL __fastcall
 
@@ -30,12 +30,16 @@ extern "C" {
 #define _Reserved_
 #endif
 
-#if defined(__clang__)
+#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) || defined(__clang__)
+#if (!defined(__RESHARPER__)) && (!defined(__INTELLISENSE__))
 #undef FIELD_OFFSET
 #undef UFIELD_OFFSET
-#define FIELD_OFFSET(type, field)	((LONG)__builtin_offsetof(type, field))
-#define UFIELD_OFFSET(type, field)	((ULONG)__builtin_offsetof(type, field))
+#define FIELD_OFFSET(type, field)	((LONG)(LONG_PTR)__builtin_offsetof(type, field))
+#define UFIELD_OFFSET(type, field)	((ULONG)(LONG_PTR)__builtin_offsetof(type, field))
 #endif
+#endif
+
+#define PAGE_SIZE					0x1000
 
 #define ALIGN_DOWN(length, type) \
 	((ULONG_PTR)(length) & ~(sizeof(type) - 1))
@@ -582,8 +586,8 @@ typedef struct _MEMORY_IMAGE_INFORMATION
 			ULONG ImageNotExecutable : 1;
 			ULONG ImageSigningLevel : 1; // REDSTONE3
 			ULONG Reserved : 30;
-		};
-	};
+		} s1;
+	} u1;
 } MEMORY_IMAGE_INFORMATION, *PMEMORY_IMAGE_INFORMATION;
 
 typedef struct _SECTION_BASIC_INFORMATION
@@ -671,8 +675,8 @@ typedef struct _IMAGE_INFO
 			ULONG ImageSignatureType	: 3;  // Signature type
 			ULONG ImagePartialMap		: 1;  // Nonzero if entire image is not mapped
 			ULONG Reserved				: 12;
-		};
-	};
+		} s1;
+	} u1;
 	PVOID	ImageBase;
 	ULONG	ImageSelector;
 	SIZE_T	ImageSize;
@@ -685,6 +689,15 @@ typedef struct _PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION
 	ULONG Reserved;
 	PVOID Callback;
 } PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION, *PPROCESS_INSTRUMENTATION_CALLBACK_INFORMATION;
+
+typedef struct _THREAD_LAST_SYSCALL_INFORMATION
+{
+	PVOID FirstArgument;
+	USHORT SystemCallNumber;
+#if NTDDI_VERSION >= NTDDI_WINBLUE
+	ULONG64 WaitTime; // may be omitted
+#endif
+} THREAD_LAST_SYSCALL_INFORMATION, *PTHREAD_LAST_SYSCALL_INFORMATION;
 
 typedef struct _OBJECT_ATTRIBUTES {
 	ULONG Length;
@@ -813,8 +826,8 @@ typedef struct _SYSTEM_CODEINTEGRITY_UNLOCK_INFORMATION
 			ULONG Unlockable : 1;
 			ULONG UnlockApplied : 1;
 			ULONG Reserved : 29;
-		};
-	};
+		} s1;
+	} u1;
 } SYSTEM_CODEINTEGRITY_UNLOCK_INFORMATION, *PSYSTEM_CODEINTEGRITY_UNLOCK_INFORMATION;
 
 typedef
@@ -2607,6 +2620,15 @@ typedef struct _SYSTEM_BASIC_INFORMATION
 	ULONG_PTR ActiveProcessorsAffinityMask;
 	CCHAR NumberOfProcessors;
 } SYSTEM_BASIC_INFORMATION, *PSYSTEM_BASIC_INFORMATION;
+
+typedef struct _SYSTEM_PROCESSOR_INFORMATION
+{
+	USHORT ProcessorArchitecture;
+	USHORT ProcessorLevel;
+	USHORT ProcessorRevision;
+	USHORT MaximumProcessors;
+	ULONG ProcessorFeatureBits;
+} SYSTEM_PROCESSOR_INFORMATION, *PSYSTEM_PROCESSOR_INFORMATION;
 
 typedef struct _FILE_PIPE_PEEK_BUFFER
 {
@@ -4873,6 +4895,19 @@ NtUnmapViewOfSection(
 	_In_opt_ PVOID BaseAddress
 	);
 
+#if NTDDI_VERSION >= NTDDI_WIN8
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtUnmapViewOfSectionEx(
+	_In_ HANDLE ProcessHandle,
+	_In_opt_ PVOID BaseAddress,
+	_In_ ULONG Flags
+	);
+
+#endif
+
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -5586,6 +5621,25 @@ NtCreateSection(
 	_In_opt_ HANDLE FileHandle
 	);
 
+#if NTDDI_VERSION >= NTDDI_WIN10_RS5
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtCreateSectionEx(
+	_Out_ PHANDLE SectionHandle,
+	_In_ ACCESS_MASK DesiredAccess,
+	_In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+	_In_opt_ PLARGE_INTEGER MaximumSize,
+	_In_ ULONG SectionPageProtection,
+	_In_ ULONG AllocationAttributes,
+	_In_opt_ HANDLE FileHandle,
+	_Inout_updates_opt_(ExtendedParameterCount) PMEM_EXTENDED_PARAMETER ExtendedParameters,
+	_In_ ULONG ExtendedParameterCount
+	);
+
+#endif
+
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -5610,6 +5664,25 @@ NtMapViewOfSection(
 	_In_ ULONG AllocationType,
 	_In_ ULONG Win32Protect
 	);
+
+#if NTDDI_VERSION >= NTDDI_WIN10_RS4
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtMapViewOfSectionEx(
+	_In_ HANDLE SectionHandle,
+	_In_ HANDLE ProcessHandle,
+	_Inout_opt_ PVOID* BaseAddress,
+	_In_ PLARGE_INTEGER ViewOffset,
+	_Inout_ PSIZE_T ViewSize,
+	_In_ ULONG AllocationType,
+	_In_ ULONG Win32Protect,
+	_Inout_updates_opt_(ParameterCount) PMEM_EXTENDED_PARAMETER ExtendedParameters,
+	_In_ ULONG ParameterCount
+	);
+
+#endif
 
 #if NTDDI_VERSION >= NTDDI_VISTA
 NTSYSCALLAPI
@@ -7466,7 +7539,7 @@ NtWorkerFactoryWorkerReady(
 	);
 
 #if NTDDI_VERSION >= NTDDI_WIN8 || defined(_WIN64)
-// Windows 8+ declaration, but can be used on any x64 Windows Vista+
+// Windows 8+ declaration, can be used on Vista/7 x64
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -7482,10 +7555,28 @@ NtWaitForWorkViaWorkerFactory(
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
-NtWaitForWorkViaWorkerFactory(
+ZwWaitForWorkViaWorkerFactory(
 	_In_ HANDLE WorkerFactoryHandle,
 	_Out_ PFILE_IO_COMPLETION_INFORMATION MiniPacket
 	);
+
+FORCEINLINE
+NTSTATUS
+NtWaitForWorkViaWorkerFactory(
+	_In_ HANDLE WorkerFactoryHandle,
+	_Out_ PFILE_IO_COMPLETION_INFORMATION MiniPackets,
+	_Reserved_ ULONG Count,
+	_Reserved_ PULONG PacketsReturned,
+	_Reserved_ PWORKER_FACTORY_DEFERRED_WORK DeferredWork
+	)
+{
+	UNREFERENCED_PARAMETER(Count);
+	UNREFERENCED_PARAMETER(PacketsReturned);
+	UNREFERENCED_PARAMETER(DeferredWork);
+
+	return ZwWaitForWorkViaWorkerFactory(WorkerFactoryHandle,
+										MiniPackets);
+}
 #endif
 #endif
 
@@ -8773,6 +8864,21 @@ RtlSetEnvironmentStrings(
 	);
 #endif
 
+#if NTDDI_VERSION >= NTDDI_VISTA
+NTSYSAPI
+HANDLE
+NTAPI
+RtlGetCurrentTransaction(
+	);
+
+NTSYSAPI
+LOGICAL
+NTAPI
+RtlSetCurrentTransaction(
+	_In_ HANDLE TransactionHandle
+	);
+#endif
+
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -9063,7 +9169,7 @@ NTAPI
 RtlGetFullPathName_U(
 	_In_ PWSTR FileName,
 	_In_ ULONG BufferLength,
-	_Out_ PWSTR Buffer,
+	_Out_writes_bytes_(BufferLength) PWSTR Buffer,
 	_Out_opt_ PWSTR *FilePart
 	);
 
@@ -9076,7 +9182,7 @@ RtlGetFullPathName_UEx(
 	_In_ ULONG BufferLength,
 	_Out_writes_bytes_(BufferLength) PWSTR Buffer,
 	_Out_opt_ PWSTR *FilePart,
-	_Out_opt_ RTL_PATH_TYPE *InputPathType
+	_Out_opt_ ULONG *BytesRequired
 	);
 #endif
 
@@ -9086,13 +9192,13 @@ NTSTATUS
 NTAPI
 RtlGetFullPathName_UstrEx(
 	_In_ PUNICODE_STRING FileName,
-	_In_opt_ PUNICODE_STRING StaticString,
-	_In_opt_ PUNICODE_STRING DynamicString,
+	_Inout_ PUNICODE_STRING StaticString,
+	_Out_opt_ PUNICODE_STRING DynamicString,
 	_Out_opt_ PUNICODE_STRING *StringUsed,
-	_Out_opt_ PSIZE_T FilePartSize,
+	_Out_opt_ SIZE_T *FilePartPrefixCch,
 	_Out_opt_ PBOOLEAN NameInvalid,
-	_Out_ RTL_PATH_TYPE* PathType,
-	_Out_opt_ PSIZE_T LengthNeeded
+	_Out_ RTL_PATH_TYPE *InputPathType,
+	_Out_opt_ SIZE_T *BytesRequired
 	);
 #endif
 
