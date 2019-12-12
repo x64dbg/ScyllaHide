@@ -200,17 +200,43 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
         InstallInstrumentationCallbackHook(NtCurrentProcess, FALSE);
     }
 
+    NTSTATUS Status;
+    if (ProcessInformationClass == ProcessDebugObjectHandle && // Handle ProcessDebugObjectHandle early
+        ProcessInformation != nullptr &&
+        ProcessInformationLength == sizeof(HANDLE) &&
+        (ProcessHandle == NtCurrentProcess || HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByProcessHandle(ProcessHandle)))
+    {
+        // Verify (1) that the handle has PROCESS_QUERY_INFORMATION access, and (2) that writing
+        // to ProcessInformation and/or ReturnLength does not cause any access or alignment violations
+        Status = HookDllData.dNtQueryInformationProcess(ProcessHandle,
+                                                        ProcessDebugPort, // Note: not ProcessDebugObjectHandle
+                                                        ProcessInformation,
+                                                        sizeof(HANDLE),
+                                                        ReturnLength);
+        if (!NT_SUCCESS(Status))
+            return Status;
+
+        // The kernel calls DbgkOpenProcessDebugPort here
+
+        // This should be done in a try/except block, but since we are a mapped DLL we cannot use SEH.
+        // Rely on the fact that the NtQIP call we just did wrote to the same buffers successfully
+        *(PHANDLE)ProcessInformation = nullptr;
+        if (ReturnLength != nullptr)
+            *ReturnLength = sizeof(HANDLE);
+
+        return STATUS_PORT_NOT_SET;
+    }
+
     if ((ProcessInformationClass == ProcessDebugFlags ||
-        ProcessInformationClass == ProcessDebugObjectHandle ||
         ProcessInformationClass == ProcessDebugPort ||
         ProcessInformationClass == ProcessBasicInformation ||
         ProcessInformationClass == ProcessBreakOnTermination ||
         ProcessInformationClass == ProcessHandleTracing) &&
         (ProcessHandle == NtCurrentProcess || HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByProcessHandle(ProcessHandle)))
     {
-        NTSTATUS ntStat = HookDllData.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
+        Status = HookDllData.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
 
-        if (NT_SUCCESS(ntStat) && ProcessInformation != 0 && ProcessInformationLength != 0)
+        if (NT_SUCCESS(Status) && ProcessInformation != nullptr && ProcessInformationLength != 0)
         {
             if (ProcessInformationClass == ProcessDebugFlags)
             {
@@ -219,21 +245,6 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
                 *((ULONG *)ProcessInformation) = ((ValueProcessDebugFlags & PROCESS_NO_DEBUG_INHERIT) != 0) ? 0 : PROCESS_DEBUG_INHERIT;
 
                 RESTORE_RETURNLENGTH();
-            }
-            else if (ProcessInformationClass == ProcessDebugObjectHandle)
-            {
-                BACKUP_RETURNLENGTH();
-
-                if (HookDllData.dNtClose)
-                    HookDllData.dNtClose(*(PHANDLE)ProcessInformation);
-                else
-                    NtClose(*(PHANDLE)ProcessInformation);
-
-                *((HANDLE *)ProcessInformation) = nullptr;
-
-                RESTORE_RETURNLENGTH(); // Trigger any possible exceptions caused by messing with the output buffer before changing the final return status
-
-                ntStat = STATUS_PORT_NOT_SET;
             }
             else if (ProcessInformationClass == ProcessDebugPort)
             {
@@ -264,11 +275,11 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
                 BACKUP_RETURNLENGTH();
                 RESTORE_RETURNLENGTH(); // Trigger any possible exceptions caused by messing with the output buffer before changing the final return status
 
-                ntStat = IsProcessHandleTracingEnabled ? STATUS_SUCCESS : STATUS_INVALID_PARAMETER;
+                Status = IsProcessHandleTracingEnabled ? STATUS_SUCCESS : STATUS_INVALID_PARAMETER;
 			}
         }
 
-        return ntStat;
+        return Status;
     }
     return HookDllData.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
 }
