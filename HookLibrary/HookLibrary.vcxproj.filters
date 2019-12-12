@@ -40,6 +40,9 @@
     <ClInclude Include="HookHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Tls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="InstrumentationCallbackX86.asm">

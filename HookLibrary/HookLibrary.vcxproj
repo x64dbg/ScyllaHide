@@ -172,6 +172,7 @@
     <ClInclude Include="HookedFunctions.h" />
     <ClInclude Include="HookHelper.h" />
     <ClInclude Include="HookMain.h" />
+    <ClInclude Include="Tls.h" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="InstrumentationCallbackX86.asm">

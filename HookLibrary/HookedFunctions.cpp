@@ -6,6 +6,7 @@ HOOK_DLL_DATA HookDllData = { 0 };
 
 #include "HookedFunctions.h"
 #include "HookHelper.h"
+#include "Tls.h"
 
 void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo, PULONG pReturnLengthAdjust);
@@ -157,7 +158,6 @@ static bool IsProcessHandleTracingEnabled = false;
 // Instrumentation callback
 
 static LONG volatile InstrumentationCallbackHookInstalled = 0;
-static LONG volatile RecurseGuard = 0;
 static ULONG NumManualSyscalls = 0;
 
 extern "C"
@@ -168,8 +168,8 @@ InstrumentationCallback(
     _Inout_ ULONG_PTR ReturnVal // EAX/RAX
     )
 {
-    if (InterlockedOr(&RecurseGuard, 0x1) == 0x1)
-        return ReturnVal;
+    if (InterlockedOr(TlsGetInstrumentationCallbackDisabled(), 0x1) == 0x1)
+        return ReturnVal; // Do not recurse
 
     const PVOID ImageBase = NtCurrentPeb()->ImageBaseAddress;
     const PIMAGE_NT_HEADERS NtHeaders = RtlImageNtHeader(ImageBase);
@@ -187,7 +187,7 @@ InstrumentationCallback(
         }
     }
 
-    InterlockedAnd(&RecurseGuard, 0);
+    InterlockedAnd(TlsGetInstrumentationCallbackDisabled(), 0);
 
     return ReturnVal;
 }
