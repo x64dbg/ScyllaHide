@@ -133,6 +133,11 @@ namespace scl
                 profile_.malwareRunpeUnpacker;
         }
 
+        bool os_version_patch_needed() const
+        {
+            return profile_name_.find(L"VMProtect") != std::wstring::npos;
+        }
+
     protected:
         static void LoadProfile(const wchar_t *file, const wchar_t *name, Profile *profile);
         static bool SaveProfile(const wchar_t *file, const wchar_t *name, const Profile *profile);

@@ -408,6 +408,11 @@ void ApplyPEBPatch(HANDLE hProcess, DWORD flags)
                 g_log.LogError(L"Failed to patch flags in PEB!ProcessHeaps");
         }
 
+        if (flags & PEB_PATCH_OsBuildNumber)
+        {
+            peb->OSBuildNumber++;
+        }
+
         if (!scl::SetPeb(hProcess, peb.get()))
             g_log.LogError(L"Failed to write PEB to remote process");
 
@@ -439,10 +444,89 @@ void ApplyPEBPatch(HANDLE hProcess, DWORD flags)
                 g_log.LogError(L"Failed to patch flags in PEB64!ProcessHeaps");
         }
 
+        if (flags & PEB_PATCH_OsBuildNumber)
+        {
+            peb64->OSBuildNumber++;
+        }
+
         if (!scl::Wow64SetPeb64(hProcess, peb64.get()))
             g_log.LogError(L"Failed to write PEB64 to remote process");
     }
 #endif
+}
+
+void ApplyNtdllVersionPatch(HANDLE hProcess)
+{
+    // This will get the 32 bit ntdll if we are on Wow64, which is fine.
+    // Note that this relies on the addresses of DLLs in \KnownDlls[32] to be the same for all processes
+    const PVOID Ntdll = GetModuleHandleW(L"ntdll.dll");
+
+    // Get the resource data entry for VS_VERSION_INFO
+    LDR_RESOURCE_INFO ResourceIdPath;
+    ResourceIdPath.Type = (ULONG_PTR)RT_VERSION;
+    ResourceIdPath.Name = VS_VERSION_INFO;
+    ResourceIdPath.Language = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
+    PIMAGE_RESOURCE_DATA_ENTRY ResourceDataEntry = nullptr;
+    NTSTATUS Status = LdrFindResource_U(Ntdll, &ResourceIdPath, 3, &ResourceDataEntry);
+    if (!NT_SUCCESS(Status))
+    {
+        g_log.LogError(L"Failed to find VS_VERSION_INFO resource in ntdll.dll: %08X", Status);
+        return;
+    }
+
+    // Get the address and size of VS_VERSION_INFO
+    PVOID Address = nullptr;
+    ULONG Size = 0;
+    Status = LdrAccessResource(Ntdll, ResourceDataEntry, &Address, &Size);
+    if (!NT_SUCCESS(Status))
+    {
+        g_log.LogError(L"Failed to obtain size of VS_VERSION_INFO resource in ntdll.dll: %08X", Status);
+        return;
+    }
+    if (Address == nullptr || Size == 0)
+    {
+        g_log.LogError(L"VS_VERSION_INFO resource in ntdll.dll has size zero");
+        return;
+    }
+
+    // VS_VERSIONINFO is a mess to navigate because it is a nested struct of variable size with (grand)children all of variable sizes
+    // See: https://docs.microsoft.com/en-gb/windows/win32/menurc/vs-versioninfo
+    // Instead of finding VS_VERSIONINFO -> StringFileInfo[] -> StringTable[] -> String (-> WCHAR[]) properly, just do it the memcmp way
+    const WCHAR Needle[] = L"FileVersion";
+    PUCHAR P = (PUCHAR)Address;
+    for ( ; P < (PUCHAR)Address + Size - sizeof(Needle); ++P)
+    {
+        if (memcmp(P, Needle, sizeof(Needle)) == 0)
+            break;
+    }
+    if (P == (PUCHAR)Address)
+    {
+        g_log.LogError(L"Failed to find FileVersion in ntdll.dll VS_VERSION_INFO");
+        return;
+    }
+
+    // Skip to the version number and discard extra nulls
+    P += sizeof(Needle);
+    while (*(PWCHAR)P == L'\0')
+    {
+        P += sizeof(WCHAR);
+    }
+
+    // P now points at e.g. 6.1.xxxx.yyyy or 10.0.xxxxx.yyyy. Skip the major and minor version numbers to get to the build number xxxx
+    const ULONG Skip = NtCurrentPeb()->OSMajorVersion >= 10 ? 5 * sizeof(WCHAR) : 4 * sizeof(WCHAR);
+    P += Skip;
+
+    // Write a new bogus build number
+    WCHAR NewBuildNumber[] = L"1337";
+    ULONG OldProtect;
+    if (VirtualProtectEx(hProcess, P, sizeof(NewBuildNumber) - sizeof(WCHAR), PAGE_EXECUTE_READWRITE, &OldProtect))
+    {
+        if (WriteProcessMemory(hProcess, P, NewBuildNumber, sizeof(NewBuildNumber) - sizeof(WCHAR), nullptr))
+        {
+            g_log.LogInfo(L"Wrote bogus value to ntdll.dll FileVersion at 0x%p", P);
+        }
+        VirtualProtectEx(hProcess, P, sizeof(NewBuildNumber), OldProtect, &OldProtect);
+    }
 }
 
 void RestoreMemory(HANDLE hProcess, DWORD_PTR address, void * buffer, int bufferSize)

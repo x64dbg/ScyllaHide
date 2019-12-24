@@ -6,6 +6,7 @@
 #define PEB_PATCH_NtGlobalFlag          0x00000002
 #define PEB_PATCH_HeapFlags             0x00000004
 #define PEB_PATCH_ProcessParameters     0x00000008
+#define PEB_PATCH_OsBuildNumber         0x00000010
 
 namespace scl
 {

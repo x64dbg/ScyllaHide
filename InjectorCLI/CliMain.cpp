@@ -132,8 +132,12 @@ static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
         peb_flags |= PEB_PATCH_NtGlobalFlag;
     if (g_settings.opts().fixPebStartupInfo)
         peb_flags |= PEB_PATCH_ProcessParameters;
+    if (g_settings.os_version_patch_needed())
+        peb_flags |= PEB_PATCH_OsBuildNumber;
 
     ApplyPEBPatch(hProcess, peb_flags);
+    if (g_settings.os_version_patch_needed())
+        ApplyNtdllVersionPatch(hProcess);
 
     if (dllMemory == nullptr || imageBase == 0)
         return peb_flags != 0; // Not injecting hook DLL
