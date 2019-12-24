@@ -202,6 +202,8 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 #ifndef BUILD_IDA_64BIT
                 if (!scl::IsWindows64() && !bHooked) // Only apply on native x86 OS, see dbg_library_unload below
                 {
+                    ReadNtApiInformation(&g_hdd);
+
                     bHooked = true;
                     startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
                 }
@@ -258,6 +260,8 @@ static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
         if (scl::IsWindows64() && !bHooked)
         {
             // Bogus unload event which is actually a load of a native x64 DLL (ntdll, wow64, wow64cpu, wow64win)
+            ReadNtApiInformation(&g_hdd);
+
             bHooked = true;
             startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
         }
