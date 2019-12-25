@@ -259,6 +259,13 @@ bool ApplyKernel32Hook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, D
     hKernel = GetModuleHandleW(L"kernel32.dll");
     hKernelbase = GetModuleHandleW(L"kernelbase.dll");
 
+    if (GetModuleBaseRemote(hProcess, L"kernel32.dll") == nullptr ||
+        (hKernelbase != nullptr && GetModuleBaseRemote(hProcess, L"kernelbase.dll") == nullptr))
+    {
+        hdd->isKernel32Hooked = FALSE;
+        return true;
+    }
+
     void * HookedOutputDebugStringA = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedOutputDebugStringA") + imageBase);
     void * HookedGetTickCount = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetTickCount") + imageBase);
     void * HookedGetTickCount64 = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetTickCount64") + imageBase);
@@ -521,10 +528,7 @@ void ApplyNtdllVersionPatch(HANDLE hProcess)
     ULONG OldProtect;
     if (VirtualProtectEx(hProcess, P, sizeof(NewBuildNumber) - sizeof(WCHAR), PAGE_EXECUTE_READWRITE, &OldProtect))
     {
-        if (WriteProcessMemory(hProcess, P, NewBuildNumber, sizeof(NewBuildNumber) - sizeof(WCHAR), nullptr))
-        {
-            g_log.LogInfo(L"Wrote bogus value to ntdll.dll FileVersion at 0x%p", P);
-        }
+        WriteProcessMemory(hProcess, P, NewBuildNumber, sizeof(NewBuildNumber) - sizeof(WCHAR), nullptr);
         VirtualProtectEx(hProcess, P, sizeof(NewBuildNumber), OldProtect, &OldProtect);
     }
 }
