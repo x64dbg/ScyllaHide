@@ -152,16 +152,20 @@ ULONG_PTR scl::User32Loader::FindSyscallByIndex(LONG win32kSyscallIndex) const
 		}
 		else
 		{
-			// Wow64, old style: lea edx, [esp+4] / mov ecx, XXXX, call fs:0C0h
-			if ((address[5] == 0x8D || address[10] == 0x8D) && (address[5] == 0xB9 || address[9] == 0xB9))
-				isSyscall = true;
-			// Win 8/8.1 Wow64: call fs:0C0h
-			else if (address[5] == 0x64 && address[6] == 0xFF && address[7] == 0x15 && address[8] == 0xC0 &&
+			if (
+				// Wow64, old style: lea edx, [esp+4] / mov ecx, XXXX, call fs:0C0h
+				((address[5] == 0x8D || address[10] == 0x8D) && (address[5] == 0xB9 || address[9] == 0xB9))
+				||
+				// Win 8/8.1 Wow64: call fs:0C0h
+				(address[5] == 0x64 && address[6] == 0xFF && address[7] == 0x15 && address[8] == 0xC0 &&
 				address[9] == 0x00 && address[10] == 0x00 && address[11] == 0x00)
+				||
+				// Win 10 Wow64: mov edx, offset Wow64SystemServiceCall, call edx, retn
+				(address[5] == 0xBA && address[10] == 0xFF && address[11] == 0xD2 && (address[12] == 0xC2 || address[12] == 0xC3))
+				)
+			{
 				isSyscall = true;
-			// Win 10 Wow64: mov edx, offset Wow64SystemServiceCall, call edx, retn
-			else if (address[5] == 0xBA && address[10] == 0xFF && address[11] == 0xD2 && (address[12] == 0xC2 || address[12] == 0xC3))
-				isSyscall = true;
+			}
 		}
 #endif
 		if (isSyscall)
