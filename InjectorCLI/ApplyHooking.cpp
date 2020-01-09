@@ -643,11 +643,17 @@ void RestoreNtdllHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 
 void RestoreKernel32Hooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
 {
-    RESTORE_JMP(GetTickCount);
-    FREE_HOOK(GetTickCount);
-
     RESTORE_JMP(OutputDebugStringA);
+    RESTORE_JMP(GetTickCount);
+    RESTORE_JMP(GetTickCount64);
+    RESTORE_JMP(GetLocalTime);
+    RESTORE_JMP(GetSystemTime);
+
     FREE_HOOK(OutputDebugStringA);
+    FREE_HOOK(GetTickCount);
+    FREE_HOOK(GetTickCount64);
+    FREE_HOOK(GetLocalTime);
+    FREE_HOOK(GetSystemTime);
 
     hdd->isKernel32Hooked = FALSE;
 }
