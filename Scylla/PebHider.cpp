@@ -37,6 +37,10 @@ bool scl::PebPatchProcessParameters(PEB* peb, HANDLE hProcess)
     auto patch_size = (DWORD_PTR)&rupp.WindowFlags - (DWORD_PTR)&rupp.StartingX;
     ZeroMemory(&rupp.WindowFlags, patch_size);
 
+    // https://github.com/x64dbg/ScyllaHide/issues/99
+    rupp.WindowFlags = STARTF_USESHOWWINDOW;
+    rupp.ShowWindowFlags = SW_SHOWNORMAL;
+
     // If the debugger used IFEO, the app doesn't need to know that
     rupp.Flags |= RTL_USER_PROCESS_PARAMETERS_IMAGE_KEY_MISSING;
 
@@ -54,6 +58,10 @@ bool scl::Wow64Peb64PatchProcessParameters(PEB64* peb64, HANDLE hProcess)
     // Some debuggers manipulate StartUpInfo to start the debugged process and therefore can be detected...
     auto patch_size = (DWORD_PTR)&rupp.WindowFlags - (DWORD_PTR)&rupp.StartingX;
     ZeroMemory(&rupp.WindowFlags, patch_size);
+
+    // https://github.com/x64dbg/ScyllaHide/issues/99
+    rupp.WindowFlags = STARTF_USESHOWWINDOW;
+    rupp.ShowWindowFlags = SW_SHOWNORMAL;
 
     // If the debugger used IFEO, the app doesn't need to know that
     rupp.Flags |= RTL_USER_PROCESS_PARAMETERS_IMAGE_KEY_MISSING;
