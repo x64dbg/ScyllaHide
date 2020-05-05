@@ -145,6 +145,116 @@ bool StartFixBeingDebugged(DWORD targetPid, bool setToNull)
     return true;
 }
 
+static bool GetProcessInfo(HANDLE hProcess, PPROCESS_SUSPEND_INFO processInfo)
+{
+    PROCESS_BASIC_INFORMATION basicInfo = { 0 };
+    NTSTATUS status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &basicInfo, sizeof(basicInfo), nullptr);
+    if (!NT_SUCCESS(status))
+        return false;
+    ULONG size;
+    status = NtQuerySystemInformation(SystemProcessInformation, nullptr, 0, &size);
+    if (status != STATUS_INFO_LENGTH_MISMATCH)
+        return false;
+    const PSYSTEM_PROCESS_INFORMATION systemProcessInfo = (PSYSTEM_PROCESS_INFORMATION)RtlAllocateHeap(RtlProcessHeap(), HEAP_ZERO_MEMORY, 2 * size);
+    if (systemProcessInfo == nullptr)
+        return false;
+    status = NtQuerySystemInformation(SystemProcessInformation, systemProcessInfo, 2 * size, nullptr);
+    if (!NT_SUCCESS(status))
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, systemProcessInfo);
+        return false;
+    }
+
+    // Count threads
+    ULONG numThreads = 0;
+    PSYSTEM_PROCESS_INFORMATION entry = systemProcessInfo;
+
+    while (true)
+    {
+        if (entry->UniqueProcessId == basicInfo.UniqueProcessId)
+        {
+            numThreads = entry->NumberOfThreads;
+            break;
+        }
+        if (entry->NextEntryOffset == 0)
+            break;
+        entry = (PSYSTEM_PROCESS_INFORMATION)((ULONG_PTR)entry + entry->NextEntryOffset);
+    }
+
+    if (numThreads == 0)
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, systemProcessInfo);
+        return false;
+    }
+
+    // Fill process info
+    processInfo->ProcessId = basicInfo.UniqueProcessId;
+    processInfo->ProcessHandle = hProcess;
+    processInfo->NumThreads = numThreads;
+
+    // Fill thread IDs
+    processInfo->ThreadSuspendInfo = (PTHREAD_SUSPEND_INFO)RtlAllocateHeap(RtlProcessHeap(), HEAP_ZERO_MEMORY, numThreads * sizeof(THREAD_SUSPEND_INFO));
+    for (ULONG i = 0; i < numThreads; ++i)
+    {
+        processInfo->ThreadSuspendInfo[i].ThreadId = entry->Threads[i].ClientId.UniqueThread;
+    }
+
+    RtlFreeHeap(RtlProcessHeap(), 0, systemProcessInfo);
+    return true;
+}
+
+// NtSuspendProcess does not return STATUS_SUSPEND_COUNT_EXCEEDED (or any other error) when one or more thread(s) in the process is/are at the suspend limit.
+// This replacement suspends all threads in a process, storing the individual thread suspend statuses. True is returned iff all threads are suspended.
+bool SafeSuspendProcess(HANDLE hProcess, PPROCESS_SUSPEND_INFO suspendInfo)
+{
+    // Get process info
+    if (!GetProcessInfo(hProcess, suspendInfo))
+        return false;
+
+    for (ULONG i = 0; i < suspendInfo->NumThreads; ++i)
+    {
+        PTHREAD_SUSPEND_INFO threadSuspendInfo = &suspendInfo->ThreadSuspendInfo[i];
+        OBJECT_ATTRIBUTES objectAttributes = RTL_CONSTANT_OBJECT_ATTRIBUTES((PUNICODE_STRING)nullptr, 0);
+        CLIENT_ID clientId = { suspendInfo->ProcessId, suspendInfo->ThreadSuspendInfo[i].ThreadId };
+
+        // Open the thread by thread ID
+        NTSTATUS status = NtOpenThread(&threadSuspendInfo->ThreadHandle, THREAD_SUSPEND_RESUME, &objectAttributes, &clientId);
+        if (!NT_SUCCESS(status))
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, suspendInfo->ThreadSuspendInfo);
+            return false;
+        }
+
+        // Suspend the thread, ignoring (but saving) STATUS_SUSPEND_COUNT_EXCEEDED errors
+        threadSuspendInfo->SuspendStatus = NtSuspendThread(threadSuspendInfo->ThreadHandle, nullptr);
+        if (!NT_SUCCESS(threadSuspendInfo->SuspendStatus) && threadSuspendInfo->SuspendStatus != STATUS_SUSPEND_COUNT_EXCEEDED)
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, suspendInfo->ThreadSuspendInfo);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// Replacement for NtResumeProcess, to be used with info obtained from a prior call to SafeSuspendProcess
+bool SafeResumeProcess(PPROCESS_SUSPEND_INFO suspendInfo)
+{
+    bool success = true;
+
+    for (ULONG i = 0; i < suspendInfo->NumThreads; ++i)
+    {
+        if (NT_SUCCESS(suspendInfo->ThreadSuspendInfo[i].SuspendStatus) &&
+            !NT_SUCCESS(NtResumeThread(suspendInfo->ThreadSuspendInfo[i].ThreadHandle, nullptr)))
+            success = false;
+        if (!NT_SUCCESS(NtClose(suspendInfo->ThreadSuspendInfo[i].ThreadHandle)))
+            success = false;
+    }
+
+    RtlFreeHeap(RtlProcessHeap(), 0, suspendInfo->ThreadSuspendInfo);
+    return success;
+}
+
 bool StartHooking(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, DWORD_PTR imageBase)
 {
     hdd->dwProtectedProcessId = GetCurrentProcessId();
@@ -174,7 +284,8 @@ bool StartHooking(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, DWORD_P
 
 void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, bool newProcess)
 {
-    if (!NT_SUCCESS(NtSuspendProcess(hProcess)))
+    PROCESS_SUSPEND_INFO suspendInfo;
+    if (!SafeSuspendProcess(hProcess, &suspendInfo))
         return;
 
     const bool injectDll = g_settings.hook_dll_needed() || hdd->isNtdllHooked || hdd->isKernel32Hooked || hdd->isUserDllHooked;
@@ -231,7 +342,7 @@ void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory
         }
     }
 
-    NtResumeProcess(hProcess);
+    SafeResumeProcess(&suspendInfo);
 }
 
 void startInjection(DWORD targetPid, HOOK_DLL_DATA *hdd, const WCHAR * dllPath, bool newProcess)

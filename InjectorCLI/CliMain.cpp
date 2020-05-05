@@ -147,7 +147,8 @@ static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 
 bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
 {
-    if (!NT_SUCCESS(NtSuspendProcess(hProcess)))
+    PROCESS_SUSPEND_INFO suspendInfo;
+    if (!SafeSuspendProcess(hProcess, &suspendInfo))
         return false;
 
     if (g_settings.opts().removeDebugPrivileges)
@@ -186,7 +187,7 @@ bool startInjectionProcess(HANDLE hProcess, BYTE * dllMemory)
         success = true;
     }
 
-    NtResumeProcess(hProcess);
+    SafeResumeProcess(&suspendInfo);
 
     return success;
 }
