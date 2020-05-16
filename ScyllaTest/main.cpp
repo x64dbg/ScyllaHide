@@ -39,6 +39,138 @@ static HANDLE GetRealCurrentProcess()
     return hRealHandle;
 }
 
+static NTSTATUS GetOtherOperationCount(PULONGLONG otherOperationCount)
+{
+    *otherOperationCount = 0;
+    ULONGLONG otherOperationCountSystemProcessInformation = 0,
+        otherOperationCountSystemExtendedProcessInformation = 0,
+        otherOperationCountSystemSessionProcessInformation = 0;
+
+    // NtQSI(SystemProcessInformation)
+    ULONG size;
+    NTSTATUS status = NtQuerySystemInformation(SystemProcessInformation, nullptr, 0, &size);
+    if (status != STATUS_INFO_LENGTH_MISMATCH)
+        return status;
+    const PSYSTEM_PROCESS_INFORMATION SystemProcessInfo = (PSYSTEM_PROCESS_INFORMATION)RtlAllocateHeap(RtlProcessHeap(), HEAP_ZERO_MEMORY, size * 2);
+    if (SystemProcessInfo == nullptr)
+        return STATUS_INSUFFICIENT_RESOURCES;
+    status = NtQuerySystemInformation(SystemProcessInformation, SystemProcessInfo, size * 2, nullptr);
+    if (!NT_SUCCESS(status))
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, SystemProcessInfo);
+        return status;
+    }
+
+    PSYSTEM_PROCESS_INFORMATION entry = SystemProcessInfo;
+    status = STATUS_NOT_FOUND;
+
+    while (true)
+    {
+        if (entry->UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess)
+        {
+            otherOperationCountSystemProcessInformation = entry->OtherOperationCount.QuadPart;
+            status = STATUS_SUCCESS;
+            break;
+        }
+        
+        if (entry->NextEntryOffset == 0)
+            break;
+        entry = (PSYSTEM_PROCESS_INFORMATION)((ULONG_PTR)entry + entry->NextEntryOffset);
+    }
+
+    RtlFreeHeap(RtlProcessHeap(), 0, SystemProcessInfo);
+    if (!NT_SUCCESS(status))
+        return status;
+
+    // NtQSI(SystemExtendedProcessInformation)
+    status = NtQuerySystemInformation(SystemExtendedProcessInformation, nullptr, 0, &size);
+    if (status != STATUS_INFO_LENGTH_MISMATCH)
+        return status;
+    const PSYSTEM_PROCESS_INFORMATION systemExtendedProcessInfo = (PSYSTEM_PROCESS_INFORMATION)RtlAllocateHeap(RtlProcessHeap(), HEAP_ZERO_MEMORY, size * 2);
+    if (SystemProcessInfo == nullptr)
+        return STATUS_INSUFFICIENT_RESOURCES;
+    status = NtQuerySystemInformation(SystemExtendedProcessInformation, systemExtendedProcessInfo, size * 2, nullptr);
+    if (!NT_SUCCESS(status))
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, systemExtendedProcessInfo);
+        return status;
+    }
+
+    entry = systemExtendedProcessInfo;
+    status = STATUS_NOT_FOUND;
+
+    while (true)
+    {
+        if (entry->UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess)
+        {
+            otherOperationCountSystemExtendedProcessInformation = entry->OtherOperationCount.QuadPart;
+            status = STATUS_SUCCESS;
+            break;
+        }
+        
+        if (entry->NextEntryOffset == 0)
+            break;
+        entry = (PSYSTEM_PROCESS_INFORMATION)((ULONG_PTR)entry + entry->NextEntryOffset);
+    }
+
+    RtlFreeHeap(RtlProcessHeap(), 0, systemExtendedProcessInfo);
+    if (!NT_SUCCESS(status))
+        return status;
+
+    // NtQSI(SystemSessionProcessInformation)
+    SYSTEM_SESSION_PROCESS_INFORMATION sessionProcessInfo = { NtCurrentPeb()->SessionId, sizeof(SYSTEM_SESSION_PROCESS_INFORMATION), &sessionProcessInfo };
+    status = NtQuerySystemInformation(SystemSessionProcessInformation, &sessionProcessInfo, sizeof(sessionProcessInfo), &sessionProcessInfo.SizeOfBuf);
+    if (status != STATUS_INFO_LENGTH_MISMATCH)
+        return status;
+    sessionProcessInfo.SizeOfBuf *= 2;
+    sessionProcessInfo.Buffer = RtlAllocateHeap(RtlProcessHeap(), HEAP_ZERO_MEMORY, sessionProcessInfo.SizeOfBuf);
+    if (SystemProcessInfo == nullptr)
+        return STATUS_INSUFFICIENT_RESOURCES;
+    status = NtQuerySystemInformation(SystemSessionProcessInformation, &sessionProcessInfo, sizeof(sessionProcessInfo), nullptr);
+    if (!NT_SUCCESS(status))
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, sessionProcessInfo.Buffer);
+        return status;
+    }
+
+    entry = (PSYSTEM_PROCESS_INFORMATION)sessionProcessInfo.Buffer;
+    status = STATUS_NOT_FOUND;
+
+    while (true)
+    {
+        if (entry->UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess)
+        {
+            otherOperationCountSystemSessionProcessInformation = entry->OtherOperationCount.QuadPart;
+            status = STATUS_SUCCESS;
+            break;
+        }
+        
+        if (entry->NextEntryOffset == 0)
+            break;
+        entry = (PSYSTEM_PROCESS_INFORMATION)((ULONG_PTR)entry + entry->NextEntryOffset);
+    }
+
+    RtlFreeHeap(RtlProcessHeap(), 0, sessionProcessInfo.Buffer);
+    if (!NT_SUCCESS(status))
+        return status;
+
+    // NtQIP(IoCounters)
+    IO_COUNTERS ioCounters;
+    status = NtQueryInformationProcess(g_proc_handle, ProcessIoCounters, &ioCounters, sizeof(ioCounters), nullptr);
+    if (!NT_SUCCESS(status))
+        return status;
+
+    // All four counts should be the same
+    if (otherOperationCountSystemProcessInformation != otherOperationCountSystemExtendedProcessInformation ||
+        otherOperationCountSystemProcessInformation != otherOperationCountSystemSessionProcessInformation ||
+        otherOperationCountSystemProcessInformation != ioCounters.OtherOperationCount)
+        return STATUS_DATA_NOT_ACCEPTED;
+
+    // Return final count
+    *otherOperationCount = otherOperationCountSystemProcessInformation;
+    return STATUS_SUCCESS;
+}
+
 static ScyllaTestResult Check_PEB_BeingDebugged()
 {
     const auto peb = scl::GetPebAddress(g_proc_handle);
@@ -132,7 +264,7 @@ static ScyllaTestResult Check_Wow64PEB64_ProcessParameters()
     const auto peb64 = scl::GetPebAddress(g_proc_handle);
     SCYLLA_TEST_FAIL_IF(!peb64);
 
-    scl::RTL_USER_PROCESS_PARAMETERS<DWORD64> rupp;
+    scl::RTL_USER_PROCESS_PARAMETERS<DWORD64> rupp{};
 
     SCYLLA_TEST_FAIL_IF(!scl::Wow64ReadProcessMemory64(g_proc_handle, (PVOID64)peb64->ProcessParameters, (PVOID)&rupp, sizeof(rupp), nullptr));
 
@@ -153,7 +285,7 @@ static ScyllaTestResult Check_CheckRemoteDebuggerPresent()
 
 static ScyllaTestResult Check_OutputDebugStringA_LastError()
 {
-    auto last_error = 0xDEAD;
+    const DWORD last_error = 0xDEAD;
     SetLastError(last_error);
     OutputDebugStringA("test");
     return SCYLLA_TEST_CHECK(GetLastError() != last_error);
@@ -227,7 +359,7 @@ static ScyllaTestResult Check_NtQuery_OverlappingReturnLength() // https://githu
     RtlZeroMemory(Buffer, sizeof(Buffer));
     PULONG pReturnLength = (PULONG)&Buffer[0];
 
-    NTSTATUS Status = NtQueryInformationProcess(NtCurrentProcess, ProcessDebugObjectHandle, Buffer, sizeof(HANDLE), pReturnLength);
+    NTSTATUS Status = NtQueryInformationProcess(g_proc_handle, ProcessDebugObjectHandle, Buffer, sizeof(HANDLE), pReturnLength);
     SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(Status) && Status != STATUS_PORT_NOT_SET);
     if (*pReturnLength != sizeof(HANDLE))
         return ScyllaTestDetected;
@@ -262,6 +394,84 @@ static ScyllaTestResult Check_NtClose()
             ? ScyllaTestDetected
             : ScyllaTestFail;
     }
+}
+
+static ScyllaTestResult Check_OtherOperationCount() // https://everdox.blogspot.com/2013/11/debugger-detection-with.html
+{
+    // Open some file
+    IO_STATUS_BLOCK ioStatusBlock;
+    UNICODE_STRING ntdllPath = RTL_CONSTANT_STRING(L"\\SystemRoot\\System32\\ntdll.dll");
+    OBJECT_ATTRIBUTES objectAttributes = RTL_CONSTANT_OBJECT_ATTRIBUTES((PUNICODE_STRING)&ntdllPath, OBJ_CASE_INSENSITIVE);
+    HANDLE fileHandle;
+    NTSTATUS status = NtCreateFile(&fileHandle,
+                                SYNCHRONIZE | FILE_EXECUTE,
+                                &objectAttributes,
+                                &ioStatusBlock,
+                                nullptr,
+                                FILE_ATTRIBUTE_NORMAL,
+                                FILE_SHARE_READ,
+                                FILE_OPEN,
+                                FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+                                nullptr,
+                                0);
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(status));
+
+    // Create section. Must be SEC_IMAGE, not SEC_COMMIT
+    HANDLE SectionHandle;
+    status = NtCreateSection(&SectionHandle,
+                            SECTION_MAP_EXECUTE,
+                            nullptr,
+                            nullptr,
+                            PAGE_EXECUTE,
+                            SEC_IMAGE,
+                            fileHandle);
+    NtClose(fileHandle);
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(status));
+
+    // Query other operation count (first go)
+    ULONGLONG otherOperationCountBefore;
+    status = GetOtherOperationCount(&otherOperationCountBefore);
+    if (!NT_SUCCESS(status))
+    {
+        NtClose(SectionHandle);
+        return status == STATUS_DATA_NOT_ACCEPTED
+            ? ScyllaTestDetected
+            : ScyllaTestFail;
+    }
+
+    // Map a view of the section
+    PVOID baseAddress = nullptr;
+    SIZE_T viewSize = 0;
+    status = NtMapViewOfSection(SectionHandle,
+                                g_proc_handle,
+                                &baseAddress,
+                                0, 
+                                0,
+                                nullptr,
+                                &viewSize,
+                                ViewUnmap,
+                                0,
+                                PAGE_EXECUTE);
+    NtClose(SectionHandle);
+    SCYLLA_TEST_FAIL_IF(!NT_SUCCESS(status));
+
+    // Query other operation count (second go)
+    ULONGLONG otherOperationCountAfter;
+    status = GetOtherOperationCount(&otherOperationCountAfter);
+
+    NtUnmapViewOfSection(g_proc_handle, baseAddress);
+
+    if (!NT_SUCCESS(status))
+    {
+        return status == STATUS_DATA_NOT_ACCEPTED
+            ? ScyllaTestDetected
+            : ScyllaTestFail;
+    }
+
+    // If the other operation count was incremented, the image was mapped into a debugger
+    return otherOperationCountAfter > otherOperationCountBefore
+        ? ScyllaTestDetected
+        : ScyllaTestOk;
 }
 
 static void PrintScyllaTestResult(ScyllaTestResult result, ULONG charsPrinted)
@@ -388,6 +598,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         SCYLLA_TEST(NtQuerySystemInformation_KernelDebugger);
         SCYLLA_TEST(NtQuery_OverlappingReturnLength);
         SCYLLA_TEST(NtClose);
+        SCYLLA_TEST_IF(ver >= scl::OS_WIN_VISTA, OtherOperationCount);
 
         printf("--------------------\n\n");
     }

@@ -9,6 +9,7 @@ HOOK_DLL_DATA HookDllData = { 0 };
 #include "Tls.h"
 
 void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo);
+void FakeCurrentOtherOperationCount(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo, PULONG pReturnLengthAdjust);
 void FilterHandleInfoEx(PSYSTEM_HANDLE_INFORMATION_EX pHandleInfoEx, PULONG pReturnLengthAdjust);
 void FilterProcess(PSYSTEM_PROCESS_INFORMATION pInfo);
@@ -102,6 +103,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
 
                 FilterProcess(ProcessInfo);
                 FakeCurrentParentProcessId(ProcessInfo);
+                FakeCurrentOtherOperationCount(ProcessInfo);
 
                 RESTORE_RETURNLENGTH();
             }
@@ -231,7 +233,8 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
         ProcessInformationClass == ProcessDebugPort ||
         ProcessInformationClass == ProcessBasicInformation ||
         ProcessInformationClass == ProcessBreakOnTermination ||
-        ProcessInformationClass == ProcessHandleTracing) &&
+        ProcessInformationClass == ProcessHandleTracing ||
+        ProcessInformationClass == ProcessIoCounters) &&
         (ProcessHandle == NtCurrentProcess || HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByProcessHandle(ProcessHandle)))
     {
         Status = HookDllData.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
@@ -277,6 +280,14 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
 
                 Status = IsProcessHandleTracingEnabled ? STATUS_SUCCESS : STATUS_INVALID_PARAMETER;
 			}
+            else if (ProcessInformationClass == ProcessIoCounters)
+            {
+                BACKUP_RETURNLENGTH();
+
+                ((PIO_COUNTERS)ProcessInformation)->OtherOperationCount = 1;
+
+                RESTORE_RETURNLENGTH();
+            }
         }
 
         return Status;
@@ -1027,6 +1038,25 @@ void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo)
         if (pInfo->UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess)
         {
             pInfo->InheritedFromUniqueProcessId = ULongToHandle(GetExplorerProcessId());
+            break;
+        }
+
+        if (pInfo->NextEntryOffset == 0)
+            break;
+
+        pInfo = (PSYSTEM_PROCESS_INFORMATION)((DWORD_PTR)pInfo + pInfo->NextEntryOffset);
+    }
+}
+
+void FakeCurrentOtherOperationCount(PSYSTEM_PROCESS_INFORMATION pInfo)
+{
+    while (true)
+    {
+        if (pInfo->UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess)
+        {
+            LARGE_INTEGER one;
+            one.QuadPart = 1;
+            pInfo->OtherOperationCount = one;
             break;
         }
 
