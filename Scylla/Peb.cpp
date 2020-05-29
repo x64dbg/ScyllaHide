@@ -85,14 +85,14 @@ bool scl::Wow64SetPeb64(HANDLE hProcess, const PEB64 *pPeb64)
     return false;
 }
 
-PVOID64 scl::Wow64GetModuleHandle64(const wchar_t* moduleName)
+PVOID64 scl::Wow64GetModuleHandle64(HANDLE hProcess, const wchar_t* moduleName)
 {
-    const auto Peb64 = Wow64GetPeb64(NtCurrentProcess);
+    const auto Peb64 = Wow64GetPeb64(hProcess);
     if (Peb64 == nullptr)
         return nullptr;
 
     PEB_LDR_DATA64 LdrData64;
-    if (!Wow64ReadProcessMemory64(NtCurrentProcess, (PVOID64)Peb64->Ldr, &LdrData64, sizeof(LdrData64), nullptr))
+    if (!Wow64ReadProcessMemory64(hProcess, (PVOID64)Peb64->Ldr, &LdrData64, sizeof(LdrData64), nullptr))
         return nullptr;
 
     PVOID64 DllBase = nullptr;
@@ -102,12 +102,12 @@ PVOID64 scl::Wow64GetModuleHandle64(const wchar_t* moduleName)
 
     do
     {
-        if (!Wow64ReadProcessMemory64(NtCurrentProcess, (PVOID64)Head.InLoadOrderLinks.Flink, &Head, sizeof(Head), nullptr))
+        if (!Wow64ReadProcessMemory64(hProcess, (PVOID64)Head.InLoadOrderLinks.Flink, &Head, sizeof(Head), nullptr))
             break;
 
         wchar_t* BaseDllName = (wchar_t*)RtlAllocateHeap(RtlProcessHeap(), HEAP_ZERO_MEMORY, Head.BaseDllName.MaximumLength);
         if (BaseDllName == nullptr ||
-            !Wow64ReadProcessMemory64(NtCurrentProcess, (PVOID64)Head.BaseDllName.Buffer, BaseDllName, Head.BaseDllName.MaximumLength, nullptr))
+            !Wow64ReadProcessMemory64(hProcess, (PVOID64)Head.BaseDllName.Buffer, BaseDllName, Head.BaseDllName.MaximumLength, nullptr))
             break;
 
         if (_wcsicmp(moduleName, BaseDllName) == 0)

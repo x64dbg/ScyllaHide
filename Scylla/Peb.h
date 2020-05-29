@@ -205,7 +205,7 @@ namespace scl {
     bool SetPeb(HANDLE hProcess, const PEB *pPeb);
     bool Wow64SetPeb64(HANDLE hProcess, const PEB64 *pPeb64);
 
-    PVOID64 Wow64GetModuleHandle64(const wchar_t* moduleName);
+    PVOID64 Wow64GetModuleHandle64(HANDLE hProcess, const wchar_t* moduleName);
 
     DWORD GetHeapFlagsOffset(bool x64);
     DWORD GetHeapForceFlagsOffset(bool x64);
