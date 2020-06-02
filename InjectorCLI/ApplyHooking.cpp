@@ -87,10 +87,8 @@ bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
     void * HookedNtYieldExecution = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtYieldExecution") + imageBase);
     void * HookedNtGetContextThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtGetContextThread") + imageBase);
     void * HookedNtSetContextThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetContextThread") + imageBase);
-#ifndef _WIN64
     void * HookedKiUserExceptionDispatcher = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedKiUserExceptionDispatcher") + imageBase);
     void * HookedNtContinue = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtContinue") + imageBase);
-#endif
     void * HookedNtClose = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtClose") + imageBase);
     void * HookedNtDuplicateObject = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtDuplicateObject") + imageBase);
     void * HookedNtSetDebugFilterState = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtSetDebugFilterState") + imageBase);
@@ -210,18 +208,65 @@ bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
         HOOK_NATIVE_NOTRAMP(NtSetDebugFilterState);
     }
 
-#ifndef _WIN64
     if (hdd->EnableKiUserExceptionDispatcherHook == TRUE)
     {
         g_log.LogDebug(L"ApplyNtdllHook -> Hooking KiUserExceptionDispatcher");
+#ifdef _WIN64
+        // The x86_64 version of this function currently contains relative offset instructions
+        // which will cause problems with the naive trampoline generation currently in use.
+        // Therefore, let us apply some manual patching instead.
+        PVOID address = (PVOID)_KiUserExceptionDispatcher;
+        if (*(PUINT32)address != 0x058B48FC)
+        {
+            g_log.LogDebug(L"ApplyNtdllHook -> KiUserExceptionDispatcher pattern mismatch 0x%lx", *(PUINT32)address);
+        }
+        else
+        {
+            // This function currently has a nine byte NOP before it, probably for hot patching?
+            // There is also some alignment space.  Let's borrow this to write our trampoline.
+            uint8_t trampoline[] =
+            {
+                0xFF, 0x15, 0x0F, 0x00, 0x00, 0x00,         // call qword ptr[+15]
+                0xFC,                                       // cld
+                0x48, 0x8B, 0x05, 0x22, 0xA4, 0x0D, 0x00,   // mov rax, qword ptr:[<Wow64PrepareForException>]
+                0x48, 0x85, 0xC0,                           // test rax,rax
+                0xEB, 0x0B                                  // jmp <next real instruction>
+            };
+
+            // update RVA of Wow64PrepareForException
+            UINT32 rvaWow64PrepareForException;
+            ReadProcessMemory(hProcess, (LPCVOID)(((UINT_PTR)address) + 4), (PVOID)&rvaWow64PrepareForException,
+                sizeof(rvaWow64PrepareForException), nullptr);
+
+            // instruction is moved up 13 bytes.  update trampoline
+            rvaWow64PrepareForException += 13;
+            memcpy(&trampoline[10], &rvaWow64PrepareForException, sizeof(rvaWow64PrepareForException));
+
+            uint8_t hook[] =
+            {
+                0xEB, 0xEB,     // jmp -21
+                0xFE, 0xED, 0xFA, 0xCE, 0xDE, 0xAD, 0xBE, 0xEF,
+            };
+
+            // insert hook into payload
+            memcpy(&hook[2], &HookedKiUserExceptionDispatcher, sizeof(PVOID));
+
+            // install trampoline
+            WriteProcessMemory(hProcess, (PVOID)(((UINT_PTR)address) - sizeof(trampoline)),
+                trampoline, sizeof(trampoline), nullptr);
+
+            // install hook
+            WriteProcessMemory(hProcess, address, hook, sizeof(hook), nullptr);
+        }
+#else
         HOOK(KiUserExceptionDispatcher);
+#endif
     }
     if (hdd->EnableNtContinueHook == TRUE)
     {
         g_log.LogDebug(L"ApplyNtdllHook -> Hooking NtContinue");
         HOOK_NATIVE(NtContinue);
     }
-#endif
 
     if (hdd->EnableNtQuerySystemTimeHook == TRUE && _NtQuerySystemTime != 0)
     {
