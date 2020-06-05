@@ -251,9 +251,24 @@ bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
             // insert hook into payload
             memcpy(&hook[2], &HookedKiUserExceptionDispatcher, sizeof(PVOID));
 
+            // for most hooks the following fields are for the trampoline.  this works for them because
+            // the trampoline is an identical copy of what was at the start of the function.  since this
+            // is not the case for us, we must preserve the original bytes in memory we deliberately set
+            // aside for this purpose.
+            PVOID backup_location = VirtualAllocEx(hProcess, nullptr, sizeof(hook), MEM_COMMIT,
+                PAGE_READWRITE);
+
+            hdd->dKiUserExceptionDispatcher = (decltype(hdd->dKiUserExceptionDispatcher))(backup_location);
+            hdd->KiUserExceptionDispatcherBackupSize = sizeof(hook);
+
+            // backup start of function
+            uint8_t backup_prologue[sizeof(hook)];
+            ReadProcessMemory(hProcess, address, backup_prologue, sizeof(backup_prologue), nullptr);
+            WriteProcessMemory(hProcess, backup_location, backup_prologue, sizeof(backup_prologue), nullptr);
+
             // install trampoline
-            WriteProcessMemory(hProcess, (PVOID)(((UINT_PTR)address) - sizeof(trampoline)),
-                trampoline, sizeof(trampoline), nullptr);
+            PVOID trampoline_location = (PVOID)(((UINT_PTR)address) - sizeof(trampoline));
+            WriteProcessMemory(hProcess, trampoline_location, trampoline, sizeof(trampoline), nullptr);
 
             // install hook
             WriteProcessMemory(hProcess, address, hook, sizeof(hook), nullptr);
