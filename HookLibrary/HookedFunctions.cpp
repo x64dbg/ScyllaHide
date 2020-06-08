@@ -498,12 +498,26 @@ void NTAPI HandleKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT
         ContextFrame->Dr7 = 0;
     }
 }
+#ifdef _WIN64
+void NTAPI HookedKiUserExceptionDispatcher()
+{
+    // inline assembly is not supported in x86_64 with CL.  a more elegant
+    // way to do this would be to modify the project to include an .asm
+    // source file that defines 'HookedKiUserExceptionDispatcher' for both
+    // 32 and 64 bit.
+    // the + 8 in the line below is because we arrive at this function via
+    // a CALL instruction which causes the stack to shift.  This CALL in
+    // the trampoline is necessary because HandleKiUserExceptionDispatcher
+    // will end in a RET instruction, and the CALL preserves the stack.
+    PCONTEXT ContextFrame = (PCONTEXT)(((UINT_PTR)_AddressOfReturnAddress()) + 8);
 
+    HandleKiUserExceptionDispatcher(nullptr, ContextFrame);
+}
+#else
 VOID NAKED NTAPI HookedKiUserExceptionDispatcher()// (PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame) //remove DRx Registers
 {
     //MOV ECX,DWORD PTR SS:[ESP+4] <- ContextFrame
     //MOV EBX,DWORD PTR SS:[ESP] <- pExcptRec
-#ifndef _WIN64
     __asm
     {
         MOV EAX, [ESP + 4]
@@ -513,10 +527,10 @@ VOID NAKED NTAPI HookedKiUserExceptionDispatcher()// (PEXCEPTION_RECORD pExcptRe
         CALL HandleKiUserExceptionDispatcher
         jmp HookDllData.dKiUserExceptionDispatcher
     }
-#endif
 
     //return HookDllData.dKiUserExceptionDispatcher(pExcptRec, ContextFrame);
 }
+#endif
 
 static DWORD_PTR KiUserExceptionDispatcherAddress = 0;
 

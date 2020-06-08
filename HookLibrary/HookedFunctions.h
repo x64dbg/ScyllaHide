@@ -58,7 +58,11 @@ NTSTATUS WINAPI HookedNtQuerySystemTime(PLARGE_INTEGER SystemTime);
 NTSTATUS NTAPI HookedNtQueryPerformanceCounter(PLARGE_INTEGER PerformanceCounter, PLARGE_INTEGER PerformanceFrequency);
 
 DWORD WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString);
+#ifdef _WIN64
+void NTAPI HandleKiUserExceptionDispatcher(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame);
+#else
 VOID NTAPI HookedKiUserExceptionDispatcher();//(PEXCEPTION_RECORD pExcptRec, PCONTEXT ContextFrame);
+#endif
 
 HWND NTAPI HookedNtUserFindWindowEx(HWND hWndParent, HWND hWndChildAfter, PUNICODE_STRING lpszClass, PUNICODE_STRING lpszWindow, DWORD dwType);
 
