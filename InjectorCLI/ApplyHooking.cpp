@@ -216,14 +216,16 @@ bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
         // which will cause problems with the naive trampoline generation currently in use.
         // Therefore, let us apply some manual patching instead.
         PVOID address = (PVOID)_KiUserExceptionDispatcher;
-        if (*(PUINT32)address != 0x058B48FC)
+        const bool startsWithCld = ((UINT8*)address)[0] == 0xFC; // true on Vista and later
+        if ((startsWithCld && *(PUINT32)address != 0x058B48FC) ||
+            (!startsWithCld && (*(PUINT32)address & 0xFFFFFF) != 0x058B48))
         {
-            g_log.LogDebug(L"ApplyNtdllHook -> KiUserExceptionDispatcher pattern mismatch 0x%lx", *(PUINT32)address);
+            g_log.LogError(L"ApplyNtdllHook -> KiUserExceptionDispatcher pattern mismatch 0x%lx", *(PUINT32)address);
         }
         else
         {
             // This function currently has a nine byte NOP before it, probably for hot patching?
-            // There is also some alignment space.  Let's borrow this to write our trampoline.
+            // There is also some alignment space. Let's borrow this to write our trampoline.
             uint8_t trampoline[] =
             {
                 0xFF, 0x15, 0x0F, 0x00, 0x00, 0x00,         // call qword ptr[+15]
@@ -233,13 +235,20 @@ bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
                 0xEB, 0x0B                                  // jmp <next real instruction>
             };
 
+            // Deal with XP/2003
+            if (!startsWithCld)
+            {
+                trampoline[6] = 0x90;                       // cld -> nop
+                trampoline[18] -= 0x1;                      // <next real instruction> -= 1
+            }
+
             // update RVA of Wow64PrepareForException
             UINT32 rvaWow64PrepareForException;
-            ReadProcessMemory(hProcess, (LPCVOID)(((UINT_PTR)address) + 4), (PVOID)&rvaWow64PrepareForException,
+            ReadProcessMemory(hProcess, (LPCVOID)(((UINT_PTR)address) + (startsWithCld ? 4 : 3)), (PVOID)&rvaWow64PrepareForException,
                 sizeof(rvaWow64PrepareForException), nullptr);
 
-            // instruction is moved up 13 bytes.  update trampoline
-            rvaWow64PrepareForException += 13;
+            // instruction is moved up 12/13 bytes. update trampoline
+            rvaWow64PrepareForException += (startsWithCld ? 13 : 12);
             memcpy(&trampoline[10], &rvaWow64PrepareForException, sizeof(rvaWow64PrepareForException));
 
             uint8_t hook[] =
@@ -251,8 +260,8 @@ bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
             // insert hook into payload
             memcpy(&hook[2], &HookedKiUserExceptionDispatcher, sizeof(PVOID));
 
-            // for most hooks the following fields are for the trampoline.  this works for them because
-            // the trampoline is an identical copy of what was at the start of the function.  since this
+            // for most hooks the following fields are for the trampoline. this works for them because
+            // the trampoline is an identical copy of what was at the start of the function. since this
             // is not the case for us, we must preserve the original bytes in memory we deliberately set
             // aside for this purpose.
             PVOID backup_location = VirtualAllocEx(hProcess, nullptr, sizeof(hook), MEM_COMMIT,
