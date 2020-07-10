@@ -12,7 +12,7 @@ if not exist "%PROGRAMFILES(x86)%" set PROGRAMFILES32=%PROGRAMFILES%
 set VSWHERE=%PROGRAMFILES32%\Microsoft Visual Studio\Installer\vswhere.exe
 if not exist "%VSWHERE%" (
 	echo VS2017/VS2019 installation directory does not exist, or the vswhere.exe tool is missing.
-	exit
+	exit /b
 )
 
 @rem Test if the vswhere tool is actually up to date enough to understand -find syntax (the one on Appveyor isn't)
@@ -32,37 +32,67 @@ del vswhere.exe 1>nul 2>&1
 
 if "%MSBUILD%"=="" (
 	echo Failed to find MSBuild installation directory.
-	exit
+	exit /b
 )
 
 if not exist 3rdparty\idasdk (
 	echo IDA SDK not found
-	exit
+	exit /b
 )
 
 "%MSBUILD%" /m /property:Configuration=Release,Platform=Win32
-if not %ERRORLEVEL%==0 exit
+if not %ERRORLEVEL%==0 exit /b
 
 "%MSBUILD%" /m /property:Configuration=Release,Platform=x64
-if not %ERRORLEVEL%==0 exit
+if not %ERRORLEVEL%==0 exit /b
 
 rmdir /S /Q Release
 xcopy /S /Y ConfigCollection Release\
 
-@rem plugins
-mkdir Release\plugins
-copy /y /b build\Release\Win32\ScyllaHideGenericPluginx86.dll Release\plugins
-copy /y /b build\Release\x64\ScyllaHideGenericPluginx64.dll Release\plugins
-copy /y /b build\Release\Win32\ScyllaHideOlly1Plugin.dll Release\plugins
-copy /y /b build\Release\Win32\ScyllaHideOlly2Plugin.dll Release\plugins
-copy /y /b build\Release\Win32\ScyllaHideTEPluginx86.dll Release\plugins
-copy /y /b build\Release\x64\ScyllaHideTEPluginx64.dll Release\plugins
-copy /y /b build\Release\Win32\ScyllaHideX64DBGPlugin.dp32 Release\plugins
-copy /y /b build\Release\x64\ScyllaHideX64DBGPlugin.dp64 Release\plugins
-copy /y /b build\Release\Win32\ScyllaHideIDAProPlugin.plw Release\plugins
+@rem Release structure
+mkdir Release\x64dbg\x32\plugins
+mkdir Release\x64dbg\x64\plugins
+mkdir Release\Olly1
+mkdir Release\Olly2
+mkdir Release\TitanEngine
+mkdir Release\Generic
+mkdir Release\IDA
 
-@rem tools
-xcopy /S /Y build\Release\Win32\*.exe Release
-xcopy /S /Y build\Release\x64\*.exe Release
-copy /y /b build\Release\Win32\HookLibraryx86.dll Release
-copy /y /b build\Release\x64\HookLibraryx64.dll Release
+copy /y /b build\Release\Win32\ScyllaHideGenericPluginx86.dll Release\Generic\
+copy /y /b build\Release\x64\ScyllaHideGenericPluginx64.dll Release\Generic\
+copy /y /b build\Release\Win32\ScyllaHideOlly1Plugin.dll Release\Olly1\
+copy /y /b build\Release\Win32\ScyllaHideOlly2Plugin.dll Release\Olly2\
+copy /y /b build\Release\Win32\ScyllaHideTEPluginx86.dll Release\TitanEngine\
+copy /y /b build\Release\x64\ScyllaHideTEPluginx64.dll Release\TitanEngine\
+copy /y /b build\Release\Win32\ScyllaHideX64DBGPlugin.dp32 Release\x64dbg\x32\plugins\
+copy /y /b build\Release\x64\ScyllaHideX64DBGPlugin.dp64 Release\x64dbg\x64\plugins\
+copy /y /b build\Release\Win32\ScyllaHideIDAProPlugin.plw Release\IDA\
+
+xcopy /S /Y build\Release\Win32\*.exe Release\
+xcopy /S /Y build\Release\x64\*.exe Release\
+copy /y /b build\Release\Win32\HookLibraryx86.dll Release\
+copy /y /b build\Release\x64\HookLibraryx64.dll Release\
+
+copy /y /b Release\HookLibraryx64.dll Release\x64dbg\x64\plugins\
+copy /y /b Release\HookLibraryx86.dll Release\x64dbg\x32\plugins\
+copy /y /b Release\scylla_hide.ini Release\x64dbg\x64\plugins\
+copy /y /b Release\scylla_hide.ini Release\x64dbg\x32\plugins\
+
+copy /y /b Release\scylla_hide.ini Release\Olly1\
+copy /y /b Release\HookLibraryx86.dll Release\Olly1\
+
+copy /y /b Release\scylla_hide.ini Release\Olly2\
+copy /y /b Release\HookLibraryx86.dll Release\Olly2\
+
+copy /y /b Release\scylla_hide.ini Release\TitanEngine\
+copy /y /b Release\HookLibraryx64.dll Release\TitanEngine\
+copy /y /b Release\HookLibraryx86.dll Release\TitanEngine\
+
+copy /y /b Release\scylla_hide.ini Release\Generic\
+copy /y /b Release\HookLibraryx64.dll Release\Generic\
+copy /y /b Release\HookLibraryx86.dll Release\Generic\
+
+copy /y /b Release\scylla_hide.ini Release\IDA\
+copy /y /b Release\HookLibraryx64.dll Release\IDA\
+copy /y /b Release\HookLibraryx86.dll Release\IDA\
+move Release\ScyllaHideIDAServer* Release\IDA\
