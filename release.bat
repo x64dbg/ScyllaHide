@@ -20,7 +20,7 @@ if not exist "%VSWHERE%" (
 if not %ERRORLEVEL%==0 (
 	@rem Fetch some version that gets it
 	echo Fetching vswhere.exe...
-	curl -O -L https://github.com/microsoft/vswhere/releases/download/2.6.7/vswhere.exe 1>nul
+	curl -O -L https://github.com/microsoft/vswhere/releases/download/2.8.4/vswhere.exe 1>nul
 	set VSWHERE=vswhere.exe
 )
 
