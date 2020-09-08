@@ -32,6 +32,7 @@ typedef struct _HOOK_DLL_DATA {
     BOOLEAN EnablePebHeapFlags;
     BOOLEAN EnablePebNtGlobalFlag;
     BOOLEAN EnablePebStartupInfo;
+    BOOLEAN EnablePebOsBuildNumber;
 
     BOOLEAN EnableOutputDebugStringHook;
 

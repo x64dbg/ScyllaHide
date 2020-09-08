@@ -269,11 +269,11 @@ bool StartHooking(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, DWORD_P
         peb_flags |= PEB_PATCH_NtGlobalFlag;
     if (g_settings.opts().fixPebStartupInfo)
         peb_flags |= PEB_PATCH_ProcessParameters;
-    if (g_settings.os_version_patch_needed())
+    if (g_settings.opts().fixPebOsBuildNumber)
         peb_flags |= PEB_PATCH_OsBuildNumber;
 
     ApplyPEBPatch(hProcess, peb_flags);
-    if (g_settings.os_version_patch_needed())
+    if (g_settings.opts().fixPebOsBuildNumber)
         ApplyNtdllVersionPatch(hProcess);
 
     if (dllMemory == nullptr || imageBase == 0)
@@ -627,6 +627,7 @@ void FillHookDllData(HANDLE hProcess, HOOK_DLL_DATA *hdd)
     hdd->EnablePebHeapFlags = g_settings.opts().fixPebHeapFlags;
     hdd->EnablePebNtGlobalFlag = g_settings.opts().fixPebNtGlobalFlag;
     hdd->EnablePebStartupInfo = g_settings.opts().fixPebStartupInfo;
+    hdd->EnablePebOsBuildNumber = g_settings.opts().fixPebOsBuildNumber;
     hdd->EnableOutputDebugStringHook = g_settings.opts().hookOutputDebugStringA;
     hdd->EnableNtSetInformationThreadHook = g_settings.opts().hookNtSetInformationThread;
     hdd->EnableNtQueryInformationProcessHook = g_settings.opts().hookNtQueryInformationProcess;
