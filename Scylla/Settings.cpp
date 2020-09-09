@@ -92,6 +92,7 @@ void scl::Settings::LoadProfile(const wchar_t *file, const wchar_t *name, Profil
     profile->fixPebHeapFlags = IniLoadNum(file, name, L"PebHeapFlags", 1);
     profile->fixPebNtGlobalFlag = IniLoadNum(file, name, L"PebNtGlobalFlag", 1);
     profile->fixPebStartupInfo = IniLoadNum(file, name, L"PebStartupInfo", 1);
+    profile->fixPebOsBuildNumber = IniLoadNum(file, name, L"PebOsBuildNumber", 1);
 
     profile->preventThreadCreation = IniLoadNum(file, name, L"PreventThreadCreation", 0);
     profile->protectProcessId = IniLoadNum(file, name, L"ProtectProcessId", 1);
@@ -167,6 +168,7 @@ bool scl::Settings::SaveProfile(const wchar_t *file, const wchar_t *name, const 
     success &= IniSaveNum(file, name, L"PebHeapFlags", profile->fixPebHeapFlags);
     success &= IniSaveNum(file, name, L"PebNtGlobalFlag", profile->fixPebNtGlobalFlag);
     success &= IniSaveNum(file, name, L"PebStartupInfo", profile->fixPebStartupInfo);
+    success &= IniSaveNum(file, name, L"PebOsBuildNumber", profile->fixPebOsBuildNumber);
     success &= IniSaveNum(file, name, L"PreventThreadCreation", profile->preventThreadCreation);
     success &= IniSaveNum(file, name, L"ProtectProcessId", profile->protectProcessId);
     success &= IniSaveNum(file, name, L"RemoveDebugPrivileges", profile->removeDebugPrivileges);

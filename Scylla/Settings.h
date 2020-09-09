@@ -42,6 +42,7 @@ namespace scl
             BOOL fixPebHeapFlags;
             BOOL fixPebNtGlobalFlag;
             BOOL fixPebStartupInfo;
+            BOOL fixPebOsBuildNumber;
             BOOL preventThreadCreation;
             BOOL protectProcessId;
             BOOL removeDebugPrivileges;
@@ -131,11 +132,6 @@ namespace scl
                 profile_.hookOutputDebugStringA ||
                 profile_.preventThreadCreation ||
                 profile_.malwareRunpeUnpacker;
-        }
-
-        bool os_version_patch_needed() const
-        {
-            return profile_name_.find(L"VMProtect") != std::wstring::npos;
         }
 
     protected:

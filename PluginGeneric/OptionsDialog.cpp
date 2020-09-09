@@ -95,8 +95,9 @@ static void UpdateOptions(HWND hWnd, const scl::Settings *settings)
     CheckDlgButton(hWnd, IDC_PEBHEAPFLAGS, opts->fixPebHeapFlags);
     CheckDlgButton(hWnd, IDC_PEBNTGLOBALFLAG, opts->fixPebNtGlobalFlag);
     CheckDlgButton(hWnd, IDC_PEBSTARTUPINFO, opts->fixPebStartupInfo);
+    CheckDlgButton(hWnd, IDC_PEBOSBUILDNUMBER, opts->fixPebOsBuildNumber);
 
-    BOOL peb_state = opts->fixPebBeingDebugged && opts->fixPebHeapFlags && opts->fixPebNtGlobalFlag && opts->fixPebStartupInfo;
+    BOOL peb_state = opts->fixPebBeingDebugged && opts->fixPebHeapFlags && opts->fixPebNtGlobalFlag && opts->fixPebStartupInfo && opts->fixPebOsBuildNumber;
     CheckDlgButton(hWnd, IDC_PEB, peb_state);
 
     CheckDlgButton(hWnd, IDC_NTSETINFORMATIONTHREAD, opts->hookNtSetInformationThread);
@@ -191,6 +192,7 @@ void SaveOptions(HWND hWnd, scl::Settings *settings)
     opts->fixPebHeapFlags = (IsDlgButtonChecked(hWnd, IDC_PEBHEAPFLAGS) == BST_CHECKED);
     opts->fixPebNtGlobalFlag = (IsDlgButtonChecked(hWnd, IDC_PEBNTGLOBALFLAG) == BST_CHECKED);
     opts->fixPebStartupInfo = (IsDlgButtonChecked(hWnd, IDC_PEBSTARTUPINFO) == BST_CHECKED);
+    opts->fixPebOsBuildNumber = (IsDlgButtonChecked(hWnd, IDC_PEBOSBUILDNUMBER) == BST_CHECKED);
     opts->hookNtSetInformationThread = (IsDlgButtonChecked(hWnd, IDC_NTSETINFORMATIONTHREAD) == BST_CHECKED);
     opts->hookNtSetInformationProcess = (IsDlgButtonChecked(hWnd, IDC_NTSETINFORMATIONPROCESS) == BST_CHECKED);
     opts->hookNtQuerySystemInformation = (IsDlgButtonChecked(hWnd, IDC_NTQUERYSYSTEMINFORMATION) == BST_CHECKED);
@@ -276,6 +278,7 @@ HWND CreateTooltips(HWND hDlg)
         { IDC_PEBHEAPFLAGS, L"Very important option, a lot of protectors check for this value." },
         { IDC_PEBNTGLOBALFLAG, L"Very important option. E.g. Themida checks for heap artifacts and heap flags." },
         { IDC_PEBSTARTUPINFO, L"This is not really important, only a few protectors check for this. Maybe Enigma checks it." },
+        { IDC_PEBOSBUILDNUMBER, L"VMProtect checks this on newer versions of Windows 10 (2019 onwards)." },
         {
             IDC_NTSETINFORMATIONTHREAD,
             L"The THREADINFOCLASS value ThreadHideFromDebugger is a well-known\r\n"
@@ -755,6 +758,7 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             CheckDlgButton(hDlg, IDC_PEBHEAPFLAGS, state);
             CheckDlgButton(hDlg, IDC_PEBNTGLOBALFLAG, state);
             CheckDlgButton(hDlg, IDC_PEBSTARTUPINFO, state);
+            CheckDlgButton(hDlg, IDC_PEBOSBUILDNUMBER, state);
             break;
         }
 
@@ -762,6 +766,7 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         case IDC_PEBHEAPFLAGS:
         case IDC_PEBNTGLOBALFLAG:
         case IDC_PEBSTARTUPINFO:
+        case IDC_PEBOSBUILDNUMBER:
         {
             if (HIWORD(wParam) != BN_CLICKED)
                 break;
@@ -769,7 +774,8 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             auto checked = IsDlgButtonChecked(hDlg, IDC_PEBBEINGDEBUGGED)
                 || IsDlgButtonChecked(hDlg, IDC_PEBHEAPFLAGS)
                 || IsDlgButtonChecked(hDlg, IDC_PEBNTGLOBALFLAG)
-                || IsDlgButtonChecked(hDlg, IDC_PEBSTARTUPINFO);
+                || IsDlgButtonChecked(hDlg, IDC_PEBSTARTUPINFO)
+                || IsDlgButtonChecked(hDlg, IDC_PEBOSBUILDNUMBER);
 
             CheckDlgButton(hDlg, IDC_PEB, checked);
             break;

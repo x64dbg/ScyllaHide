@@ -132,11 +132,11 @@ static bool StartHooking(HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
         peb_flags |= PEB_PATCH_NtGlobalFlag;
     if (g_settings.opts().fixPebStartupInfo)
         peb_flags |= PEB_PATCH_ProcessParameters;
-    if (g_settings.os_version_patch_needed())
+    if (g_settings.opts().fixPebOsBuildNumber)
         peb_flags |= PEB_PATCH_OsBuildNumber;
 
     ApplyPEBPatch(hProcess, peb_flags);
-    if (g_settings.os_version_patch_needed())
+    if (g_settings.opts().fixPebOsBuildNumber)
         ApplyNtdllVersionPatch(hProcess);
 
     if (dllMemory == nullptr || imageBase == 0)
@@ -312,6 +312,7 @@ void ReadSettings()
     g_hdd.EnablePebHeapFlags = g_settings.opts().fixPebHeapFlags;
     g_hdd.EnablePebNtGlobalFlag = g_settings.opts().fixPebNtGlobalFlag;
     g_hdd.EnablePebStartupInfo = g_settings.opts().fixPebStartupInfo;
+    g_hdd.EnablePebOsBuildNumber = g_settings.opts().fixPebOsBuildNumber;
     g_hdd.EnablePreventThreadCreation = g_settings.opts().preventThreadCreation;
     g_hdd.EnableProtectProcessId = g_settings.opts().protectProcessId;
 }
