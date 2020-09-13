@@ -155,6 +155,7 @@ typedef struct _HOOK_DLL_DATA {
     BOOLEAN isNtdllHooked;
     BOOLEAN isKernel32Hooked;
     BOOLEAN isUserDllHooked;
+    BOOLEAN isPebHooked;
 
 #ifndef _WIN64
     HOOK_NATIVE_CALL32 HookNative[MAX_NATIVE_HOOKS];

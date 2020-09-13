@@ -261,20 +261,26 @@ bool StartHooking(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, DWORD_P
     hdd->EnableProtectProcessId = TRUE;
 
     DWORD peb_flags = 0;
-    if (g_settings.opts().fixPebBeingDebugged)
-        peb_flags |= PEB_PATCH_BeingDebugged;
-    if (g_settings.opts().fixPebHeapFlags)
-        peb_flags |= PEB_PATCH_HeapFlags;
-    if (g_settings.opts().fixPebNtGlobalFlag)
-        peb_flags |= PEB_PATCH_NtGlobalFlag;
-    if (g_settings.opts().fixPebStartupInfo)
-        peb_flags |= PEB_PATCH_ProcessParameters;
-    if (g_settings.opts().fixPebOsBuildNumber)
-        peb_flags |= PEB_PATCH_OsBuildNumber;
 
-    ApplyPEBPatch(hProcess, peb_flags);
-    if (g_settings.opts().fixPebOsBuildNumber)
-        ApplyNtdllVersionPatch(hProcess);
+    if (!hdd->isPebHooked) {
+        if (g_settings.opts().fixPebBeingDebugged)
+            peb_flags |= PEB_PATCH_BeingDebugged;
+        if (g_settings.opts().fixPebHeapFlags)
+            peb_flags |= PEB_PATCH_HeapFlags;
+        if (g_settings.opts().fixPebNtGlobalFlag)
+            peb_flags |= PEB_PATCH_NtGlobalFlag;
+        if (g_settings.opts().fixPebStartupInfo)
+            peb_flags |= PEB_PATCH_ProcessParameters;
+        if (g_settings.opts().fixPebOsBuildNumber)
+            peb_flags |= PEB_PATCH_OsBuildNumber;
+
+        ApplyPEBPatch(hProcess, peb_flags);
+
+        if (g_settings.opts().fixPebOsBuildNumber)
+            ApplyNtdllVersionPatch(hProcess);
+
+        hdd->isPebHooked = TRUE;
+    }
 
     if (dllMemory == nullptr || imageBase == 0)
         return peb_flags != 0; // Not injecting hook DLL
@@ -659,6 +665,7 @@ void FillHookDllData(HANDLE hProcess, HOOK_DLL_DATA *hdd)
     hdd->isKernel32Hooked = FALSE;
     hdd->isNtdllHooked = FALSE;
     hdd->isUserDllHooked = FALSE;
+    hdd->isPebHooked = FALSE;
 }
 
 bool RemoveDebugPrivileges(HANDLE hProcess)
