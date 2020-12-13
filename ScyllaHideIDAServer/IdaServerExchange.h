@@ -96,6 +96,7 @@ typedef struct _IDA_SERVER_EXCHANGE
 	unsigned char EnablePebHeapFlags;
 	unsigned char EnablePebNtGlobalFlag;
 	unsigned char EnablePebStartupInfo;
+	unsigned char EnablePebOsBuildNumber;
 
 	unsigned char EnableOutputDebugStringHook;
 
