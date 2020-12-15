@@ -190,6 +190,13 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
         {
         case STATUS_BREAKPOINT:
         {
+            if (!bHooked)
+            {
+                ReadNtApiInformation(&g_hdd);
+
+                bHooked = true;
+                startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
+            }
             break;
         }
 
