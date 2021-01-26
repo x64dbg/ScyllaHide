@@ -36,6 +36,7 @@ namespace scl
             BOOL hookNtUserBuildHwndList;
             BOOL hookNtUserFindWindowEx;
             BOOL hookNtUserQueryWindow;
+            BOOL hookNtUserGetForegroundWindow;
             BOOL hookNtYieldExecution;
             BOOL hookOutputDebugStringA;
             BOOL fixPebBeingDebugged;
@@ -128,6 +129,7 @@ namespace scl
                 profile_.hookNtUserBuildHwndList ||
                 profile_.hookNtUserFindWindowEx ||
                 profile_.hookNtUserQueryWindow ||
+                profile_.hookNtUserGetForegroundWindow ||
                 profile_.hookNtYieldExecution ||
                 profile_.hookOutputDebugStringA ||
                 profile_.preventThreadCreation ||

@@ -26,6 +26,7 @@ HookedNtUserBlockInput
 HookedNtUserBuildHwndList
 HookedNtUserBuildHwndList_Eight
 HookedNtUserFindWindowEx
+HookedNtUserGetForegroundWindow
 HookedNtUserQueryWindow
 HookedNtYieldExecution
 HookedOutputDebugStringA

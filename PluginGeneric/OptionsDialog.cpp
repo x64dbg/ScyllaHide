@@ -119,6 +119,7 @@ static void UpdateOptions(HWND hWnd, const scl::Settings *settings)
     CheckDlgButton(hWnd, IDC_NTUSERFINDWINDOWEX, opts->hookNtUserFindWindowEx);
     CheckDlgButton(hWnd, IDC_NTUSERBUILDHWNDLIST, opts->hookNtUserBuildHwndList);
     CheckDlgButton(hWnd, IDC_NTUSERQUERYWINDOW, opts->hookNtUserQueryWindow);
+    CheckDlgButton(hWnd, IDC_NTUSERGETFOREGROUNDWINDOW, opts->hookNtUserGetForegroundWindow);
     CheckDlgButton(hWnd, IDC_NTSETDEBUGFILTERSTATE, opts->hookNtSetDebugFilterState);
     CheckDlgButton(hWnd, IDC_NTCLOSE, opts->hookNtClose);
     CheckDlgButton(hWnd, IDC_NTCREATETHREADEX, opts->hookNtCreateThreadEx);
@@ -208,6 +209,7 @@ void SaveOptions(HWND hWnd, scl::Settings *settings)
     opts->hookNtUserBlockInput = (IsDlgButtonChecked(hWnd, IDC_NTUSERBLOCKINPUT) == BST_CHECKED);
     opts->hookNtUserBuildHwndList = (IsDlgButtonChecked(hWnd, IDC_NTUSERBUILDHWNDLIST) == BST_CHECKED);
     opts->hookNtUserQueryWindow = (IsDlgButtonChecked(hWnd, IDC_NTUSERQUERYWINDOW) == BST_CHECKED);
+    opts->hookNtUserGetForegroundWindow = (IsDlgButtonChecked(hWnd, IDC_NTUSERGETFOREGROUNDWINDOW) == BST_CHECKED);
     opts->hookNtSetDebugFilterState = (IsDlgButtonChecked(hWnd, IDC_NTSETDEBUGFILTERSTATE) == BST_CHECKED);
     opts->hookNtClose = (IsDlgButtonChecked(hWnd, IDC_NTCLOSE) == BST_CHECKED);
     opts->hookNtCreateThreadEx = (IsDlgButtonChecked(hWnd, IDC_NTCREATETHREADEX) == BST_CHECKED);
@@ -361,6 +363,12 @@ HWND CreateTooltips(HWND hDlg)
             L"This is a system call function in user32.dll.\r\n"
             L"The windows API GetWindowThreadProcessId calls this internally.\r\n"
             L"This is used to hide the debugger process."
+        },
+        {
+            IDC_NTUSERGETFOREGROUNDWINDOW,
+            L"This is a system call function in user32.dll.\r\n"
+            L"The windows API GetForegroundWindow calls this internally.\r\n"
+            L"The debugger window will be hidden."
         },
         {
             IDC_NTSETDEBUGFILTERSTATE,

@@ -56,13 +56,16 @@ typedef struct _HOOK_DLL_DATA {
     //Native user32.dll/win32u.dll functions
     ULONG_PTR NtUserBlockInputVA;
     ULONG_PTR NtUserQueryWindowVA;
+    ULONG_PTR NtUserGetForegroundWindowVA;
     ULONG_PTR NtUserBuildHwndListVA;
     ULONG_PTR NtUserFindWindowExVA;
     ULONG_PTR NtUserGetClassNameVA;
     ULONG_PTR NtUserInternalGetWindowTextVA;
+    ULONG_PTR NtUserGetThreadStateVA;
 
     BOOLEAN EnableNtUserBlockInputHook;
     BOOLEAN EnableNtUserQueryWindowHook;
+    BOOLEAN EnableNtUserGetForegroundWindowHook;
     BOOLEAN EnableNtUserBuildHwndListHook;
     BOOLEAN EnableNtUserFindWindowExHook;
     BOOLEAN EnableNtSetDebugFilterStateHook;
@@ -142,11 +145,14 @@ typedef struct _HOOK_DLL_DATA {
     DWORD NtUserBuildHwndListBackupSize;
     t_NtUserQueryWindow dNtUserQueryWindow;
     DWORD NtUserQueryWindowBackupSize;
+    t_NtUserGetForegroundWindow dNtUserGetForegroundWindow;
+    DWORD NtUserGetForegroundWindowBackupSize;
 
 
     t_NtUserQueryWindow NtUserQueryWindow;
     t_NtUserGetClassName NtUserGetClassName;
     t_NtUserInternalGetWindowText NtUserInternalGetWindowText;
+    t_NtUserGetThreadState NtUserGetThreadState;
 
     DWORD dwProtectedProcessId;
     BOOLEAN EnableProtectProcessId;

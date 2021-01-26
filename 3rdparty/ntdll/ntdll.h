@@ -4607,6 +4607,26 @@ HANDLE
 	_In_ WINDOWINFOCLASS WindowInfo
 	);
 
+typedef enum _THREAD_STATE_ROUTINE
+{
+	THREADSTATE_GETTHREADINFO,
+	THREADSTATE_ACTIVEWINDOW
+} THREAD_STATE_ROUTINE;
+
+// GetActiveWindow
+typedef
+ULONG_PTR
+(NTAPI
+*t_NtUserGetThreadState)(
+	THREAD_STATE_ROUTINE Routine
+	);
+
+typedef
+HWND
+(NTAPI
+*t_NtUserGetForegroundWindow)(
+	);
+
 typedef
 int
 (NTAPI

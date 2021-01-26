@@ -73,6 +73,7 @@ bool SendEventToServer(unsigned long notif_code, unsigned long ProcessId)
     idaExchange.EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
     idaExchange.EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
     idaExchange.EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;
+    idaExchange.EnableNtUserGetForegroundWindowHook = g_settings.opts().hookNtUserGetForegroundWindow;
     idaExchange.EnableNtSetDebugFilterStateHook = g_settings.opts().hookNtSetDebugFilterState;
     idaExchange.DllInjectNormal = g_settings.opts().dllNormal;
     idaExchange.DllInjectStealth = g_settings.opts().dllStealth;

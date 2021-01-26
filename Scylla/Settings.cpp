@@ -85,6 +85,7 @@ void scl::Settings::LoadProfile(const wchar_t *file, const wchar_t *name, Profil
     profile->hookNtUserBuildHwndList = IniLoadNum(file, name, L"NtUserBuildHwndListHook", 1);
     profile->hookNtUserFindWindowEx = IniLoadNum(file, name, L"NtUserFindWindowExHook", 1);
     profile->hookNtUserQueryWindow = IniLoadNum(file, name, L"NtUserQueryWindowHook", 1);
+    profile->hookNtUserGetForegroundWindow = IniLoadNum(file, name, L"NtUserGetForegroundWindowHook", 1);
     profile->hookNtYieldExecution = IniLoadNum(file, name, L"NtYieldExecutionHook", 1);
     profile->hookOutputDebugStringA = IniLoadNum(file, name, L"OutputDebugStringHook", 1);
 
@@ -161,6 +162,7 @@ bool scl::Settings::SaveProfile(const wchar_t *file, const wchar_t *name, const 
     success &= IniSaveNum(file, name, L"NtUserBuildHwndListHook", profile->hookNtUserBuildHwndList);
     success &= IniSaveNum(file, name, L"NtUserFindWindowExHook", profile->hookNtUserFindWindowEx);
     success &= IniSaveNum(file, name, L"NtUserQueryWindowHook", profile->hookNtUserQueryWindow);
+    success &= IniSaveNum(file, name, L"NtUserGetForegroundWindowHook", profile->hookNtUserGetForegroundWindow);
     success &= IniSaveNum(file, name, L"NtYieldExecutionHook", profile->hookNtYieldExecution);
     success &= IniSaveNum(file, name, L"OutputDebugStringHook", profile->hookOutputDebugStringA);
 

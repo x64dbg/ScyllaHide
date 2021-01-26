@@ -947,6 +947,16 @@ HANDLE NTAPI HookedNtUserQueryWindow(HWND hwnd, WINDOWINFOCLASS WindowInfo)
 	return HookDllData.dNtUserQueryWindow(hwnd, WindowInfo);
 }
 
+HWND NTAPI HookedNtUserGetForegroundWindow()
+{
+	HWND Hwnd = HookDllData.dNtUserGetForegroundWindow();
+	if (Hwnd != nullptr && IsWindowBad(Hwnd))
+	{
+		Hwnd = (HWND)HookDllData.NtUserGetThreadState(THREADSTATE_ACTIVEWINDOW);
+	}
+	return Hwnd;
+}
+
 //WIN XP: CreateThread -> CreateRemoteThread -> NtCreateThread
 NTSTATUS NTAPI HookedNtCreateThread(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PCLIENT_ID ClientId,PCONTEXT ThreadContext,PINITIAL_TEB InitialTeb,BOOLEAN CreateSuspended)
 {
@@ -1124,7 +1134,7 @@ NTSTATUS NTAPI HookedNtResumeThread(HANDLE ThreadHandle, PULONG PreviousSuspendC
 	{
 		DumpMalware(dwProcessId);
 		TerminateProcessByProcessId(dwProcessId); //terminate it
-		DbgPrint("Malware called ResumeThread");
+		DbgPrint((PCH)"Malware called ResumeThread");
 		DbgBreakPoint();
 		return STATUS_SUCCESS;
 	}

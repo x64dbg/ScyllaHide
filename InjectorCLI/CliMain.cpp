@@ -306,6 +306,7 @@ void ReadSettings()
     g_hdd.EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
     g_hdd.EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
     g_hdd.EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;
+    g_hdd.EnableNtUserGetForegroundWindowHook = g_settings.opts().hookNtUserGetForegroundWindow;
     g_hdd.EnableNtYieldExecutionHook = g_settings.opts().hookNtYieldExecution;
     g_hdd.EnableOutputDebugStringHook = g_settings.opts().hookOutputDebugStringA;
     g_hdd.EnablePebBeingDebugged = g_settings.opts().fixPebBeingDebugged;

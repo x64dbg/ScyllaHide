@@ -34,8 +34,10 @@ void ReadNtApiInformation(HOOK_DLL_DATA *hdd)
         "NtUserBuildHwndList",
         "NtUserFindWindowEx",
         "NtUserQueryWindow",
+        "NtUserGetForegroundWindow",
         "NtUserGetClassName",
-        "NtUserInternalGetWindowText" }))
+        "NtUserInternalGetWindowText",
+        "NtUserGetThreadState" }))
     {
         g_log.LogError(L"Failed to find user32.dll/win32u.dll syscalls!");
         return;
@@ -43,17 +45,21 @@ void ReadNtApiInformation(HOOK_DLL_DATA *hdd)
 
     hdd->NtUserBlockInputVA = user32Loader.GetUserSyscallVa("NtUserBlockInput");
     hdd->NtUserQueryWindowVA = user32Loader.GetUserSyscallVa("NtUserQueryWindow");
+    hdd->NtUserGetForegroundWindowVA = user32Loader.GetUserSyscallVa("NtUserGetForegroundWindow");
     hdd->NtUserBuildHwndListVA = user32Loader.GetUserSyscallVa("NtUserBuildHwndList");
     hdd->NtUserFindWindowExVA = user32Loader.GetUserSyscallVa("NtUserFindWindowEx");
     hdd->NtUserGetClassNameVA = user32Loader.GetUserSyscallVa("NtUserGetClassName");
     hdd->NtUserInternalGetWindowTextVA = user32Loader.GetUserSyscallVa("NtUserInternalGetWindowText");
+    hdd->NtUserGetThreadStateVA = user32Loader.GetUserSyscallVa("NtUserGetThreadState");
 
     g_log.LogInfo(L"Loaded VA for NtUserBlockInput = 0x%p", hdd->NtUserBlockInputVA);
     g_log.LogInfo(L"Loaded VA for NtUserQueryWindow = 0x%p", hdd->NtUserQueryWindowVA);
+    g_log.LogInfo(L"Loaded VA for NtUserGetForegroundWindow = 0x%p", hdd->NtUserGetForegroundWindowVA);
     g_log.LogInfo(L"Loaded VA for NtUserBuildHwndList = 0x%p", hdd->NtUserBuildHwndListVA);
     g_log.LogInfo(L"Loaded VA for NtUserFindWindowEx = 0x%p", hdd->NtUserFindWindowExVA);
     g_log.LogInfo(L"Loaded VA for NtUserGetClassName = 0x%p", hdd->NtUserGetClassNameVA);
     g_log.LogInfo(L"Loaded VA for NtUserInternalGetWindowText = 0x%p", hdd->NtUserInternalGetWindowTextVA);
+    g_log.LogInfo(L"Loaded VA for NtUserGetThreadState = 0x%p", hdd->NtUserGetThreadStateVA);
 }
 
 #ifndef _WIN64
@@ -641,6 +647,7 @@ void FillHookDllData(HANDLE hProcess, HOOK_DLL_DATA *hdd)
     hdd->EnableNtUserFindWindowExHook = g_settings.opts().hookNtUserFindWindowEx;
     hdd->EnableNtUserBuildHwndListHook = g_settings.opts().hookNtUserBuildHwndList;
     hdd->EnableNtUserQueryWindowHook = g_settings.opts().hookNtUserQueryWindow;
+    hdd->EnableNtUserGetForegroundWindowHook = g_settings.opts().hookNtUserGetForegroundWindow;
     hdd->EnableNtSetDebugFilterStateHook = g_settings.opts().hookNtSetDebugFilterState;
     hdd->EnableGetTickCountHook = g_settings.opts().hookGetTickCount;
     hdd->EnableGetTickCount64Hook = g_settings.opts().hookGetTickCount64;

@@ -120,6 +120,7 @@ typedef struct _IDA_SERVER_EXCHANGE
 
 	unsigned char EnableNtUserBlockInputHook;
 	unsigned char EnableNtUserQueryWindowHook;
+	unsigned char EnableNtUserGetForegroundWindowHook;
 	unsigned char EnableNtUserBuildHwndListHook;
 	unsigned char EnableNtUserFindWindowExHook;
 	unsigned char EnableNtSetDebugFilterStateHook;

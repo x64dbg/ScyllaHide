@@ -50,6 +50,7 @@ t_NtUserBlockInput _NtUserBlockInput = 0;
 t_NtUserBuildHwndList _NtUserBuildHwndList = 0;
 t_NtUserFindWindowEx _NtUserFindWindowEx = 0;
 t_NtUserQueryWindow _NtUserQueryWindow = 0;
+t_NtUserGetForegroundWindow _NtUserGetForegroundWindow = 0;
 
 t_NtSetInformationThread _NtSetInformationThread = 0;
 t_NtQuerySystemInformation _NtQuerySystemInformation = 0;
@@ -406,28 +407,33 @@ bool ApplyUserHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD
     void * HookedNtUserBuildHwndList = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBuildHwndList") + imageBase);
     void * HookedNtUserBuildHwndList_Eight = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBuildHwndList_Eight") + imageBase);
     void * HookedNtUserQueryWindow = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserQueryWindow") + imageBase);
+    void * HookedNtUserGetForegroundWindow = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserGetForegroundWindow") + imageBase);
 
-    g_log.LogDebug(L"ApplyUserHook -> HookedNtUserBlockInput %p HookedNtUserFindWindowEx %p HookedNtUserBuildHwndList %p HookedNtUserBuildHwndList_Eight %p HookedNtUserQueryWindow %p",
+    g_log.LogDebug(L"ApplyUserHook -> HookedNtUserBlockInput %p HookedNtUserFindWindowEx %p HookedNtUserBuildHwndList %p HookedNtUserBuildHwndList_Eight %p HookedNtUserQueryWindow %p HookedNtUserGetForegroundWindow %p",
         HookedNtUserBlockInput,
         HookedNtUserFindWindowEx,
         HookedNtUserBuildHwndList,
         HookedNtUserBuildHwndList_Eight,
-        HookedNtUserQueryWindow);
+        HookedNtUserQueryWindow,
+        HookedNtUserGetForegroundWindow);
 
     _NtUserBlockInput = (t_NtUserBlockInput)hdd->NtUserBlockInputVA;
     _NtUserFindWindowEx = (t_NtUserFindWindowEx)hdd->NtUserFindWindowExVA;
     _NtUserBuildHwndList = (t_NtUserBuildHwndList)hdd->NtUserBuildHwndListVA;
     _NtUserQueryWindow = (t_NtUserQueryWindow)hdd->NtUserQueryWindowVA;
+    _NtUserGetForegroundWindow = (t_NtUserGetForegroundWindow)hdd->NtUserGetForegroundWindowVA;
 
     hdd->NtUserQueryWindow = _NtUserQueryWindow;
     hdd->NtUserGetClassName = (t_NtUserGetClassName)hdd->NtUserGetClassNameVA;
     hdd->NtUserInternalGetWindowText = (t_NtUserInternalGetWindowText)hdd->NtUserInternalGetWindowTextVA;
+    hdd->NtUserGetThreadState = (t_NtUserGetThreadState)hdd->NtUserGetThreadStateVA;
 
-    g_log.LogDebug(L"ApplyUserHook -> _NtUserBlockInput %p _NtUserFindWindowEx %p _NtUserBuildHwndList %p _NtUserQueryWindow %p",
+    g_log.LogDebug(L"ApplyUserHook -> _NtUserBlockInput %p _NtUserFindWindowEx %p _NtUserBuildHwndList %p _NtUserQueryWindow %p _NtUserGetForegroundWindow %p",
         _NtUserBlockInput,
         _NtUserFindWindowEx,
         _NtUserBuildHwndList,
-        _NtUserQueryWindow);
+        _NtUserQueryWindow,
+        _NtUserGetForegroundWindow);
 
     if (hdd->EnableNtUserBlockInputHook)
     {
@@ -453,6 +459,11 @@ bool ApplyUserHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD
     {
         g_log.LogDebug(L"ApplyUserHook -> Hooking NtUserQueryWindow");
         HOOK_NATIVE(NtUserQueryWindow);
+    }
+    if (hdd->EnableNtUserGetForegroundWindowHook)
+    {
+        g_log.LogDebug(L"ApplyUserHook -> Hooking NtUserGetForegroundWindow");
+        HOOK_NATIVE(NtUserGetForegroundWindow);
     }
 
     hdd->isUserDllHooked = TRUE;
@@ -736,18 +747,21 @@ void RestoreUserHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
         RESTORE_JMP(NtUserFindWindowEx);
         RESTORE_JMP(NtUserBuildHwndList);
         RESTORE_JMP(NtUserQueryWindow);
+        RESTORE_JMP(NtUserGetForegroundWindow);
     }
 #else
     RESTORE_JMP(NtUserBlockInput);
     RESTORE_JMP(NtUserFindWindowEx);
     RESTORE_JMP(NtUserBuildHwndList);
     RESTORE_JMP(NtUserQueryWindow);
+    RESTORE_JMP(NtUserGetForegroundWindow);
 #endif
 
     FREE_HOOK(NtUserBlockInput);
     FREE_HOOK(NtUserFindWindowEx);
     FREE_HOOK(NtUserBuildHwndList);
     FREE_HOOK(NtUserQueryWindow);
+    FREE_HOOK(NtUserGetForegroundWindow);
 
     hdd->isUserDllHooked = FALSE;
 }
