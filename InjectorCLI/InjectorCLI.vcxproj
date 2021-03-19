@@ -153,6 +153,11 @@
   <ItemGroup>
     <None Include="..\PluginGeneric\ghost.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Scylla\Scylla.vcxproj">
+      <Project>{e468da07-48ea-40eb-a845-fa69c39d3396}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

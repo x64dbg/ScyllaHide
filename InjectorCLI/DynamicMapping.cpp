@@ -4,50 +4,57 @@
 
 #pragma comment(lib, "psapi.lib")
 
-LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory, bool wipeHeaders)
+//----------------------------------------------------------------------------------
+LPVOID MapModuleToProcess(
+    HANDLE hProcess,
+    BYTE *dllMemory,
+    bool wipeHeaders)
 {
-    PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)dllMemory;
-    PIMAGE_NT_HEADERS pNtHeader = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosHeader + pDosHeader->e_lfanew);
+    PIMAGE_DOS_HEADER pDosHeader     = (PIMAGE_DOS_HEADER)dllMemory;
+    PIMAGE_NT_HEADERS pNtHeader      = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosHeader + pDosHeader->e_lfanew);
     PIMAGE_SECTION_HEADER pSecHeader = IMAGE_FIRST_SECTION(pNtHeader);
 
     if (pDosHeader->e_magic != IMAGE_DOS_SIGNATURE || pNtHeader->Signature != IMAGE_NT_SIGNATURE)
-    {
         return nullptr;
-    }
 
-    IMAGE_DATA_DIRECTORY relocDir = pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
-    bool relocatable = (pNtHeader->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) != 0;
-    bool hasRelocDir = pNtHeader->OptionalHeader.NumberOfRvaAndSizes >= IMAGE_DIRECTORY_ENTRY_BASERELOC && relocDir.VirtualAddress > 0 && relocDir.Size > 0;
-    if (!hasRelocDir && (pNtHeader->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)) // A relocation dir is optional, but it must not have been stripped
-    {
+    IMAGE_DATA_DIRECTORY relocDir   = pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+    bool relocatable                = (pNtHeader->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) != 0;
+    bool hasRelocDir                = pNtHeader->OptionalHeader.NumberOfRvaAndSizes >= IMAGE_DIRECTORY_ENTRY_BASERELOC && relocDir.VirtualAddress > 0 && relocDir.Size > 0;
+
+    // A relocation directory is optional, but it must not have been stripped
+    if (!hasRelocDir && (pNtHeader->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED))
         return nullptr;
-    }
 
-    ULONG_PTR headersBase = pNtHeader->OptionalHeader.ImageBase;
-    LPVOID preferredBase = relocatable ? nullptr : (LPVOID)headersBase;
-    LPVOID imageRemote = VirtualAllocEx(hProcess, preferredBase, pNtHeader->OptionalHeader.SizeOfImage, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    LPVOID imageLocal = VirtualAlloc(nullptr, pNtHeader->OptionalHeader.SizeOfImage, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    ULONG_PTR headersBase   = pNtHeader->OptionalHeader.ImageBase;
+    LPVOID preferredBase    = relocatable ? nullptr : (LPVOID)headersBase;
 
-    if (!imageLocal || !imageRemote)
-    {
+    LPVOID imageRemote      = VirtualAllocEx(hProcess, preferredBase, pNtHeader->OptionalHeader.SizeOfImage, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    LPVOID imageLocal       = VirtualAlloc(nullptr, pNtHeader->OptionalHeader.SizeOfImage, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+
+    if (imageLocal == nullptr || imageRemote == nullptr)
         return nullptr;
-    }
 
     // Update the headers to the relocated image base
     if (relocatable && (ULONG_PTR)imageRemote != pNtHeader->OptionalHeader.ImageBase)
         pNtHeader->OptionalHeader.ImageBase = (ULONG_PTR)imageRemote;
 
-    memcpy((LPVOID)imageLocal, (LPVOID)pDosHeader, pNtHeader->OptionalHeader.SizeOfHeaders);
+    memcpy(imageLocal, pDosHeader, pNtHeader->OptionalHeader.SizeOfHeaders);
 
     SIZE_T imageSize = pNtHeader->OptionalHeader.SizeOfImage;
-    for (WORD i = 0; i < pNtHeader->FileHeader.NumberOfSections; i++)
+    for (WORD i = 0; i < pNtHeader->FileHeader.NumberOfSections; i++, ++pSecHeader)
     {
-        if (hasRelocDir && i == pNtHeader->FileHeader.NumberOfSections - 1 &&
-            pSecHeader->VirtualAddress == relocDir.VirtualAddress && (pSecHeader->Characteristics & IMAGE_SCN_MEM_DISCARDABLE))
-            imageSize = pSecHeader->VirtualAddress; // Limit the maximum VA to copy to the process to exclude .reloc if it is the last section
+        // Limit the maximum VA to copy to the process to exclude .reloc if it is the last section
+        if (     hasRelocDir
+              && i == pNtHeader->FileHeader.NumberOfSections - 1
+              && pSecHeader->VirtualAddress == relocDir.VirtualAddress && (pSecHeader->Characteristics & IMAGE_SCN_MEM_DISCARDABLE))
+        {
+            imageSize = pSecHeader->VirtualAddress;
+        }
 
-        memcpy((LPVOID)((DWORD_PTR)imageLocal + pSecHeader->VirtualAddress), (LPVOID)((DWORD_PTR)pDosHeader + pSecHeader->PointerToRawData), pSecHeader->SizeOfRawData);
-        pSecHeader++;
+        memcpy(
+            LPVOID((DWORD_PTR)imageLocal + pSecHeader->VirtualAddress),
+            LPVOID((DWORD_PTR)pDosHeader + pSecHeader->PointerToRawData),
+            pSecHeader->SizeOfRawData);
     }
 
     if (hasRelocDir)
@@ -59,11 +66,19 @@ LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory, bool wipeHeaders)
             dwDelta);
     }
 
-    ResolveImports((PIMAGE_IMPORT_DESCRIPTOR)((DWORD_PTR)imageLocal + pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress), (DWORD_PTR)imageLocal);
+    // Imports resolution
+    ResolveImports(
+        PIMAGE_IMPORT_DESCRIPTOR((DWORD_PTR)imageLocal + pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress),
+        (DWORD_PTR)imageLocal);
 
+    // 
     SIZE_T skipBytes = wipeHeaders ? pNtHeader->OptionalHeader.SizeOfHeaders : 0;
-    if (WriteProcessMemory(hProcess, (PVOID)((ULONG_PTR)imageRemote + skipBytes), (PVOID)((ULONG_PTR)imageLocal + skipBytes),
-        imageSize - skipBytes, nullptr))
+    if (WriteProcessMemory(
+            hProcess,
+            (PVOID)((ULONG_PTR)imageRemote + skipBytes),
+            (PVOID)((ULONG_PTR)imageLocal + skipBytes),
+            imageSize - skipBytes,
+            nullptr))
     {
         VirtualFree(imageLocal, 0, MEM_RELEASE);
     }
@@ -76,6 +91,7 @@ LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory, bool wipeHeaders)
     return imageRemote;
 }
 
+//----------------------------------------------------------------------------------
 bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module)
 {
     PIMAGE_THUNK_DATA thunkRef;
@@ -83,30 +99,24 @@ bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module)
 
     while (pImport->FirstThunk)
     {
-        char * moduleName = (char *)(module + pImport->Name);
+        char *moduleName = (char *)(module + pImport->Name);
 
         HMODULE hModule = GetModuleHandleA(moduleName);
 
-        if (!hModule)
+        if (hModule == nullptr)
         {
             hModule = LoadLibraryA(moduleName);
             if (!hModule)
-            {
                 return false;
-            }
         }
 
         funcRef = (PIMAGE_THUNK_DATA)(module + pImport->FirstThunk);
         if (pImport->OriginalFirstThunk)
-        {
             thunkRef = (PIMAGE_THUNK_DATA)(module + pImport->OriginalFirstThunk);
-        }
         else
-        {
             thunkRef = (PIMAGE_THUNK_DATA)(module + pImport->FirstThunk);
-        }
 
-        while (thunkRef->u1.Function)
+        for (; thunkRef->u1.Function != 0; ++thunkRef, ++funcRef)
         {
             if (IMAGE_SNAP_BY_ORDINAL(thunkRef->u1.Function))
             {
@@ -118,14 +128,11 @@ bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module)
                 funcRef->u1.Function = (DWORD_PTR)GetProcAddress(hModule, (LPCSTR)thunkData->Name);
             }
 
-            if (!funcRef->u1.Function)
+            if (funcRef->u1.Function == 0)
             {
                 MessageBoxA(0, "Function not resolved", moduleName, 0);
                 return false;
             }
-
-            thunkRef++;
-            funcRef++;
         }
 
         pImport++;
@@ -134,33 +141,30 @@ bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module)
     return true;
 }
 
-void DoBaseRelocation(PIMAGE_BASE_RELOCATION relocation, DWORD_PTR memory, DWORD_PTR dwDelta)
+//----------------------------------------------------------------------------------
+void DoBaseRelocation(
+    PIMAGE_BASE_RELOCATION relocation,
+    DWORD_PTR memory,
+    DWORD_PTR dwDelta)
 {
-    DWORD_PTR * patchAddress;
+    DWORD_PTR *patchAddress;
     WORD type, offset;
 
     while (relocation->VirtualAddress)
     {
-        PBYTE dest = (PBYTE)(memory + relocation->VirtualAddress);
-        DWORD count = (relocation->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
-        WORD * relocInfo = (WORD *)((DWORD_PTR)relocation + sizeof(IMAGE_BASE_RELOCATION));
+        PBYTE dest      = (PBYTE)(memory + relocation->VirtualAddress);
+        DWORD count     = (relocation->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
+        WORD *relocInfo = (WORD *)((DWORD_PTR)relocation + sizeof(IMAGE_BASE_RELOCATION));
 
         for (DWORD i = 0; i < count; i++)
         {
             type = relocInfo[i] >> 12;
             offset = relocInfo[i] & 0xfff;
 
-            switch (type)
+            if (type == IMAGE_REL_BASED_HIGHLOW || type == IMAGE_REL_BASED_DIR64)
             {
-            case IMAGE_REL_BASED_ABSOLUTE:
-                break;
-            case IMAGE_REL_BASED_HIGHLOW:
-            case IMAGE_REL_BASED_DIR64:
                 patchAddress = (DWORD_PTR *)(dest + offset);
                 *patchAddress += dwDelta;
-                break;
-            default:
-                break;
             }
         }
 
@@ -168,11 +172,12 @@ void DoBaseRelocation(PIMAGE_BASE_RELOCATION relocation, DWORD_PTR memory, DWORD
     }
 }
 
+//----------------------------------------------------------------------------------
 DWORD RVAToOffset(PIMAGE_NT_HEADERS pNtHdr, DWORD dwRVA)
 {
     PIMAGE_SECTION_HEADER pSectionHdr = IMAGE_FIRST_SECTION(pNtHdr);
 
-    for (WORD i = 0; i < pNtHdr->FileHeader.NumberOfSections; i++)
+    for (WORD i = 0; i < pNtHdr->FileHeader.NumberOfSections; i++, ++pSectionHdr)
     {
         if (pSectionHdr->VirtualAddress <= dwRVA)
         {
@@ -183,71 +188,73 @@ DWORD RVAToOffset(PIMAGE_NT_HEADERS pNtHdr, DWORD dwRVA)
 
                 return (dwRVA);
             }
-
         }
-        pSectionHdr++;
     }
 
-    return (0);
+    return 0;
 }
 
-DWORD GetDllFunctionAddressRVA(BYTE * dllMemory, LPCSTR apiName)
+
+//----------------------------------------------------------------------------------
+DWORD GetDllFunctionAddressRVA(BYTE *dllMemory, LPCSTR apiName)
 {
     PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)dllMemory;
-    PIMAGE_NT_HEADERS pNtHeader = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosHeader + pDosHeader->e_lfanew);
-    PIMAGE_EXPORT_DIRECTORY pExportDir;
+    PIMAGE_NT_HEADERS pNtHeader  = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDosHeader + pDosHeader->e_lfanew);
 
-    DWORD exportDirRVA = pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-    DWORD exportDirOffset = RVAToOffset(pNtHeader, exportDirRVA);
+    DWORD exportDirRVA      = pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+    DWORD exportDirOffset   = RVAToOffset(pNtHeader, exportDirRVA);
 
-    pExportDir = (PIMAGE_EXPORT_DIRECTORY)((DWORD_PTR)dllMemory + exportDirOffset);
+    auto pExportDir = (PIMAGE_EXPORT_DIRECTORY)((DWORD_PTR)dllMemory + exportDirOffset);
 
-    DWORD * addressOfFunctionsArray = (DWORD *)((DWORD)pExportDir->AddressOfFunctions - exportDirRVA + (DWORD_PTR)pExportDir);
-    DWORD * addressOfNamesArray = (DWORD *)((DWORD)pExportDir->AddressOfNames - exportDirRVA + (DWORD_PTR)pExportDir);
-    WORD * addressOfNameOrdinalsArray = (WORD *)((DWORD)pExportDir->AddressOfNameOrdinals - exportDirRVA + (DWORD_PTR)pExportDir);
+    auto addressOfFunctionsArray    = (DWORD *)((DWORD)pExportDir->AddressOfFunctions - exportDirRVA + (DWORD_PTR)pExportDir);
+    auto addressOfNamesArray        = (DWORD *)((DWORD)pExportDir->AddressOfNames - exportDirRVA + (DWORD_PTR)pExportDir);
+    auto addressOfNameOrdinalsArray = (WORD *)((DWORD)pExportDir->AddressOfNameOrdinals - exportDirRVA + (DWORD_PTR)pExportDir);
 
     for (DWORD i = 0; i < pExportDir->NumberOfNames; i++)
     {
         char * functionName = (char*)(addressOfNamesArray[i] - exportDirRVA + (DWORD_PTR)pExportDir);
-
         if (!_stricmp(functionName, apiName))
-        {
             return addressOfFunctionsArray[addressOfNameOrdinalsArray[i]];
-        }
     }
 
     return 0;
 }
 
+//----------------------------------------------------------------------------------
 HMODULE GetModuleBaseRemote(HANDLE hProcess, const wchar_t* szDLLName)
 {
     DWORD cbNeeded = 0;
     wchar_t szModuleName[MAX_PATH] = { 0 };
-    if (EnumProcessModules(hProcess, 0, 0, &cbNeeded))
+    if (!EnumProcessModules(hProcess, 0, 0, &cbNeeded))
+        return NULL;
+
+    HMODULE *hMods = (HMODULE*)malloc(cbNeeded*sizeof(HMODULE));
+    HMODULE hMod = NULL;
+
+    do 
     {
-        HMODULE* hMods = (HMODULE*)malloc(cbNeeded*sizeof(HMODULE));
-        if (EnumProcessModules(hProcess, hMods, cbNeeded, &cbNeeded))
+        if (!EnumProcessModules(hProcess, hMods, cbNeeded, &cbNeeded))
+            break;
+
+        for (unsigned int i = 0; i < cbNeeded / sizeof(HMODULE); i++)
         {
-            for (unsigned int i = 0; i < cbNeeded / sizeof(HMODULE); i++)
+            szModuleName[0] = 0;
+            if (GetModuleFileNameExW(hProcess, hMods[i], szModuleName, _countof(szModuleName)))
             {
-                szModuleName[0] = 0;
-                if (GetModuleFileNameExW(hProcess, hMods[i], szModuleName, _countof(szModuleName)))
+                wchar_t* dllName = wcsrchr(szModuleName, L'\\');
+                if (dllName != nullptr)
                 {
-                    wchar_t* dllName = wcsrchr(szModuleName, L'\\');
-                    if (dllName)
+                    dllName++;
+                    if (_wcsicmp(dllName, szDLLName) == 0)
                     {
-                        dllName++;
-                        if (!_wcsicmp(dllName, szDLLName))
-                        {
-                            HMODULE module = hMods[i];
-                            free(hMods);
-                            return module;
-                        }
+                        hMod = hMods[i];
+                        break;
                     }
                 }
             }
         }
-        free(hMods);
-    }
-    return 0;
+    } while (false);
+
+    free(hMods);
+    return hMod;
 }

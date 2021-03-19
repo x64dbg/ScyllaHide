@@ -19,13 +19,15 @@ FORCEINLINE ULONG NTAPI RtlGetTickCount()
 
 bool HasDebugPrivileges(HANDLE hProcess);
 bool IsWow64Process(HANDLE ProcessHandle);
-NTSTATUS InstallInstrumentationCallbackHook(HANDLE ProcessHandle, BOOLEAN Remove);
+NTSTATUS InstallInstrumentationCallbackHook(_In_ HANDLE ProcessHandle, _In_ BOOLEAN Remove);
 DWORD GetExplorerProcessId();
-DWORD GetProcessIdByName(PUNICODE_STRING processName);
+DWORD NtGetProcessIdByName(PUNICODE_STRING processName);
 bool IsProcessNameBad(PUNICODE_STRING processName);
 
 DWORD GetProcessIdByProcessHandle(HANDLE hProcess);
 DWORD GetProcessIdByThreadHandle(HANDLE hThread);
+
+bool IsThreadInProcess(HANDLE ThreadHandle);
 
 bool RtlUnicodeStringContains(PUNICODE_STRING Str, PUNICODE_STRING SubStr, BOOLEAN CaseInsensitive);
 

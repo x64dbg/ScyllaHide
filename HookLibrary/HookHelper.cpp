@@ -5,115 +5,197 @@
 #include "HookedFunctions.h"
 #include "HookMain.h"
 
-const WCHAR * BadProcessnameList[] =
+//----------------------------------------------------------------------------------
+const wchar_t *BadProcessnameList[] =
 {
-	L"ollydbg.exe",
-	L"ida.exe",
-	L"ida64.exe",
-	L"idag.exe",
-	L"idag64.exe",
-	L"idaw.exe",
-	L"idaw64.exe",
-	L"idaq.exe",
-	L"idaq64.exe",
-	L"idau.exe",
-	L"idau64.exe",
-	L"scylla.exe",
-	L"scylla_x64.exe",
-	L"scylla_x86.exe",
-	L"protection_id.exe",
-	L"x64dbg.exe",
-	L"x32dbg.exe",
-	L"windbg.exe",
-	L"reshacker.exe",
-	L"ImportREC.exe",
-	L"IMMUNITYDEBUGGER.EXE",
-	L"devenv.exe"
+    // Olly
+    L"ollydbg.exe",
+    // IDA
+    L"ida.exe", L"ida64.exe", L"idag.exe", L"idag64.exe",
+    L"idaw.exe", L"idaw64.exe", L"idaq.exe", L"idaq64.exe",
+    L"idau.exe", L"idau64.exe", L"win64_remote64.exe",
+    // Scylla
+    L"scylla.exe", L"scylla_x64.exe", L"scylla_x86.exe",
+    // Protection ID
+    L"protection_id.exe",
+    // x64dbg
+    L"x64dbg.exe", L"x32dbg.exe",
+    // Windbg
+    L"windbg.exe", "cdb.exe"
+    // Res hacker
+    L"reshacker.exe",
+    // Imprec
+    L"ImportREC.exe",
+    // Immunity
+    L"IMMUNITYDEBUGGER.EXE",
+    // Visual Studio
+    L"devenv.exe",
+    nullptr
 };
 
-const WCHAR * BadWindowTextList[] =
-{
-	L"OLLYDBG",
-	L"ida",
-	L"disassembly",
-	L"scylla",
-	L"Debug",
-	L"[CPU",
-	L"Immunity",
-	L"WinDbg",
-	L"x32dbg",
-	L"x64dbg",
-	L"Import reconstructor"
-};
-
-const WCHAR * BadWindowClassList[] =
+//----------------------------------------------------------------------------------
+const wchar_t *BadWindowTextList[] =
 {
 	L"OLLYDBG",
-	L"Zeta Debugger",
-	L"Rock Debugger",
-	L"ObsidianGUI",
-	L"ID", //Immunity Debugger
-	L"WinDbgFrameClass", //WinDBG
-	L"idawindow",
-	L"tnavbox",
-	L"idaview",
-	L"tgrzoom"
+    L"ida",
+    L"disassembly",
+    L"scylla",
+    L"Debug",
+    L"[CPU",
+    L"Immunity",
+    L"WinDbg",
+    L"x32dbg",
+    L"x64dbg",
+    L"Import reconstructor",
+    nullptr
 };
 
+//----------------------------------------------------------------------------------
+const wchar_t *BadWindowClassList[] =
+{
+    L"OLLYDBG",
+    L"Zeta Debugger",
+    L"Rock Debugger",
+    L"ObsidianGUI",
+    L"ID", //Immunity Debugger
+    L"WinDbgFrameClass", //WinDBG
+    L"idawindow",
+    L"tnavbox",
+    L"idaview",
+    L"tgrzoom",
+    nullptr
+};
+
+//----------------------------------------------------------------------------------
 extern "C" void InstrumentationCallbackAsm();
 
 extern HOOK_DLL_DATA HookDllData;
+
 extern SAVE_DEBUG_REGISTERS ArrayDebugRegister[100];
+
+static DWORD dwExplorerPid = 0;
 
 static USHORT DebugObjectTypeIndex = 0;
 static USHORT ProcessTypeIndex = 0;
 static USHORT ThreadTypeIndex = 0;
 
+static BYTE memory[sizeof(IMAGE_NT_HEADERS) + 0x100] = { 0 };
+
+WCHAR MalwareFile[MAX_PATH] = { 0 };
+const WCHAR MalwareFilename[] = L"Unpacked.exe";
+
+//----------------------------------------------------------------------------------
+static LUID ConvertLongToLuid(LONG value)
+{
+    LUID luid;
+    LARGE_INTEGER largeInt;
+    largeInt.QuadPart = value;
+    luid.LowPart = largeInt.LowPart;
+    luid.HighPart = largeInt.HighPart;
+    return luid;
+}
+
+//----------------------------------------------------------------------------------
+bool RtlUnicodeStringContains(PUNICODE_STRING Str, PUNICODE_STRING SubStr, BOOLEAN CaseInsensitive)
+{
+    if (Str == nullptr || SubStr == nullptr || Str->Length < SubStr->Length)
+        return false;
+
+    const USHORT numCharsDiff = (Str->Length - SubStr->Length) / sizeof(WCHAR);
+    UNICODE_STRING slice = *Str;
+    slice.Length = SubStr->Length;
+
+    for (USHORT i = 0; i <= numCharsDiff; ++i, ++slice.Buffer, slice.MaximumLength -= sizeof(WCHAR))
+    {
+        if (RtlEqualUnicodeString(&slice, SubStr, CaseInsensitive))
+            return true;
+    }
+    return false;
+}
+
+//----------------------------------------------------------------------------------
+static bool IsUnicodeStringInTable(PUNICODE_STRING uStr, const wchar_t* Table[])
+{
+    if (uStr == nullptr || uStr->Length == 0 || uStr->Buffer == nullptr)
+        return false;
+
+    UNICODE_STRING uValue;
+    for (size_t i = 0; ; ++i)
+    {
+        auto wStr = const_cast<PWSTR>(Table[i]);
+        if (wStr == nullptr)
+            break;
+
+        RtlInitUnicodeString(&uValue, wStr);
+        if (RtlUnicodeStringContains(uStr, &uValue, TRUE))
+            return true;
+    }
+    return false;
+}
+
+//----------------------------------------------------------------------------------
+void ThreadDebugContextRemoveEntry(const int index)
+{
+    ArrayDebugRegister[index].dwThreadId = 0;
+}
+
+//----------------------------------------------------------------------------------
+void ThreadDebugContextSaveContext(const int index, const PCONTEXT ThreadContext)
+{
+    ArrayDebugRegister[index].dwThreadId = HandleToULong(NtCurrentTeb()->ClientId.UniqueThread);
+    ArrayDebugRegister[index].Dr0 = ThreadContext->Dr0;
+    ArrayDebugRegister[index].Dr1 = ThreadContext->Dr1;
+    ArrayDebugRegister[index].Dr2 = ThreadContext->Dr2;
+    ArrayDebugRegister[index].Dr3 = ThreadContext->Dr3;
+    ArrayDebugRegister[index].Dr6 = ThreadContext->Dr6;
+    ArrayDebugRegister[index].Dr7 = ThreadContext->Dr7;
+}
+
+//----------------------------------------------------------------------------------
+int ThreadDebugContextFindExistingSlotIndex()
+{
+    auto CurrentThreadId = HandleToULong(NtCurrentTeb()->ClientId.UniqueThread);
+    for (size_t i = 0; i < _countof(ArrayDebugRegister); i++)
+    {
+        if (ArrayDebugRegister[i].dwThreadId != 0)
+        {
+            if (ArrayDebugRegister[i].dwThreadId == CurrentThreadId)
+                return int(i);
+        }
+    }
+    return -1;
+}
+
+//----------------------------------------------------------------------------------
+int ThreadDebugContextFindFreeSlotIndex()
+{
+    for (size_t i = 0; i < _countof(ArrayDebugRegister); i++)
+    {
+        if (ArrayDebugRegister[i].dwThreadId == 0)
+            return int(i);
+    }
+    return -1;
+}
+
+//----------------------------------------------------------------------------------
 bool IsProcessNameBad(PUNICODE_STRING processName)
 {
-	if (processName == nullptr || processName->Length == 0 || processName->Buffer == nullptr)
-		return false;
-
-	UNICODE_STRING badProcessName;
-	for (int i = 0; i < _countof(BadProcessnameList); i++)
-	{
-		RtlInitUnicodeString(&badProcessName, const_cast<PWSTR>(BadProcessnameList[i]));
-		if (RtlEqualUnicodeString(processName, &badProcessName, TRUE))
-			return true;
-	}
-	return false;
+    return IsUnicodeStringInTable(processName, BadProcessnameList);
 }
 
+//----------------------------------------------------------------------------------
 bool IsWindowClassNameBad(PUNICODE_STRING className)
 {
-	if (className == nullptr || className->Length == 0 || className->Buffer == nullptr)
-		return false;
-
-	UNICODE_STRING badWindowClassName;
-	for (int i = 0; i < _countof(BadWindowClassList); i++)
-	{
-		RtlInitUnicodeString(&badWindowClassName, const_cast<PWSTR>(BadWindowClassList[i]));
-		if (RtlUnicodeStringContains(className, &badWindowClassName, TRUE))
-			return true;
-	}
-	return false;
+    return IsUnicodeStringInTable(className, BadWindowClassList);
 }
 
+//----------------------------------------------------------------------------------
 bool IsWindowNameBad(PUNICODE_STRING windowName)
 {
-	if (windowName == nullptr || windowName->Length == 0 || windowName->Buffer == nullptr)
-		return false;
-
-	UNICODE_STRING badWindowName;
-	for (int i = 0; i < _countof(BadWindowTextList); i++)
-	{
-		RtlInitUnicodeString(&badWindowName, const_cast<PWSTR>(BadWindowTextList[i]));
-		if (RtlUnicodeStringContains(windowName, &badWindowName, TRUE))
-			return true;
-	}
-	return false;
+    return IsUnicodeStringInTable(windowName, BadWindowTextList);
 }
 
+//----------------------------------------------------------------------------------
 bool IsWindowBad(HWND hWnd)
 {
 	if (HookDllData.EnableProtectProcessId)
@@ -121,6 +203,7 @@ bool IsWindowBad(HWND hWnd)
 		const ULONG Pid = HookDllData.dNtUserQueryWindow != nullptr
 			? HandleToULong(HookDllData.dNtUserQueryWindow(hWnd, WindowProcess))
 			: HandleToULong(HookDllData.NtUserQueryWindow(hWnd, WindowProcess));
+
 		if (Pid == HookDllData.dwProtectedProcessId)
 			return true;
 	}
@@ -138,6 +221,7 @@ bool IsWindowBad(HWND hWnd)
 	return IsWindowNameBad(&WindowText);
 }
 
+//----------------------------------------------------------------------------------
 static void GetBadObjectTypes()
 {
 	// If NtQSI is not hooked, this function is N/A
@@ -160,36 +244,43 @@ static void GetBadObjectTypes()
 	PSYSTEM_HANDLE_INFORMATION_EX HandleInfo = &Dummy;
 	ULONG Size;
 	NTSTATUS Status;
-	if ((Status = HookDllData.dNtQuerySystemInformation(SystemExtendedHandleInformation,
-														HandleInfo,
-														sizeof(Dummy),
-														&Size)) != STATUS_INFO_LENGTH_MISMATCH)
-		goto exit;
 
-	HandleInfo = (PSYSTEM_HANDLE_INFORMATION_EX)RtlAllocateHeap(RtlProcessHeap(), 0, 2 * Size);
-	Status = HookDllData.dNtQuerySystemInformation(SystemExtendedHandleInformation,
-													HandleInfo,
-													2 * Size,
-													nullptr);
-	if (!NT_SUCCESS(Status))
-		goto exit;
+    do 
+    {
+        Status = HookDllData.dNtQuerySystemInformation(
+                        SystemExtendedHandleInformation,
+                        HandleInfo,
+                        sizeof(Dummy),
+                        &Size);
 
-	// Enumerate all handles
-	for (ULONG i = 0; i < HandleInfo->NumberOfHandles; ++i)
-	{
-		SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX Entry = HandleInfo->Handles[i];
-		if (Entry.UniqueProcessId != (ULONG_PTR)NtCurrentTeb()->ClientId.UniqueProcess)
-			continue; // Not our process
+        if (Status != STATUS_INFO_LENGTH_MISMATCH)
+            break;
 
-		if (Entry.HandleValue == (ULONG_PTR)DebugObjectHandle)
-			DebugObjectTypeIndex = Entry.ObjectTypeIndex;
-		else if (Entry.HandleValue == (ULONG_PTR)ProcessHandle)
-			ProcessTypeIndex = Entry.ObjectTypeIndex;
-		else if (Entry.HandleValue == (ULONG_PTR)ThreadHandle)
-			ThreadTypeIndex = Entry.ObjectTypeIndex;
-	}
+        HandleInfo = (PSYSTEM_HANDLE_INFORMATION_EX)RtlAllocateHeap(RtlProcessHeap(), 0, 2 * Size);
+        Status = HookDllData.dNtQuerySystemInformation(SystemExtendedHandleInformation,
+            HandleInfo,
+            2 * Size,
+            nullptr);
+        if (!NT_SUCCESS(Status))
+            break;
 
-exit:
+        // Enumerate all handles
+        for (ULONG i = 0; i < HandleInfo->NumberOfHandles; ++i)
+        {
+            SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX Entry = HandleInfo->Handles[i];
+            if (Entry.UniqueProcessId != (ULONG_PTR)NtCurrentTeb()->ClientId.UniqueProcess)
+                continue; // Not our process
+
+            if (Entry.HandleValue == (ULONG_PTR)DebugObjectHandle)
+                DebugObjectTypeIndex = Entry.ObjectTypeIndex;
+            else if (Entry.HandleValue == (ULONG_PTR)ProcessHandle)
+                ProcessTypeIndex = Entry.ObjectTypeIndex;
+            else if (Entry.HandleValue == (ULONG_PTR)ThreadHandle)
+                ThreadTypeIndex = Entry.ObjectTypeIndex;
+        }
+    } while (false);
+
+    // Cleanup
 	if (DebugObjectHandle != nullptr)
 		NtClose(DebugObjectHandle);
 	if (ProcessHandle != nullptr)
@@ -200,24 +291,22 @@ exit:
 		RtlFreeHeap(RtlProcessHeap(), 0, HandleInfo);
 }
 
+//----------------------------------------------------------------------------------
 bool IsObjectTypeBad(USHORT objectTypeIndex)
 {
 	GetBadObjectTypes();
-	return objectTypeIndex == DebugObjectTypeIndex ||
-		objectTypeIndex == ProcessTypeIndex ||
-		objectTypeIndex == ThreadTypeIndex;
+	return     objectTypeIndex == DebugObjectTypeIndex
+            || objectTypeIndex == ProcessTypeIndex
+            || objectTypeIndex == ThreadTypeIndex;
 }
 
-static LUID ConvertLongToLuid(LONG value)
+bool IsThreadInProcess(HANDLE ThreadHandle)
 {
-	LUID luid;
-	LARGE_INTEGER largeInt;
-	largeInt.QuadPart = value;
-	luid.LowPart = largeInt.LowPart;
-	luid.HighPart = largeInt.HighPart;
-	return luid;
+    return     ThreadHandle == NtCurrentThread
+            || HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByThreadHandle(ThreadHandle);
 }
 
+//----------------------------------------------------------------------------------
 bool HasDebugPrivileges(HANDLE hProcess)
 {
 	HANDLE hToken;
@@ -240,23 +329,24 @@ bool HasDebugPrivileges(HANDLE hProcess)
 	return hasDebugPrivileges == TRUE;
 }
 
+//----------------------------------------------------------------------------------
 bool IsWow64Process(HANDLE ProcessHandle)
 {
 	PPEB WoW64Peb = nullptr;
-	const NTSTATUS Status = NtQueryInformationProcess(ProcessHandle,
-													ProcessWow64Information,
-													&WoW64Peb,
-													sizeof(WoW64Peb),
-													nullptr);
+	const NTSTATUS Status = NtQueryInformationProcess(
+                                ProcessHandle,
+								ProcessWow64Information,
+								&WoW64Peb,
+								sizeof(WoW64Peb),
+								nullptr);
 
 	return NT_SUCCESS(Status) && WoW64Peb != nullptr;
 }
 
-NTSTATUS
-InstallInstrumentationCallbackHook(
+//----------------------------------------------------------------------------------
+NTSTATUS InstallInstrumentationCallbackHook(
 	_In_ HANDLE ProcessHandle,
-	_In_ BOOLEAN Remove
-	)
+	_In_ BOOLEAN Remove)
 {
 	const PVOID Callback = Remove ? nullptr : (PVOID)InstrumentationCallbackAsm;
 	NTSTATUS Status = STATUS_NOT_SUPPORTED;
@@ -310,6 +400,7 @@ InstallInstrumentationCallbackHook(
 									(PVOID)&Callback,
 									sizeof(Callback));
 
+        // Restore debug privilege
 		RtlAdjustPrivilege(SE_DEBUG_PRIVILEGE, SeDebugWasEnabled, FALSE, &SeDebugWasEnabled);
 	}
 #endif
@@ -317,65 +408,57 @@ InstallInstrumentationCallbackHook(
 	return Status;
 }
 
-void * GetPEBRemote(HANDLE hProcess)
+//----------------------------------------------------------------------------------
+void *GetPEBRemote(HANDLE hProcess)
 {
 	PROCESS_BASIC_INFORMATION pbi;
 
 	if (HookDllData.dNtQueryInformationProcess)
 	{
 		if (HookDllData.dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
-		{
 			return pbi.PebBaseAddress;
-		}
 	}
 	else
 	{
 		//maybe not hooked
 		if (NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
-		{
 			return pbi.PebBaseAddress;
-		}
 	}
 
 	return 0;
 }
 
-
+//----------------------------------------------------------------------------------
 DWORD GetProcessIdByProcessHandle(HANDLE hProcess)
 {
 	PROCESS_BASIC_INFORMATION pbi;
 
-	if (HookDllData.dNtQueryInformationProcess)
+	if (HookDllData.dNtQueryInformationProcess != nullptr)
 	{
 		if (HookDllData.dNtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
-		{
 			return HandleToULong(pbi.UniqueProcessId);
-		}
 	}
 	else
 	{
-		//maybe not hooked
 		if (NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), 0) >= 0)
-		{
 			return HandleToULong(pbi.UniqueProcessId);
-		}
 	}
 
 	return 0;
 }
 
+//----------------------------------------------------------------------------------
 DWORD GetProcessIdByThreadHandle(HANDLE hThread)
 {
 	THREAD_BASIC_INFORMATION tbi;
 
 	if (NT_SUCCESS(NtQueryInformationThread(hThread, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0)))
-	{
 		return HandleToULong(tbi.ClientId.UniqueProcess);
-	}
 
 	return 0;
 }
 
+//----------------------------------------------------------------------------------
 void TerminateProcessByProcessId(DWORD dwProcess)
 {
 	if (dwProcess == 0)
@@ -392,39 +475,43 @@ void TerminateProcessByProcessId(DWORD dwProcess)
 	}
 }
 
-static DWORD dwExplorerPid = 0;
-
+//----------------------------------------------------------------------------------
 DWORD GetExplorerProcessId()
 {
 	if (dwExplorerPid == 0)
 	{
 		UNICODE_STRING explorerName = RTL_CONSTANT_STRING(L"explorer.exe");
-		dwExplorerPid = GetProcessIdByName(&explorerName);
+		dwExplorerPid = NtGetProcessIdByName(&explorerName);
 	}
 	return dwExplorerPid;
 }
 
-DWORD GetProcessIdByName(PUNICODE_STRING processName)
+//----------------------------------------------------------------------------------
+DWORD NtGetProcessIdByName(PUNICODE_STRING processName)
 {
 	ULONG size;
 	if (NtQuerySystemInformation(SystemProcessInformation, nullptr, 0, &size) != STATUS_INFO_LENGTH_MISMATCH)
 		return 0;
+
 	const PSYSTEM_PROCESS_INFORMATION systemProcessInfo =
 		static_cast<PSYSTEM_PROCESS_INFORMATION>(RtlAllocateHeap(RtlProcessHeap(), 0, 2 * size));
+
 	NTSTATUS status;
 	if (HookDllData.dNtQuerySystemInformation != nullptr)
 	{
-		status = HookDllData.dNtQuerySystemInformation(SystemProcessInformation,
-													systemProcessInfo,
-													2 * size,
-													nullptr);
+		status = HookDllData.dNtQuerySystemInformation(
+            SystemProcessInformation,
+			systemProcessInfo,
+			2 * size,
+			nullptr);
 	}
 	else
 	{
-		status = NtQuerySystemInformation(SystemProcessInformation,
-											systemProcessInfo,
-											2 * size,
-											nullptr);
+		status = NtQuerySystemInformation(
+            SystemProcessInformation,
+			systemProcessInfo,
+			2 * size,
+			nullptr);
 	}
 	if (!NT_SUCCESS(status))
 		return 0;
@@ -448,68 +535,7 @@ DWORD GetProcessIdByName(PUNICODE_STRING processName)
 	return pid;
 }
 
-bool RtlUnicodeStringContains(PUNICODE_STRING Str, PUNICODE_STRING SubStr, BOOLEAN CaseInsensitive)
-{
-	if (Str == nullptr || SubStr == nullptr || Str->Length < SubStr->Length)
-		return false;
-
-	const USHORT numCharsDiff = (Str->Length - SubStr->Length) / sizeof(WCHAR);
-	UNICODE_STRING slice = *Str;
-	slice.Length = SubStr->Length;
-
-	for (USHORT i = 0; i <= numCharsDiff; ++i, ++slice.Buffer, slice.MaximumLength -= sizeof(WCHAR))
-	{
-		if (RtlEqualUnicodeString(&slice, SubStr, CaseInsensitive))
-			return true;
-	}
-	return false;
-}
-
-void ThreadDebugContextRemoveEntry(const int index)
-{
-	ArrayDebugRegister[index].dwThreadId = 0;
-}
-
-void ThreadDebugContextSaveContext(const int index, const PCONTEXT ThreadContext)
-{
-	ArrayDebugRegister[index].dwThreadId = HandleToULong(NtCurrentTeb()->ClientId.UniqueThread);
-	ArrayDebugRegister[index].Dr0 = ThreadContext->Dr0;
-	ArrayDebugRegister[index].Dr1 = ThreadContext->Dr1;
-	ArrayDebugRegister[index].Dr2 = ThreadContext->Dr2;
-	ArrayDebugRegister[index].Dr3 = ThreadContext->Dr3;
-	ArrayDebugRegister[index].Dr6 = ThreadContext->Dr6;
-	ArrayDebugRegister[index].Dr7 = ThreadContext->Dr7;
-}
-
-int ThreadDebugContextFindExistingSlotIndex()
-{
-	for (int i = 0; i < _countof(ArrayDebugRegister); i++)
-	{
-		if (ArrayDebugRegister[i].dwThreadId != 0)
-		{
-			if (ArrayDebugRegister[i].dwThreadId == HandleToULong(NtCurrentTeb()->ClientId.UniqueThread))
-			{
-				return i;
-			}
-		}
-	}
-
-	return -1;
-}
-
-int ThreadDebugContextFindFreeSlotIndex()
-{
-	for (int i = 0; i < _countof(ArrayDebugRegister); i++)
-	{
-		if (ArrayDebugRegister[i].dwThreadId == 0)
-		{
-			return i;
-		}
-	}
-
-	return -1;
-}
-
+//----------------------------------------------------------------------------------
 // GetSystemTime and GetLocalTime are reimplemented here because the KernelBase functions use
 // RIP-relative addressing which breaks hooking. https://github.com/x64dbg/ScyllaHide/issues/31
 void NTAPI RealGetSystemTime(PSYSTEMTIME lpSystemTime)
@@ -527,6 +553,7 @@ void NTAPI RealGetSystemTime(PSYSTEMTIME lpSystemTime)
 	lpSystemTime->wDayOfWeek = TimeFields.Weekday;
 }
 
+//----------------------------------------------------------------------------------
 void NTAPI RealGetLocalTime(LPSYSTEMTIME lpSystemTime)
 {
 	TIME_FIELDS TimeFields;
@@ -546,6 +573,7 @@ void NTAPI RealGetLocalTime(LPSYSTEMTIME lpSystemTime)
 	lpSystemTime->wDayOfWeek = TimeFields.Weekday;
 }
 
+//----------------------------------------------------------------------------------
 void IncreaseSystemTime(LPSYSTEMTIME lpTime)
 {
 	lpTime->wMilliseconds++;
@@ -581,9 +609,7 @@ void IncreaseSystemTime(LPSYSTEMTIME lpTime)
 	}
 }
 
-
-BYTE memory[sizeof(IMAGE_NT_HEADERS) + 0x100] = {0};
-
+//----------------------------------------------------------------------------------
 void DumpMalware(DWORD dwProcessId)
 {
 	OBJECT_ATTRIBUTES attributes = { sizeof(OBJECT_ATTRIBUTES) };
@@ -625,9 +651,6 @@ void DumpMalware(DWORD dwProcessId)
 	NtClose(hProcess);
 }
 
-WCHAR MalwareFile[MAX_PATH] = {0};
-const WCHAR MalwareFilename[] = L"Unpacked.exe";
-
 bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize, DWORD_PTR imagebase)
 {
 	if (MalwareFile[0] == 0)
@@ -652,7 +675,12 @@ bool WriteMalwareToDisk(LPCVOID buffer, DWORD bufferSize, DWORD_PTR imagebase)
 	return WriteMemoryToFile(MalwareFile, buffer,bufferSize, imagebase);
 }
 
-bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize, DWORD_PTR imagebase)
+//----------------------------------------------------------------------------------
+bool WriteMemoryToFile(
+    const WCHAR * filename,
+    LPCVOID buffer,
+    DWORD bufferSize,
+    DWORD_PTR imagebase)
 {
 	PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)buffer;
 	PIMAGE_NT_HEADERS pNt = (PIMAGE_NT_HEADERS)((DWORD_PTR)pDos + pDos->e_lfanew);
@@ -661,33 +689,42 @@ bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize,
 	UNICODE_STRING NtPath;
 	if (!RtlDosPathNameToNtPathName_U(filename, &NtPath, nullptr, nullptr))
 		return false;
+
 	OBJECT_ATTRIBUTES objectAttributes;
 	IO_STATUS_BLOCK ioStatusBlock;
 	InitializeObjectAttributes(&objectAttributes, &NtPath, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
 
 	HANDLE hFile;
-	NTSTATUS status = NtCreateFile(&hFile,
-								FILE_GENERIC_WRITE,
-								&objectAttributes,
-								&ioStatusBlock,
-								nullptr,
-								FILE_ATTRIBUTE_NORMAL,
-								FILE_SHARE_READ,
-								FILE_OVERWRITE_IF,
-								FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
-								nullptr,
-								0);
+	NTSTATUS status = NtCreateFile(
+        &hFile,
+		FILE_GENERIC_WRITE,
+		&objectAttributes,
+		&ioStatusBlock,
+		nullptr,
+		FILE_ATTRIBUTE_NORMAL,
+		FILE_SHARE_READ,
+		FILE_OVERWRITE_IF,
+		FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+		nullptr,
+		0);
 	if (!NT_SUCCESS(status))
 		return false;
 
 	status = NtWriteFile(hFile, nullptr, nullptr, nullptr, &ioStatusBlock, (PVOID)buffer,
 		pNt->OptionalHeader.SizeOfHeaders, nullptr, nullptr);
 
-	for (WORD i = 0; i < pNt->FileHeader.NumberOfSections; i++)
+	for (WORD i = 0; i < pNt->FileHeader.NumberOfSections; i++, ++pSection)
 	{
-		status = NtWriteFile(hFile, nullptr, nullptr, nullptr, &ioStatusBlock, (BYTE *)buffer + pSection->VirtualAddress,
-			pSection->SizeOfRawData, nullptr, nullptr);
-		pSection++;
+		status = NtWriteFile(
+                    hFile,
+                    nullptr,
+                    nullptr,
+                    nullptr,
+                    &ioStatusBlock,
+                    (BYTE *)buffer + pSection->VirtualAddress,
+			        pSection->SizeOfRawData,
+                    nullptr,
+                    nullptr);
 	}
 	NtClose(hFile);
 

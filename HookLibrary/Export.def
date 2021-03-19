@@ -1,33 +1,33 @@
 LIBRARY
 EXPORTS
-HookDllData
-HookedGetLocalTime
-HookedGetSystemTime
-HookedGetTickCount
-HookedGetTickCount64
-HookedKiUserExceptionDispatcher
-HookedNativeCallInternal
-HookedNtClose
-HookedNtContinue
-HookedNtCreateThread
-HookedNtCreateThreadEx
-HookedNtDuplicateObject
-HookedNtGetContextThread
-HookedNtQueryInformationProcess
-HookedNtQueryObject
-HookedNtQueryPerformanceCounter
-HookedNtQuerySystemInformation
-HookedNtQuerySystemTime
-HookedNtSetContextThread
-HookedNtSetDebugFilterState
-HookedNtSetInformationProcess
-HookedNtSetInformationThread
-HookedNtUserBlockInput
-HookedNtUserBuildHwndList
-HookedNtUserBuildHwndList_Eight
-HookedNtUserFindWindowEx
-HookedNtUserGetForegroundWindow
-HookedNtUserQueryWindow
-HookedNtYieldExecution
-HookedOutputDebugStringA
-HookedNtResumeThread
+	HookDllData
+	HookedGetLocalTime
+	HookedGetSystemTime
+	HookedGetTickCount
+	HookedGetTickCount64
+	HookedKiUserExceptionDispatcher
+	HookedNativeCallInternal
+	HookedNtClose
+	HookedNtContinue
+	HookedNtCreateThread
+	HookedNtCreateThreadEx
+	HookedNtDuplicateObject
+	HookedNtGetContextThread
+	HookedNtQueryInformationProcess
+	HookedNtQueryObject
+	HookedNtQueryPerformanceCounter
+	HookedNtQuerySystemInformation
+	HookedNtQuerySystemTime
+	HookedNtSetContextThread
+	HookedNtSetDebugFilterState
+	HookedNtSetInformationProcess
+	HookedNtSetInformationThread
+	HookedNtUserBlockInput
+	HookedNtUserBuildHwndList
+	HookedNtUserBuildHwndList_Eight
+	HookedNtUserFindWindowEx
+	HookedNtUserGetForegroundWindow
+	HookedNtUserQueryWindow
+	HookedNtYieldExecution
+	HookedOutputDebugStringA
+	HookedNtResumeThread

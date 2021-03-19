@@ -9,7 +9,15 @@ namespace scl
 {
 	class User32Loader
 	{
-	public:
+    private:
+        const USHORT OsBuildNumber;
+        const bool NativeX86;
+        const PUCHAR Win32kUserDll; // win32u.dll if OsBuildNumber >= 14393, user32.dll otherwise
+
+        std::map<std::string, ULONG_PTR> FunctionNamesAndVas;
+
+        ULONG_PTR FindSyscallByIndex(LONG win32kSyscallIndex) const;
+    public:
 		User32Loader();
 		~User32Loader();
 
@@ -17,14 +25,5 @@ namespace scl
 
 		ULONG_PTR GetUserSyscallVa(const std::string& functionName) const { return FunctionNamesAndVas.at(functionName); }
 		LONG GetUserSyscallIndex(const std::string& functionName) const;
-
-	private:
-		ULONG_PTR FindSyscallByIndex(LONG win32kSyscallIndex) const;
-
-		const USHORT OsBuildNumber;
-		const bool NativeX86;
-		const PUCHAR Win32kUserDll; // win32u.dll if OsBuildNumber >= 14393, user32.dll otherwise
-
-		std::map<std::string, ULONG_PTR> FunctionNamesAndVas;
 	};
 }

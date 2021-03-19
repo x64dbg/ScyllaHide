@@ -3,6 +3,7 @@
 #include <Scylla/OsInfo.h>
 #include "Util.h"
 
+//----------------------------------------------------------------------------------
 scl::PEB *scl::GetPebAddress(HANDLE hProcess)
 {
     ::PROCESS_BASIC_INFORMATION pbi = { 0 };
@@ -12,6 +13,7 @@ scl::PEB *scl::GetPebAddress(HANDLE hProcess)
     return NT_SUCCESS(status) ? (PEB *)pbi.PebBaseAddress : nullptr;
 }
 
+//----------------------------------------------------------------------------------
 /**
  * Get PEB64 address of WOW64 process.
  */
@@ -28,6 +30,7 @@ PVOID64 scl::GetPeb64Address(HANDLE hProcess)
     return nullptr;
 }
 
+//----------------------------------------------------------------------------------
 std::shared_ptr<scl::PEB> scl::GetPeb(HANDLE hProcess)
 {
     auto peb_addr = GetPebAddress(hProcess);
@@ -41,6 +44,7 @@ std::shared_ptr<scl::PEB> scl::GetPeb(HANDLE hProcess)
     return peb;
 }
 
+//----------------------------------------------------------------------------------
 /**
  * @remark Use only real process handles.
  */
@@ -60,6 +64,7 @@ std::shared_ptr<scl::PEB64> scl::Wow64GetPeb64(HANDLE hProcess)
     return nullptr;
 }
 
+//----------------------------------------------------------------------------------
 bool scl::SetPeb(HANDLE hProcess, const PEB *pPeb)
 {
     auto peb_addr = GetPebAddress(hProcess);
@@ -69,6 +74,7 @@ bool scl::SetPeb(HANDLE hProcess, const PEB *pPeb)
     return WriteProcessMemory(hProcess, peb_addr, pPeb, sizeof(*pPeb), nullptr) == TRUE;
 }
 
+//----------------------------------------------------------------------------------
 /**
  * @remark Use only real process handles.
  */
@@ -85,6 +91,7 @@ bool scl::Wow64SetPeb64(HANDLE hProcess, const PEB64 *pPeb64)
     return false;
 }
 
+//----------------------------------------------------------------------------------
 PVOID64 scl::Wow64GetModuleHandle64(HANDLE hProcess, const wchar_t* moduleName)
 {
     const auto Peb64 = Wow64GetPeb64(hProcess);
@@ -105,15 +112,15 @@ PVOID64 scl::Wow64GetModuleHandle64(HANDLE hProcess, const wchar_t* moduleName)
         if (!Wow64ReadProcessMemory64(hProcess, (PVOID64)Head.InLoadOrderLinks.Flink, &Head, sizeof(Head), nullptr))
             break;
 
-        wchar_t* BaseDllName = (wchar_t*)RtlAllocateHeap(RtlProcessHeap(), HEAP_ZERO_MEMORY, Head.BaseDllName.MaximumLength);
-        if (BaseDllName == nullptr ||
-            !Wow64ReadProcessMemory64(hProcess, (PVOID64)Head.BaseDllName.Buffer, BaseDllName, Head.BaseDllName.MaximumLength, nullptr))
+        wchar_t *BaseDllName = (wchar_t*)RtlAllocateHeap(RtlProcessHeap(), HEAP_ZERO_MEMORY, Head.BaseDllName.MaximumLength);
+        if (    BaseDllName == nullptr
+             || !Wow64ReadProcessMemory64(hProcess, (PVOID64)Head.BaseDllName.Buffer, BaseDllName, Head.BaseDllName.MaximumLength, nullptr))
+        {
             break;
+        }
 
         if (_wcsicmp(moduleName, BaseDllName) == 0)
-        {
             DllBase = (PVOID64)Head.DllBase;
-        }
 
         RtlFreeHeap(RtlProcessHeap(), 0, BaseDllName);
 
@@ -122,6 +129,7 @@ PVOID64 scl::Wow64GetModuleHandle64(HANDLE hProcess, const wchar_t* moduleName)
     return DllBase;
 }
 
+//----------------------------------------------------------------------------------
 DWORD scl::GetHeapFlagsOffset(bool x64)
 {
     if (x64)
@@ -140,6 +148,7 @@ DWORD scl::GetHeapFlagsOffset(bool x64)
     }
 }
 
+//----------------------------------------------------------------------------------
 DWORD scl::GetHeapForceFlagsOffset(bool x64)
 {
     if (x64)

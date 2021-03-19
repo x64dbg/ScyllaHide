@@ -148,62 +148,62 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
 
     switch (d->DebugEvent->dwDebugEventCode)
     {
-    case CREATE_PROCESS_DEBUG_EVENT:
-    {
-        ProcessId = d->DebugEvent->dwProcessId;
-        bHooked = false;
-        ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
-
-        if (d->DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
+        case CREATE_PROCESS_DEBUG_EVENT:
         {
-            //ATTACH
-            if (g_settings.opts().killAntiAttach)
+            ProcessId = d->DebugEvent->dwProcessId;
+            bHooked = false;
+            ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
+
+            if (d->DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
             {
-                if (!ApplyAntiAntiAttach(ProcessId))
+                //ATTACH
+                if (g_settings.opts().killAntiAttach)
                 {
-                    MessageBoxW(hwndDlg, L"Anti-Anti-Attach failed", L"Error", MB_ICONERROR);
+                    if (!ApplyAntiAntiAttach(ProcessId))
+                    {
+                        MessageBoxW(hwndDlg, L"Anti-Anti-Attach failed", L"Error", MB_ICONERROR);
+                    }
+                }
+                //In newest x64dbg version the auto break on attach was removed so ScyllaHide would never inject.
+                if (!bHooked)
+                {
+                    ReadNtApiInformation(&g_hdd);
+
+                    bHooked = true;
+                    startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
                 }
             }
-            //In newest x64dbg version the auto break on attach was removed so ScyllaHide would never inject.
-            if (!bHooked)
-            {
-                ReadNtApiInformation(&g_hdd);
 
-                bHooked = true;
-                startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
-            }
+            break;
         }
-
-        break;
-    }
-    case LOAD_DLL_DEBUG_EVENT:
-    {
-        if (bHooked)
+        case LOAD_DLL_DEBUG_EVENT:
         {
-            startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
-        }
-        break;
-    }
-    case EXCEPTION_DEBUG_EVENT:
-    {
-        switch (d->DebugEvent->u.Exception.ExceptionRecord.ExceptionCode)
-        {
-        case STATUS_BREAKPOINT:
-        {
-            if (!bHooked)
+            if (bHooked)
             {
-                ReadNtApiInformation(&g_hdd);
-
-                bHooked = true;
-                startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
+                startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
             }
             break;
         }
+        case EXCEPTION_DEBUG_EVENT:
+        {
+            switch (d->DebugEvent->u.Exception.ExceptionRecord.ExceptionCode)
+            {
+            case STATUS_BREAKPOINT:
+            {
+                if (!bHooked)
+                {
+                    ReadNtApiInformation(&g_hdd);
 
+                    bHooked = true;
+                    startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
+                }
+                break;
+            }
+
+            }
+
+            break;
         }
-
-        break;
-    }
     }
 }
 

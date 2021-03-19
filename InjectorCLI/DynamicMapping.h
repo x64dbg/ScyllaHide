@@ -2,6 +2,7 @@
 
 #include <windows.h>
 
+//----------------------------------------------------------------------------------
 typedef struct _SameTebFlags
 {
     union
@@ -27,9 +28,29 @@ typedef struct _SameTebFlags
 #define TEB_OFFSET_SAME_TEB_FLAGS 0xFCA
 #endif
 
-LPVOID MapModuleToProcess(HANDLE hProcess, BYTE * dllMemory, bool wipeHeaders);
-void DoBaseRelocation(PIMAGE_BASE_RELOCATION relocation, DWORD_PTR memory, DWORD_PTR dwDelta);
-DWORD GetDllFunctionAddressRVA(BYTE * dllMemory, LPCSTR apiName);
-DWORD RVAToOffset(PIMAGE_NT_HEADERS pNtHdr, DWORD dwRVA);
-HMODULE GetModuleBaseRemote(HANDLE hProcess, const wchar_t* szDLLName);
-bool ResolveImports(PIMAGE_IMPORT_DESCRIPTOR pImport, DWORD_PTR module);
+//----------------------------------------------------------------------------------
+LPVOID MapModuleToProcess(
+    HANDLE hProcess,
+    BYTE *dllMemory,
+    bool wipeHeaders);
+
+void DoBaseRelocation(
+    PIMAGE_BASE_RELOCATION relocation,
+    DWORD_PTR memory,
+    DWORD_PTR dwDelta);
+
+DWORD GetDllFunctionAddressRVA(
+    BYTE *dllMemory,
+    LPCSTR apiName);
+
+DWORD RVAToOffset(
+    PIMAGE_NT_HEADERS pNtHdr,
+    DWORD dwRVA);
+
+HMODULE GetModuleBaseRemote(
+    HANDLE hProcess,
+    const wchar_t *szDLLName);
+
+bool ResolveImports(
+    PIMAGE_IMPORT_DESCRIPTOR pImport,
+    DWORD_PTR module);
