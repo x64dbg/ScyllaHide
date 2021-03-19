@@ -20,11 +20,13 @@ scl::User32Loader::~User32Loader()
 		FreeLibrary((HMODULE)Win32kUserDll);
 }
 
+//----------------------------------------------------------------------------------
 // Finds the requested user32/win32u syscalls by name for later retrieval with GetUserSyscallVa
 bool scl::User32Loader::FindSyscalls(const std::vector<std::string>& syscallNames)
 {
 	if (Win32kUserDll == nullptr) // Failed to load user32.dll or win32u.dll
 		return false;
+
 	if (OsBuildNumber < 2600) // Unsupported or unknown OS
 		return false;
 
@@ -79,6 +81,7 @@ bool scl::User32Loader::FindSyscalls(const std::vector<std::string>& syscallName
 	return check;
 }
 
+//----------------------------------------------------------------------------------
 // Returns the win32k syscall number for a function name
 LONG scl::User32Loader::GetUserSyscallIndex(const std::string& functionName) const
 {
@@ -87,6 +90,7 @@ LONG scl::User32Loader::GetUserSyscallIndex(const std::string& functionName) con
 		const PUCHAR syscallAddress = (PUCHAR)GetProcAddress((HMODULE)Win32kUserDll, functionName.c_str());
 		if (syscallAddress == nullptr)
 			return -1;
+
 		for (PUCHAR address = syscallAddress; address < syscallAddress + 16; ++address)
 		{
 			if (address[0] == 0xB8 && address[1] != 0xD1)
@@ -107,6 +111,7 @@ LONG scl::User32Loader::GetUserSyscallIndex(const std::string& functionName) con
 	return -1;
 }
 
+//----------------------------------------------------------------------------------
 // Scans user32.dll and returns the VA of the function that performs the syscall with the given index
 ULONG_PTR scl::User32Loader::FindSyscallByIndex(LONG win32kSyscallIndex) const
 {

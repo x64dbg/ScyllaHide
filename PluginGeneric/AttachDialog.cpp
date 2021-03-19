@@ -3,64 +3,67 @@
 #include <string>
 
 #ifdef OLLY1
-#include "..\ScyllaHideOlly1Plugin\resource.h"
+    #include "..\ScyllaHideOlly1Plugin\resource.h"
 #elif OLLY2
-#include "..\ScyllaHideOlly2Plugin\resource.h"
-#include <ollydbg2/plugin.h>
+    #include "..\ScyllaHideOlly2Plugin\resource.h"
+    #include <ollydbg2/plugin.h>
 #elif __IDP__
-#include "..\ScyllaHideIDAProPlugin\resource.h"
-#include <idp.hpp>
+    #include "..\ScyllaHideIDAProPlugin\resource.h"
+    #pragma warning(push)
+    #pragma warning(disable: 4244 4267)
+    #include <idp.hpp>
+    #pragma warning(pop)
 #elif X64DBG
-#include "..\ScyllaHideX64DBGPlugin\resource.h"
+    #include "..\ScyllaHideX64DBGPlugin\resource.h"
 #endif
 
 #define BULLSEYE_CENTER_X_OFFSET		15
 #define BULLSEYE_CENTER_Y_OFFSET		18
 
-typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
+typedef void (__cdecl *t_AttachProcess)(DWORD dwPID);
 
 t_AttachProcess _AttachProcess = 0;
 
-extern HINSTANCE hinst;
 #ifdef OLLY1
-extern HWND hwmain; // Handle of main OllyDbg window
+    extern HWND hwmain; // Handle of main OllyDbg window
 #elif OLLY2
-HWND hwmain = hwollymain;
+    HWND hwmain = hwollymain;
 #elif __IDP__
-HWND hwmain = (HWND)callui(ui_get_hwnd).vptr;
+    HWND hwmain = NULL;
 #elif X64DBG
-extern HWND hwndDlg;
-HWND hwmain;
+    extern HWND hwndDlg;
+    HWND hwmain;
 #endif
+
+extern HINSTANCE hinst;
+
 HBITMAP hBitmapFinderToolFilled = NULL;
 HBITMAP hBitmapFinderToolEmpty = NULL;
 HCURSOR hCursorPrevious = NULL;
 HCURSOR hCursorSearchWindow = NULL;
-BOOL bStartSearchWindow = FALSE;
-HWND hwndFoundWindow = NULL;
+BOOL    bStartSearchWindow = FALSE;
+HWND    hwndFoundWindow = NULL;
 wchar_t title[256];
 wchar_t pidTextHex[9];
 wchar_t pidTextDec[11];
-DWORD pid = NULL;
+DWORD   pid = 0;
 
-//toggles the finder image
+//----------------------------------------------------------------------------------
+// Toggles the finder image
 void SetFinderToolImage(HWND hwnd, BOOL bSet)
 {
     HBITMAP hBmpToSet = NULL;
 
     if (bSet)
-    {
         hBmpToSet = hBitmapFinderToolFilled;
-    }
     else
-    {
         hBmpToSet = hBitmapFinderToolEmpty;
-    }
 
     SendDlgItemMessage(hwnd, IDC_ICON_FINDER, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmpToSet);
 }
 
-//centers cursor in bullseye. adds to the illusion that the bullseye can be dragged out
+//----------------------------------------------------------------------------------
+// Centers cursor in bullseye. adds to the illusion that the bullseye can be dragged out
 void MoveCursorPositionToBullsEye(HWND hwnd)
 {
     HWND hwndToolFinder = NULL;
@@ -69,7 +72,7 @@ void MoveCursorPositionToBullsEye(HWND hwnd)
 
     hwndToolFinder = GetDlgItem(hwnd, IDC_ICON_FINDER);
 
-    if (hwndToolFinder)
+    if (hwndToolFinder != NULL)
     {
         GetWindowRect(hwndToolFinder, &rect);
         screenpoint.x = rect.left + BULLSEYE_CENTER_X_OFFSET;
@@ -78,50 +81,38 @@ void MoveCursorPositionToBullsEye(HWND hwnd)
     }
 }
 
-//does some sanity checks on a possible found window
+//----------------------------------------------------------------------------------
+// Do sanity checks on a possible found window
 BOOL CheckWindowValidity(HWND hwnd, HWND hwndToCheck)
 {
     HWND hwndTemp = NULL;
 
-    if (hwndToCheck == NULL)
-    {
+    if (hwndToCheck == NULL || IsWindow(hwndToCheck) == FALSE)
         return FALSE;
-    }
 
-    if (IsWindow(hwndToCheck) == FALSE)
-    {
-        return FALSE;
-    }
 
     //same window as previous?
     if (hwndToCheck == hwndFoundWindow)
-    {
         return FALSE;
-    }
 
     //debugger window is not a valid one
     if (hwndToCheck == hwmain)
-    {
         return FALSE;
-    }
 
     // It also must not be the "Search Window" dialog box itself.
     if (hwndToCheck == hwnd)
-    {
         return FALSE;
-    }
 
     // It also must not be one of the dialog box's children...
     hwndTemp = GetParent(hwndToCheck);
     if ((hwndTemp == hwnd) || (hwndTemp == hwmain))
-    {
         return FALSE;
-    }
 
     hwndFoundWindow = hwndToCheck;
     return TRUE;
 }
 
+//----------------------------------------------------------------------------------
 void DisplayExe(HWND hwnd, DWORD dwPid)
 {
     WCHAR filepath[MAX_PATH] = { 0 };
@@ -132,13 +123,9 @@ void DisplayExe(HWND hwnd, DWORD dwPid)
         CloseHandle(hProc);
 
         if (wcslen(filepath) > 0)
-        {
             SetDlgItemTextW(hwnd, IDC_EXEPATH, wcsrchr(filepath, L'\\') + 1);
-        }
         else
-        {
             SetDlgItemTextW(hwnd, IDC_EXEPATH, L"UNKNOWN");
-        }
     }
     else
     {
@@ -146,175 +133,171 @@ void DisplayExe(HWND hwnd, DWORD dwPid)
     }
 }
 
-//attach dialog proc
-INT_PTR CALLBACK AttachProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+//----------------------------------------------------------------------------------
+// Attach dialog proc
+INT_PTR CALLBACK AttachProc(
+    HWND hWnd,
+    UINT message,
+    WPARAM wParam,
+    LPARAM lParam)
 {
     wchar_t buf[20] = { 0 };
 
     switch (message)
     {
-    case WM_INITDIALOG:
-    {
-#ifdef X64DBG
-        hwmain = hwndDlg;
-#endif
+        case WM_INITDIALOG:
+        {
+    #ifdef X64DBG
+            hwmain = hwndDlg;
+    #endif
 
-        hBitmapFinderToolFilled = LoadBitmap(hinst, MAKEINTRESOURCE(IDB_FINDERFILLED));
-        hBitmapFinderToolEmpty = LoadBitmap(hinst, MAKEINTRESOURCE(IDB_FINDEREMPTY));
-        hCursorSearchWindow = LoadCursor(hinst, MAKEINTRESOURCE(IDC_CURSOR_SEARCH_WINDOW));
+            hBitmapFinderToolFilled = LoadBitmap(hinst, MAKEINTRESOURCE(IDB_FINDERFILLED));
+            hBitmapFinderToolEmpty = LoadBitmap(hinst, MAKEINTRESOURCE(IDB_FINDEREMPTY));
+            hCursorSearchWindow = LoadCursor(hinst, MAKEINTRESOURCE(IDC_CURSOR_SEARCH_WINDOW));
 
-        break;
-    }
-    case WM_CLOSE:
-    {
-        EndDialog(hWnd, NULL);
-    }
-    break;
-
-    case WM_COMMAND:
-    {
-        switch (LOWORD(wParam)) {
-        case IDOK: { //attach
-            if (pid != NULL) {
-                EndDialog(hWnd, NULL);
-
-                if (_AttachProcess != 0)
-                {
-                    _AttachProcess(pid);
-                }
-                else
-                {
-                    MessageBoxW(0, L"Developer!!! You forgot something _AttachProcess!!!!!", L"ERROR", 0);
-                }
-            }
             break;
         }
-        case IDCANCEL: {
+        case WM_CLOSE:
             EndDialog(hWnd, NULL);
             break;
-        }
-        case IDC_PIDHEX: {
-            if (0 < GetDlgItemTextW(hWnd, IDC_PIDHEX, buf, _countof(buf))) {
-                if (wcscmp(buf, pidTextHex) != 0) {
-                    wcscpy(pidTextHex, buf);
-                    swscanf(pidTextHex, L"%X", &pid);
-                    wsprintfW(pidTextDec, L"%d", pid);
-                    SetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec);
-                    DisplayExe(hWnd, pid);
-                    SetDlgItemTextW(hWnd, IDC_TITLE, L"");
+
+        case WM_COMMAND:
+        {
+            switch (LOWORD(wParam))
+            {
+                // Attach
+                case IDOK:
+                { 
+                    if (pid != NULL)
+                    {
+                        EndDialog(hWnd, NULL);
+
+                        if (_AttachProcess != nullptr)
+                            _AttachProcess(pid);
+                        else
+                            MessageBoxW(0, L"Developer!!! You forgot something _AttachProcess!!!!!", L"ERROR", 0);
+                    }
+                    break;
+                }
+                case IDCANCEL:
+                {
+                    EndDialog(hWnd, NULL);
+                    break;
+                }
+                case IDC_PIDHEX:
+                {
+                    if (0 < GetDlgItemTextW(hWnd, IDC_PIDHEX, buf, _countof(buf)))
+                    {
+                        if (wcscmp(buf, pidTextHex) != 0)
+                        {
+                            wcscpy(pidTextHex, buf);
+                            swscanf_s(pidTextHex, L"%X", &pid);
+                            wsprintfW(pidTextDec, L"%d", pid);
+                            SetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec);
+                            DisplayExe(hWnd, pid);
+                            SetDlgItemTextW(hWnd, IDC_TITLE, L"");
+                        }
+                    }
+                    break;
+                }
+                case IDC_PIDDEC:
+                {
+
+                    if (0 < GetDlgItemTextW(hWnd, IDC_PIDDEC, buf, _countof(buf)))
+                    {
+                        if (wcscmp(buf, pidTextDec) != 0)
+                        {
+                            wcscpy_s(pidTextDec, buf);
+                            swscanf_s(pidTextDec, L"%d", &pid);
+                            wsprintfW(pidTextHex, L"%X", pid);
+                            SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
+                            DisplayExe(hWnd, pid);
+                            SetDlgItemTextW(hWnd, IDC_TITLE, L"");
+                        }
+                    }
+                    break;
+                }
+                case IDC_ICON_FINDER:
+                {
+                    bStartSearchWindow = TRUE;
+
+                    SetFinderToolImage(hWnd, FALSE);
+
+                    MoveCursorPositionToBullsEye(hWnd);
+
+                    // Set the screen cursor to the BullsEye cursor.
+                    if (hCursorSearchWindow)
+                        hCursorPrevious = SetCursor(hCursorSearchWindow);
+                    else
+                        hCursorPrevious = NULL;
+
+                    //redirect all mouse events to this AttachProc
+                    SetCapture(hWnd);
+
+                    ShowWindow(hwmain, SW_HIDE);
+                    break;
                 }
             }
+
             break;
         }
-        case IDC_PIDDEC:
-        {
 
-            if (0 < GetDlgItemTextW(hWnd, IDC_PIDDEC, buf, _countof(buf))) {
-                if (wcscmp(buf, pidTextDec) != 0) {
-                    wcscpy(pidTextDec, buf);
-                    swscanf(pidTextDec, L"%d", &pid);
+        case WM_MOUSEMOVE:
+        {
+            if (bStartSearchWindow)
+            {
+                POINT screenpoint;
+                HWND hwndCurrentWindow = NULL;
+
+                GetCursorPos(&screenpoint);
+
+                hwndCurrentWindow = WindowFromPoint(screenpoint);
+
+                if (CheckWindowValidity(hWnd, hwndCurrentWindow))
+                {
+                    //get some info about the window
+                    GetWindowThreadProcessId(hwndFoundWindow, &pid);
+
+                    DisplayExe(hWnd, pid);
+
+                    if (GetWindowTextW(hwndCurrentWindow, title, _countof(title)) > 0)
+                        SetDlgItemTextW(hWnd, IDC_TITLE, title);
+                    else
+                        SetDlgItemTextW(hWnd, IDC_TITLE, L"");
+
                     wsprintfW(pidTextHex, L"%X", pid);
+                    wsprintfW(pidTextDec, L"%d", pid);
                     SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
-                    DisplayExe(hWnd, pid);
-                    SetDlgItemTextW(hWnd, IDC_TITLE, L"");
+                    SetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec);
+
                 }
             }
-            break;
-        }
-        case IDC_ICON_FINDER: {
-            bStartSearchWindow = TRUE;
 
-            SetFinderToolImage(hWnd, FALSE);
-
-            MoveCursorPositionToBullsEye(hWnd);
-
-            // Set the screen cursor to the BullsEye cursor.
-            if (hCursorSearchWindow)
-            {
-                hCursorPrevious = SetCursor(hCursorSearchWindow);
-            }
-            else
-            {
-                hCursorPrevious = NULL;
-            }
-
-            //redirect all mouse events to this AttachProc
-            SetCapture(hWnd);
-
-            ShowWindow(hwmain, SW_HIDE);
             break;
         }
 
-        }
-
-        break;
-    }
-
-    case WM_MOUSEMOVE:
-    {
-        if (bStartSearchWindow)
+        case WM_LBUTTONUP:
         {
-            POINT screenpoint;
-            HWND hwndCurrentWindow = NULL;
-
-            GetCursorPos(&screenpoint);
-
-            hwndCurrentWindow = WindowFromPoint(screenpoint);
-
-            if (CheckWindowValidity(hWnd, hwndCurrentWindow))
+            if (bStartSearchWindow)
             {
-                //get some info about the window
-                GetWindowThreadProcessId(hwndFoundWindow, &pid);
+                // Restore cursor
+                if (hCursorPrevious)
+                    SetCursor(hCursorPrevious);
 
-                DisplayExe(hWnd, pid);
+                SetFinderToolImage(hWnd, TRUE);
 
-                if (GetWindowTextW(hwndCurrentWindow, title, _countof(title)) > 0)
-                {
-                    SetDlgItemTextW(hWnd, IDC_TITLE, title);
-                }
-                else
-                {
-                    SetDlgItemTextW(hWnd, IDC_TITLE, L"");
-                }
+                // Release the mouse capture.
+                ReleaseCapture();
 
-                wsprintfW(pidTextHex, L"%X", pid);
-                wsprintfW(pidTextDec, L"%d", pid);
-                SetDlgItemTextW(hWnd, IDC_PIDHEX, pidTextHex);
-                SetDlgItemTextW(hWnd, IDC_PIDDEC, pidTextDec);
+                ShowWindow(hwmain, SW_SHOWNORMAL);
 
+                bStartSearchWindow = FALSE;
             }
+            break;
         }
 
-        break;
-    }
-
-    case WM_LBUTTONUP:
-    {
-        if (bStartSearchWindow)
-        {
-            // restore cursor
-            if (hCursorPrevious)
-            {
-                SetCursor(hCursorPrevious);
-            }
-
-            SetFinderToolImage(hWnd, TRUE);
-
-            // release the mouse capture.
-            ReleaseCapture();
-
-            ShowWindow(hwmain, SW_SHOWNORMAL);
-
-            bStartSearchWindow = FALSE;
-        }
-
-        break;
-    }
-
-    default:
-    {
-        return FALSE;
-    }
+        default:
+            return FALSE;
     }
 
     return 0;

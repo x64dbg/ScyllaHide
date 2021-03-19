@@ -223,18 +223,20 @@ typedef struct _UNICODE_STRING
 typedef const UNICODE_STRING *PCUNICODE_STRING;
 
 #define DECLARE_UNICODE_STRING_SIZE(_var, _size) \
-WCHAR _var ## _buffer[_size]; \
-__pragma(warning(push)) \
-__pragma(warning(disable:4221)) __pragma(warning(disable:4204)) \
-UNICODE_STRING _var = { 0, (_size) * sizeof(WCHAR) , _var ## _buffer } \
-__pragma(warning(pop))
+    WCHAR _var ## _buffer[_size]; \
+    __pragma(warning(push)) \
+    __pragma(warning(disable:4221)) \
+    __pragma(warning(disable:4204)) \
+    UNICODE_STRING _var = { 0, (_size) * sizeof(WCHAR) , _var ## _buffer } \
+    __pragma(warning(pop))
 
 #define DECLARE_STATIC_UNICODE_STRING_SIZE(_var, _size) \
-WCHAR _var ## _buffer[_size]; \
-__pragma(warning(push)) \
-__pragma(warning(disable:4221)) __pragma(warning(disable:4204)) \
-static UNICODE_STRING _var = { 0, (_size) * sizeof(WCHAR) , _var ## _buffer } \
-__pragma(warning(pop))
+    WCHAR _var ## _buffer[_size]; \
+    __pragma(warning(push)) \
+    __pragma(warning(disable:4221)) \
+    __pragma(warning(disable:4204)) \
+    static UNICODE_STRING _var = { 0, (_size) * sizeof(WCHAR) , _var ## _buffer } \
+    __pragma(warning(pop))
 
 #if defined(__clang__)
 #define RTL_CONSTANT_STRING(s) \

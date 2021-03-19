@@ -11,13 +11,13 @@
 
 // GDT selector numbers on AMD64
 #define KGDT64_R3_CMCODE (2 * 16)   // user mode 32-bit code
-#define KGDT64_R3_CODE (3 * 16)     // user mode 64-bit code
+#define KGDT64_R3_CODE   (3 * 16)   // user mode 64-bit code
 #define RPL_MASK 3
 
-#if !defined(_WIN64)
-_DecodeType DecodingType = Decode32Bits;
-#else
+#if defined(_WIN64)
 _DecodeType DecodingType = Decode64Bits;
+#else
+_DecodeType DecodingType = Decode32Bits;
 #endif
 
 #ifdef _WIN64
@@ -29,8 +29,8 @@ const int detourLenWow64FarJmp = 1 + sizeof(DWORD) + sizeof(USHORT); // EA far j
 
 
 extern scl::Settings g_settings;
-extern void * HookedNativeCallInternal;
-extern void * NativeCallContinue;
+extern void *HookedNativeCallInternal;
+extern void *NativeCallContinue;
 extern HOOK_NATIVE_CALL32 * HookNative;
 extern int countNativeHooks;
 extern bool onceNativeCallContinue;
@@ -40,7 +40,8 @@ extern bool fatalAlreadyHookedFailure;
 BYTE originalBytes[60] = { 0 };
 BYTE changedBytes[60] = { 0 };
 
-void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo)
+//----------------------------------------------------------------------------------
+void WriteJumper(unsigned char *lpbFrom, unsigned char *lpbTo)
 {
 #ifdef _WIN64
     lpbFrom[0] = 0xFF;
@@ -53,7 +54,12 @@ void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo)
 #endif
 }
 
-void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo, unsigned char * buf, bool prefixNop)
+//----------------------------------------------------------------------------------
+void WriteJumper(
+    unsigned char *lpbFrom,
+    unsigned char *lpbTo,
+    unsigned char *buf,
+    bool prefixNop)
 {
 #ifdef _WIN64
     UNREFERENCED_PARAMETER(lpbFrom);
@@ -74,6 +80,7 @@ void WriteJumper(unsigned char * lpbFrom, unsigned char * lpbTo, unsigned char *
 #endif
 }
 
+//----------------------------------------------------------------------------------
 #ifndef _WIN64
 void WriteWow64Jumper(unsigned char * lpbTo, unsigned char * buf)
 {
@@ -84,17 +91,20 @@ void WriteWow64Jumper(unsigned char * lpbTo, unsigned char * buf)
 }
 #endif
 
-void ClearSyscallBreakpoint(const char* funcName, unsigned char* funcBytes)
+//----------------------------------------------------------------------------------
+void ClearSyscallBreakpoint(const char *funcName, unsigned char *funcBytes)
 {
     // Do nothing if this is not a syscall stub
-    if ((funcName == nullptr || funcName[0] == '\0') ||
-        (funcName[0] != 'N' || funcName[1] != 't') &&
-        (funcName[0] != 'Z' || funcName[1] != 'w'))
+    if (    (funcName == nullptr || funcName[0] == '\0') 
+	     || (funcName[0] != 'N' || funcName[1] != 't') 
+		 && (funcName[0] != 'Z' || funcName[1] != 'w'))
+    {
         return;
+    }
 
-    if (funcBytes[0] == 0xCC || // int 3
-        (funcBytes[0] == 0xCD && funcBytes[1] == 0x03) || // long int 3
-        (funcBytes[0] == 0xF0 && funcBytes[1] == 0x0B)) // UD2
+    if (    funcBytes[0] == 0xCC                            // int 3
+         || (funcBytes[0] == 0xCD && funcBytes[1] == 0x03)  // long int 3
+         || (funcBytes[0] == 0xF0 && funcBytes[1] == 0x0B)) // UD2
     {
 #ifdef _WIN64
         // x64 stubs always start with 'mov r10, rcx'
@@ -110,6 +120,7 @@ void ClearSyscallBreakpoint(const char* funcName, unsigned char* funcBytes)
     }
 }
 
+//----------------------------------------------------------------------------------
 #ifndef _WIN64
 
 DWORD GetEcxSysCallIndex32(const BYTE * data, int dataSize)
@@ -130,9 +141,7 @@ DWORD GetEcxSysCallIndex32(const BYTE * data, int dataSize)
             if (decomposerResult[0].opcode == I_MOV && decomposerResult[1].opcode == I_MOV)
             {
                 if (decomposerResult[1].ops[0].index == R_ECX)
-                {
                     return decomposerResult[1].imm.dword;
-                }
             }
         }
     }
@@ -140,6 +149,7 @@ DWORD GetEcxSysCallIndex32(const BYTE * data, int dataSize)
     return 0;
 }
 
+//----------------------------------------------------------------------------------
 DWORD GetSysCallIndex32(const BYTE * data)
 {
     unsigned int DecodedInstructionsCount = 0;
@@ -156,13 +166,9 @@ DWORD GetSysCallIndex32(const BYTE * data)
         if (decomposerResult[0].flags != FLAG_NOT_DECODABLE)
         {
             if (decomposerResult[0].opcode == I_MOV)
-            {
                 return decomposerResult[0].imm.dword;
-            }
             else
-            {
                 MessageBoxA(nullptr, "GetSysCallIndex32: Opcode is not I_MOV", "Distorm ERROR", MB_ICONERROR);
-            }
         }
         else
         {
@@ -177,7 +183,8 @@ DWORD GetSysCallIndex32(const BYTE * data)
     return (DWORD)-1; // Don't return 0 here, it is a valid syscall index
 }
 
-DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
+//----------------------------------------------------------------------------------
+DWORD GetCallDestination(HANDLE hProcess, const BYTE *data, int dataSize)
 {
     unsigned int DecodedInstructionsCount = 0;
     _CodeInfo decomposerCi = { 0 };
@@ -229,9 +236,10 @@ DWORD GetCallDestination(HANDLE hProcess, const BYTE * data, int dataSize)
         }
     }
 
-    return NULL;
+    return 0;
 }
 
+//----------------------------------------------------------------------------------
 DWORD GetFunctionSizeRETN(BYTE * data, int dataSize)
 {
     unsigned int DecodedInstructionsCount = 0;
@@ -250,9 +258,7 @@ DWORD GetFunctionSizeRETN(BYTE * data, int dataSize)
             if (decomposerResult[i].flags != FLAG_NOT_DECODABLE)
             {
                 if (decomposerResult[i].opcode == I_RET)
-                {
                     return (DWORD)(((DWORD_PTR)decomposerResult[i].addr + (DWORD_PTR)decomposerResult[i].size) - (DWORD_PTR)data);
-                }
             }
         }
 
@@ -261,6 +267,7 @@ DWORD GetFunctionSizeRETN(BYTE * data, int dataSize)
     return 0;
 }
 
+//----------------------------------------------------------------------------------
 DWORD GetCallOffset(const BYTE * data, int dataSize, DWORD * callSize)
 {
     unsigned int DecodedInstructionsCount = 0;
@@ -291,6 +298,7 @@ DWORD GetCallOffset(const BYTE * data, int dataSize, DWORD * callSize)
     return 0;
 }
 
+//----------------------------------------------------------------------------------
 ULONG_PTR FindPattern(ULONG_PTR base, ULONG size, const UCHAR* pattern, ULONG patternSize)
 {
     for (PUCHAR Address = (PUCHAR)base; Address < (PUCHAR)(base + size - patternSize); ++Address)
@@ -308,10 +316,11 @@ ULONG_PTR FindPattern(ULONG_PTR base, ULONG size, const UCHAR* pattern, ULONG pa
     return 0;
 }
 
+//----------------------------------------------------------------------------------
 BYTE KiFastSystemCallWow64Backup[7] = { 0 };
 DWORD KiFastSystemCallWow64Address = 0; // In wow64cpu.dll, named X86SwitchTo64BitMode prior to Windows 8
 
-void * DetourCreateRemoteWow64(void * hProcess, bool createTramp)
+void *DetourCreateRemoteWow64(void * hProcess, bool createTramp)
 {
     PBYTE trampoline = nullptr;
     DWORD protect;
@@ -474,6 +483,7 @@ void * DetourCreateRemoteWow64(void * hProcess, bool createTramp)
     return trampoline;
 }
 
+//----------------------------------------------------------------------------------
 //7C91E4F0 ntdll.KiFastSystemCall  EB F9   JMP 7C91E4EB
 
 BYTE KiFastSystemCallJmpPatch[] = { 0xE9, 0x00, 0x00, 0x00, 0x00, 0xEB, 0xF9 };
@@ -481,7 +491,7 @@ BYTE KiFastSystemCallBackup[20] = { 0 };
 DWORD KiFastSystemCallAddress = 0;
 DWORD KiFastSystemCallBackupSize = 0;
 
-void * DetourCreateRemoteX86(void * hProcess, bool createTramp)
+void *DetourCreateRemoteX86(void * hProcess, bool createTramp)
 {
     PBYTE trampoline = 0;
     DWORD protect;
@@ -548,7 +558,14 @@ void * DetourCreateRemoteX86(void * hProcess, bool createTramp)
     return trampoline;
 }
 
-void * DetourCreateRemote32(void * hProcess, const char* funcName, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, unsigned long * backupSize)
+//----------------------------------------------------------------------------------
+void *DetourCreateRemote32(
+    void *hProcess,
+    const char *funcName,
+    void *lpFuncOrig,
+    void *lpFuncDetour,
+    bool createTramp,
+    unsigned long *backupSize)
 {
     if (!scl::IsWow64Process(hProcess))
     {
@@ -617,7 +634,14 @@ void * DetourCreateRemote32(void * hProcess, const char* funcName, void * lpFunc
 
 #endif
 
-void * DetourCreateRemote(void * hProcess, const char* funcName, void * lpFuncOrig, void * lpFuncDetour, bool createTramp, DWORD * backupSize)
+//----------------------------------------------------------------------------------
+void *DetourCreateRemote(
+    void *hProcess,
+    const char *funcName,
+    void *lpFuncOrig,
+    void *lpFuncDetour,
+    bool createTramp,
+    DWORD *backupSize)
 {
     BYTE originalBytes[50] = { 0 };
     BYTE tempSpace[1000] = { 0 };
@@ -640,8 +664,9 @@ void * DetourCreateRemote(void * hProcess, const char* funcName, void * lpFuncOr
     // Note that this check will give a false negative in the case that a function is hooked *and* has a breakpoint set on it (now cleared).
     // We can clear the breakpoint or detect the hook, not both. (If the hook is ours, this is actually a hack because we should be properly unhooking)
 #ifdef _WIN64
-    const bool isHooked = (originalBytes[0] == 0xFF && originalBytes[1] == 0x25) ||
-        (originalBytes[0] == 0x90 && originalBytes[1] == 0xFF && originalBytes[2] == 0x25);
+    const bool isHooked =
+	        (originalBytes[0] == 0xFF && originalBytes[1] == 0x25)
+	    ||  (originalBytes[0] == 0x90 && originalBytes[1] == 0xFF && originalBytes[2] == 0x25);
 #else
     const bool isHooked = originalBytes[0] == 0xE9;
 #endif
@@ -661,8 +686,9 @@ void * DetourCreateRemote(void * hProcess, const char* funcName, void * lpFuncOr
     {
         *backupSize = detourLen;
 
+        // TODO: ;! trampoline pool. No need to allocate a page per trampoline
         trampoline = (PBYTE)VirtualAllocEx(hProcess, 0, detourLen + minDetourLen, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-        if (!trampoline)
+        if (trampoline == nullptr)
             return 0;
 
         WriteProcessMemory(hProcess, trampoline, originalBytes, detourLen, 0);
@@ -698,7 +724,8 @@ void * DetourCreateRemote(void * hProcess, const char* funcName, void * lpFuncOr
     }
 }
 
-void * DetourCreate(void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
+//----------------------------------------------------------------------------------
+void *DetourCreate(void *lpFuncOrig, void *lpFuncDetour, bool createTramp)
 {
     PBYTE trampoline = 0;
     DWORD protect;
@@ -742,7 +769,8 @@ void * DetourCreate(void * lpFuncOrig, void * lpFuncDetour, bool createTramp)
     }
 }
 
-int GetDetourLen(const void * lpStart, const int minSize)
+//----------------------------------------------------------------------------------
+int GetDetourLen(const void *lpStart, const int minSize)
 {
     int totalLen = 0;
     unsigned char * lpDataPos = (unsigned char *)lpStart;
@@ -750,7 +778,7 @@ int GetDetourLen(const void * lpStart, const int minSize)
     while (totalLen < minSize)
     {
         int len = (int)LengthDisassemble((void *)lpDataPos);
-        if (len < 1) //len < 1 will cause infinite loops
+        if (len < 1) // len < 1 will cause infinite loops
             len = 1;
         lpDataPos += len;
         totalLen += len;
@@ -759,6 +787,7 @@ int GetDetourLen(const void * lpStart, const int minSize)
     return totalLen;
 }
 
+//----------------------------------------------------------------------------------
 int LengthDisassemble(LPVOID DisassmAddress)
 {
     unsigned int DecodedInstructionsCount = 0;
@@ -773,9 +802,7 @@ int LengthDisassemble(LPVOID DisassmAddress)
     if (distorm_decompose(&decomposerCi, decomposerResult, _countof(decomposerResult), &DecodedInstructionsCount) != DECRES_INPUTERR)
     {
         if (decomposerResult[0].flags != FLAG_NOT_DECODABLE)
-        {
             return decomposerResult[0].size;
-        }
     }
 
     return -1; //this is dangerous

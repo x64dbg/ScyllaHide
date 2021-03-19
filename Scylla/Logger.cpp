@@ -6,18 +6,21 @@
 
 const wchar_t scl::Logger::kFileName[] = L"scylla_hide.log";
 
+//----------------------------------------------------------------------------------
 scl::Logger::Logger()
 {
     ZeroMemory(cb_a_, sizeof(cb_a_));
     ZeroMemory(cb_w_, sizeof(cb_w_));
 }
 
+//----------------------------------------------------------------------------------
 scl::Logger::~Logger()
 {
     if (file_.is_open())
         file_.close();
 }
 
+//----------------------------------------------------------------------------------
 bool scl::Logger::SetLogFile(const wchar_t *filepath)
 {
     if (file_.is_open())
@@ -28,6 +31,7 @@ bool scl::Logger::SetLogFile(const wchar_t *filepath)
     return file_.is_open();
 }
 
+//----------------------------------------------------------------------------------
 void scl::Logger::LogDebug(const wchar_t *fmt, ...)
 {
     va_list ap;
@@ -36,6 +40,7 @@ void scl::Logger::LogDebug(const wchar_t *fmt, ...)
     va_end(ap);
 }
 
+//----------------------------------------------------------------------------------
 void scl::Logger::LogInfo(const wchar_t *fmt, ...)
 {
     va_list ap;
@@ -44,6 +49,7 @@ void scl::Logger::LogInfo(const wchar_t *fmt, ...)
     va_end(ap);
 }
 
+//----------------------------------------------------------------------------------
 void scl::Logger::LogError(const wchar_t *fmt, ...)
 {
     va_list ap;
@@ -52,17 +58,23 @@ void scl::Logger::LogError(const wchar_t *fmt, ...)
     va_end(ap);
 }
 
-void scl::Logger::LogGeneric(const char *prefix, LogCbA cb_a, LogCbW cb_w, const wchar_t *fmt, va_list ap)
+//----------------------------------------------------------------------------------
+void scl::Logger::LogGeneric(
+    const char *prefix,
+    LogCbA cb_a,
+    LogCbW cb_w,
+    const wchar_t *fmt,
+    va_list ap)
 {
     va_list vap;
     va_copy(vap, ap);
     auto strw = scl::vfmtw(fmt, ap);
     va_end(ap);
 
-    if (cb_w)
+    if (cb_w != nullptr)
         cb_w(strw.c_str());
 
-    if (cb_a || file_.is_open())
+    if (cb_a != nullptr || file_.is_open())
     {
         auto stra = scl::wstr_conv().to_bytes(strw);
 

@@ -4,7 +4,6 @@ extern InstrumentationCallback:near
 
 .code
 InstrumentationCallbackAsm proc
-
 	cmp eax, 0			; STATUS_SUCCESS
 	jne ReturnToCaller
 

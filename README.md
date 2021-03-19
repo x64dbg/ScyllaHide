@@ -8,7 +8,7 @@ ScyllaHide supports various debuggers through plugins:
 
 - OllyDbg [v1](http://www.ollydbg.de) and [v2](http://www.ollydbg.de/version2.html)
 - [x64dbg](https://x64dbg.com)
-- [Hex-Rays IDA](https://www.hex-rays.com/products/ida/) v6 (not supported)
+- [Hex-Rays IDA 7.5+](https://www.hex-rays.com/products/ida/) (x86 is not supported)
 - TitanEngine v2 ([original](http://www.reversinglabs.com/open-source/titanengine.html) and [updated](https://github.com/x64dbg/TitanEngine/) versions)
 
 PE x64 debugging is fully supported with plugins for x64dbg and IDA.

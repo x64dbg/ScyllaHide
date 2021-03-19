@@ -26,6 +26,7 @@
 // The set of force flags to clear is the intersection of valid force flags and the debug flags
 #define HEAP_CLEARABLE_FORCE_FLAGS      (HEAP_CLEARABLE_FLAGS & HEAP_VALID_FORCE_FLAGS)
 
+//----------------------------------------------------------------------------------
 bool scl::PebPatchProcessParameters(PEB* peb, HANDLE hProcess)
 {
     RTL_USER_PROCESS_PARAMETERS<DWORD_PTR> rupp;
@@ -47,7 +48,8 @@ bool scl::PebPatchProcessParameters(PEB* peb, HANDLE hProcess)
     return (WriteProcessMemory(hProcess, (PVOID)peb->ProcessParameters, &rupp, sizeof(rupp), nullptr) == TRUE);
 }
 
-bool scl::Wow64Peb64PatchProcessParameters(PEB64* peb64, HANDLE hProcess)
+//----------------------------------------------------------------------------------
+bool scl::Wow64Peb64PatchProcessParameters(PEB64 *peb64, HANDLE hProcess)
 {
 #ifndef _WIN64
     scl::RTL_USER_PROCESS_PARAMETERS<DWORD64> rupp;
@@ -93,7 +95,7 @@ bool scl::PebPatchHeapFlags(PEB* peb, HANDLE hProcess)
         if (ReadProcessMemory(hProcess, heaps[i], (PVOID)heap.data(), heap.size(), nullptr) == FALSE)
             return false;
 
-        auto flags = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(is_x64));
+        auto flags       = (DWORD *)(heap.data() + scl::GetHeapFlagsOffset(is_x64));
         auto force_flags = (DWORD *)(heap.data() + scl::GetHeapForceFlagsOffset(is_x64));
 
         *flags &= ~HEAP_CLEARABLE_FLAGS;
@@ -107,7 +109,8 @@ bool scl::PebPatchHeapFlags(PEB* peb, HANDLE hProcess)
     return true;
 }
 
-bool scl::Wow64Peb64PatchHeapFlags(PEB64* peb, HANDLE hProcess)
+//----------------------------------------------------------------------------------
+bool scl::Wow64Peb64PatchHeapFlags(PEB64 *peb, HANDLE hProcess)
 {
     std::vector<PVOID64> heaps;
     heaps.resize(peb->NumberOfHeaps);

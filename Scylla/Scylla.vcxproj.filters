@@ -65,9 +65,6 @@
     <ClInclude Include="PebHider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="User32Loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>

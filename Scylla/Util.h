@@ -6,7 +6,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "Resource.h"
 #include "NtApiShim.h"
 
 namespace scl
@@ -32,7 +31,11 @@ namespace scl
     bool IniSaveString(const wchar_t *file, const wchar_t *section, const wchar_t *key, const wchar_t *value);
 
     template<int BASE = 10, typename VALUE_TYPE>
-    VALUE_TYPE IniLoadNum(const wchar_t *file, const wchar_t *section, const wchar_t *key, VALUE_TYPE default_value)
+    VALUE_TYPE IniLoadNum(
+        const wchar_t *file,
+        const wchar_t *section,
+        const wchar_t *key,
+        VALUE_TYPE default_value)
     {
         static_assert((BASE == 8) || (BASE == 10) || (BASE == 16), "invalid base");
 
@@ -56,7 +59,11 @@ namespace scl
     }
 
     template<int BASE = 10, typename VALUE_TYPE>
-    bool IniSaveNum(const wchar_t *file, const wchar_t *section, const wchar_t *key, VALUE_TYPE value)
+    bool IniSaveNum(
+        const wchar_t *file,
+        const wchar_t *section,
+        const wchar_t *key,
+        VALUE_TYPE value)
     {
         static_assert((BASE == 8) || (BASE == 10) || (BASE == 16), "invalid base");
 
@@ -74,8 +81,40 @@ namespace scl
 
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> &wstr_conv();
 
-    bool Wow64QueryInformationProcess64(HANDLE hProcess, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength);
+    bool Wow64QueryInformationProcess64(
+        HANDLE hProcess,
+        PROCESSINFOCLASS ProcessInformationClass,
+        PVOID ProcessInformation,
+        ULONG ProcessInformationLength,
+        PULONG ReturnLength);
 
-    bool Wow64ReadProcessMemory64(HANDLE hProcess, PVOID64 address, PVOID buffer, ULONGLONG buffer_size, PULONGLONG bytes_read);
+    bool Wow64ReadProcessMemory64(
+        HANDLE hProcess,
+        PVOID64 address,
+        PVOID buffer,
+        ULONGLONG buffer_size,
+        PULONGLONG bytes_read);
+
     bool Wow64WriteProcessMemory64(HANDLE hProcess, PVOID64 address, LPCVOID buffer, ULONGLONG buffer_size, PULONGLONG bytes_written);
+
+    //----------------------------------------------------------------------------------
+    // HANDLE wrapper class
+    class Handle
+    {
+    public:
+        explicit Handle(HANDLE handle) : handle_(handle) {}
+        ~Handle()
+        {
+            if (handle_ != NULL && (handle_ != INVALID_HANDLE_VALUE))
+                CloseHandle(handle_);
+        }
+
+        Handle(const Handle& other) = delete;
+        Handle& operator=(const Handle& other) = delete;
+
+        HANDLE get() const { return handle_; }
+
+    private:
+        HANDLE handle_;
+    };
 };

@@ -9,8 +9,8 @@
 // http://terminus.rewolf.pl/terminus/structures/ntdll/_PEB_combined.html
 //
 
-namespace scl {
-
+namespace scl
+{
 #pragma pack(push, 1)
     template <class T>
     struct _LIST_ENTRY_T
@@ -91,7 +91,7 @@ namespace scl {
 
     };
 
-    template <typename T, typename NGF, int A>
+    template <typename T, typename NGF, int GDIBUFFERSIZE>
     struct _PEB_T
     {
         union
@@ -163,7 +163,7 @@ namespace scl {
             T ImageProcessAffinityMask;
             T ActiveProcessAffinityMask;
         };
-        T GdiHandleBuffer[A];
+        T GdiHandleBuffer[GDIBUFFERSIZE];
         T PostProcessInitRoutine;
         T TlsExpansionBitmap;
         DWORD TlsExpansionBitmapBits[32];
@@ -209,4 +209,4 @@ namespace scl {
 
     DWORD GetHeapFlagsOffset(bool x64);
     DWORD GetHeapForceFlagsOffset(bool x64);
-    }
+}

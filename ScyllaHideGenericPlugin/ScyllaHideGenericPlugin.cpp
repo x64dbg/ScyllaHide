@@ -7,6 +7,7 @@
 
 #include "..\PluginGeneric\Injector.h"
 
+//----------------------------------------------------------------------------------
 struct HookStatus
 {
     HookStatus()
@@ -21,12 +22,12 @@ struct HookStatus
     bool specialPebFix;
 };
 
-typedef void(__cdecl * t_AttachProcess)(DWORD dwPID);
+typedef void (__cdecl * t_AttachProcess)(DWORD dwPID);
 
 #ifdef _WIN64
-const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
+    const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx64.dll";
 #else
-const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
+    const WCHAR g_scyllaHideDllFilename[] = L"HookLibraryx86.dll";
 #endif
 
 scl::Settings g_settings;
@@ -40,16 +41,19 @@ HOOK_DLL_DATA g_hdd;
 static HMODULE hNtdllModule = 0;
 static std::unordered_map<DWORD, HookStatus> hookStatusMap;
 
+//----------------------------------------------------------------------------------
 static void LogCallback(const wchar_t *msg)
 {
     _putws(msg);
 }
 
+//----------------------------------------------------------------------------------
 DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
 {
     auto pid = DebugEvent->dwProcessId;
     auto status = HookStatus();
     auto found = hookStatusMap.find(pid);
+
     if (found == hookStatusMap.end())
         hookStatusMap[pid] = status;
     else
@@ -72,69 +76,72 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
 
     switch (DebugEvent->dwDebugEventCode)
     {
-    case CREATE_PROCESS_DEBUG_EVENT:
-    {
-        status.ProcessId = DebugEvent->dwProcessId;
-        status.bHooked = false;
-        ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
-
-        if (DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
+        case CREATE_PROCESS_DEBUG_EVENT:
         {
-            //ATTACH
-            if (g_settings.opts().killAntiAttach)
+            status.ProcessId = DebugEvent->dwProcessId;
+            status.bHooked = false;
+            ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
+
+            if (DebugEvent->u.CreateProcessInfo.lpStartAddress == NULL)
             {
-                if (!ApplyAntiAntiAttach(status.ProcessId))
+                //ATTACH
+                if (g_settings.opts().killAntiAttach)
                 {
-                    g_log.LogError(L"Anti-Anti-Attach failed");
+                    if (!ApplyAntiAntiAttach(status.ProcessId))
+                    {
+                        g_log.LogError(L"Anti-Anti-Attach failed");
+                    }
                 }
-            }
-        }
-
-        break;
-    }
-
-    case LOAD_DLL_DEBUG_EVENT:
-    {
-        if (status.bHooked)
-        {
-            startInjection(status.ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
-        }
-
-        break;
-    }
-
-    case EXCEPTION_DEBUG_EVENT:
-    {
-        switch (DebugEvent->u.Exception.ExceptionRecord.ExceptionCode)
-        {
-        case STATUS_BREAKPOINT:
-        {
-            if (!status.bHooked)
-            {
-                ReadNtApiInformation(&g_hdd);
-
-                status.bHooked = true;
-                startInjection(status.ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
             }
 
             break;
         }
+
+        case LOAD_DLL_DEBUG_EVENT:
+        {
+            if (status.bHooked)
+                startInjection(status.ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
+
+            break;
         }
 
-        break;
-    }
+        case EXCEPTION_DEBUG_EVENT:
+        {
+            switch (DebugEvent->u.Exception.ExceptionRecord.ExceptionCode)
+            {
+                case STATUS_BREAKPOINT:
+                {
+                    if (!status.bHooked)
+                    {
+                        ReadNtApiInformation(&g_hdd);
+
+                        status.bHooked = true;
+                        startInjection(status.ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
+                    }
+
+                    break;
+                }
+            }
+
+            break;
+        }
     }
 
     hookStatusMap[pid] = status;
 }
 
+//----------------------------------------------------------------------------------
 DLL_EXPORT void ScyllaHideReset()
 {
     ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
     hookStatusMap.clear();
 }
 
-DLL_EXPORT void ScyllaHideInit(const WCHAR* Directory, LOGWRAPPER Logger, LOGWRAPPER ErrorLogger)
+//----------------------------------------------------------------------------------
+DLL_EXPORT void ScyllaHideInit(
+    const WCHAR *Directory,
+    LOGWRAPPER Logger,
+    LOGWRAPPER ErrorLogger)
 {
     hNtdllModule = GetModuleHandleW(L"ntdll.dll");
 

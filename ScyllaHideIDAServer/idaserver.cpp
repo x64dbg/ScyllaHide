@@ -22,18 +22,19 @@ std::wstring g_scyllaHideDllPath;
 HOOK_DLL_DATA g_hdd;
 
 WSADATA wsaData;
-char * ListenPortString = IDA_SERVER_DEFAULT_PORT_TEXT;
+char *ListenPortString = IDA_SERVER_DEFAULT_PORT_TEXT;
 unsigned short ListenPort = IDA_SERVER_DEFAULT_PORT;
 IDA_SERVER_EXCHANGE idaExchange = { 0 };
-DWORD ProcessId = 0;
 bool bHooked = false;
 
-static void LogCallback(const wchar_t * msg)
+//----------------------------------------------------------------------------------
+static void LogCallback(const wchar_t *msg)
 {
     _putws(msg);
 }
 
-static void checkPaths(const std::wstring & wstrPath)
+//----------------------------------------------------------------------------------
+static void checkPaths(const std::wstring &wstrPath)
 {
     g_scyllaHideDllPath = wstrPath + g_scyllaHideDllFilename;
 
@@ -58,6 +59,7 @@ static void checkPaths(const std::wstring & wstrPath)
     }
 }
 
+//----------------------------------------------------------------------------------
 static void startListen()
 {
     int iResult;
@@ -142,82 +144,86 @@ static void startListen()
     WSACleanup();
 }
 
-void MapSettings()
+//----------------------------------------------------------------------------------
+static void MapSettings()
 {
-    g_settings.opts().dllUnload = idaExchange.UnloadDllAfterInjection;
-    g_settings.opts().dllNormal = idaExchange.DllInjectNormal;
-    g_settings.opts().dllStealth = idaExchange.DllInjectStealth;
+    g_settings.opts().dllUnload                     = idaExchange.UnloadDllAfterInjection;
+    g_settings.opts().dllNormal                     = idaExchange.DllInjectNormal;
+    g_settings.opts().dllStealth                    = idaExchange.DllInjectStealth;
     g_settings.opts().hookKiUserExceptionDispatcher = idaExchange.EnableKiUserExceptionDispatcherHook;
-    g_settings.opts().hookNtClose = idaExchange.EnableNtCloseHook;
-    g_settings.opts().hookNtContinue = idaExchange.EnableNtCloseHook;
-    g_settings.opts().hookNtCreateThreadEx = idaExchange.EnableNtCreateThreadExHook;
-    g_settings.opts().hookNtGetContextThread = idaExchange.EnableNtGetContextThreadHook;
+    g_settings.opts().hookNtClose                   = idaExchange.EnableNtCloseHook;
+    g_settings.opts().hookNtContinue                = idaExchange.EnableNtCloseHook;
+    g_settings.opts().hookNtCreateThreadEx          = idaExchange.EnableNtCreateThreadExHook;
+    g_settings.opts().hookNtGetContextThread        = idaExchange.EnableNtGetContextThreadHook;
     g_settings.opts().hookNtQueryInformationProcess = idaExchange.EnableNtQueryInformationProcessHook;
-    g_settings.opts().hookNtQueryObject = idaExchange.EnableNtQueryObjectHook;
-    g_settings.opts().hookNtQuerySystemInformation = idaExchange.EnableNtQuerySystemInformationHook;
-    g_settings.opts().hookNtSetContextThread = idaExchange.EnableNtSetContextThreadHook;
-    g_settings.opts().hookNtSetDebugFilterState = idaExchange.EnableNtSetDebugFilterStateHook;
-    g_settings.opts().hookNtSetInformationThread = idaExchange.EnableNtSetInformationThreadHook;
-    g_settings.opts().hookNtUserBlockInput = idaExchange.EnableNtUserBlockInputHook;
-    g_settings.opts().hookNtUserBuildHwndList = idaExchange.EnableNtUserBuildHwndListHook;
-    g_settings.opts().hookNtUserFindWindowEx = idaExchange.EnableNtUserFindWindowExHook;
-    g_settings.opts().hookNtUserQueryWindow = idaExchange.EnableNtUserQueryWindowHook;
-    g_settings.opts().hookNtYieldExecution = idaExchange.EnableNtYieldExecutionHook;
-    g_settings.opts().preventThreadCreation = idaExchange.EnablePreventThreadCreation;
-    g_settings.opts().hookOutputDebugStringA = idaExchange.EnableOutputDebugStringHook;
-    g_settings.opts().hookNtSetInformationProcess = idaExchange.EnableNtSetInformationProcessHook;
+    g_settings.opts().hookNtQueryObject             = idaExchange.EnableNtQueryObjectHook;
+    g_settings.opts().hookNtQuerySystemInformation  = idaExchange.EnableNtQuerySystemInformationHook;
+    g_settings.opts().hookNtSetContextThread        = idaExchange.EnableNtSetContextThreadHook;
+    g_settings.opts().hookNtSetDebugFilterState     = idaExchange.EnableNtSetDebugFilterStateHook;
+    g_settings.opts().hookNtSetInformationThread    = idaExchange.EnableNtSetInformationThreadHook;
+    g_settings.opts().hookNtUserBlockInput          = idaExchange.EnableNtUserBlockInputHook;
+    g_settings.opts().hookNtUserBuildHwndList       = idaExchange.EnableNtUserBuildHwndListHook;
+    g_settings.opts().hookNtUserFindWindowEx        = idaExchange.EnableNtUserFindWindowExHook;
+    g_settings.opts().hookNtUserQueryWindow         = idaExchange.EnableNtUserQueryWindowHook;
+    g_settings.opts().hookNtYieldExecution          = idaExchange.EnableNtYieldExecutionHook;
+    g_settings.opts().preventThreadCreation         = idaExchange.EnablePreventThreadCreation;
+    g_settings.opts().hookOutputDebugStringA        = idaExchange.EnableOutputDebugStringHook;
+    g_settings.opts().hookNtSetInformationProcess   = idaExchange.EnableNtSetInformationProcessHook;
 
-    g_settings.opts().hookGetTickCount = idaExchange.EnableGetTickCountHook;
-    g_settings.opts().hookGetTickCount64 = idaExchange.EnableGetTickCount64Hook;
-    g_settings.opts().hookGetLocalTime = idaExchange.EnableGetLocalTimeHook;
-    g_settings.opts().hookGetSystemTime = idaExchange.EnableGetSystemTimeHook;
-    g_settings.opts().hookNtQuerySystemTime = idaExchange.EnableNtQuerySystemTimeHook;
+    g_settings.opts().hookGetTickCount              = idaExchange.EnableGetTickCountHook;
+    g_settings.opts().hookGetTickCount64            = idaExchange.EnableGetTickCount64Hook;
+    g_settings.opts().hookGetLocalTime              = idaExchange.EnableGetLocalTimeHook;
+    g_settings.opts().hookGetSystemTime             = idaExchange.EnableGetSystemTimeHook;
+    g_settings.opts().hookNtQuerySystemTime         = idaExchange.EnableNtQuerySystemTimeHook;
     g_settings.opts().hookNtQueryPerformanceCounter = idaExchange.EnableNtQueryPerformanceCounterHook;
 
-    g_settings.opts().fixPebBeingDebugged = idaExchange.EnablePebBeingDebugged;
-    g_settings.opts().fixPebHeapFlags = idaExchange.EnablePebHeapFlags;
-    g_settings.opts().fixPebNtGlobalFlag = idaExchange.EnablePebNtGlobalFlag;
-    g_settings.opts().fixPebStartupInfo = idaExchange.EnablePebStartupInfo;
+    g_settings.opts().fixPebBeingDebugged           = idaExchange.EnablePebBeingDebugged;
+    g_settings.opts().fixPebHeapFlags               = idaExchange.EnablePebHeapFlags;
+    g_settings.opts().fixPebNtGlobalFlag            = idaExchange.EnablePebNtGlobalFlag;
+    g_settings.opts().fixPebStartupInfo             = idaExchange.EnablePebStartupInfo;
 
-    g_settings.opts().malwareRunpeUnpacker = idaExchange.EnableMalwareRunPeUnpacker;
+    g_settings.opts().killAntiAttach                = idaExchange.KillAntiAttach;
+    g_settings.opts().malwareRunpeUnpacker          = idaExchange.EnableMalwareRunPeUnpacker;
 }
 
-static void DoSomeBitCheck()
+//----------------------------------------------------------------------------------
+static void DoProcessBitnessCheck(DWORD ProcessId)
 {
-    if (scl::IsWindows64())
-    {
-        HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, 0, ProcessId);
-        if (hProcess)
-        {
+    if (!scl::IsWindows64())
+        return;
+
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, 0, ProcessId);
+    if (hProcess == NULL)
+        return;
 
 #ifdef _WIN64
-            if (scl::IsWow64Process(hProcess))
-            {
-                printf("WARNING: This is a 32bit process and I am 64bit!");
-                getchar();
-                ExitProcess(0);
-            }
-#else
-            if (!scl::IsWow64Process(hProcess))
-            {
-                printf("WARNING: This is a 64bit process and I am 32bit!");
-                getchar();
-                ExitProcess(0);
-            }
-#endif
-            CloseHandle(hProcess);
-        }
+    if (scl::IsWow64Process(hProcess))
+    {
+        printf("WARNING: This is a 32bit process and I am 64bit!");
+        getchar();
+        ExitProcess(0);
     }
+#else
+    if (!scl::IsWow64Process(hProcess))
+    {
+        printf("WARNING: This is a 64bit process and I am 32bit!");
+        getchar();
+        ExitProcess(0);
+    }
+#endif
+    CloseHandle(hProcess);
 }
 
+//----------------------------------------------------------------------------------
 static void handleClient(SOCKET ClientSocket)
 {
     int iResult;
     bool once = false;
-
+    DWORD ProcessId;
     do
     {
         iResult = recv(ClientSocket, (char*)&idaExchange, sizeof(IDA_SERVER_EXCHANGE), 0);
+        ProcessId = idaExchange.ProcessId;
 
         if (iResult == sizeof(IDA_SERVER_EXCHANGE))
         {
@@ -225,59 +231,61 @@ static void handleClient(SOCKET ClientSocket)
 
             switch (idaExchange.notif_code)
             {
-            case dbg_process_attach:
-            {
-
-                break;
-            }
-            case dbg_process_start:
-            {
-
-                ProcessId = idaExchange.ProcessId;
-                bHooked = false;
-                ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
-
-                if (!once)
+                case dbg_process_attach:
+                case dbg_process_start:
                 {
-                    DoSomeBitCheck();
-                    once = true;
+                    bHooked = false;
+                    ZeroMemory(&g_hdd, sizeof(HOOK_DLL_DATA));
+
+                    ReadNtApiInformation(&g_hdd);
+
+                    // Attach?
+                    if (idaExchange.notif_code == dbg_process_attach && g_settings.opts().killAntiAttach)
+                    {
+                        if (!ApplyAntiAntiAttach(ProcessId))
+                            wprintf(L"Anti-Anti-Attach failed\n");
+                    }
+
+                    if (!once)
+                    {
+                        DoProcessBitnessCheck(ProcessId);
+                        once = true;
+                    }
+
+                    if (!bHooked)
+                    {
+                        bHooked = true;
+                        startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
+                    }
+
+                    break;
                 }
 
-                if (!bHooked)
+                case dbg_process_exit:
                 {
-                    bHooked = true;
-                    startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
+
+                    iResult = -1; // Terminate loop
+                    break;
                 }
 
-                break;
-            }
-            case dbg_process_exit:
-            {
-
-                iResult = -1; //terminate loop
-                break;
-            }
-            case dbg_library_load:
-            {
-
-                if (bHooked)
+                case dbg_library_load:
                 {
-                    startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
-                }
-                break;
-            }
-
-            case inject_dll:
-            {
-                if (!once)
-                {
-                    DoSomeBitCheck();
-                    once = true;
+                    if (bHooked)
+                        startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), false);
+                    break;
                 }
 
-                injectDll(ProcessId, idaExchange.DllPathForInjection);
-                break;
-            }
+                case inject_dll:
+                {
+                    if (!once)
+                    {
+                        DoProcessBitnessCheck(ProcessId);
+                        once = true;
+                    }
+
+                    injectDll(ProcessId, idaExchange.DllPathForInjection);
+                    break;
+                }
             }
 
             idaExchange.result = RESULT_SUCCESS;
@@ -298,7 +306,7 @@ static void handleClient(SOCKET ClientSocket)
     } while (iResult > 0);
 }
 
-
+//----------------------------------------------------------------------------------
 static BOOL startWinsock()
 {
     BOOL isWinsockUp = TRUE;
@@ -313,6 +321,7 @@ static BOOL startWinsock()
     return isWinsockUp;
 }
 
+//----------------------------------------------------------------------------------
 static bool SetDebugPrivileges()
 {
     TOKEN_PRIVILEGES Debug_Privileges;
@@ -335,6 +344,7 @@ static bool SetDebugPrivileges()
     return retVal;
 }
 
+//----------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
     auto wstrPath = scl::GetModuleFileNameW();
@@ -364,7 +374,6 @@ int main(int argc, char *argv[])
         //printf("Starting Winsock: DONE\n");
         startListen();
     }
-
 
     getchar();
     return 0;
