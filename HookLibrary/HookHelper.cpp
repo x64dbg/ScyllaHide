@@ -246,7 +246,7 @@ bool IsWow64Process(HANDLE ProcessHandle)
 	const NTSTATUS Status = NtQueryInformationProcess(ProcessHandle,
 													ProcessWow64Information,
 													&WoW64Peb,
-													sizeof(WoW64Peb),
+													sizeof(PPEB),
 													nullptr);
 
 	return NT_SUCCESS(Status) && WoW64Peb != nullptr;
@@ -276,7 +276,7 @@ InstallInstrumentationCallbackHook(
 		}
 
 		// WOW64: set the callback pointer in the version field
-		InstrumentationCallbackInfo.Version = (ULONG)(ULONG_PTR)Callback;
+		InstrumentationCallbackInfo.Version = (ULONG_PTR)Callback;
 #endif
 		InstrumentationCallbackInfo.Reserved = 0;
 		InstrumentationCallbackInfo.Callback = Callback;
