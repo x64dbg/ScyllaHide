@@ -38,7 +38,7 @@ bool scl::PebPatchProcessParameters(PEB* peb, HANDLE hProcess)
     ZeroMemory(&rupp.WindowFlags, patch_size);
 
     // https://github.com/x64dbg/ScyllaHide/issues/99
-    rupp.WindowFlags = STARTF_USESHOWWINDOW;
+    rupp.WindowFlags = STARTF_USESHOWWINDOW | 0x400; //when explorer runs the application, set it |= 0x400.
     rupp.ShowWindowFlags = SW_SHOWNORMAL;
 
     // If the debugger used IFEO, the app doesn't need to know that
@@ -60,7 +60,7 @@ bool scl::Wow64Peb64PatchProcessParameters(PEB64* peb64, HANDLE hProcess)
     ZeroMemory(&rupp.WindowFlags, patch_size);
 
     // https://github.com/x64dbg/ScyllaHide/issues/99
-    rupp.WindowFlags = STARTF_USESHOWWINDOW;
+    rupp.WindowFlags = STARTF_USESHOWWINDOW | 0x400; //when explorer runs the application, set it |= 0x400.
     rupp.ShowWindowFlags = SW_SHOWNORMAL;
 
     // If the debugger used IFEO, the app doesn't need to know that
