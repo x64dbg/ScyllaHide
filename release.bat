@@ -35,11 +35,6 @@ if "%MSBUILD%"=="" (
 	exit /b
 )
 
-if not exist 3rdparty\idasdk (
-	echo IDA SDK not found
-	exit /b
-)
-
 "%MSBUILD%" /m /property:Configuration=Release,Platform=Win32
 if not %ERRORLEVEL%==0 exit /b
 
@@ -96,3 +91,5 @@ copy /y /b Release\scylla_hide.ini Release\IDA\
 copy /y /b Release\HookLibraryx64.dll Release\IDA\
 copy /y /b Release\HookLibraryx86.dll Release\IDA\
 move Release\ScyllaHideIDAServer* Release\IDA\
+
+exit 0
