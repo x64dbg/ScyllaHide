@@ -35,11 +35,6 @@ if "%MSBUILD%"=="" (
 	exit /b
 )
 
-if not exist 3rdparty\idasdk (
-	echo IDA SDK not found
-	exit /b
-)
-
 "%MSBUILD%" /m /property:Configuration=Release,Platform=Win32
 if not %ERRORLEVEL%==0 exit /b
 
