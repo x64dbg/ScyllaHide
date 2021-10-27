@@ -41,6 +41,11 @@
     <ClInclude Include="Version.h" />
     <ClInclude Include="Win32kSyscalls.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SCMRevGen\SCMRevGen.vcxproj">
+      <Project>{4cef9c8e-91c8-4148-94b1-af2a3b597762}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{E468DA07-48EA-40EB-A845-FA69C39D3396}</ProjectGuid>

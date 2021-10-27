@@ -1,0 +1,45 @@
+name: Visual Studio
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    # Skip building pull requests from the same repository
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+    runs-on: windows-2019
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    
+    - name: Build
+      run: |
+        cmd /c call release.bat
+
+    - name: Get current time
+      uses: srfrnk/current-time@v1.1.0
+      id: current-time
+      with:
+        format: YYYY-MM-DD_HH-MM
+    
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ github.event.repository.name }}_${{ steps.current-time.outputs.formattedTime }}
+        path: Release/
+    
+    - name: Compress artifacts
+      uses: papeloto/action-zip@v1
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      with:
+        files: Release/
+        dest: ${{ github.event.repository.name }}_${{ steps.current-time.outputs.formattedTime }}.zip
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      with:
+        prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') || contains(github.ref, '-pre') }}
+        files: ${{ github.event.repository.name }}_${{ steps.current-time.outputs.formattedTime }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
