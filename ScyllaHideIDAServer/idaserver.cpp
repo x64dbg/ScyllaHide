@@ -245,6 +245,7 @@ static void handleClient(SOCKET ClientSocket)
 
                 if (!bHooked)
                 {
+                    ReadNtApiInformation(&g_hdd);
                     bHooked = true;
                     startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
                 }
