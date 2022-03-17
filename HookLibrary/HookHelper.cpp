@@ -28,7 +28,9 @@ const WCHAR * BadProcessnameList[] =
 	L"reshacker.exe",
 	L"ImportREC.exe",
 	L"IMMUNITYDEBUGGER.EXE",
-	L"devenv.exe"
+	L"devenv.exe",
+	L"Procmon.exe",
+	L"Procmon64.exe"
 };
 
 const WCHAR * BadWindowTextList[] =
@@ -43,7 +45,8 @@ const WCHAR * BadWindowTextList[] =
 	L"WinDbg",
 	L"x32dbg",
 	L"x64dbg",
-	L"Import reconstructor"
+	L"Import reconstructor",
+	L"Process Monitor - Sysinternals: www.sysinternals.com"
 };
 
 const WCHAR * BadWindowClassList[] =
@@ -57,7 +60,8 @@ const WCHAR * BadWindowClassList[] =
 	L"idawindow",
 	L"tnavbox",
 	L"idaview",
-	L"tgrzoom"
+	L"tgrzoom",
+	L"PROCMON_WINDOW_CLASS" //Process Monitor
 };
 
 extern "C" void InstrumentationCallbackAsm();
