@@ -60,7 +60,7 @@ ScyllaHide supports various debuggers with plugins:
 \begin{itemize}
 \item OllyDbg v1 and v2 \url{http://www.ollydbg.de}
 \item x64dbg \url{http://x64dbg.com} or \url{https://github.com/x64dbg/x64dbg}
-\item Hex-Rays IDA v6 \url{https://www.hex-rays.com/products/ida}
+\item Hex-Rays IDA v7.7 \url{https://www.hex-rays.com/products/ida}
 \item TitanEngine v2 \url{https://bitbucket.org/mrexodia/titanengine-update} and \url{http://www.reversinglabs.com/open-source/titanengine.html}
 \end{itemize}
 
@@ -85,14 +85,14 @@ Copy scylla\_hide.ini, HookLibraryx86.dll and ScyllaHideOlly1.dll to your specif
 \subsection{OllyDbg v2}
 Copy scylla\_hide.ini, HookLibraryx86.dll and ScyllaHideOlly2.dll to your specific plugins directory.
 
-\subsection{IDA v6}
+\subsection{IDA v7.7}
 \textbf{32-bit:}
 Copy scylla\_hide.ini, HookLibraryx86.dll and ScyllaHideIDA.plw to your IDA plugins directory.
 
 \textbf{64-bit:}
-Copy scylla\_hide.ini, HookLibraryx64.dll, ScyllaHideIDASrvx64.exe and ScyllaHideIDA.p64 to your IDA plugins directory.
+Copy ScyllaHideIDAProPlugin64.dll and scylla\_hide.ini to your IDA plugins directory.
 
-Note: \\Start ScyllaHideIDASrvx64.exe to debug 64bit applications remotely. \\Start ScyllaHideIDASrvx86.exe to debug 32bit applications remotely.
+Note: \\Start ScyllaHideIDAServerx64.exe to debug 64bit applications remotely. \\Start ScyllaHideIDASrvx86.exe to debug 32bit applications remotely.
 
 Command line: ScyllaHideIDASrvxXX.exe <port>\\
 For example: ScyllaHideIDASrvxXX.exe 1345

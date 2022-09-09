@@ -5,7 +5,7 @@
 //for 64bit - p64
 #ifdef BUILD_IDA_64BIT
 #define __EA64__
-#pragma comment(lib, "x86_win_vc_64/ida.lib")
+#pragma comment(lib, "x64_win_vc_32/ida.lib")  // TODO: I only found this in IDA 7.7 SDK, but x64_win_vc_64 exists on 8.0
 #else
 //for 32bit - plw
 #pragma comment(lib, "x86_win_vc_32/ida.lib")
@@ -64,14 +64,14 @@ static void AttachProcess(DWORD dwPID)
     switch (res) {
     case -1:
     {
-        MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
+        MessageBoxA(GetForegroundWindow(),
             "Can't attach to that process !",
             "ScyllaHide Plugin", MB_OK | MB_ICONERROR);
         break;
     }
     case -2:
     {
-        MessageBoxA((HWND)callui(ui_get_hwnd).vptr,
+        MessageBoxA(GetForegroundWindow(),
             "Can't find that PID !",
             "ScyllaHide Plugin", MB_OK | MB_ICONERROR);
         break;
@@ -102,7 +102,7 @@ static bool SetDebugPrivileges()
 }
 
 //callback for various debug events
-static int idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
+static ssize_t idaapi debug_mainloop(void *user_data, int notif_code, va_list va)
 {
     switch (notif_code)
     {
@@ -295,13 +295,14 @@ static void idaapi IDAP_term(void)
 }
 
 //called when user clicks in plugin menu or presses hotkey
-static void idaapi IDAP_run(int arg)
+static bool idaapi IDAP_run(size_t arg)
 {
-    DialogBoxW(hinst, MAKEINTRESOURCE(IDD_OPTIONS), (HWND)callui(ui_get_hwnd).vptr, &OptionsDlgProc);
+    DialogBoxW(hinst, MAKEINTRESOURCE(IDD_OPTIONS), GetForegroundWindow(), &OptionsDlgProc);
+    return true;
 }
 
 //init the plugin
-static int idaapi IDAP_init(void)
+static plugmod_t* idaapi IDAP_init(void)
 {
     //ensure target is PE executable
     if (inf.filetype != f_PE) return PLUGIN_SKIP;
