@@ -879,6 +879,14 @@ typedef struct _RTL_QUERY_REGISTRY_TABLE
 #define RTL_REGISTRY_HANDLE					0x40000000	// Low order bits are registry handle
 #define RTL_REGISTRY_OPTIONAL				0x80000000	// Indicates the key node is optional
 
+// RtlQueryProcessDebugInformation Values
+#define RTL_QUERY_PROCESS_DEBUG_MODULES                       0x01
+#define RTL_QUERY_PROCESS_DEBUG_BACKTRACE                     0x02
+#define RTL_QUERY_PROCESS_DEBUG_HEAPS                         0x04
+#define RTL_QUERY_PROCESS_DEBUG_HEAP_TAGS                     0x08
+#define RTL_QUERY_PROCESS_DEBUG_HEAP_BLOCKS                   0x10
+#define RTL_QUERY_PROCESS_DEBUG_LOCKS                         0x20
+
 typedef struct _PROCESS_HANDLE_INFORMATION
 {
 	ULONG HandleCount;
@@ -9088,6 +9096,13 @@ RtlCreateQueryDebugBuffer(
 	_In_opt_ ULONG MaximumCommit,
 	_In_ BOOLEAN UseEventPair
 	);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlDestroyQueryDebugBuffer(
+    _In_ PRTL_DEBUG_INFORMATION pDebug
+    );
 
 NTSYSAPI
 NTSTATUS
