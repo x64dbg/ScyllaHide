@@ -29,26 +29,32 @@
       <AdditionalLibraryDirectories>$(SolutionDir)3rdparty;$(SolutionDir)3rdparty\idasdk\lib;$(OutDir)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Scylla.lib;ntdll\ntdll_$(PlatformShortName).lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
-      <AdditionalOptions>/NOVCFEATURE /NOCOFFGRPINFO %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/NOVCFEATURE /NOCOFFGRPINFO /PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WINVER=0x0501;_WIN32_WINNT=0x0501;NTDDI_VERSION=0x05010000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(USE_XP_TOOLCHAIN)'!=''">WINVER=0x0501;_WIN32_WINNT=0x0501;NTDDI_VERSION=0x05010000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(USE_XP_TOOLCHAIN)'==''">WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <Version>5.1</Version>
-      <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
+      <Version Condition="'$(USE_XP_TOOLCHAIN)'!=''">5.1</Version>
+      <Version Condition="'$(USE_XP_TOOLCHAIN)'==''">6.1</Version>
+      <MinimumRequiredVersion Condition="'$(USE_XP_TOOLCHAIN)'!=''">5.01</MinimumRequiredVersion>
+      <MinimumRequiredVersion Condition="'$(USE_XP_TOOLCHAIN)'==''">6.01</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
     <ClCompile>
-      <PreprocessorDefinitions>WINVER=0x0502;_WIN32_WINNT=0x0502;NTDDI_VERSION=0x05020000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(USE_XP_TOOLCHAIN)'!=''">WINVER=0x0502;_WIN32_WINNT=0x0502;NTDDI_VERSION=0x05020000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(USE_XP_TOOLCHAIN)'==''">WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <Version>5.2</Version>
-      <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
+      <Version Condition="'$(USE_XP_TOOLCHAIN)'!=''">5.2</Version>
+      <Version Condition="'$(USE_XP_TOOLCHAIN)'==''">6.1</Version>
+      <MinimumRequiredVersion Condition="'$(USE_XP_TOOLCHAIN)'!=''">5.02</MinimumRequiredVersion>
+      <MinimumRequiredVersion Condition="'$(USE_XP_TOOLCHAIN)'==''">6.01</MinimumRequiredVersion>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

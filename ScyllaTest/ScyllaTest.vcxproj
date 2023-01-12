@@ -32,6 +32,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
     <VcpkgEnabled>false</VcpkgEnabled>
+    <VCToolsVersion Condition="'$(USE_XP_TOOLCHAIN)'!=''">14.27.29110</VCToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -40,6 +41,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
     <VcpkgEnabled>false</VcpkgEnabled>
+    <VCToolsVersion Condition="'$(USE_XP_TOOLCHAIN)'!=''">14.27.29110</VCToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -49,6 +51,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
     <VcpkgEnabled>false</VcpkgEnabled>
+    <VCToolsVersion Condition="'$(USE_XP_TOOLCHAIN)'!=''">14.27.29110</VCToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -58,6 +61,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
     <VcpkgEnabled>false</VcpkgEnabled>
+    <VCToolsVersion Condition="'$(USE_XP_TOOLCHAIN)'!=''">14.27.29110</VCToolsVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
