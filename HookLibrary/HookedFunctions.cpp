@@ -52,6 +52,7 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
         SystemInformationClass == SystemHandleInformation ||
         SystemInformationClass == SystemExtendedHandleInformation ||
         SystemInformationClass == SystemExtendedProcessInformation ||   // Vista+
+        SystemInformationClass == SystemFirmwareTableInformation ||     // Vista+
         SystemInformationClass == SystemCodeIntegrityInformation ||     // Vista+
         SystemInformationClass == SystemKernelDebuggerInformationEx ||  // 8.1+
         SystemInformationClass == SystemKernelDebuggerFlags ||          // 10+
@@ -141,6 +142,16 @@ NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInf
                 RtlZeroMemory(SystemInformation, SystemInformationLength);
 
                 RESTORE_RETURNLENGTH();
+            }
+            else if (SystemInformationClass == SystemFirmwareTableInformation)
+            {
+                // Don't allow reading BIOS Option ROMs (VMProtect virtualization check).
+                if (SystemInformationLength > 0x10
+                    && ((PSYSTEM_FIRMWARE_TABLE_INFORMATION)SystemInformation)->ProviderSignature == 'FIRM'
+                    && ((PSYSTEM_FIRMWARE_TABLE_INFORMATION)SystemInformation)->TableID - 0xC0000u < 0x30000u)
+                {
+                    RtlZeroMemory((PUCHAR)SystemInformation + 0x10, SystemInformationLength - 0x10);
+                }
             }
         }
 
