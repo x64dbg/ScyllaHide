@@ -270,7 +270,7 @@ HWND CreateTooltips(HWND hDlg)
             IDC_PEB,
             L"The most important anti-anti-debug option.\r\n"
             L"Almost every protector checks for PEB values.\r\n"
-            L"There are three important options and one minor option."
+            L"There are three important options and some minor options."
         },
         {
             IDC_PEBBEINGDEBUGGED,
@@ -280,7 +280,10 @@ HWND CreateTooltips(HWND hDlg)
         { IDC_PEBHEAPFLAGS, L"Very important option, a lot of protectors check for this value." },
         { IDC_PEBNTGLOBALFLAG, L"Very important option. E.g. Themida checks for heap artifacts and heap flags." },
         { IDC_PEBSTARTUPINFO, L"This is not really important, only a few protectors check for this. Maybe Enigma checks it." },
-        { IDC_PEBOSBUILDNUMBER, L"VMProtect checks this on newer versions of Windows 10 (2019 onwards)." },
+        { IDC_PEBOSBUILDNUMBER, L"VMProtect checks this for determining syscall numbers for direct syscalls.\r\n"
+                                L"On Windows 10, you also need to put an access HWBP on KUSER_SHARED_DATA+0x260\r\n"
+                                L"and patch the build number manually.\r\n"
+                                L"NOTE: This won't have the desired effect for WOW64 processes!"},
         {
             IDC_NTSETINFORMATIONTHREAD,
             L"The THREADINFOCLASS value ThreadHideFromDebugger is a well-known\r\n"

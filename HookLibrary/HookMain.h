@@ -116,6 +116,13 @@ typedef struct _HOOK_DLL_DATA {
     t_NtCreateThread dNtCreateThread;
     DWORD NtCreateThreadBackupSize;
 
+    t_NtOpenFile dNtOpenFile;
+    DWORD NtOpenFileBackupSize;
+    t_NtCreateSection dNtCreateSection;
+    DWORD NtCreateSectionBackupSize;
+    t_NtMapViewOfSection dNtMapViewOfSection;
+    DWORD NtMapViewOfSectionBackupSize;
+
 	/////////////////////////////////////////////////////////
 	t_GetTickCount dGetTickCount;
 	DWORD GetTickCountBackupSize;
