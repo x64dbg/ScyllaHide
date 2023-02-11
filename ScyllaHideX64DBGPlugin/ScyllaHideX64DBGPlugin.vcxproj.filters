@@ -36,6 +36,9 @@
     <ClCompile Include="..\PluginGeneric\AttachDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Scylla\VersionPatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h">
@@ -57,6 +60,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\AttachDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Scylla\VersionPatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

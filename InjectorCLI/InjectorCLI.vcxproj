@@ -140,12 +140,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\PluginGeneric\Injector.cpp" />
+    <ClCompile Include="..\Scylla\VersionPatch.cpp" />
     <ClCompile Include="ApplyHooking.cpp" />
     <ClCompile Include="DynamicMapping.cpp" />
     <ClCompile Include="CliMain.cpp" />
     <ClCompile Include="RemoteHook.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Scylla\VersionPatch.h" />
     <ClInclude Include="ApplyHooking.h" />
     <ClInclude Include="DynamicMapping.h" />
     <ClInclude Include="RemoteHook.h" />

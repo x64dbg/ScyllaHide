@@ -8,6 +8,8 @@ HOOK_DLL_DATA HookDllData = { 0 };
 #include "HookHelper.h"
 #include "Tls.h"
 
+#include "Scylla/VersionPatch.h"
+
 void FakeCurrentParentProcessId(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FakeCurrentOtherOperationCount(PSYSTEM_PROCESS_INFORMATION pInfo);
 void FilterHandleInfo(PSYSTEM_HANDLE_INFORMATION pHandleInfo, PULONG pReturnLengthAdjust);
@@ -1142,4 +1144,108 @@ NTSTATUS NTAPI HookedNtResumeThread(HANDLE ThreadHandle, PULONG PreviousSuspendC
 	{
 		return HookDllData.dNtResumeThread(ThreadHandle, PreviousSuspendCount);
 	}
+}
+
+HANDLE hNtdllFile = INVALID_HANDLE_VALUE;
+HANDLE hNtdllSection = INVALID_HANDLE_VALUE;
+
+NTSTATUS NTAPI HookedNtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, ULONG ShareAccess, ULONG OpenOptions)
+{
+    NTSTATUS status = HookDllData.dNtOpenFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
+
+    if (NT_SUCCESS(status))
+    {
+        UNICODE_STRING usNtdll;
+        RtlInitUnicodeString(&usNtdll, L"\\ntdll.dll");
+        if (RtlUnicodeStringContains(ObjectAttributes->ObjectName, &usNtdll, TRUE))
+        {
+            hNtdllFile = *FileHandle;
+        }
+    }
+
+    return status;
+}
+
+NTSTATUS NTAPI HookedNtCreateSection(PHANDLE SectionHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PLARGE_INTEGER MaximumSize, ULONG SectionPageProtection, ULONG AllocationAttributes, HANDLE FileHandle)
+{
+    if (AllocationAttributes == SEC_IMAGE_NO_EXECUTE && RtlNtMajorVersion() <= 6 && (RtlNtMajorVersion() < 6 || RtlNtMinorVersion() < 2))
+    {
+        // Fix for VMProtect. It attempts to use SEC_IMAGE_NO_EXECUTE on OSes that don't support it.
+        AllocationAttributes = SEC_IMAGE;
+    }
+    NTSTATUS status = HookDllData.dNtCreateSection(SectionHandle, DesiredAccess, ObjectAttributes, MaximumSize, SectionPageProtection, AllocationAttributes, FileHandle);
+
+    if (NT_SUCCESS(status) && hNtdllFile != INVALID_HANDLE_VALUE && FileHandle == hNtdllFile)
+    {
+        hNtdllFile = INVALID_HANDLE_VALUE;
+        hNtdllSection = *SectionHandle;
+    }
+
+    return status;
+}
+
+void DestroyMappedNtApi(const char *szProcName, PVOID hRealNtdll, PVOID pMapping)
+{
+    PVOID ProcedureAddress;
+    ANSI_STRING ProcedureName;
+    RtlInitAnsiString(&ProcedureName, (PSTR)szProcName);
+    if (NT_SUCCESS(LdrGetProcedureAddress(hRealNtdll, &ProcedureName, 0, &ProcedureAddress)))
+    {
+        SIZE_T delta = (ULONG_PTR)ProcedureAddress - (ULONG_PTR)hRealNtdll;
+        PUCHAR pMappedApi = (PUCHAR)pMapping + delta;
+
+#ifdef _WIN64
+        if (*(PDWORD)pMappedApi != 0xB8D18B4C) // mov r10,rcx; mov eax, callNr
+            return;
+
+        PVOID ProtAddress = pMappedApi;
+        SIZE_T RegionSize = 5;
+        ULONG OldProtect;
+        if (NT_SUCCESS(NtProtectVirtualMemory(NtCurrentProcess, &ProtAddress, &RegionSize, PAGE_READWRITE, &OldProtect)))
+        {
+            *(PWORD)pMappedApi = 0x0B0F; // UD2
+            *(PWORD)(pMappedApi + 3) = 0x0B0F; // UD2
+            NtProtectVirtualMemory(NtCurrentProcess, &ProtAddress, &RegionSize, OldProtect, &OldProtect);
+        }
+#else
+        if (*pMappedApi != 0xB8) // mov eax, callNr
+            return;
+
+        PVOID ProtAddress = pMappedApi;
+        SIZE_T RegionSize = 2;
+        ULONG OldProtect;
+        if (NT_SUCCESS(NtProtectVirtualMemory(NtCurrentProcess, &ProtAddress, &RegionSize, PAGE_READWRITE, &OldProtect)))
+        {
+            *(PWORD)pMappedApi = 0x0B0F; // UD2
+            NtProtectVirtualMemory(NtCurrentProcess, &ProtAddress, &RegionSize, OldProtect, &OldProtect);
+        }
+#endif
+    }
+}
+
+NTSTATUS NTAPI HookedNtMapViewOfSection(HANDLE SectionHandle, HANDLE ProcessHandle, PVOID* BaseAddress, ULONG_PTR ZeroBits, SIZE_T CommitSize, PLARGE_INTEGER SectionOffset, PSIZE_T ViewSize, SECTION_INHERIT InheritDisposition, ULONG AllocationType, ULONG Win32Protect)
+{
+    NTSTATUS status = HookDllData.dNtMapViewOfSection(SectionHandle, ProcessHandle, BaseAddress, ZeroBits, CommitSize, SectionOffset, ViewSize, InheritDisposition, AllocationType, Win32Protect);
+
+    if (NT_SUCCESS(status) && ProcessHandle == NtCurrentProcess && hNtdllSection != INVALID_HANDLE_VALUE && SectionHandle == hNtdllSection)
+    {
+        hNtdllSection = INVALID_HANDLE_VALUE;
+        ApplyNtdllVersionPatch(ProcessHandle, *BaseAddress);
+
+        // Prevent syscall numbers from being extracted from API code.
+        PVOID hRealNtdll;
+        UNICODE_STRING usNtdll;
+        RtlInitUnicodeString(&usNtdll, L"ntdll.dll");
+        if (NT_SUCCESS(LdrGetDllHandle(NULL, NULL, &usNtdll, &hRealNtdll)))
+        {
+            DestroyMappedNtApi("NtSetInformationProcess", hRealNtdll, *BaseAddress); // If VMProtect can syscall this, it will unset the instrumentation callback.
+            DestroyMappedNtApi("NtQueryInformationProcess", hRealNtdll, *BaseAddress);
+            DestroyMappedNtApi("NtSetInformationThread", hRealNtdll, *BaseAddress);
+            DestroyMappedNtApi("NtQueryInformationThread", hRealNtdll, *BaseAddress);
+            DestroyMappedNtApi("NtQuerySystemInformation", hRealNtdll, *BaseAddress);
+            DestroyMappedNtApi("NtQueryVirtualMemory", hRealNtdll, *BaseAddress);
+        }
+    }
+
+    return status;
 }

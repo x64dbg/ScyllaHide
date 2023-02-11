@@ -1,6 +1,7 @@
 #include <Scylla/Logger.h>
 #include <Scylla/OsInfo.h>
 #include <Scylla/PebHider.h>
+#include "Scylla/VersionPatch.h"
 
 #include "ApplyHooking.h"
 #include "DynamicMapping.h"
@@ -69,6 +70,9 @@ t_NtCreateThreadEx _NtCreateThreadEx = 0;
 t_NtQuerySystemTime _NtQuerySystemTime = 0;
 t_NtQueryPerformanceCounter _NtQueryPerformanceCounter = 0;
 t_NtResumeThread _NtResumeThread = 0;
+t_NtOpenFile _NtOpenFile = 0;
+t_NtCreateSection _NtCreateSection = 0;
+t_NtMapViewOfSection _NtMapViewOfSection = 0;
 
 bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD_PTR imageBase)
 {
@@ -98,6 +102,9 @@ bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
     void * HookedNtQuerySystemTime = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQuerySystemTime") + imageBase);
     void * HookedNtQueryPerformanceCounter = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtQueryPerformanceCounter") + imageBase);
     void * HookedNtResumeThread = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtResumeThread") + imageBase);
+    void * HookedNtOpenFile = (void*)(GetDllFunctionAddressRVA(dllMemory, "HookedNtOpenFile") + imageBase);
+    void * HookedNtCreateSection = (void*)(GetDllFunctionAddressRVA(dllMemory, "HookedNtCreateSection") + imageBase);
+    void * HookedNtMapViewOfSection = (void*)(GetDllFunctionAddressRVA(dllMemory, "HookedNtMapViewOfSection") + imageBase);
 
     HookedNativeCallInternal = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNativeCallInternal") + imageBase);
 
@@ -119,6 +126,9 @@ bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
     _NtQuerySystemTime = (t_NtQuerySystemTime)GetProcAddress(hNtdll, "NtQuerySystemTime");
     _NtQueryPerformanceCounter = (t_NtQueryPerformanceCounter)GetProcAddress(hNtdll, "NtQueryPerformanceCounter");
     _NtResumeThread = (t_NtResumeThread)GetProcAddress(hNtdll, "NtResumeThread");
+    _NtOpenFile = (t_NtOpenFile)GetProcAddress(hNtdll, "NtOpenFile");
+    _NtCreateSection = (t_NtCreateSection)GetProcAddress(hNtdll, "NtCreateSection");
+    _NtMapViewOfSection = (t_NtMapViewOfSection)GetProcAddress(hNtdll, "NtMapViewOfSection");
 
     g_log.LogDebug(L"ApplyNtdllHook -> _NtSetInformationThread %p _NtQuerySystemInformation %p _NtQueryInformationProcess %p _NtSetInformationProcess %p _NtQueryObject %p",
         _NtSetInformationThread,
@@ -141,6 +151,10 @@ bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
         _NtQuerySystemTime,
         _NtQueryPerformanceCounter,
         _NtResumeThread);
+    g_log.LogDebug(L"ApplyNtdllHook -> _NtOpenFile %p _NtCreateSection %p _NtMapViewOfSection %p",
+        _NtOpenFile,
+        _NtCreateSection,
+        _NtMapViewOfSection);
 
     if (hdd->EnableNtSetInformationThreadHook == TRUE)
     {
@@ -317,6 +331,16 @@ bool ApplyNtdllHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWOR
     {
         g_log.LogDebug(L"ApplyNtdllHook -> Hooking NtResumeThread for RUNPE UNPACKER");
         HOOK_NATIVE(NtResumeThread);
+    }
+
+    if (hdd->EnablePebOsBuildNumber == TRUE)
+    {
+        g_log.LogDebug(L"ApplyNtdllHook -> Hooking NtOpenFile");
+        HOOK_NATIVE(NtOpenFile);
+        g_log.LogDebug(L"ApplyNtdllHook -> Hooking NtCreateSection");
+        HOOK_NATIVE(NtCreateSection);
+        g_log.LogDebug(L"ApplyNtdllHook -> Hooking NtMapViewOfSection");
+        HOOK_NATIVE(NtMapViewOfSection);
     }
 
     hdd->isNtdllHooked = TRUE;
@@ -497,7 +521,7 @@ void ApplyPEBPatch(HANDLE hProcess, DWORD flags)
 
         if (flags & PEB_PATCH_OsBuildNumber)
         {
-            peb->OSBuildNumber++;
+            peb->OSBuildNumber = FAKE_VERSION;
         }
 
         if (!scl::SetPeb(hProcess, peb.get()))
@@ -533,7 +557,7 @@ void ApplyPEBPatch(HANDLE hProcess, DWORD flags)
 
         if (flags & PEB_PATCH_OsBuildNumber)
         {
-            peb64->OSBuildNumber++;
+            peb64->OSBuildNumber = FAKE_VERSION;
         }
 
         if (!scl::Wow64SetPeb64(hProcess, peb64.get()))
@@ -547,70 +571,7 @@ void ApplyNtdllVersionPatch(HANDLE hProcess)
     // This will get the 32 bit ntdll if we are on Wow64, which is fine.
     // Note that this relies on the addresses of DLLs in \KnownDlls[32] to be the same for all processes
     const PVOID Ntdll = GetModuleHandleW(L"ntdll.dll");
-
-    // Get the resource data entry for VS_VERSION_INFO
-    LDR_RESOURCE_INFO ResourceIdPath;
-    ResourceIdPath.Type = (ULONG_PTR)RT_VERSION;
-    ResourceIdPath.Name = VS_VERSION_INFO;
-    ResourceIdPath.Language = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
-    PIMAGE_RESOURCE_DATA_ENTRY ResourceDataEntry = nullptr;
-    NTSTATUS Status = LdrFindResource_U(Ntdll, &ResourceIdPath, 3, &ResourceDataEntry);
-    if (!NT_SUCCESS(Status))
-    {
-        g_log.LogError(L"Failed to find VS_VERSION_INFO resource in ntdll.dll: %08X", Status);
-        return;
-    }
-
-    // Get the address and size of VS_VERSION_INFO
-    PVOID Address = nullptr;
-    ULONG Size = 0;
-    Status = LdrAccessResource(Ntdll, ResourceDataEntry, &Address, &Size);
-    if (!NT_SUCCESS(Status))
-    {
-        g_log.LogError(L"Failed to obtain size of VS_VERSION_INFO resource in ntdll.dll: %08X", Status);
-        return;
-    }
-    if (Address == nullptr || Size == 0)
-    {
-        g_log.LogError(L"VS_VERSION_INFO resource in ntdll.dll has size zero");
-        return;
-    }
-
-    // VS_VERSIONINFO is a mess to navigate because it is a nested struct of variable size with (grand)children all of variable sizes
-    // See: https://docs.microsoft.com/en-gb/windows/win32/menurc/vs-versioninfo
-    // Instead of finding VS_VERSIONINFO -> StringFileInfo[] -> StringTable[] -> String (-> WCHAR[]) properly, just do it the memcmp way
-    const WCHAR Needle[] = L"FileVersion";
-    PUCHAR P = (PUCHAR)Address;
-    for ( ; P < (PUCHAR)Address + Size - sizeof(Needle); ++P)
-    {
-        if (memcmp(P, Needle, sizeof(Needle)) == 0)
-            break;
-    }
-    if (P == (PUCHAR)Address)
-    {
-        g_log.LogError(L"Failed to find FileVersion in ntdll.dll VS_VERSION_INFO");
-        return;
-    }
-
-    // Skip to the version number and discard extra nulls
-    P += sizeof(Needle);
-    while (*(PWCHAR)P == L'\0')
-    {
-        P += sizeof(WCHAR);
-    }
-
-    // P now points at e.g. 6.1.xxxx.yyyy or 10.0.xxxxx.yyyy. Skip the major and minor version numbers to get to the build number xxxx
-    const ULONG Skip = NtCurrentPeb()->OSMajorVersion >= 10 ? 5 * sizeof(WCHAR) : 4 * sizeof(WCHAR);
-    P += Skip;
-
-    // Write a new bogus build number
-    WCHAR NewBuildNumber[] = L"1337";
-    ULONG OldProtect;
-    if (VirtualProtectEx(hProcess, P, sizeof(NewBuildNumber) - sizeof(WCHAR), PAGE_EXECUTE_READWRITE, &OldProtect))
-    {
-        WriteProcessMemory(hProcess, P, NewBuildNumber, sizeof(NewBuildNumber) - sizeof(WCHAR), nullptr);
-        VirtualProtectEx(hProcess, P, sizeof(NewBuildNumber), OldProtect, &OldProtect);
-    }
+    ApplyNtdllVersionPatch(hProcess, Ntdll);
 }
 
 void RestoreMemory(HANDLE hProcess, DWORD_PTR address, void * buffer, int bufferSize)
@@ -681,6 +642,9 @@ void RestoreNtdllHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
             RESTORE_JMP(NtQueryInformationProcess);
             RESTORE_JMP(NtQuerySystemInformation);
             RESTORE_JMP(NtSetInformationThread);
+            RESTORE_JMP(NtOpenFile);
+            RESTORE_JMP(NtCreateSection);
+            RESTORE_JMP(NtMapViewOfSection);
         }
     }
 #else
@@ -697,6 +661,9 @@ void RestoreNtdllHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
     RESTORE_JMP(NtQueryInformationProcess);
     RESTORE_JMP(NtQuerySystemInformation);
     RESTORE_JMP(NtSetInformationThread);
+    RESTORE_JMP(NtOpenFile);
+    RESTORE_JMP(NtCreateSection);
+    RESTORE_JMP(NtMapViewOfSection);
 #endif
 
     FREE_HOOK(NtClose);
@@ -712,6 +679,9 @@ void RestoreNtdllHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
     FREE_HOOK(NtQueryInformationProcess);
     FREE_HOOK(NtQuerySystemInformation);
     FREE_HOOK(NtSetInformationThread);
+    FREE_HOOK(NtOpenFile);
+    FREE_HOOK(NtCreateSection);
+    FREE_HOOK(NtMapViewOfSection);
 
 
     RESTORE_JMP(KiUserExceptionDispatcher);

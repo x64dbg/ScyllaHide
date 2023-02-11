@@ -157,6 +157,7 @@
     <ClCompile Include="..\PluginGeneric\AttachDialog.cpp" />
     <ClCompile Include="..\PluginGeneric\Injector.cpp" />
     <ClCompile Include="..\PluginGeneric\OptionsDialog.cpp" />
+    <ClCompile Include="..\Scylla\VersionPatch.cpp" />
     <ClCompile Include="ScyllaHideX64DBGPlugin.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +167,7 @@
     <ClInclude Include="..\PluginGeneric\AttachDialog.h" />
     <ClInclude Include="..\PluginGeneric\Injector.h" />
     <ClInclude Include="..\PluginGeneric\OptionsDialog.h" />
+    <ClInclude Include="..\Scylla\VersionPatch.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

@@ -31,3 +31,6 @@ HookedNtUserQueryWindow
 HookedNtYieldExecution
 HookedOutputDebugStringA
 HookedNtResumeThread
+HookedNtOpenFile
+HookedNtCreateSection
+HookedNtMapViewOfSection

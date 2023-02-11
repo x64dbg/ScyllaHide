@@ -30,6 +30,9 @@
     <ClCompile Include="..\PluginGeneric\Injector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Scylla\VersionPatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DynamicMapping.h">
@@ -42,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Scylla\VersionPatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -146,6 +146,7 @@
     <ClCompile Include="..\InjectorCLI\DynamicMapping.cpp" />
     <ClCompile Include="..\InjectorCLI\RemoteHook.cpp" />
     <ClCompile Include="..\PluginGeneric\Injector.cpp" />
+    <ClCompile Include="..\Scylla\VersionPatch.cpp" />
     <ClCompile Include="ScyllaHideGenericPlugin.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -153,6 +154,7 @@
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h" />
     <ClInclude Include="..\InjectorCLI\RemoteHook.h" />
     <ClInclude Include="..\PluginGeneric\Injector.h" />
+    <ClInclude Include="..\Scylla\VersionPatch.h" />
     <ClInclude Include="ScyllaHideGenericPlugin.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -42,6 +42,9 @@
     <ClCompile Include="..\PluginGeneric\OllyExceptionHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Scylla\VersionPatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\InjectorCLI\DynamicMapping.h">
@@ -69,6 +72,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\PluginGeneric\OllyExceptionHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Scylla\VersionPatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
