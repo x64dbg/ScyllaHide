@@ -30,7 +30,10 @@ const WCHAR * BadProcessnameList[] =
 	L"IMMUNITYDEBUGGER.EXE",
 	L"devenv.exe",
 	L"Procmon.exe",
-	L"Procmon64.exe"
+	L"Procmon64.exe",
+	L"APIMonitor.exe",
+	L"apimonitor-x64.exe",
+	L"apimonitor-x86.exe"
 };
 
 const WCHAR * BadWindowTextList[] =
@@ -45,8 +48,11 @@ const WCHAR * BadWindowTextList[] =
 	L"WinDbg",
 	L"x32dbg",
 	L"x64dbg",
+	L"WinDbg",
 	L"Import reconstructor",
-	L"Process Monitor - Sysinternals: www.sysinternals.com"
+	L"Process Monitor - Sysinternals: www.sysinternals.com",
+	L"API Monitor",
+	L"Monitored Processes"
 };
 
 const WCHAR * BadWindowClassList[] =
@@ -55,13 +61,16 @@ const WCHAR * BadWindowClassList[] =
 	L"Zeta Debugger",
 	L"Rock Debugger",
 	L"ObsidianGUI",
-	L"ID", //Immunity Debugger
-	L"WinDbgFrameClass", //WinDBG
+	L"ID", // Immunity Debugger
+	L"WinDbgFrameClass", // classic WinDBG
+	L"DbgX.Shell", // new WinDBG
 	L"idawindow",
 	L"tnavbox",
 	L"idaview",
 	L"tgrzoom",
-	L"PROCMON_WINDOW_CLASS" //Process Monitor
+	L"PROCMON_WINDOW_CLASS", // Process Monitor
+	L"APIMonitor By Rohitab",
+	L"99929D61-1338-48B1-9433-D42A1D94F0D2" // API Monitor
 };
 
 extern "C" void InstrumentationCallbackAsm();
