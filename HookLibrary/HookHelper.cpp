@@ -33,7 +33,8 @@ const WCHAR * BadProcessnameList[] =
 	L"Procmon64.exe",
 	L"APIMonitor.exe",
 	L"apimonitor-x64.exe",
-	L"apimonitor-x86.exe"
+	L"apimonitor-x86.exe",
+	L"cheatengine-" // cheatengine-i386.exe, cheatengine-x86_64.exe, cheatengine-x86_64-SSE4-AVX2.exe, ...
 };
 
 const WCHAR * BadWindowTextList[] =
@@ -52,7 +53,8 @@ const WCHAR * BadWindowTextList[] =
 	L"Import reconstructor",
 	L"Process Monitor - Sysinternals: www.sysinternals.com",
 	L"API Monitor",
-	L"Monitored Processes"
+	L"Monitored Processes",
+	L"Cheat Engine"
 };
 
 const WCHAR * BadWindowClassList[] =
