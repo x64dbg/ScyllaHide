@@ -689,14 +689,9 @@ bool RemoveDebugPrivileges(HANDLE hProcess)
     return false;
 }
 
-#define DbgBreakPoint_FUNC_SIZE 2
-#ifdef _WIN64
-#define DbgUiRemoteBreakin_FUNC_SIZE 0x42
-#define NtContinue_FUNC_SIZE 11
-#else
-#define DbgUiRemoteBreakin_FUNC_SIZE 0x54
-#define NtContinue_FUNC_SIZE 0x18
-#endif
+#define DbgBreakPoint_FUNC_SIZE 0x10
+#define DbgUiRemoteBreakin_FUNC_SIZE 0x80
+#define NtContinue_FUNC_SIZE 0x40
 
 typedef struct _PATCH_FUNC {
     PCHAR funcName;
