@@ -265,6 +265,7 @@ typedef struct _STRING
 	USHORT MaximumLength;
 	PCHAR Buffer;
 } STRING, *PSTRING, ANSI_STRING, *PANSI_STRING, OEM_STRING, *POEM_STRING;
+typedef const STRING *PCSTRING, *PCANSI_STRING, *PCOEM_STRING;
 
 typedef struct _SYSTEM_SESSION_PROCESS_INFORMATION
 {
@@ -7838,7 +7839,7 @@ NTSYSAPI
 ULONG
 __cdecl
 DbgPrint(
-	_In_ PCH Format,
+	_In_z_ _Printf_format_string_ PCSTR Format,
 	...
 	);
 
@@ -7848,7 +7849,7 @@ __cdecl
 DbgPrintEx(
 	_In_ ULONG ComponentId,
 	_In_ ULONG Level,
-	_In_ PCSTR Format,
+	_In_z_ _Printf_format_string_ PCSTR Format,
 	...
 	);
 
@@ -8673,7 +8674,7 @@ VOID
 NTAPI
 RtlInitUnicodeString(
 	_Out_ PUNICODE_STRING DestinationString,
-	_In_opt_ PWSTR SourceString
+	_In_opt_ PCWSTR SourceString
 	);
 
 NTSYSAPI
@@ -8681,7 +8682,7 @@ VOID
 NTAPI
 RtlInitAnsiString(
 	_Out_ PANSI_STRING DestinationString,
-	_In_opt_ PSTR SourceString
+	_In_opt_ PCSTR SourceString
 	);
 
 NTSYSAPI
@@ -8705,7 +8706,7 @@ NTSTATUS
 NTAPI
 RtlAnsiStringToUnicodeString(
 	_Inout_ PUNICODE_STRING DestinationString,
-	_In_ PANSI_STRING SourceString,
+	_In_ PCANSI_STRING SourceString,
 	_In_ BOOLEAN AllocateDestinationString
 	);
 
@@ -8714,7 +8715,7 @@ NTSTATUS
 NTAPI
 RtlUnicodeStringToAnsiString(
 	_Inout_ PANSI_STRING DestinationString,
-	_In_ PUNICODE_STRING SourceString,
+	_In_ PCUNICODE_STRING SourceString,
 	_In_ BOOLEAN AllocateDestinationString
 	);
 
@@ -8730,8 +8731,8 @@ NTSYSAPI
 BOOLEAN
 NTAPI
 RtlPrefixString(
-	_In_ PSTRING String1,
-	_In_ PSTRING String2,
+	_In_ PCSTRING String1,
+	_In_ PCSTRING String2,
 	_In_ BOOLEAN CaseInSensitive
 	);
 
@@ -8740,7 +8741,7 @@ NTSTATUS
 NTAPI
 RtlAppendStringToString(
 	_In_ PSTRING Destination,
-	_In_ PSTRING Source
+	_In_ PCSTRING Source
 	);
 
 NTSYSAPI
@@ -8748,7 +8749,7 @@ VOID
 NTAPI
 RtlUpperString(
 	_In_ PSTRING DestinationString,
-	_In_ PSTRING SourceString
+	_In_ PCSTRING SourceString
 	);
 
 NTSYSAPI
