@@ -43,8 +43,7 @@ static NTSTATUS GetOtherOperationCount(PULONGLONG otherOperationCount)
 {
     *otherOperationCount = 0;
     ULONGLONG otherOperationCountSystemProcessInformation = 0,
-        otherOperationCountSystemExtendedProcessInformation = 0,
-        otherOperationCountSystemSessionProcessInformation = 0;
+        otherOperationCountSystemExtendedProcessInformation = 0;
 
     // NtQSI(SystemProcessInformation)
     ULONG size;
@@ -117,43 +116,6 @@ static NTSTATUS GetOtherOperationCount(PULONGLONG otherOperationCount)
     if (!NT_SUCCESS(status))
         return status;
 
-    // NtQSI(SystemSessionProcessInformation)
-    SYSTEM_SESSION_PROCESS_INFORMATION sessionProcessInfo = { NtCurrentPeb()->SessionId, sizeof(SYSTEM_SESSION_PROCESS_INFORMATION), &sessionProcessInfo };
-    status = NtQuerySystemInformation(SystemSessionProcessInformation, &sessionProcessInfo, sizeof(sessionProcessInfo), &sessionProcessInfo.SizeOfBuf);
-    if (status != STATUS_INFO_LENGTH_MISMATCH)
-        return status;
-    sessionProcessInfo.SizeOfBuf *= 2;
-    sessionProcessInfo.Buffer = RtlAllocateHeap(RtlProcessHeap(), HEAP_ZERO_MEMORY, sessionProcessInfo.SizeOfBuf);
-    if (SystemProcessInfo == nullptr)
-        return STATUS_INSUFFICIENT_RESOURCES;
-    status = NtQuerySystemInformation(SystemSessionProcessInformation, &sessionProcessInfo, sizeof(sessionProcessInfo), nullptr);
-    if (!NT_SUCCESS(status))
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, sessionProcessInfo.Buffer);
-        return status;
-    }
-
-    entry = (PSYSTEM_PROCESS_INFORMATION)sessionProcessInfo.Buffer;
-    status = STATUS_NOT_FOUND;
-
-    while (true)
-    {
-        if (entry->UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess)
-        {
-            otherOperationCountSystemSessionProcessInformation = entry->OtherOperationCount.QuadPart;
-            status = STATUS_SUCCESS;
-            break;
-        }
-        
-        if (entry->NextEntryOffset == 0)
-            break;
-        entry = (PSYSTEM_PROCESS_INFORMATION)((ULONG_PTR)entry + entry->NextEntryOffset);
-    }
-
-    RtlFreeHeap(RtlProcessHeap(), 0, sessionProcessInfo.Buffer);
-    if (!NT_SUCCESS(status))
-        return status;
-
     // NtQIP(IoCounters)
     IO_COUNTERS ioCounters;
     status = NtQueryInformationProcess(g_proc_handle, ProcessIoCounters, &ioCounters, sizeof(ioCounters), nullptr);
@@ -162,7 +124,6 @@ static NTSTATUS GetOtherOperationCount(PULONGLONG otherOperationCount)
 
     // All four counts should be the same
     if (otherOperationCountSystemProcessInformation != otherOperationCountSystemExtendedProcessInformation ||
-        otherOperationCountSystemProcessInformation != otherOperationCountSystemSessionProcessInformation ||
         otherOperationCountSystemProcessInformation != ioCounters.OtherOperationCount)
         return STATUS_DATA_NOT_ACCEPTED;
 
