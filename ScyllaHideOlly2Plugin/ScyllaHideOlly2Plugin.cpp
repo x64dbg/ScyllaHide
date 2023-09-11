@@ -397,7 +397,7 @@ extc void ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent)
         {
             if (!bHooked)
             {
-                ReadNtApiInformation(&g_hdd);
+                ReadNtApiInformation(&g_hdd,ProcessId);
 
                 bHooked = true;
                 startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
