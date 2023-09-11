@@ -58,7 +58,6 @@ int wmain(int argc, wchar_t* argv[])
     g_log.SetLogCb(scl::Logger::Info, LogCallback);
     g_log.SetLogCb(scl::Logger::Error, LogCallback);
 
-    ReadNtApiInformation(&g_hdd);
     SetDebugPrivileges();
     //ChangeBadWindowText();
     g_settings.Load(g_scyllaHideIniPath.c_str());
@@ -102,6 +101,7 @@ int wmain(int argc, wchar_t* argv[])
 
     if (targetPid && dllPath)
     {
+        ReadNtApiInformation(&g_hdd, targetPid);
         wprintf(L"\nPID\t: %d 0x%X\nDLL Path: %s\n\n", targetPid, targetPid, dllPath);
         if (!startInjection(targetPid, dllPath))
             result = 1; // failure

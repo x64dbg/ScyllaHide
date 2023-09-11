@@ -85,7 +85,7 @@ extern "C" DLL_EXPORT void TitanDebuggingCallBack(LPDEBUG_EVENT debugEvent, int 
             {
                 if (!bHooked)
                 {
-                    ReadNtApiInformation(&g_hdd);
+                    ReadNtApiInformation(&g_hdd, ProcessId);
 
                     bHooked = true;
                     startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);

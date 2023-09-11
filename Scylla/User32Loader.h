@@ -13,7 +13,7 @@ namespace scl
 		User32Loader();
 		~User32Loader();
 
-		bool FindSyscalls(const std::vector<std::string>& syscallNames);
+		bool FindSyscalls(const std::vector<std::string>& syscallNames, DWORD targetPid);
 
 		ULONG_PTR GetUserSyscallVa(const std::string& functionName) const { return FunctionNamesAndVas.at(functionName); }
 		LONG GetUserSyscallIndex(const std::string& functionName) const;

@@ -27,7 +27,7 @@ typedef struct _PROCESS_SUSPEND_INFO
     PTHREAD_SUSPEND_INFO ThreadSuspendInfo; // THREAD_SUSPEND_INFO[NumThreads]
 } PROCESS_SUSPEND_INFO, *PPROCESS_SUSPEND_INFO;
 
-void ReadNtApiInformation(HOOK_DLL_DATA *hdd);
+void ReadNtApiInformation(HOOK_DLL_DATA *hdd, DWORD ProcessId);
 
 void InstallAntiAttachHook();
 void startInjectionProcess(HANDLE hProcess, HOOK_DLL_DATA *hdd, BYTE * dllMemory, bool newProcess);
