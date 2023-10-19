@@ -263,16 +263,3 @@ $RECYCLE.BIN/
 
 # Mac crap
 .DS_Store
-/ScyllaTest/ScyllaTest.vcxproj
-/ScyllaHideX64DBGPlugin/ScyllaHideX64DBGPlugin.vcxproj
-/ScyllaHideTEPlugin/ScyllaHideTEPlugin.vcxproj
-/ScyllaHideOlly2Plugin/ScyllaHideOlly2Plugin.vcxproj
-/ScyllaHideOlly1Plugin/ScyllaHideOlly1Plugin.vcxproj
-/ScyllaHideIDAServer/ScyllaHideIDAServer.vcxproj
-/ScyllaHideIDAProPlugin/ScyllaHideIDAProPlugin.vcxproj
-/ScyllaHideGenericPlugin/ScyllaHideGenericPlugin.vcxproj
-/Scylla/Scylla.vcxproj
-/SCMRevGen/SCMRevGen.vcxproj
-/InjectorCLI/InjectorCLI.vcxproj
-/HookLibrary/HookLibrary.vcxproj
-/3rdparty/distorm/distorm.vcxproj
