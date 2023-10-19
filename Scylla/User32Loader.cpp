@@ -2,6 +2,7 @@
 #include "Win32kSyscalls.h"
 #include "Scylla/OsInfo.h"
 #include "Scylla/Logger.h"
+#include "InjectorCLI/DynamicMapping.h"
 
 extern scl::Logger g_log;
 
@@ -21,7 +22,7 @@ scl::User32Loader::~User32Loader()
 }
 
 // Finds the requested user32/win32u syscalls by name for later retrieval with GetUserSyscallVa
-bool scl::User32Loader::FindSyscalls(const std::vector<std::string>& syscallNames)
+bool scl::User32Loader::FindSyscalls(const std::vector<std::string>& syscallNames, DWORD targetPid)
 {
 	if (Win32kUserDll == nullptr) // Failed to load user32.dll or win32u.dll
 		return false;
@@ -30,10 +31,15 @@ bool scl::User32Loader::FindSyscalls(const std::vector<std::string>& syscallName
 
 	if (OsBuildNumber >= 14393)
 	{
+
+        HANDLE hProcess = OpenProcess(PROCESS_SUSPEND_RESUME | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION, 0, targetPid);
+        HMODULE remoteBase = GetModuleBaseRemote(hProcess, L"win32u.dll");
+        CloseHandle(hProcess);
+
 		// On >= 10.0.14393.0 we can simply get the VAs from win32u.dll
 		for (const auto& syscallName : syscallNames)
 		{
-			const ULONG_PTR syscallAddress = (ULONG_PTR)GetProcAddress((HMODULE)Win32kUserDll, syscallName.c_str());
+			const ULONG_PTR syscallAddress = (ULONG_PTR)GetProcAddress((HMODULE)Win32kUserDll, syscallName.c_str()) - (ULONG_PTR)Win32kUserDll + (ULONG_PTR)remoteBase;
 			if (syscallAddress == 0)
 				return false;
 			FunctionNamesAndVas[syscallName] = syscallAddress;
@@ -51,11 +57,15 @@ bool scl::User32Loader::FindSyscalls(const std::vector<std::string>& syscallName
 		functionNamesAndSyscallNums[syscallName] = (ULONG_PTR)syscallNum;
 	}
 
+    HANDLE hProcess = OpenProcess(PROCESS_SUSPEND_RESUME | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION, 0, targetPid);
+    HMODULE remoteBase = GetModuleBaseRemote(hProcess, L"user32.dll");
+    CloseHandle(hProcess);
+
 	// Find the VAs of the functions we want
 	for (const auto& function : functionNamesAndSyscallNums)
 	{
 		const std::string syscallName = function.first;
-		const ULONG_PTR syscallAddress = FindSyscallByIndex((ULONG)function.second);
+		const ULONG_PTR syscallAddress = FindSyscallByIndex((ULONG)function.second) - (ULONG_PTR)Win32kUserDll + (ULONG_PTR)remoteBase;
 		if (syscallAddress != 0)
 		{
 			FunctionNamesAndVas[syscallName] = syscallAddress;
@@ -69,7 +79,7 @@ bool scl::User32Loader::FindSyscalls(const std::vector<std::string>& syscallName
 	}
 
 	// Sanity check the NtUserBlockInput VA as this is an exported syscall
-	const ULONG_PTR BlockInputVa = (ULONG_PTR)GetProcAddress((HMODULE)Win32kUserDll, "BlockInput");
+	const ULONG_PTR BlockInputVa = (ULONG_PTR)GetProcAddress((HMODULE)Win32kUserDll, "BlockInput") - (ULONG_PTR)Win32kUserDll + (ULONG_PTR)remoteBase;
 	if (BlockInputVa == 0)
 		return false;
 	const bool check = GetUserSyscallVa("NtUserBlockInput") == BlockInputVa;

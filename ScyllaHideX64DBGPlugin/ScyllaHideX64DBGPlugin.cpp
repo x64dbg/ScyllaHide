@@ -167,7 +167,7 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
             //In newest x64dbg version the auto break on attach was removed so ScyllaHide would never inject.
             if (!bHooked)
             {
-                ReadNtApiInformation(&g_hdd);
+                ReadNtApiInformation(&g_hdd, ProcessId);
 
                 bHooked = true;
                 startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
@@ -192,7 +192,7 @@ static void cbDebugloop(CBTYPE cbType, void* callbackInfo)
         {
             if (!bHooked)
             {
-                ReadNtApiInformation(&g_hdd);
+                ReadNtApiInformation(&g_hdd, ProcessId);
 
                 bHooked = true;
                 startInjection(ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);

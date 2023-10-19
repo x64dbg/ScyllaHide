@@ -26,7 +26,7 @@ BYTE* RemoteBreakinPatch;
 BYTE OllyRemoteBreakInReplacement[8];
 HANDLE hDebuggee;
 
-void ReadNtApiInformation(HOOK_DLL_DATA *hdd)
+void ReadNtApiInformation(HOOK_DLL_DATA *hdd, DWORD targetPid)
 {
     scl::User32Loader user32Loader;
     if (!user32Loader.FindSyscalls({
@@ -37,7 +37,7 @@ void ReadNtApiInformation(HOOK_DLL_DATA *hdd)
         "NtUserGetForegroundWindow",
         "NtUserGetClassName",
         "NtUserInternalGetWindowText",
-        "NtUserGetThreadState" }))
+        "NtUserGetThreadState" }, targetPid))
     {
         g_log.LogError(L"Failed to find user32.dll/win32u.dll syscalls!");
         return;

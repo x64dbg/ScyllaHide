@@ -111,7 +111,7 @@ DLL_EXPORT void ScyllaHideDebugLoop(const DEBUG_EVENT* DebugEvent)
         {
             if (!status.bHooked)
             {
-                ReadNtApiInformation(&g_hdd);
+                ReadNtApiInformation(&g_hdd, status.ProcessId);
 
                 status.bHooked = true;
                 startInjection(status.ProcessId, &g_hdd, g_scyllaHideDllPath.c_str(), true);
