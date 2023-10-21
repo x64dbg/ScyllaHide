@@ -105,21 +105,15 @@ void InstallAntiAttachHook()
     jmpback += 5;
 
     BYTE jmp[1] = { 0xE9 };
-    WriteProcessMemory(hOlly, DbgUiIssueRemoteBreakin_addr, &jmp, sizeof(jmp), NULL);
-    DWORD patch = (DWORD)handleAntiAttach;
-    patch -= (DWORD)DbgUiIssueRemoteBreakin_addr;
-    patch -= 5;
-    WriteProcessMemory(hOlly, DbgUiIssueRemoteBreakin_addr + 1, &patch, 4, NULL);
+    memcpy(DbgUiIssueRemoteBreakin_addr, &jmp, sizeof(jmp));
+    DWORD patch = (DWORD)handleAntiAttach - ((DWORD)DbgUiIssueRemoteBreakin_addr + 5);
+    memcpy(&jmp[1], &patch, sizeof(DWORD));
 
     //init our remote breakin patch
-    BYTE* p = &OllyRemoteBreakInReplacement[0];
-    *p = 0xCC;  //int3
-    p++;
-    *p = 0x68;  //push
-    p++;
-    *(DWORD*)(p) = ExitThread_addr;
-    p += 4;
-    *p = 0xC3; //retn
+    BYTE OllyRemoteBreakInReplacement[] = { 0xCC, 0x68 }; //int3 and push
+    DWORD* p = (DWORD*)&OllyRemoteBreakInReplacement[2];
+    *p = ExitThread_addr;
+    OllyRemoteBreakInReplacement[6] = 0xC3; // retn
 #endif
 }
 
