@@ -230,13 +230,22 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
 
         return STATUS_PORT_NOT_SET;
     }
-
+#ifndef _WIN64 // Only wow64process
+    if ((ProcessInformationClass == ProcessDebugFlags ||
+        ProcessInformationClass == ProcessDebugPort ||
+        ProcessInformationClass == ProcessBasicInformation ||
+        ProcessInformationClass == ProcessBreakOnTermination ||
+        ProcessInformationClass == ProcessHandleTracing ||
+        ProcessInformationClass == ProcessIoCounters ||
+        ProcessInformationClass == ProcessWow64Information) &&
+#else
     if ((ProcessInformationClass == ProcessDebugFlags ||
         ProcessInformationClass == ProcessDebugPort ||
         ProcessInformationClass == ProcessBasicInformation ||
         ProcessInformationClass == ProcessBreakOnTermination ||
         ProcessInformationClass == ProcessHandleTracing ||
         ProcessInformationClass == ProcessIoCounters) &&
+#endif
         (ProcessHandle == NtCurrentProcess || HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess) == GetProcessIdByProcessHandle(ProcessHandle)))
     {
         Status = HookDllData.dNtQueryInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
@@ -290,6 +299,22 @@ NTSTATUS NTAPI HookedNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFO
 
                 RESTORE_RETURNLENGTH();
             }
+#ifndef _WIN64 // Only wow64process
+            else if (ProcessInformationClass == ProcessWow64Information)
+            {
+                BACKUP_RETURNLENGTH();
+                static bool vectorinstall = false;
+                if (vectorinstall == false)
+                {
+                    AddVectoredExceptionHandler(1, &VMPSysenterHandler);
+                    vectorinstall = true;
+                }
+
+                *((ULONG_PTR*)ProcessInformation) = 0;
+
+                RESTORE_RETURNLENGTH();
+            }
+#endif
         }
 
         return Status;
