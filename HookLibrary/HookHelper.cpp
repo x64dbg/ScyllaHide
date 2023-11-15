@@ -708,3 +708,247 @@ bool WriteMemoryToFile(const WCHAR * filename, LPCVOID buffer, DWORD bufferSize,
 
 	return NT_SUCCESS(status);
 }
+
+#ifndef _WIN64 // Windows 7-8.1 do not support x86/WOW64 instrumentation callbacks
+LONG CALLBACK VMPSysenterHandler(EXCEPTION_POINTERS* info)
+{
+    int ExceptionCode = info->ExceptionRecord->ExceptionCode;
+    ULONG_PTR ExceptionInfo0 = info->ExceptionRecord->ExceptionInformation[0];
+    ULONG_PTR ExceptionInfo1 = info->ExceptionRecord->ExceptionInformation[1];
+    ULONG_PTR ExceptionAddr = (ULONG_PTR)info->ExceptionRecord->ExceptionAddress;
+
+    if (ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
+    {
+        if (ExceptionInfo0 == 0) // Read
+            if (ExceptionInfo1 == -1) // InAccessible Address
+                if (!IsBadReadPtr((void*)ExceptionAddr, 2))
+                    if (*reinterpret_cast<USHORT*>(ExceptionAddr) == 0x340F) // sysenter
+                    {
+                        //x32bit syscall_number windows 10 22H2 19045.3324 ~
+                        enum SYSCALLNAME : ULONG {
+                            NTSETINFORMATIONPROCESS = 0x4F,
+                            NTQUERYINFORMATIONPROCESS = 0xB9,
+                            NTSETINFORMATIONTHREAD = 0x4D,
+                            NTOPENFILE = 0xF4,
+                            NTCREATESECTION = 0x163,
+                            NTMAPVIEWOFSECTION = 0x101,
+                            NTUNMAPVIEWOFSECTION = 0x14,
+                            NTCLOSE = 0x18E,
+                            NTPROTECTVIRTUALMEMORY = 0xCE,
+                            NTQUERYVIRTUALMEMORY = 0x97,
+                            NTQUERYSYSTEMINFORMATION = 0x9D
+                        };
+
+
+                        ULONG Syscallnum = info->ContextRecord->Eax;
+
+                        PVOID FuncArgs = reinterpret_cast<PVOID>(info->ContextRecord->Esp + 8);
+
+                        switch (Syscallnum)
+                        {
+                        case SYSCALLNAME::NTSETINFORMATIONPROCESS:
+                        {
+                            //ProcessWow64Information
+
+                            HANDLE ProcessHandle = *reinterpret_cast<HANDLE*>(FuncArgs);
+                            PROCESSINFOCLASS pclass = *reinterpret_cast<PROCESSINFOCLASS*>((ULONG_PTR*)FuncArgs + 1);
+                            PVOID informationbuffer = *reinterpret_cast<PVOID*>((ULONG_PTR*)FuncArgs + 2);
+                            ULONG buffersize = *reinterpret_cast<ULONG*>((ULONG_PTR*)FuncArgs + 3);
+
+                            if (pclass != ProcessInstrumentationCallback)
+                                info->ContextRecord->Eax = NtSetInformationProcess(ProcessHandle, pclass, informationbuffer, buffersize);
+                            else
+                            {
+                                info->ContextRecord->Eax = 0;
+                            }
+
+                            info->ContextRecord->Eip += 2;
+
+                            break;
+                        }
+                        case SYSCALLNAME::NTQUERYINFORMATIONPROCESS:
+                        {
+
+                            HANDLE ProcessHandle = *reinterpret_cast<HANDLE*>(FuncArgs);
+                            PROCESSINFOCLASS pclass = *reinterpret_cast<PROCESSINFOCLASS*>((ULONG_PTR*)FuncArgs + 1);
+                            PVOID informationbuffer = *reinterpret_cast<PVOID*>((ULONG_PTR*)FuncArgs + 2);
+                            ULONG buffersize = *reinterpret_cast<ULONG*>((ULONG_PTR*)FuncArgs + 3);
+                            PULONG returnbuffersize = *reinterpret_cast<PULONG*>((ULONG_PTR*)FuncArgs + 4);
+
+                            info->ContextRecord->Eax = NtQueryInformationProcess(ProcessHandle, pclass, informationbuffer, buffersize, returnbuffersize);
+
+                            info->ContextRecord->Eip += 2;
+
+                            break;
+                        }
+                        case SYSCALLNAME::NTSETINFORMATIONTHREAD:
+                        {
+
+                            HANDLE ProcessHandle = *reinterpret_cast<HANDLE*>(FuncArgs);
+                            THREADINFOCLASS tclass = *reinterpret_cast<THREADINFOCLASS*>((ULONG_PTR*)FuncArgs + 1);
+                            PVOID threadinformation = *reinterpret_cast<PVOID*>((ULONG_PTR*)FuncArgs + 2);
+                            ULONG buffersize = *reinterpret_cast<ULONG*>((ULONG_PTR*)FuncArgs + 3);
+
+                            info->ContextRecord->Eax = NtSetInformationThread(ProcessHandle, tclass, threadinformation, buffersize);
+
+                            info->ContextRecord->Eip += 2;
+
+                            break;
+                        }
+                        case SYSCALLNAME::NTOPENFILE:
+                        {
+
+
+                            PHANDLE PProcessHandle = *reinterpret_cast<PHANDLE*>(FuncArgs);
+                            ACCESS_MASK accessmask = *reinterpret_cast<ACCESS_MASK*>((ULONG_PTR*)FuncArgs + 1);
+                            POBJECT_ATTRIBUTES attribute = *reinterpret_cast<POBJECT_ATTRIBUTES*>((ULONG_PTR*)FuncArgs + 2);
+                            PIO_STATUS_BLOCK io_block = *reinterpret_cast<PIO_STATUS_BLOCK*>((ULONG_PTR*)FuncArgs + 3);
+                            ULONG shareaccess = *reinterpret_cast<ULONG*>((ULONG_PTR*)FuncArgs + 4);
+                            ULONG openoption = *reinterpret_cast<ULONG*>((ULONG_PTR*)FuncArgs + 5);
+
+                            info->ContextRecord->Eax = NtOpenFile(PProcessHandle, accessmask, attribute, io_block, shareaccess, openoption);
+
+                            info->ContextRecord->Eip += 2;
+
+                            break;
+                        }
+                        case SYSCALLNAME::NTCREATESECTION:
+                        {
+
+                            PHANDLE SectionHandle = *reinterpret_cast<PHANDLE*>(FuncArgs);
+                            ACCESS_MASK accessmask = *reinterpret_cast<ACCESS_MASK*>((ULONG_PTR*)FuncArgs + 1);
+                            POBJECT_ATTRIBUTES attribute = *reinterpret_cast<POBJECT_ATTRIBUTES*>((ULONG_PTR*)FuncArgs + 2);
+                            PLARGE_INTEGER largeinteger = *reinterpret_cast<PLARGE_INTEGER*>((ULONG_PTR*)FuncArgs + 3);
+                            ULONG shareaccess = *reinterpret_cast<ULONG*>((ULONG_PTR*)FuncArgs + 4);
+                            ULONG openoption = *reinterpret_cast<ULONG*>((ULONG_PTR*)FuncArgs + 5);
+                            HANDLE filehandle = *reinterpret_cast<HANDLE*>((ULONG_PTR*)FuncArgs + 6);
+
+                            info->ContextRecord->Eax = NtCreateSection(
+                                SectionHandle,
+                                accessmask,
+                                attribute,
+                                largeinteger,
+                                shareaccess,
+                                openoption,
+                                filehandle
+                            );
+
+                            info->ContextRecord->Eip += 2;
+
+                            break;
+                        }
+                        case SYSCALLNAME::NTMAPVIEWOFSECTION:
+                        {
+                            HANDLE SectionHandle = *reinterpret_cast<HANDLE*>(FuncArgs);
+                            HANDLE ProcessHandle = *reinterpret_cast<HANDLE*>((ULONG_PTR*)FuncArgs + 1);
+                            PVOID* Baseaddress = *reinterpret_cast<PVOID**>((ULONG_PTR*)FuncArgs + 2);
+                            ULONG_PTR Zerobits = *reinterpret_cast<ULONG_PTR*>((ULONG_PTR*)FuncArgs + 3);
+                            SIZE_T commitsize = *reinterpret_cast<SIZE_T*>((ULONG_PTR*)FuncArgs + 4);
+                            PLARGE_INTEGER largeinteger = *reinterpret_cast<PLARGE_INTEGER*>((ULONG_PTR*)FuncArgs + 5);
+                            PSIZE_T viewsize = *reinterpret_cast<PSIZE_T*>((ULONG_PTR*)FuncArgs + 6);
+                            SECTION_INHERIT inhertdispos = *reinterpret_cast<SECTION_INHERIT*>((ULONG_PTR*)FuncArgs + 7);
+                            ULONG AllocationType = *reinterpret_cast<ULONG_PTR*>((ULONG_PTR*)FuncArgs + 8);
+                            ULONG Win32Protect = *reinterpret_cast<ULONG_PTR*>((ULONG_PTR*)FuncArgs + 9);
+
+                            info->ContextRecord->Eax = NtMapViewOfSection(
+                                SectionHandle,
+                                ProcessHandle,
+                                Baseaddress,
+                                Zerobits,
+                                commitsize,
+                                largeinteger,
+                                viewsize,
+                                inhertdispos,
+                                AllocationType,
+                                Win32Protect
+                            );
+
+                            info->ContextRecord->Eip += 2;
+
+                            break;
+                        }
+                        case SYSCALLNAME::NTUNMAPVIEWOFSECTION:
+                        {
+                            HANDLE ProcessHandle = *reinterpret_cast<HANDLE*>(FuncArgs);
+                            PVOID Baseaddress = *reinterpret_cast<PVOID*>((ULONG_PTR*)FuncArgs + 1);
+
+                            info->ContextRecord->Eax = NtUnmapViewOfSection(ProcessHandle, Baseaddress);
+
+                            info->ContextRecord->Eip += 2;
+
+                            break;
+                        }
+                        case SYSCALLNAME::NTCLOSE:
+                        {
+                            HANDLE Handle = *reinterpret_cast<HANDLE*>(FuncArgs);
+                            info->ContextRecord->Eax = NtClose(Handle);
+
+                            info->ContextRecord->Eip += 2;
+                            break;
+                        }
+                        case SYSCALLNAME::NTPROTECTVIRTUALMEMORY:
+                        {
+
+                            HANDLE ProcessHandle = *reinterpret_cast<HANDLE*>(FuncArgs);
+                            PVOID* Baseaddress = *reinterpret_cast<PVOID**>((ULONG_PTR*)FuncArgs + 1);
+                            PSIZE_T RegionSize = *reinterpret_cast<PSIZE_T*>((ULONG_PTR*)FuncArgs + 2);
+                            ULONG NewProt = *reinterpret_cast<ULONG*>((ULONG_PTR*)FuncArgs + 3);
+                            PULONG OldProt = *reinterpret_cast<PULONG*>((ULONG_PTR*)FuncArgs + 4);
+
+                            info->ContextRecord->Eax = NtProtectVirtualMemory(ProcessHandle, Baseaddress, RegionSize, NewProt, OldProt);
+
+                            info->ContextRecord->Eip += 2;
+                            break;
+                        }
+                        case SYSCALLNAME::NTQUERYVIRTUALMEMORY:
+                        {
+                            HANDLE ProcessHandle = *reinterpret_cast<HANDLE*>(FuncArgs);
+                            PVOID Baseaddress = *reinterpret_cast<PVOID*>((ULONG_PTR*)FuncArgs + 1);
+                            MEMORY_INFORMATION_CLASS meminfoclass = *reinterpret_cast<MEMORY_INFORMATION_CLASS*>((ULONG_PTR*)FuncArgs + 2);
+                            PVOID MemoryInformation = *reinterpret_cast<PVOID*>((ULONG_PTR*)FuncArgs + 3);
+                            SIZE_T MemoryInformationLength = *reinterpret_cast<SIZE_T*>((ULONG_PTR*)FuncArgs + 4);
+                            PSIZE_T ReturnLength = *reinterpret_cast<PSIZE_T*>((ULONG_PTR*)FuncArgs + 5);
+
+                            info->ContextRecord->Eax = NtQueryVirtualMemory(
+                                ProcessHandle,
+                                Baseaddress,
+                                meminfoclass,
+                                MemoryInformation,
+                                MemoryInformationLength,
+                                ReturnLength
+                            );
+
+                            info->ContextRecord->Eip += 2;
+                            break;
+                        }
+                        case SYSCALLNAME::NTQUERYSYSTEMINFORMATION:
+                        {
+                            SYSTEM_INFORMATION_CLASS SysteminformationClass = *reinterpret_cast<SYSTEM_INFORMATION_CLASS*>(FuncArgs);
+                            PVOID SystemInformation = *reinterpret_cast<PVOID*>((ULONG_PTR*)FuncArgs + 1);
+                            ULONG SystemInformationLength = *reinterpret_cast<ULONG*>((ULONG_PTR*)FuncArgs + 2);
+                            PULONG ReturnLength = *reinterpret_cast<PULONG*>((ULONG_PTR*)FuncArgs + 3);
+
+                            info->ContextRecord->Eax = NtQuerySystemInformation(
+                                SysteminformationClass,
+                                SystemInformation,
+                                SystemInformationLength,
+                                ReturnLength
+                            );
+
+                            info->ContextRecord->Eip += 2;
+                            break;
+                        }
+                        default:
+                        {
+                            return EXCEPTION_CONTINUE_SEARCH;
+                        }
+                        }
+
+
+                        return EXCEPTION_CONTINUE_EXECUTION;
+                    }
+    }
+
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+#endif
