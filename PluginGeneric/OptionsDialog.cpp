@@ -646,10 +646,11 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             wstrNewProfileName.resize(lstrlenW(wstrNewProfileName.c_str()));
 
 #elif defined(__IDP__)
-            auto szNewProfileName = askstr(0, "", "New profile name?");
-            if (!szNewProfileName)
+            qstring qNewProfileName;
+            bool success = ask_str(&qNewProfileName, 0, "New profile name?");
+            if (!success)
                 break;
-            wstrNewProfileName = scl::wstr_conv().from_bytes(szNewProfileName);
+            wstrNewProfileName = scl::wstr_conv().from_bytes(qNewProfileName.c_str());
 
 #elif defined(X64DBG)
             std::string strNewProfileName;
@@ -874,7 +875,7 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
                 break;
 
             EndDialog(hDlg, NULL);
-            DialogBoxW(hinst, MAKEINTRESOURCE(IDD_ATTACH), (HWND)callui(ui_get_hwnd).vptr, &AttachProc);
+            DialogBoxW(hinst, MAKEINTRESOURCE(IDD_ATTACH), GetForegroundWindow(), &AttachProc);
             break;
         }
 
@@ -883,7 +884,7 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             if (HIWORD(wParam) != BN_CLICKED)
                 break;
 
-            scl::ShowAboutBox((HWND)callui(ui_get_hwnd).vptr);
+            scl::ShowAboutBox(GetForegroundWindow());
             break;
         }
 #endif
