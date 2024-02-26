@@ -1,5 +1,6 @@
+#include <Windows.h>
+
 #define USE_STANDARD_FILE_FUNCTIONS
-#pragma warning(disable : 4996 4512 4127 4201)
 
 //for 64bit - p64
 #ifdef BUILD_IDA_64BIT
@@ -10,13 +11,14 @@
 #pragma comment(lib, "x64_win_vc_32_pro/ida.lib")
 #endif
 
-
-#include <Windows.h>
+#pragma warning(push, 0)
 #include <ida.hpp>
 #include <idp.hpp>
 #include <dbg.hpp>
 #include <loader.hpp>
 #include <kernwin.hpp>
+#pragma warning(pop)
+
 #include <Scylla/Logger.h>
 #include <Scylla/Settings.h>
 #include <Scylla/Version.h>

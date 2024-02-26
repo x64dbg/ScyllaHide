@@ -99,7 +99,7 @@ mkdir Release\Olly1
 mkdir Release\Olly2
 mkdir Release\TitanEngine
 mkdir Release\Generic
-mkdir Release\IDA
+mkdir Release\IDA\plugins
 
 copy /y /b build\Release\Win32\ScyllaHideGenericPluginx86.dll Release\Generic\
 copy /y /b build\Release\x64\ScyllaHideGenericPluginx64.dll Release\Generic\
@@ -109,7 +109,7 @@ copy /y /b build\Release\Win32\ScyllaHideTEPluginx86.dll Release\TitanEngine\
 copy /y /b build\Release\x64\ScyllaHideTEPluginx64.dll Release\TitanEngine\
 copy /y /b build\Release\Win32\ScyllaHideX64DBGPlugin.dp32 Release\x64dbg\x32\plugins\
 copy /y /b build\Release\x64\ScyllaHideX64DBGPlugin.dp64 Release\x64dbg\x64\plugins\
-copy /y /b build\Release\Win32\ScyllaHideIDAProPlugin.plw Release\IDA\
+copy /y /b build\Release\x64\ScyllaHideIDAProPlugin.dll Release\IDA\plugins\
 
 xcopy /S /Y build\Release\Win32\*.exe Release\
 xcopy /S /Y build\Release\x64\*.exe Release\
@@ -140,4 +140,4 @@ copy /y /b Release\HookLibraryx64.dll Release\IDA\
 copy /y /b Release\HookLibraryx86.dll Release\IDA\
 move Release\ScyllaHideIDAServer* Release\IDA\
 
-exit 0
+exit /b 0

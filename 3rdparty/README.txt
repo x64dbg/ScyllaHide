@@ -1,1 +1,1 @@
-To build the IDA plugin, extract the contents of idasdk695.zip in the directory "idasdk"
+To build the IDA plugin, extract the contents of idasdk83_pro.zip in the directory "idasdk"
