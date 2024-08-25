@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28315.86
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InjectorCLI", "InjectorCLI\InjectorCLI.vcxproj", "{92C90AAD-036E-474D-902C-CFD1E7422899}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -51,8 +51,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "distorm", "3rdparty\distorm
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scylla", "Scylla\Scylla.vcxproj", "{E468DA07-48EA-40EB-A845-FA69C39D3396}"
 	ProjectSection(ProjectDependencies) = postProject
-		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
 		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762} = {4CEF9C8E-91C8-4148-94B1-AF2A3B597762}
+		{920BBB4D-C715-4CD4-9129-FF2CF941495D} = {920BBB4D-C715-4CD4-9129-FF2CF941495D}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaTest", "ScyllaTest\ScyllaTest.vcxproj", "{5EEACDD3-61B9-4E6A-BB47-5F37C03973C3}"
@@ -61,6 +61,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaTest", "ScyllaTest\Sc
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SCMRevGen", "SCMRevGen\SCMRevGen.vcxproj", "{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScyllaHideCE", "ScyllaHideCE\ScyllaHideCE.vcxproj", "{E33E8721-AF3D-4979-8E6A-DE59A8591C7E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C2B5EC30-CF03-4963-B963-7576E9F1D01E} = {C2B5EC30-CF03-4963-B963-7576E9F1D01E}
+		{C36C2313-72A8-4583-B7D8-28E193D5287F} = {C36C2313-72A8-4583-B7D8-28E193D5287F}
+		{E468DA07-48EA-40EB-A845-FA69C39D3396} = {E468DA07-48EA-40EB-A845-FA69C39D3396}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -162,6 +169,14 @@ Global
 		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}.Release|Win32.Build.0 = Release|Win32
 		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}.Release|x64.ActiveCfg = Release|x64
 		{4CEF9C8E-91C8-4148-94B1-AF2A3B597762}.Release|x64.Build.0 = Release|x64
+		{E33E8721-AF3D-4979-8E6A-DE59A8591C7E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E33E8721-AF3D-4979-8E6A-DE59A8591C7E}.Debug|Win32.Build.0 = Debug|Win32
+		{E33E8721-AF3D-4979-8E6A-DE59A8591C7E}.Debug|x64.ActiveCfg = Debug|x64
+		{E33E8721-AF3D-4979-8E6A-DE59A8591C7E}.Debug|x64.Build.0 = Debug|x64
+		{E33E8721-AF3D-4979-8E6A-DE59A8591C7E}.Release|Win32.ActiveCfg = Release|Win32
+		{E33E8721-AF3D-4979-8E6A-DE59A8591C7E}.Release|Win32.Build.0 = Release|Win32
+		{E33E8721-AF3D-4979-8E6A-DE59A8591C7E}.Release|x64.ActiveCfg = Release|x64
+		{E33E8721-AF3D-4979-8E6A-DE59A8591C7E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

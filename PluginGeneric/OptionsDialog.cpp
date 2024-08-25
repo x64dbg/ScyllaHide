@@ -37,6 +37,12 @@
 #define IDC_SELECT_EXCEPTIONS 23949
 #endif
 
+// gettin prof name with simple winapi for now
+#if defined(_CE)
+#include "..\ScyllaHideCE\include\ScyllaHideCE.h"
+#endif
+
+
 #define SCYLLA_MAX_TOOLTIP_WIDTH    500
 
 extern scl::Settings g_settings;
@@ -56,7 +62,7 @@ wchar_t DllPathForInjection[MAX_PATH] = { 0 };
 
 void createExceptionWindow(HWND hwnd);
 
-static void UpdateOptionsExceptions(HWND hWnd, const scl::Settings *settings)
+static void UpdateOptionsExceptions(HWND hWnd, const scl::Settings* settings)
 {
     auto opts = &settings->opts();
 
@@ -82,12 +88,13 @@ static void UpdateOptionsExceptions(HWND hWnd, const scl::Settings *settings)
 
 #elif defined(X64DBG)
     auto check = true;
+
 #endif
 
     CheckDlgButton(hWnd, IDC_EXCEPTION_ALL, check ? BST_CHECKED : BST_UNCHECKED);
 }
 
-static void UpdateOptions(HWND hWnd, const scl::Settings *settings)
+static void UpdateOptions(HWND hWnd, const scl::Settings* settings)
 {
     auto opts = &settings->opts();
 
@@ -185,7 +192,7 @@ static void UpdateOptions(HWND hWnd, const scl::Settings *settings)
     UpdateOptionsExceptions(hWnd, settings);
 }
 
-void SaveOptions(HWND hWnd, scl::Settings *settings)
+void SaveOptions(HWND hWnd, scl::Settings* settings)
 {
     auto opts = &settings->opts();
 
@@ -261,7 +268,7 @@ HWND CreateTooltips(HWND hDlg)
     static const struct
     {
         unsigned ctrl_id;
-        const wchar_t *text;
+        const wchar_t* text;
     } ctrl_tips[] = {
         { IDOK, L"Apply Settings and close the dialog" },
         { IDC_PROFILES, L"Select profile" },
@@ -558,7 +565,7 @@ HWND CreateTooltips(HWND hDlg)
         ti.hwnd = hDlg;
         ti.uId = (UINT_PTR)hCtrl;
         ti.hinst = hInstance;
-        ti.lpszText = (wchar_t *)(ctrl_tips[i].text);
+        ti.lpszText = (wchar_t*)(ctrl_tips[i].text);
         ti.lParam = 0;
 
         SendMessageW(hToolTipWnd, TTM_ADDTOOL, 0, (LPARAM)&ti);
@@ -570,7 +577,7 @@ HWND CreateTooltips(HWND hDlg)
     return hToolTipWnd;
 }
 
-//options dialog proc
+//options dialog proc 
 INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -650,13 +657,16 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             if (!szNewProfileName)
                 break;
             wstrNewProfileName = scl::wstr_conv().from_bytes(szNewProfileName);
-
-#elif defined(X64DBG)
+            //try to use WINAPI to avoid x64dbg lib
+#elif defined(X64DBG) && !defined(_CE)
             std::string strNewProfileName;
             strNewProfileName.resize(GUI_MAX_LINE_SIZE);
             if (!GuiGetLineWindow("New profile name?", &strNewProfileName[0]))
                 break;
             wstrNewProfileName = scl::wstr_conv().from_bytes(strNewProfileName.c_str());
+
+#elif defined(_CE)
+            wstrNewProfileName = getProfile();
 #endif
 
             if (!g_settings.AddProfile(wstrNewProfileName.c_str()))
@@ -680,7 +690,7 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
                 break;
 
             SaveOptions(hDlg, &g_settings);
-
+#if !defined(_CE)
             if (ProcessId)
             {
 #ifdef __IDP__
@@ -697,7 +707,7 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             {
                 MessageBoxW(hDlg, L"Please start the target to apply changes!", L"[ScyllaHide Options]", MB_ICONINFORMATION);
             }
-
+#endif
             EndDialog(hDlg, NULL);
             break;
         }
@@ -917,8 +927,8 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 
 
 typedef struct _NAME_TOOLTIP {
-    const WCHAR * name;
-    WCHAR * tooltip;
+    const WCHAR* name;
+    WCHAR* tooltip;
     ULONG_PTR windowId;
 } NAME_TOOLTIP;
 
@@ -972,7 +982,7 @@ LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LP
         GetClientRect(hwnd, &rect);
         height = rect.bottom;
         GetWindowRect(hwnd, &rect);
-        height = rect.bottom - rect.top - height + (EXCEPTION_WINDOW_BASE_HEIGHT + (numOfExceptions*(HEIGHT_OF_EXCEPTION_CHECKBOX + 5))) + 5;
+        height = rect.bottom - rect.top - height + (EXCEPTION_WINDOW_BASE_HEIGHT + (numOfExceptions * (HEIGHT_OF_EXCEPTION_CHECKBOX + 5))) + 5;
         SetWindowPos(hwnd, NULL, 0, 0, rect.right - rect.left, height, SWP_NOMOVE | SWP_NOZORDER);
 
         HFONT hFont;
@@ -1015,7 +1025,7 @@ LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LP
         if (g_settings.opts().handleExceptionWx86Breakpoint) CheckDlgButton(hwnd, ID_EXCEPTION_Wx86Breakpoint, BST_CHECKED);
         if (g_settings.opts().handleExceptionRip) CheckDlgButton(hwnd, ID_EXCEPTION_RIP, BST_CHECKED);
 
-        control = CreateWindowExW(0, L"Button", L"Apply", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, (numOfExceptions)* 20 + 1, 100, 25, hwnd, (HMENU)ID_EXCEPTION_APPLY, hInst, NULL);
+        control = CreateWindowExW(0, L"Button", L"Apply", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, (numOfExceptions) * 20 + 1, 100, 25, hwnd, (HMENU)ID_EXCEPTION_APPLY, hInst, NULL);
         SendMessageW(control, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(1, 0));
         control = CreateWindowExW(0, L"Button", L"Cancel", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 1, (numOfExceptions + 1) * 20 + 5, 100, 25, hwnd, (HMENU)ID_EXCEPTION_CANCEL, hInst, NULL);
         SendMessageW(control, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(1, 0));
@@ -1057,7 +1067,7 @@ LRESULT CALLBACK ExceptionSettingsWndproc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
 void createExceptionWindow(HWND hwnd)
 {
-    WCHAR * classname = L"exception_window_config_scyllahide";
+    WCHAR* classname = L"exception_window_config_scyllahide";
     WNDCLASSW wc = { 0 };
     HWND     wnd;
     MSG      msg;
@@ -1069,7 +1079,7 @@ void createExceptionWindow(HWND hwnd)
     wc.lpszClassName = classname;
     RegisterClassW(&wc);
 
-    int windowHeight = EXCEPTION_WINDOW_BASE_HEIGHT + (_countof(exceptionNamesTooltip)*(HEIGHT_OF_EXCEPTION_CHECKBOX + 5));
+    int windowHeight = EXCEPTION_WINDOW_BASE_HEIGHT + (_countof(exceptionNamesTooltip) * (HEIGHT_OF_EXCEPTION_CHECKBOX + 5));
 
     wnd = CreateWindowExW(0,
         classname,
