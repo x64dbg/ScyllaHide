@@ -21,6 +21,9 @@ void FilterHwndList(HWND * phwndFirst, PUINT pcHwndNeeded);
 
 SAVE_DEBUG_REGISTERS ArrayDebugRegister[100] = { 0 }; //Max 100 threads
 
+HANDLE hNtdllFile = INVALID_HANDLE_VALUE;
+HANDLE hNtdllSection = INVALID_HANDLE_VALUE;
+
 // https://forum.tuts4you.com/topic/40011-debugme-vmprotect-312-build-886-anti-debug-method-improved/#comment-192824
 // https://github.com/x64dbg/ScyllaHide/issues/47
 // https://github.com/mrexodia/TitanHide/issues/27
@@ -620,6 +623,15 @@ void NAKED NTAPI HookedNativeCallInternal()
 
 NTSTATUS NTAPI HookedNtClose(HANDLE Handle)
 {
+    if (hNtdllFile != INVALID_HANDLE_VALUE && Handle == hNtdllFile )  // in HookedNtCreateSection
+    {
+        hNtdllFile = INVALID_HANDLE_VALUE;  // reset here too
+    }
+
+    if (hNtdllSection != INVALID_HANDLE_VALUE && Handle == hNtdllSection)
+    {
+        hNtdllSection = INVALID_HANDLE_VALUE;
+    }
     OBJECT_HANDLE_FLAG_INFORMATION flags;
     NTSTATUS Status;
     if (HookDllData.dNtQueryObject != nullptr)
@@ -1146,8 +1158,7 @@ NTSTATUS NTAPI HookedNtResumeThread(HANDLE ThreadHandle, PULONG PreviousSuspendC
 	}
 }
 
-HANDLE hNtdllFile = INVALID_HANDLE_VALUE;
-HANDLE hNtdllSection = INVALID_HANDLE_VALUE;
+
 
 NTSTATUS NTAPI HookedNtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, ULONG ShareAccess, ULONG OpenOptions)
 {
