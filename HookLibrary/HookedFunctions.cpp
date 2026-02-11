@@ -632,6 +632,7 @@ NTSTATUS NTAPI HookedNtClose(HANDLE Handle)
     {
         hNtdllSection = INVALID_HANDLE_VALUE;
     }
+
     OBJECT_HANDLE_FLAG_INFORMATION flags;
     NTSTATUS Status;
     if (HookDllData.dNtQueryObject != nullptr)
