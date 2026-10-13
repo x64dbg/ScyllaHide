@@ -3,6 +3,7 @@ EXPORTS
 HookDllData
 HookedGetLocalTime
 HookedGetSystemTime
+HookedGetForegroundWindow
 HookedGetTickCount
 HookedGetTickCount64
 HookedKiUserExceptionDispatcher

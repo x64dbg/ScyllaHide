@@ -52,6 +52,7 @@ t_NtUserBuildHwndList _NtUserBuildHwndList = 0;
 t_NtUserFindWindowEx _NtUserFindWindowEx = 0;
 t_NtUserQueryWindow _NtUserQueryWindow = 0;
 t_NtUserGetForegroundWindow _NtUserGetForegroundWindow = 0;
+t_GetForegroundWindow _GetForegroundWindow = 0;
 
 t_NtSetInformationThread _NtSetInformationThread = 0;
 t_NtQuerySystemInformation _NtQuerySystemInformation = 0;
@@ -432,14 +433,16 @@ bool ApplyUserHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD
     void * HookedNtUserBuildHwndList_Eight = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserBuildHwndList_Eight") + imageBase);
     void * HookedNtUserQueryWindow = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserQueryWindow") + imageBase);
     void * HookedNtUserGetForegroundWindow = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedNtUserGetForegroundWindow") + imageBase);
+    void * HookedGetForegroundWindow = (void *)(GetDllFunctionAddressRVA(dllMemory, "HookedGetForegroundWindow") + imageBase);
 
-    g_log.LogDebug(L"ApplyUserHook -> HookedNtUserBlockInput %p HookedNtUserFindWindowEx %p HookedNtUserBuildHwndList %p HookedNtUserBuildHwndList_Eight %p HookedNtUserQueryWindow %p HookedNtUserGetForegroundWindow %p",
+    g_log.LogDebug(L"ApplyUserHook -> HookedNtUserBlockInput %p HookedNtUserFindWindowEx %p HookedNtUserBuildHwndList %p HookedNtUserBuildHwndList_Eight %p HookedNtUserQueryWindow %p HookedNtUserGetForegroundWindow %p HookedGetForegroundWindow %p",
         HookedNtUserBlockInput,
         HookedNtUserFindWindowEx,
         HookedNtUserBuildHwndList,
         HookedNtUserBuildHwndList_Eight,
         HookedNtUserQueryWindow,
-        HookedNtUserGetForegroundWindow);
+        HookedNtUserGetForegroundWindow,
+        HookedGetForegroundWindow);
 
     _NtUserBlockInput = (t_NtUserBlockInput)hdd->NtUserBlockInputVA;
     _NtUserFindWindowEx = (t_NtUserFindWindowEx)hdd->NtUserFindWindowExVA;
@@ -488,6 +491,32 @@ bool ApplyUserHook(HOOK_DLL_DATA * hdd, HANDLE hProcess, BYTE * dllMemory, DWORD
     {
         g_log.LogDebug(L"ApplyUserHook -> Hooking NtUserGetForegroundWindow");
         HOOK_NATIVE(NtUserGetForegroundWindow);
+
+        // Since Windows 11 24H2 user32!GetForegroundWindow no longer calls win32u!NtUserGetForegroundWindow, so the
+        // native hook above no longer intercepts callers of the public API (e.g. Themida). Hook the user32 wrapper too.
+        // If it is only a forwarder to the (already hooked) native function, skip it: it would either be redundant or
+        // be mistaken for an already-hooked function, which aborts all further hooks.
+        _GetForegroundWindow = (t_GetForegroundWindow)GetProcAddress(GetModuleHandleW(L"user32.dll"), "GetForegroundWindow");
+        if (_GetForegroundWindow != nullptr && (void*)_GetForegroundWindow != (void*)_NtUserGetForegroundWindow)
+        {
+            BYTE prologue[3] = { 0 };
+            ReadProcessMemory(hProcess, (void*)_GetForegroundWindow, prologue, sizeof(prologue), nullptr);
+#ifdef _WIN64
+            const bool isForwarder = (prologue[0] == 0xFF && prologue[1] == 0x25) ||
+                (prologue[0] == 0x90 && prologue[1] == 0xFF && prologue[2] == 0x25);
+#else
+            const bool isForwarder = (prologue[0] == 0xE9);
+#endif
+            if (isForwarder)
+            {
+                g_log.LogDebug(L"ApplyUserHook -> user32!GetForegroundWindow is a forwarder, native hook is sufficient");
+            }
+            else
+            {
+                g_log.LogDebug(L"ApplyUserHook -> Hooking user32!GetForegroundWindow");
+                HOOK(GetForegroundWindow);
+            }
+        }
     }
 
     hdd->isUserDllHooked = TRUE;
@@ -727,11 +756,14 @@ void RestoreUserHooks(HOOK_DLL_DATA * hdd, HANDLE hProcess)
     RESTORE_JMP(NtUserGetForegroundWindow);
 #endif
 
+    RESTORE_JMP(GetForegroundWindow);
+
     FREE_HOOK(NtUserBlockInput);
     FREE_HOOK(NtUserFindWindowEx);
     FREE_HOOK(NtUserBuildHwndList);
     FREE_HOOK(NtUserQueryWindow);
     FREE_HOOK(NtUserGetForegroundWindow);
+    FREE_HOOK(GetForegroundWindow);
 
     hdd->isUserDllHooked = FALSE;
 }

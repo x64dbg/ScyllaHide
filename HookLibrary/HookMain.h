@@ -16,6 +16,8 @@ typedef DWORD(WINAPI * t_OutputDebugStringA)(LPCSTR lpOutputString); //Kernel32.
 typedef DWORD(WINAPI * t_OutputDebugStringW)(LPCWSTR lpOutputString); //Kernel32.dll
 //WIN 7 X64: OutputDebugStringW -> OutputDebugStringA
 
+typedef HWND(WINAPI * t_GetForegroundWindow)(void); //User32.dll
+
 #define MAX_NATIVE_HOOKS 32
 
 #pragma pack(push, 1)
@@ -154,6 +156,10 @@ typedef struct _HOOK_DLL_DATA {
     DWORD NtUserQueryWindowBackupSize;
     t_NtUserGetForegroundWindow dNtUserGetForegroundWindow;
     DWORD NtUserGetForegroundWindowBackupSize;
+
+    //user32.dll wrapper. Since Windows 11 24H2 user32!GetForegroundWindow no longer forwards to win32u!NtUserGetForegroundWindow
+    t_GetForegroundWindow dGetForegroundWindow;
+    DWORD GetForegroundWindowBackupSize;
 
 
     t_NtUserQueryWindow NtUserQueryWindow;

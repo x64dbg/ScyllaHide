@@ -959,6 +959,16 @@ HWND NTAPI HookedNtUserGetForegroundWindow()
 	return Hwnd;
 }
 
+HWND WINAPI HookedGetForegroundWindow()
+{
+	HWND Hwnd = HookDllData.dGetForegroundWindow();
+	if (Hwnd != nullptr && IsWindowBad(Hwnd))
+	{
+		Hwnd = (HWND)HookDllData.NtUserGetThreadState(THREADSTATE_ACTIVEWINDOW);
+	}
+	return Hwnd;
+}
+
 //WIN XP: CreateThread -> CreateRemoteThread -> NtCreateThread
 NTSTATUS NTAPI HookedNtCreateThread(PHANDLE ThreadHandle,ACCESS_MASK DesiredAccess,POBJECT_ATTRIBUTES ObjectAttributes,HANDLE ProcessHandle,PCLIENT_ID ClientId,PCONTEXT ThreadContext,PINITIAL_TEB InitialTeb,BOOLEAN CreateSuspended)
 {
