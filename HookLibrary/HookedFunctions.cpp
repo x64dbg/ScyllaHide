@@ -164,6 +164,47 @@ static bool IsProcessHandleTracingEnabled = false;
 static LONG volatile InstrumentationCallbackHookInstalled = 0;
 static ULONG NumManualSyscalls = 0;
 
+static PVOID volatile CachedImageBase = nullptr;
+static ULONG_PTR volatile CachedImageEnd = 0;
+
+static bool GetCachedImageRange(PVOID &ImageBase, ULONG_PTR &ImageEnd)
+{
+    const PVOID CurrentImageBase = NtCurrentPeb()->ImageBaseAddress;
+    if (CurrentImageBase == nullptr)
+        return false;
+
+    const PVOID CachedBase = CachedImageBase;
+    const ULONG_PTR CachedEnd = CachedImageEnd;
+    if (CachedBase == CurrentImageBase && CachedEnd > (ULONG_PTR)CachedBase)
+    {
+        ImageBase = CurrentImageBase;
+        ImageEnd = CachedEnd;
+        return true;
+    }
+
+    IMAGE_DOS_HEADER DosHeader;
+    if (!NT_SUCCESS(NtReadVirtualMemory(NtCurrentProcess, CurrentImageBase, &DosHeader, sizeof(DosHeader), nullptr)) ||
+        DosHeader.e_magic != IMAGE_DOS_SIGNATURE)
+        return false;
+
+    IMAGE_NT_HEADERS NtHeaders;
+    if (!NT_SUCCESS(NtReadVirtualMemory(NtCurrentProcess,
+                                        (PBYTE)CurrentImageBase + DosHeader.e_lfanew,
+                                        &NtHeaders,
+                                        sizeof(NtHeaders),
+                                        nullptr)) ||
+        NtHeaders.Signature != IMAGE_NT_SIGNATURE ||
+        NtHeaders.OptionalHeader.SizeOfImage == 0)
+        return false;
+
+    CachedImageEnd = (ULONG_PTR)CurrentImageBase + NtHeaders.OptionalHeader.SizeOfImage;
+    CachedImageBase = CurrentImageBase;
+
+    ImageBase = CurrentImageBase;
+    ImageEnd = CachedImageEnd;
+    return true;
+}
+
 extern "C"
 ULONG_PTR
 NTAPI
@@ -175,10 +216,10 @@ InstrumentationCallback(
     if (InterlockedOr(TlsGetInstrumentationCallbackDisabled(), 0x1) == 0x1)
         return ReturnVal; // Do not recurse
 
-    const PVOID ImageBase = NtCurrentPeb()->ImageBaseAddress;
-    const PIMAGE_NT_HEADERS NtHeaders = RtlImageNtHeader(ImageBase);
-    if (NtHeaders != nullptr && ReturnAddress >= (ULONG_PTR)ImageBase &&
-        ReturnAddress < (ULONG_PTR)ImageBase + NtHeaders->OptionalHeader.SizeOfImage)
+    PVOID ImageBase;
+    ULONG_PTR ImageEnd;
+    if (GetCachedImageRange(ImageBase, ImageEnd) && ReturnAddress >= (ULONG_PTR)ImageBase &&
+        ReturnAddress < ImageEnd)
     {
         // Syscall return address within the exe file
         ReturnVal = (ULONG_PTR)(ULONG)STATUS_PORT_NOT_SET;
